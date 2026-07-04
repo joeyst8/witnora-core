@@ -1,6 +1,6 @@
-# Witnora-Core v0.8.0
+# Witnora-Core v0.8.1
 
-Witnora-Core v0.8.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.8.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -162,9 +162,11 @@ The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
 
 ## Public Benchmark Evaluation
 
-v0.8.0 adds a public benchmark harness for reproducible pilot runs. It supports:
+v0.8.1 includes the public benchmark harness and artifact writer for
+reproducible pilot runs. It supports:
 
 - `--public-suite cnfgen-small`, a small in-repo crafted CNFgen-style suite,
+- `--public-suite cnfgen-artifact`, a larger in-repo public-style artifact suite,
 - `--dimacs-dir path/to/satlib_subset` for user-provided SATLIB CNFs,
 - `--dimacs-dir path/to/satcomp_subset` for user-provided SAT Competition CNFs.
 
@@ -178,9 +180,16 @@ Example public benchmark commands:
 
 ```bash
 python -m witnora_core.benchmark --public-suite cnfgen-small --c 2 --out results.json --csv results.csv --report REPORT.md --export-certs certs/ --strict-unsat-external --drat-trim path/to/drat-trim
+python -m witnora_core.benchmark --public-suite cnfgen-artifact --c 2 --out results.json --csv results.csv --report REPORT.md --export-certs certs/ --strict-unsat-external --drat-trim path/to/drat-trim --timeout-seconds 300
 python -m witnora_core.benchmark --dimacs-dir path/to/satlib_subset --c 2 --out satlib_results.json --csv satlib.csv --report SATLIB_REPORT.md --export-certs certs_satlib/ --strict-unsat-external --drat-trim path/to/drat-trim --max-instances 50
 python -m witnora_core.benchmark --dimacs-dir path/to/satcomp_subset --c 2 --out satcomp_results.json --csv satcomp.csv --report SATCOMP_REPORT.md --export-certs certs_satcomp/ --strict-unsat-external --drat-trim path/to/drat-trim --timeout-seconds 300
 ```
+
+v0.8.1 benchmark outputs should be packaged separately from source archives.
+The artifact writer creates `README.md`, `config.json`, `results.csv`,
+`results.json`, `REPORT.md`, `selected_instances.txt`, `environment.txt`,
+`strict_verification_summary.json`, `drat_logs/`, and `certs/` under an output
+directory such as `outputs/v0.8.1-public-benchmark/`.
 
 Each public benchmark instance receives exactly one category:
 
@@ -217,9 +226,10 @@ checker is built from upstream source. v0.7.0 adds DRAT-style export for
 supported 2-SAT SCC contradictions by deriving complementary units from logged
 implication paths, then deriving the empty clause. v0.7.1 adds pre-benchmark
 proof-coverage smoke tests for subsumption, pure literal elimination, and
-multi-component UNSAT certificates. v0.8.0 adds public benchmark categories,
+multi-component UNSAT certificates. v0.8.0 added public benchmark categories,
 CSV/JSON/Markdown public reports, per-instance timeout handling, and strict
-UNSAT external verification mode.
+UNSAT external verification mode. v0.8.1 packages a real public-style benchmark
+artifact separately from the source release.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -280,7 +290,7 @@ is counted as externally certified only when `proof.drat` is exported and real
 
 ## Minimal DRAT Bridge
 
-v0.8.0 can export a DRAT-style proof for supported end-to-end
+v0.8.1 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
@@ -318,7 +328,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.8.0",
+  "checker": "witnora_internal_rup_subset_checker_v0.8.1",
   "checked_against": "original.dimacs"
 }
 ```
@@ -416,7 +426,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.8.0 does not claim full
+This classification is deliberately conservative. v0.8.1 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 
@@ -424,7 +434,7 @@ assignment/reconstruction certificates rather than clausal refutations.
 
 Public benchmark reporting must separate UNSAT results that have real external
 proof checking from UNSAT results that are native-only or internally checked
-only. v0.8.0 exposes public benchmark categories:
+only. v0.8.1 exposes public benchmark categories:
 
 - `UNSAT_DRAT_EXPORTED_VERIFIED` when `proof.drat` exists and real
   `drat-trim` ran successfully,

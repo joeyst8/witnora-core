@@ -29,7 +29,7 @@ from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 
 WIDTH_FOUND = "FOUND"
 WIDTH_NOT_FOUND = "NOT_FOUND"
@@ -698,7 +698,11 @@ def write_csv(data: dict[str, Any], path: str | Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Witnora-Core benchmark runner")
     parser.add_argument("--suite", choices=["synthetic"], help="benchmark suite to run")
-    parser.add_argument("--public-suite", choices=["cnfgen-small"], help="public benchmark suite to run")
+    parser.add_argument(
+        "--public-suite",
+        choices=["cnfgen-small", "cnfgen-artifact"],
+        help="public benchmark suite to run",
+    )
     parser.add_argument("--dimacs-dir", help="directory containing .cnf or .dimacs files")
     parser.add_argument("--c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--out", help="write JSON output to this path")

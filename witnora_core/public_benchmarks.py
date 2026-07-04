@@ -169,6 +169,71 @@ def cnfgen_small_cases() -> list[PublicBenchmarkCase]:
     return cases
 
 
+def cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
+    """Larger public-style crafted suite for v0.8.1 artifact runs.
+
+    These are generated in-repo when the external CNFgen package is unavailable.
+    They should be reported as public-style generated formulas, not as an
+    official CNFgen release dataset.
+    """
+
+    formulas: list[tuple[str, str, CNFFormula, str]] = []
+    for pigeons in range(3, 11):
+        holes = pigeons - 1
+        formulas.append(
+            (
+                f"php_{pigeons}_{holes}",
+                "pigeonhole",
+                _pigeonhole_formula(pigeons, holes),
+                "public-style pigeonhole; generated internally because cnfgen is unavailable",
+            )
+        )
+    for n in [5, 8, 12, 16, 20]:
+        formulas.append(
+            (
+                f"blocked_clique_n{n}",
+                "blocked_clique",
+                blocked_clique_collapse_family(n),
+                "public-style blocked clique collapse family",
+            )
+        )
+    for n in [5, 7, 9]:
+        formulas.append(
+            (
+                f"bounded_chain_n{n}",
+                "bounded_treewidth_chain",
+                bounded_treewidth_chain_family(n),
+                "public-style bounded-treewidth chain",
+            )
+        )
+    for n_vars, n_clauses, seed in [(8, 24, 13), (12, 42, 17), (16, 64, 19)]:
+        formulas.append(
+            (
+                f"random_3sat_v{n_vars}_c{n_clauses}_s{seed}",
+                "random_3sat",
+                random_3sat_family(n_vars, n_clauses, seed),
+                "deterministic public-style random 3-SAT no-collapse probe",
+            )
+        )
+    for name, rhs in [("parity_equal_pair", 0), ("parity_unequal_pair", 1)]:
+        _unused_name, formula = _parity_pair_formula(name, rhs)
+        formulas.append((name, "parity", formula, "public-style two-variable parity encoding"))
+
+    cases: list[PublicBenchmarkCase] = []
+    for name, family, formula, notes in formulas:
+        cases.append(
+            PublicBenchmarkCase(
+                instance_name=name,
+                source_suite="cnfgen-artifact",
+                family=family,
+                dimacs_text=_formula_to_dimacs(formula),
+                source="generated:cnfgen_style_internal_v0.8.1",
+                notes=notes,
+            )
+        )
+    return cases
+
+
 def dimacs_dir_cases(
     dimacs_dir: str | Path,
     *,
@@ -197,9 +262,12 @@ def dimacs_dir_cases(
 
 
 def public_suite_cases(name: str, *, max_instances: int | None = None) -> list[PublicBenchmarkCase]:
-    if name != "cnfgen-small":
-        raise ValueError("supported public suites: cnfgen-small")
-    cases = cnfgen_small_cases()
+    if name == "cnfgen-small":
+        cases = cnfgen_small_cases()
+    elif name == "cnfgen-artifact":
+        cases = cnfgen_artifact_cases()
+    else:
+        raise ValueError("supported public suites: cnfgen-small, cnfgen-artifact")
     return cases[:max_instances] if max_instances is not None else cases
 
 
@@ -514,7 +582,7 @@ def run_public_benchmark(
     ]
     summary = summarize_public_results(results)
     data = {
-        "version": "0.8.0",
+        "version": "0.8.1",
         "benchmark_kind": "public",
         "c_parameter": c,
         "timestamp": timestamp or datetime.now(timezone.utc).isoformat(),
