@@ -19,7 +19,8 @@ from .certificate import (
 )
 from .cnf import CNFFormula
 from .components import component_details, connected_components
-from .dimacs import load_dimacs
+from .dimacs import load_dimacs, parse_dimacs
+from .proof import export_certificate_bundle
 from .primal import graph_edges, primal_graph
 from .reconstruction import reconstruct_assignment
 from .simplify import simplify
@@ -412,8 +413,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Witnora-Core v0 collapse-path runner")
     parser.add_argument("dimacs", help="path to DIMACS CNF input")
     parser.add_argument("--c", "-c", type=int, default=4, dest="c_parameter")
+    parser.add_argument("--export-cert", help="write .wcert directory or .wcert.json certificate")
     args = parser.parse_args(argv)
-    path = solve_dimacs_file(args.dimacs, args.c_parameter)
+    dimacs_path = Path(args.dimacs)
+    original_text = dimacs_path.read_text(encoding="utf-8")
+    formula = parse_dimacs(original_text)
+    path = solve(formula, args.c_parameter)
+    if args.export_cert:
+        export_certificate_bundle(
+            formula,
+            path,
+            args.export_cert,
+            original_dimacs_text=original_text,
+        )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0
 

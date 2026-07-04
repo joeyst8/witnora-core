@@ -24,11 +24,12 @@ from .families import (
     unsat_unit_conflict_family,
 )
 from .primal import graph_edges, primal_graph
+from .proof import export_certificate_bundle
 from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 WIDTH_FOUND = "FOUND"
 WIDTH_NOT_FOUND = "NOT_FOUND"
@@ -68,6 +69,7 @@ class BenchmarkCase:
     formula: CNFFormula
     source: str
     notes: str = ""
+    original_dimacs_text: str | None = None
 
     @property
     def n_vars(self) -> int:
@@ -125,6 +127,7 @@ class BenchmarkResult:
     time_ms: float
     failure_reason: str
     determinism_pass: bool | None = None
+    certificate_bundle_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -158,6 +161,7 @@ class BenchmarkResult:
             "time_ms": self.time_ms,
             "failure_reason": self.failure_reason,
             "determinism_pass": self.determinism_pass,
+            "certificate_bundle_path": self.certificate_bundle_path,
         }
 
 
@@ -285,6 +289,7 @@ def run_case(
     *,
     determinism_check: bool = False,
     max_width_search_vars: int = 28,
+    export_cert_path: str | Path | None = None,
 ) -> BenchmarkResult:
     original = structural_metrics(case.formula)
     post_s = post_s_formula(case.formula)
@@ -300,6 +305,16 @@ def run_case(
     if determinism_check:
         second = solve(case.formula, c)
         determinism_pass = compare_deterministic_run(path, second)
+
+    certificate_bundle_path: str | None = None
+    if export_cert_path is not None:
+        export_certificate_bundle(
+            case.formula,
+            path,
+            export_cert_path,
+            original_dimacs_text=case.original_dimacs_text or case.formula.canonical_dimacs(),
+        )
+        certificate_bundle_path = str(export_cert_path)
 
     return BenchmarkResult(
         case_name=case.name,
@@ -332,6 +347,7 @@ def run_case(
         time_ms=float(path.stats.get("time_ms", 0.0)),
         failure_reason=failure_reason(path.status),
         determinism_pass=determinism_pass,
+        certificate_bundle_path=certificate_bundle_path,
     )
 
 
@@ -553,6 +569,7 @@ def dimacs_cases(dimacs_dir: str | Path) -> list[BenchmarkCase]:
                 formula=formula,
                 source=str(path),
                 notes="user-provided DIMACS",
+                original_dimacs_text=path.read_text(encoding="utf-8"),
             )
         )
     return cases
@@ -566,14 +583,19 @@ def run_benchmark(
     max_width_search_vars: int = 28,
     timestamp: str | None = None,
     scale: str | None = None,
+    export_certs_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     case_list = list(cases)
+    cert_root = Path(export_certs_dir) if export_certs_dir is not None else None
+    if cert_root is not None:
+        cert_root.mkdir(parents=True, exist_ok=True)
     results = [
         run_case(
             case,
             c,
             determinism_check=determinism_check,
             max_width_search_vars=max_width_search_vars,
+            export_cert_path=(cert_root / f"{case.name}.wcert") if cert_root is not None else None,
         )
         for case in case_list
     ]
@@ -596,6 +618,7 @@ def run_synthetic_benchmark(
     determinism_check: bool = False,
     max_width_search_vars: int = 28,
     timestamp: str | None = None,
+    export_certs_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     return run_benchmark(
         synthetic_cases(scale),
@@ -604,6 +627,7 @@ def run_synthetic_benchmark(
         max_width_search_vars=max_width_search_vars,
         timestamp=timestamp,
         scale=scale,
+        export_certs_dir=export_certs_dir,
     )
 
 
@@ -614,6 +638,7 @@ def run_dimacs_dir_benchmark(
     determinism_check: bool = False,
     max_width_search_vars: int = 28,
     timestamp: str | None = None,
+    export_certs_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     return run_benchmark(
         dimacs_cases(dimacs_dir),
@@ -622,6 +647,7 @@ def run_dimacs_dir_benchmark(
         max_width_search_vars=max_width_search_vars,
         timestamp=timestamp,
         scale=None,
+        export_certs_dir=export_certs_dir,
     )
 
 
@@ -641,6 +667,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--out", help="write JSON output to this path")
     parser.add_argument("--csv", dest="csv_path", help="write per-case CSV output to this path")
+    parser.add_argument("--export-certs", help="write one .wcert certificate per benchmark case")
     parser.add_argument(
         "--scale",
         choices=["small", "medium"],
@@ -665,6 +692,7 @@ def main(argv: list[str] | None = None) -> int:
             scale=args.scale,
             determinism_check=args.determinism_check,
             max_width_search_vars=args.max_width_search_vars,
+            export_certs_dir=args.export_certs,
         )
     else:
         data = run_dimacs_dir_benchmark(
@@ -672,6 +700,7 @@ def main(argv: list[str] | None = None) -> int:
             args.c_parameter,
             determinism_check=args.determinism_check,
             max_width_search_vars=args.max_width_search_vars,
+            export_certs_dir=args.export_certs,
         )
 
     payload = json.dumps(data, indent=2, sort_keys=True)

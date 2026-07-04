@@ -17,6 +17,7 @@ from witnora_core.families import (
     blocked_clique_collapse_family,
     random_3sat_family,
 )
+from witnora_core.proof import verify_certificate_bundle
 from witnora_core.report import generate_markdown_report
 
 
@@ -25,7 +26,7 @@ class BenchmarkTest(unittest.TestCase):
         data = run_synthetic_benchmark(2, timestamp="TEST_TIMESTAMP")
         self.assertIn("per_case_results", data)
         self.assertIn("summary", data)
-        self.assertEqual(data["version"], "0.2.0")
+        self.assertEqual(data["version"], "0.3.0")
         self.assertEqual(data["c_parameter"], 2)
         self.assertEqual(data["scale"], "small")
         self.assertGreaterEqual(data["summary"]["total_cases"], 8)
@@ -185,6 +186,20 @@ class BenchmarkTest(unittest.TestCase):
         self.assertIn("## Cases That Changed Route", report)
         self.assertIn("bounded_treewidth_chain_n5", report)
         print("BENCHMARK_COMPARE_PASS")
+
+    def test_benchmark_certificate_export(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cert_root = Path(tmp) / "certs"
+            data = run_synthetic_benchmark(
+                2,
+                timestamp="TEST_TIMESTAMP",
+                export_certs_dir=cert_root,
+            )
+            first = data["per_case_results"][0]
+            self.assertTrue(first["certificate_bundle_path"])
+            verified = verify_certificate_bundle(first["certificate_bundle_path"])
+        self.assertTrue(verified["verified"], verified)
+        print("BENCHMARK_CERT_EXPORT_PASS")
 
 
 if __name__ == "__main__":

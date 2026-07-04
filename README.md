@@ -1,6 +1,6 @@
-# Witnora-Core v0.2.0
+# Witnora-Core v0.3.0
 
-Witnora-Core v0.2.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.3.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -118,6 +118,12 @@ Export per-case CSV alongside JSON:
 python -m witnora_core.benchmark --suite synthetic --scale medium --c 2 --out results.json --csv results.csv --determinism-check
 ```
 
+Export per-case certificates:
+
+```bash
+python -m witnora_core.benchmark --suite synthetic --scale small --c 2 --out results.json --export-certs certs/
+```
+
 Generate a Markdown benchmark report:
 
 ```bash
@@ -152,7 +158,66 @@ post-simplification width search for large formulas using
 `NO_COLLAPSE` in benchmark output is still not a hardness claim. It means only
 that the current grammar and `c` budget did not produce a certified collapse.
 
-The v0/v0.1 exact treewidth route remains scoped to `0 <= c <= 4`.
+The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
+
+## Proof-Carrying Certificates
+
+Witnora-Core v0.3.0 adds portable certificate bundles. A certificate can be
+exported as either a `.wcert` directory or a single `.wcert.json` file.
+
+Export a certificate:
+
+```bash
+python -m witnora_core.runner examples/bce_demo.dimacs --c 2 --export-cert out.wcert
+python -m witnora_core.runner examples/bce_demo.dimacs --c 2 --export-cert out.wcert.json
+```
+
+Verify a saved certificate without rerunning collapse search:
+
+```bash
+python -m witnora_core.verify_certificate out.wcert
+python -m witnora_core.verify_certificate out.wcert.json
+```
+
+A `.wcert` directory contains:
+
+- `manifest.json`
+- `original.dimacs`
+- `normalized.dimacs`
+- `result.json`
+- `collapse_path.json`
+- `reconstruction_trace.json`
+- `component_results.json`
+- `stats.json`
+- `certificate_hash.txt`
+- `verifier_version.txt`
+
+The verifier checks file hashes, the deterministic certificate hash, formula
+hashes, collapse-path replay, component decomposition replay, reconstruction
+trace consistency, SAT assignment verification, and UNSAT contradictions.
+
+The standalone verifier may reuse low-level checking utilities, but it does not
+call the solver runner or rediscover a collapse path.
+
+## proof_trace_class
+
+Certificate bundles include a `proof_trace_class`:
+
+- `SAT_ASSIGNMENT_RECONSTRUCTION`
+- `UNSAT_INTERNAL_REPLAY`
+- `NO_COLLAPSE_REPORT`
+- `PARTIAL_RAT_COMPATIBLE`
+- `UNSUPPORTED_FOR_EXTERNAL_LRAT`
+
+Each collapse step also receives an `external_proof_status`, such as
+`CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
+`LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
+
+This classification is deliberately conservative. v0.3.0 does not claim full
+LRAT or FRAT support, and SAT certificates remain assignment/reconstruction
+certificates rather than clausal refutations.
+
+See [PROOF_FORMAT_ROADMAP.md](PROOF_FORMAT_ROADMAP.md).
 
 ## certificate_hash
 
@@ -240,6 +305,14 @@ Expected pass markers include:
 - `BENCHMARK_CSV_EXPORT_PASS`
 - `BENCHMARK_REPORT_GENERATION_PASS`
 - `BENCHMARK_COMPARE_PASS`
+- `CERT_EXPORT_SAT_PASS`
+- `CERT_EXPORT_UNSAT_PASS`
+- `CERT_EXPORT_COMPONENTS_PASS`
+- `CERT_HASH_TAMPER_REJECT_PASS`
+- `COLLAPSE_PATH_TAMPER_REJECT_PASS`
+- `ASSIGNMENT_TAMPER_REJECT_PASS`
+- `CERT_DETERMINISM_PASS`
+- `BENCHMARK_CERT_EXPORT_PASS`
 - adversarial markers from `tests/test_adversarial_correctness.py`
 
 ## Run Examples
