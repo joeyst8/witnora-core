@@ -64,3 +64,38 @@ formulas beyond the raw primal-treewidth-1 CNF base class.
 This does not imply anything about P vs NP. It shows only that the implemented
 certified preprocessing collapse class is strictly larger than the raw
 bounded-treewidth base class for this explicit infinite family.
+
+## XOR Exact Pattern Soundness
+
+Let `V = {x1, ..., xk}` and let `b` be either 0 or 1. The full CNF encoding of
+the XOR equation
+
+```text
+x1 xor x2 xor ... xor xk = b
+```
+
+contains one clause for every Boolean assignment `a` to `V` with parity not
+equal to `b`. The clause for `a` contains:
+
+- `not xi` when `a(xi) = True`
+- `xi` when `a(xi) = False`
+
+That clause is falsified exactly by assignment `a` and satisfied by every other
+assignment on `V`.
+
+Therefore the conjunction of all forbidden-assignment clauses is satisfied
+exactly by the assignments whose parity is `b`. It is equivalent, on the
+variables `V`, to the XOR equation.
+
+Witnora-Core v0.9.2 uses this fact conservatively. When it detects that a set
+of CNF clauses exactly equals the full forbidden-assignment encoding for an XOR
+equation, it may add that equation as an implied constraint while retaining the
+source clauses in the CNF. This is satisfiability-preserving for SAT witnesses:
+any final SAT assignment is still checked against the original CNF and the
+detected XOR equations.
+
+This is not heuristic XOR mining and not a CryptoMiniSat-style extractor.
+Sidecar XOR equations have a different status: they define a combined
+`CNF and XOR` input problem and are not claimed to be implied by the CNF alone.
+XOR-native UNSAT remains native-only in v0.9.2 and is not claimed as DRAT,
+LRAT, or FRAT certified.

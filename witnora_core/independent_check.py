@@ -13,9 +13,9 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.9.1"
+CHECKER = "independent_raw_checker_v0.9.2"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
-DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.1"
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.2"
 DRAT_CHECKED_AGAINST = "original.dimacs"
 DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
@@ -1153,6 +1153,21 @@ def _extra_touching_clauses_raw(
     ]
 
 
+def _clause_for_forbidden_assignment_raw(
+    variables: tuple[int, ...],
+    bits: tuple[int, ...],
+) -> ClauseRaw:
+    return tuple(sorted((-var if bit else var) for var, bit in zip(variables, bits)))
+
+
+def _canonical_xor_cnf_clauses_raw(variables: tuple[int, ...], rhs: int) -> set[ClauseRaw]:
+    return {
+        _clause_for_forbidden_assignment_raw(variables, tuple((mask >> index) & 1 for index in range(len(variables))))
+        for mask in range(1 << len(variables))
+        if sum((mask >> index) & 1 for index in range(len(variables))) % 2 != (rhs & 1)
+    }
+
+
 def _clause_eval_for_local_assignment_raw(clause: ClauseRaw, assignment: dict[int, bool]) -> bool:
     return any(
         assignment[abs(lit)] if lit > 0 else not assignment[abs(lit)]
@@ -1165,24 +1180,7 @@ def _source_clauses_equivalent_to_xor_raw(
     rhs: int,
     source_clauses: set[ClauseRaw],
 ) -> bool:
-    if len(variables) not in {2, 3}:
-        return False
-    for mask in range(1 << len(variables)):
-        assignment = {
-            var: bool((mask >> index) & 1)
-            for index, var in enumerate(variables)
-        }
-        source_satisfied = all(
-            _clause_eval_for_local_assignment_raw(clause, assignment)
-            for clause in source_clauses
-        )
-        parity = 0
-        for var in variables:
-            parity ^= int(assignment[var])
-        xor_satisfied = parity == rhs
-        if source_satisfied != xor_satisfied:
-            return False
-    return True
+    return source_clauses == _canonical_xor_cnf_clauses_raw(variables, rhs)
 
 
 def _verify_xor_detected_equations_raw(
@@ -1202,6 +1200,8 @@ def _verify_xor_detected_equations_raw(
             return False, "detected XOR source clauses must not be removed"
         if equation.get("safe_use") is not True:
             return False, "detected XOR safe_use must be true"
+        if equation.get("exact_full_encoding") is not True:
+            return False, "detected XOR must record exact_full_encoding=true"
         try:
             source_clauses = {
                 canonicalize_clause_raw(clause)
@@ -1212,7 +1212,8 @@ def _verify_xor_detected_equations_raw(
         if None in source_clauses:
             return False, "detected XOR source clause is tautological"
         typed_source = {clause for clause in source_clauses if clause is not None}
-        if len(typed_source) != (2 if len(variables) == 2 else 4):
+        expected_count = 1 << (len(variables) - 1)
+        if len(typed_source) != expected_count:
             return False, "detected XOR source clause count mismatch"
         if not typed_source <= original_clauses:
             return False, "detected XOR source clause missing from original CNF"
@@ -1324,7 +1325,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.9.1", "proof_trace")
+        return _fail("external_lrat_frat must remain false in v0.9.2", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":

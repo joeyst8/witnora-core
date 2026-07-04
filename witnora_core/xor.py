@@ -12,6 +12,7 @@ XOR_SAT = "SAT"
 XOR_UNSAT = "UNSAT"
 XOR_DETECTION_IMPLIED_ONLY = "IMPLIED_CONSTRAINT_ONLY"
 XOR_DETECTION_SIDECAR = "EXPLICIT_SIDECAR"
+XOR_PATTERN_SKIPPED_MAX_K = "XOR_PATTERN_SKIPPED_MAX_K"
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class XorEquation:
     detection_mode: str = XOR_DETECTION_SIDECAR
     source_clauses_removed: bool = False
     extra_clauses_touching_variables: tuple[tuple[int, ...], ...] = field(default_factory=tuple)
+    exact_full_encoding: bool = False
     safe_use: bool = True
 
     def __init__(
@@ -37,6 +39,7 @@ class XorEquation:
         detection_mode: str | None = None,
         source_clauses_removed: bool = False,
         extra_clauses_touching_variables: Iterable[Iterable[int]] = (),
+        exact_full_encoding: bool = False,
         safe_use: bool = True,
     ):
         counts: dict[int, int] = {}
@@ -68,6 +71,7 @@ class XorEquation:
                 for clause in extra_clauses_touching_variables
             ),
         )
+        object.__setattr__(self, "exact_full_encoding", bool(exact_full_encoding))
         object.__setattr__(self, "safe_use", bool(safe_use))
 
     @property
@@ -103,6 +107,7 @@ class XorEquation:
             detection_mode=self.detection_mode,
             source_clauses_removed=self.source_clauses_removed,
             extra_clauses_touching_variables=self.extra_clauses_touching_variables,
+            exact_full_encoding=self.exact_full_encoding,
             safe_use=self.safe_use,
         )
 
@@ -118,6 +123,7 @@ class XorEquation:
             "extra_clauses_touching_variables": [
                 list(clause) for clause in self.extra_clauses_touching_variables
             ],
+            "exact_full_encoding": self.exact_full_encoding,
             "safe_use": self.safe_use,
         }
 
@@ -125,13 +131,23 @@ class XorEquation:
 @dataclass(frozen=True)
 class XorSystem:
     equations: tuple[XorEquation, ...]
+    diagnostics: tuple[dict[str, Any], ...]
 
-    def __init__(self, equations: Iterable[XorEquation] = ()):
+    def __init__(
+        self,
+        equations: Iterable[XorEquation] = (),
+        diagnostics: Iterable[dict[str, Any]] = (),
+    ):
         kept = [eq for eq in equations if not eq.is_tautology]
         object.__setattr__(
             self,
             "equations",
             tuple(sorted(kept, key=lambda eq: (eq.variables, eq.rhs, eq.source))),
+        )
+        object.__setattr__(
+            self,
+            "diagnostics",
+            tuple(sorted((dict(item) for item in diagnostics), key=lambda item: repr(sorted(item.items())))),
         )
 
     @property
@@ -139,12 +155,16 @@ class XorSystem:
         return tuple(sorted({var for eq in self.equations for var in eq.variables}))
 
     def substitute(self, assignment: dict[int, bool]) -> "XorSystem":
-        return XorSystem(eq.substitute(assignment) for eq in self.equations)
+        return XorSystem(
+            (eq.substitute(assignment) for eq in self.equations),
+            diagnostics=self.diagnostics,
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "equations": [eq.to_dict() for eq in self.equations],
             "variables": list(self.variables),
+            "diagnostics": list(self.diagnostics),
         }
 
 
@@ -272,6 +292,22 @@ def _clause_for_forbidden_assignment(variables: tuple[int, ...], bits: tuple[int
     return tuple(sorted((-var if bit else var) for var, bit in zip(variables, bits)))
 
 
+def canonical_xor_cnf_clauses(variables: Iterable[int], rhs: int) -> set[tuple[int, ...]]:
+    """Return the exact full CNF encoding of a positive-variable XOR equation."""
+
+    canonical = tuple(sorted({int(var) for var in variables}))
+    if any(var <= 0 for var in canonical):
+        raise ValueError("XOR CNF variables must be positive")
+    if not canonical:
+        return set()
+    target_rhs = int(rhs) & 1
+    return {
+        _clause_for_forbidden_assignment(canonical, bits)
+        for bits in itertools.product((0, 1), repeat=len(canonical))
+        if sum(bits) % 2 != target_rhs
+    }
+
+
 def _extra_touching_clauses(
     formula_clauses: set[tuple[int, ...]],
     variables: tuple[int, ...],
@@ -308,54 +344,89 @@ def _detected_equation(
             variables,
             source_tuple,
         ),
+        exact_full_encoding=True,
         safe_use=True,
     )
 
 
-def detect_cnf_xor_patterns(formula: CNFFormula, *, include_3var: bool = True) -> XorSystem:
+def detect_cnf_xor_patterns(
+    formula: CNFFormula,
+    *,
+    include_3var: bool = True,
+    max_k: int = 6,
+) -> XorSystem:
     clauses = {tuple(clause.literals) for clause in formula.clauses}
     equations: list[XorEquation] = []
+    diagnostics: list[dict[str, Any]] = []
     seen: set[tuple[tuple[int, ...], int]] = set()
 
-    variables = formula.variables
-    for x, y in itertools.combinations(variables, 2):
-        eq0 = (tuple(sorted((x, y))), 0)
-        eq1 = (tuple(sorted((x, y))), 1)
-        equality_clauses = (tuple(sorted((-x, y))), tuple(sorted((x, -y))))
-        disequality_clauses = (tuple(sorted((x, y))), tuple(sorted((-x, -y))))
-        if all(clause in clauses for clause in equality_clauses) and eq0 not in seen:
-            equations.append(
-                _detected_equation((x, y), 0, equality_clauses, clauses)
-            )
-            seen.add(eq0)
-        if all(clause in clauses for clause in disequality_clauses) and eq1 not in seen:
-            equations.append(
-                _detected_equation((x, y), 1, disequality_clauses, clauses)
-            )
-            seen.add(eq1)
+    if max_k < 2:
+        return XorSystem(diagnostics=[{"reason": XOR_PATTERN_SKIPPED_MAX_K, "max_k": int(max_k)}])
+    effective_max_k = int(max_k)
+    if not include_3var:
+        effective_max_k = min(effective_max_k, 2)
 
-    if include_3var:
-        for triple in itertools.combinations(variables, 3):
-            for rhs in (0, 1):
-                key = (tuple(triple), rhs)
-                if key in seen:
-                    continue
-                required = tuple(
-                    _clause_for_forbidden_assignment(triple, bits)
-                    for bits in itertools.product((0, 1), repeat=3)
-                    if (bits[0] ^ bits[1] ^ bits[2]) != rhs
-                )
-                if all(clause in clauses for clause in required):
-                    equations.append(
-                        _detected_equation(
-                            triple,
-                            rhs,
-                            required,
-                            clauses,
-                        )
+    groups: dict[tuple[int, ...], set[tuple[int, ...]]] = {}
+    for clause in clauses:
+        variables = tuple(sorted({abs(lit) for lit in clause}))
+        if len(variables) != len(clause):
+            continue
+        groups.setdefault(variables, set()).add(clause)
+
+    for variables, group in sorted(groups.items()):
+        k = len(variables)
+        if k < 2:
+            continue
+        if k > effective_max_k:
+            diagnostics.append(
+                {
+                    "reason": XOR_PATTERN_SKIPPED_MAX_K,
+                    "variables": list(variables),
+                    "pattern_size": k,
+                    "max_k": effective_max_k,
+                    "clause_count": len(group),
+                }
+            )
+            continue
+        expected_count = 1 << (k - 1)
+        if len(group) != expected_count:
+            diagnostics.append(
+                {
+                    "reason": "XOR_PATTERN_NOT_EXACT_FULL_ENCODING",
+                    "variables": list(variables),
+                    "pattern_size": k,
+                    "expected_clause_count": expected_count,
+                    "actual_clause_count": len(group),
+                }
+            )
+            continue
+        for rhs in (0, 1):
+            key = (variables, rhs)
+            if key in seen:
+                continue
+            required = canonical_xor_cnf_clauses(variables, rhs)
+            if group == required:
+                equations.append(
+                    _detected_equation(
+                        variables,
+                        rhs,
+                        required,
+                        clauses,
                     )
-                    seen.add(key)
-    return XorSystem(equations)
+                )
+                seen.add(key)
+                break
+        else:
+            diagnostics.append(
+                {
+                    "reason": "XOR_PATTERN_NOT_EXACT_FULL_ENCODING",
+                    "variables": list(variables),
+                    "pattern_size": k,
+                    "expected_clause_count": expected_count,
+                    "actual_clause_count": len(group),
+                }
+            )
+    return XorSystem(equations, diagnostics=diagnostics)
 
 
 def xor_metadata(
@@ -374,6 +445,7 @@ def xor_metadata(
             "pivot_variables": solution.get("pivot_variables", []),
             "free_variables": solution.get("free_variables", []),
             "rref_rows": solution.get("rref_rows", []),
+            "detected_diagnostics": list(detected.diagnostics),
         },
         "xor_status": {
             "xor_status": solution.get("status"),
@@ -382,6 +454,7 @@ def xor_metadata(
             "contradiction": solution.get("contradiction"),
             "verified": bool(verified),
             "detected_equations": [eq.to_dict() for eq in detected.equations],
+            "detected_diagnostics": list(detected.diagnostics),
             "external_drat": False,
             "drat_claim": "NOT_EXPORTED",
         },

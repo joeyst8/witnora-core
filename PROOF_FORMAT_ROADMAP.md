@@ -44,11 +44,14 @@ audit for small diagnostic CNFs.
 
 Witnora-Core v0.9.0 adds a conservative explicit XOR/affine reasoning
 prototype. Witnora-Core v0.9.1 hardens its soundness metadata and independent
-checking. It accepts sidecar XOR equations and exact small CNF-encoded XOR
-patterns, solves the resulting affine system by Gaussian elimination over
-GF(2), and verifies SAT assignments against both the original CNF and the XOR
-equations. XOR UNSAT is native-only in v0.9.1 and is not exported as DRAT,
-LRAT, or FRAT.
+checking. Witnora-Core v0.9.2 extends exact CNF XOR detection to full
+k-variable forbidden-assignment encodings up to a configurable cap, default
+`k <= 6`. It accepts sidecar XOR equations and exact CNF-encoded XOR patterns,
+solves the resulting affine system by Gaussian elimination over GF(2), and
+verifies SAT assignments against both the original CNF and the XOR equations.
+Sidecar XOR equations define the combined input problem `CNF and XOR`; detected
+CNF patterns are implied constraints. XOR UNSAT is native-only in v0.9.2 and is
+not exported as DRAT, LRAT, or FRAT.
 
 ## What LRAT Is Appropriate For
 
@@ -84,7 +87,7 @@ Current certificate bundles classify each step with
   by the empty clause.
 - `XOR`: v0.9 sidecar or exact-pattern affine reasoning. SAT is checked by
   assignment verification against CNF and XOR equations. XOR UNSAT is native
-  only and not a clausal DRAT/LRAT/FRAT refutation in v0.9.1.
+  only and not a clausal DRAT/LRAT/FRAT refutation in v0.9.2.
 
 ## SAT Certificates
 
@@ -177,7 +180,7 @@ Unsupported in v0.9.1:
 The v0.9.1 checker string is:
 
 ```text
-witnora_internal_rup_subset_checker_v0.9.1
+witnora_internal_rup_subset_checker_v0.9.2
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -314,21 +317,23 @@ It is not new solver logic, not a hardness oracle, and not evidence that larger
 formulas are hard. Claims about specific formulas such as `php_4_3` are treated
 as hypotheses to test against the actual CNF encoding and primal graph.
 
-## v0.9.1 Explicit XOR / Affine Prototype
+## v0.9.2 Explicit XOR / Affine Prototype
 
-The v0.9.1 XOR route is intentionally conservative. It supports:
+The v0.9.2 XOR route is intentionally conservative. It supports:
 
 - explicit sidecar equations of the form `xor 1 2 3 = 0`,
 - exact two-variable equality and disequality CNF patterns,
 - exact three-variable parity CNF patterns when all four required clauses are
   present,
+- exact k-variable full CNF parity encodings up to `--detect-xor-max-k`,
+  default `k <= 6`,
 - Gaussian elimination over GF(2) with deterministic free-variable assignment.
 
 It does not support:
 
 - broad heuristic XOR extraction,
 - CryptoMiniSat-style XOR discovery,
-- arbitrary large CNF-to-XOR recovery,
+- arbitrary large or over-cap CNF-to-XOR recovery,
 - DRAT/LRAT/FRAT export for XOR UNSAT.
 
 For SAT, the certificate model is still assignment based: the reconstructed
@@ -336,22 +341,34 @@ assignment must satisfy the original CNF and every XOR equation. Certificate
 bundles include `xor_system.json`, `xor_trace.json`, and `xor_status.json` when
 XOR reasoning is used.
 
-Detected CNF XOR patterns are used as implied constraints only. v0.9.1 records
+Detected CNF XOR patterns are used as implied constraints only. v0.9.2 records
 `detection_mode: "IMPLIED_CONSTRAINT_ONLY"`,
 `source_clauses_removed: false`, the exact source clauses, extra clauses
-touching the same variables, and `safe_use: true`. The source clauses remain in
-the CNF. Extra clauses are safe only because Witnora still verifies the original
-CNF; detected XOR is not a local replacement.
+touching the same variables, `exact_full_encoding: true`, and `safe_use: true`.
+The source clauses remain in the CNF. Extra clauses are safe only because
+Witnora still verifies the original CNF; detected XOR is not a local
+replacement.
 
 The independent raw checker verifies that detected source clauses exist in the
-original CNF, exactly encode the claimed 2- or 3-variable XOR relation, did not
-claim clause removal, and list the extra touching clauses deterministically.
+original CNF, exactly equal the full forbidden-assignment encoding for the
+claimed k-variable XOR relation, did not claim clause removal, and list the
+extra touching clauses deterministically.
 
-For UNSAT, v0.9.1 reports `UNSAT_XOR_NATIVE` and benchmark/public reporting
+For UNSAT, v0.9.2 reports `UNSAT_XOR_NATIVE` and benchmark/public reporting
 maps this to `UNSAT_XOR_NATIVE_NOT_DRAT`. This category is not externally
 DRAT-certified and must not be counted with `UNSAT_DRAT_EXPORTED_VERIFIED`.
 Future DRAT/LRAT/FRAT work would need a separate sound proof bridge for the
 affine contradiction.
+
+### XOR Exact Pattern Soundness
+
+For variables `V = {x1, ..., xk}` and RHS `b`, the exact full CNF encoding of
+`x1 xor ... xor xk = b` contains one clause for every assignment to `V` whose
+parity is not `b`. Each such clause is falsified only by that forbidden
+assignment. Therefore the conjunction of the source clauses is equivalent to
+the XOR equation on `V`. Adding the detected XOR equation as an implied
+constraint while retaining the source clauses is satisfiability-preserving for
+SAT witnesses.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -399,7 +416,7 @@ The next proof-format milestones should keep the bridge conservative:
 
 ## Forbidden Claims
 
-Witnora-Core v0.9.1 does not claim:
+Witnora-Core v0.9.2 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

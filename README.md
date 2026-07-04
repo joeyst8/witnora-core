@@ -1,6 +1,6 @@
-# Witnora-Core v0.9.1
+# Witnora-Core v0.9.2
 
-Witnora-Core v0.9.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.1 hardens the conservative explicit XOR/affine reasoning prototype.
+Witnora-Core v0.9.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.2 extends the conservative explicit XOR/affine prototype with exact k-variable full-CNF XOR pattern detection.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
@@ -30,8 +30,8 @@ Component decomposition uses the incidence graph. Bounded-width reasoning uses t
 
 ## Explicit XOR / Affine Prototype
 
-v0.9.1 adds a conservative XOR route over GF(2). It supports explicit sidecar
-equations and exact small CNF patterns only; it is not a CryptoMiniSat-style XOR
+v0.9.2 adds a conservative XOR route over GF(2). It supports explicit sidecar
+equations and exact full-CNF XOR patterns only; it is not a CryptoMiniSat-style XOR
 extractor and does not claim to detect arbitrary algebraic structure hidden in
 CNF.
 
@@ -47,7 +47,13 @@ Run with:
 ```bash
 python -m witnora_core.runner input.dimacs --xor input.xor --c 2
 python -m witnora_core.runner input.dimacs --detect-xor --c 2
+python -m witnora_core.runner input.dimacs --detect-xor --detect-xor-max-k 6 --c 2
 ```
+
+Sidecar XOR equations define the combined problem `CNF and XOR`; they are not
+claimed to be implied by the CNF alone. Detected CNF XOR patterns are different:
+they are accepted only when the source clauses exactly equal a full
+forbidden-assignment encoding of an XOR equation.
 
 The Gaussian elimination routine canonicalizes equations, cancels duplicate
 variables mod 2, assigns free variables deterministically `False`, and records
@@ -58,9 +64,15 @@ The CNF pattern detector is deliberately narrow:
 - `(not x or y) and (x or not y)` gives `x xor y = 0`,
 - `(x or y) and (not x or not y)` gives `x xor y = 1`,
 - exact 3-variable parity encodings are detected only when all four required
-  clauses are present.
+  clauses are present,
+- exact k-variable parity encodings are detected up to `--detect-xor-max-k`
+  when all `2^(k-1)` required forbidden-assignment clauses are present.
 
-Detected pattern clauses are left in the CNF in v0.9.1. XOR equations are used
+The default exact pattern cap is `k <= 6`. Witnora groups only by the exact
+variable set appearing in full-width clauses. It does not search arbitrary
+subsets and does not perform heuristic XOR mining.
+
+Detected pattern clauses are left in the CNF in v0.9.2. XOR equations are used
 as additional implied constraints, not as replacements for CNF clauses. Any SAT
 result must still verify the original CNF and all XOR equations.
 
@@ -69,13 +81,14 @@ Every detected XOR equation records:
 - `detection_mode: "IMPLIED_CONSTRAINT_ONLY"`,
 - `source_clauses_removed: false`,
 - exact source clauses,
+- `exact_full_encoding: true`,
 - extra clauses touching the same variables,
 - `safe_use: true`.
 
 Extra clauses touching the same variables are allowed only because the source
 CNF remains in force and final SAT assignments are checked against the original
 CNF. If local equivalence/replacement is added in a future release, it needs a
-separate explicit proof; v0.9.1 does not remove or replace XOR source clauses.
+separate explicit proof; v0.9.2 does not remove or replace XOR source clauses.
 
 XOR-aware results may use:
 
@@ -83,7 +96,7 @@ XOR-aware results may use:
 - `final_class: "CNF_XOR_COMBINED"`,
 - `status: "UNSAT_XOR_NATIVE"` with `final_class: "XOR_UNSAT_NATIVE"`.
 
-XOR-native UNSAT is not DRAT-certified in v0.9.1. Public benchmark/reporting
+XOR-native UNSAT is not DRAT-certified in v0.9.2. Public benchmark/reporting
 code classifies it as `UNSAT_XOR_NATIVE_NOT_DRAT`, not as
 `UNSAT_DRAT_EXPORTED_VERIFIED`.
 
@@ -369,6 +382,8 @@ for `c = 2, 3, 4`. v0.8.5 adds an exact treewidth / VE-ordering audit for small
 diagnostic CNFs. v0.9.0 adds explicit XOR sidecars and exact small CNF XOR
 pattern detection as a prototype affine route. v0.9.1 hardens exact pattern
 metadata and independent checking for extra-clause and malformed-pattern cases.
+v0.9.2 extends exact CNF XOR detection to full k-variable parity encodings up
+to a configurable cap, default `k <= 6`, while retaining all source clauses.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -469,7 +484,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.9.1",
+  "checker": "witnora_internal_rup_subset_checker_v0.9.2",
   "checked_against": "original.dimacs"
 }
 ```

@@ -468,12 +468,13 @@ def solve_with_xor(
     *,
     xor_system: XorSystem | None = None,
     detect_cnf_xor: bool = False,
+    detect_xor_max_k: int = 6,
 ) -> CollapsePath:
     """Solve a CNF together with conservative explicit/detected XOR equations."""
 
     start = time.perf_counter()
     sidecar = xor_system or XorSystem()
-    detected = detect_cnf_xor_patterns(formula) if detect_cnf_xor else XorSystem()
+    detected = detect_cnf_xor_patterns(formula, max_k=detect_xor_max_k) if detect_cnf_xor else XorSystem()
     system = XorSystem([*sidecar.equations, *detected.equations])
     if not system.equations:
         return solve(formula, c)
@@ -593,6 +594,12 @@ def main(argv: list[str] | None = None) -> int:
         help="enable conservative exact CNF XOR pattern detection",
     )
     parser.add_argument(
+        "--detect-xor-max-k",
+        type=int,
+        default=6,
+        help="maximum exact full-CNF XOR pattern size to detect",
+    )
+    parser.add_argument(
         "--export-drat",
         action="store_true",
         help="with --export-cert, add proof.drat for supported UNSAT paths",
@@ -613,6 +620,7 @@ def main(argv: list[str] | None = None) -> int:
         args.c_parameter,
         xor_system=xor_system,
         detect_cnf_xor=args.detect_xor,
+        detect_xor_max_k=args.detect_xor_max_k,
     ) if (xor_system is not None or args.detect_xor) else solve(formula, args.c_parameter)
     if args.export_cert:
         export_certificate_bundle(
