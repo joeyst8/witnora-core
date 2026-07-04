@@ -22,7 +22,7 @@ from .public_benchmarks import find_cnfgen_cli
 from .runner import solve
 from .treewidth import verify_elimination_order
 
-AUDIT_VERSION = "0.8.5"
+AUDIT_VERSION = "0.9.0"
 
 EXACT_WIDTH_FOUND = "EXACT_WIDTH_FOUND"
 NOT_FOUND_UP_TO_MAX_C = "NOT_FOUND_UP_TO_MAX_C"
@@ -297,7 +297,7 @@ def write_audit_csv(data: dict[str, Any], path: str | Path) -> None:
 
 def audit_report_markdown(data: dict[str, Any]) -> str:
     lines = [
-        "# Witnora-Core v0.8.5 Exact Treewidth / VE Ordering Audit",
+        "# Witnora-Core v0.9.0 Exact Treewidth / VE Ordering Audit",
         "",
         "This audit checks whether selected NO_COLLAPSE results are explained by primal treewidth exceeding the tested c values or by a possible VE ordering-search bug.",
         "It is a diagnostic, not a hardness claim and not new solver logic.",
@@ -373,11 +373,11 @@ def write_audit_artifact(data: dict[str, Any], output_dir: str | Path, *, zip_pa
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Audit exact primal treewidth for small CNF formulas")
-    parser.add_argument("--out-dir", default="outputs/v0.8.5-treewidth-audit")
+    parser.add_argument("--out-dir", default="outputs/v0.9.0-treewidth-audit")
     parser.add_argument("--cnfgen-path")
     parser.add_argument("--max-vars", type=int, default=24)
     parser.add_argument("--timeout-seconds", type=float, default=60.0)
-    parser.add_argument("--zip", default="witnora-core-v0.8.5-treewidth-audit.zip")
+    parser.add_argument("--zip", default="witnora-core-v0.9.0-treewidth-audit.zip")
     args = parser.parse_args(argv)
     data = audit_official_pigeonhole(
         args.out_dir,

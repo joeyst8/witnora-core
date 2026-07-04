@@ -19,13 +19,14 @@ from .public_benchmarks import (
     TIMEOUT,
     UNSAT_DRAT_EXPORTED_VERIFIED,
     UNSAT_NOT_EXTERNALLY_VERIFIED,
+    UNSAT_XOR_NATIVE_NOT_DRAT,
     UNSUPPORTED_DRAT,
     generate_public_markdown_report,
     write_public_csv,
 )
 
-ARTIFACT_VERSION = "0.8.5"
-ARTIFACT_DIR_NAME = "v0.8.5-public-benchmark"
+ARTIFACT_VERSION = "0.9.0"
+ARTIFACT_DIR_NAME = "v0.9.0-public-benchmark"
 
 
 def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
@@ -34,7 +35,7 @@ def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
     uncertified = [
         result
         for result in results
-        if result.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT}
+        if result.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_NOT_DRAT}
     ]
     return {
         "artifact_version": ARTIFACT_VERSION,
@@ -44,9 +45,10 @@ def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
         "drat_trim_verified_unsat_count": int(summary.get("externally_verified_unsat_count", 0)),
         "unverified_unsat_count": int(summary.get("unverified_unsat_count", 0)),
         "unsupported_drat_count": int(summary.get("unsupported_drat_count", 0)),
+        "xor_native_unsat_count": int(summary.get("xor_native_unsat_count", 0)),
         "certified_unsat_rule": (
             "Only UNSAT_DRAT_EXPORTED_VERIFIED counts as externally certified UNSAT; "
-            "UNSAT_NOT_EXTERNALLY_VERIFIED and UNSUPPORTED_DRAT are not aggregated with it."
+            "UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, and UNSAT_XOR_NATIVE_NOT_DRAT are not aggregated with it."
         ),
         "uncertified_unsat_instances": [
             {
@@ -101,14 +103,14 @@ def environment_text(config: dict[str, Any]) -> str:
         f"processor: {platform.processor()}",
         f"drat_trim_path: {config.get('drat_trim_path', '')}",
         "memory_measurement: null",
-        "memory_measurement_note: memory was not measured by the v0.8.5 artifact runner",
+        "memory_measurement_note: memory was not measured by the v0.9.0 artifact runner",
     ]
     return "\n".join(lines) + "\n"
 
 
 def artifact_readme_text(config: dict[str, Any], sources_not_run: list[dict[str, str]]) -> str:
     lines = [
-        "# Witnora-Core v0.8.5 Public Benchmark Artifact",
+        "# Witnora-Core v0.9.0 Public Benchmark Artifact",
         "",
         "This artifact is separate from the Witnora source release archive.",
         "It contains benchmark outputs, certificates, DRAT proof files where exported, and summary reports.",

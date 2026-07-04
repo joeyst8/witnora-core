@@ -1,8 +1,8 @@
-# Witnora-Core v0.8.5
+# Witnora-Core v0.9.0
 
-Witnora-Core v0.8.5 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.9.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.0 adds a conservative explicit XOR/affine reasoning prototype.
 
-No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
+No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
 ## Implemented Theorem Scope
 
@@ -27,6 +27,52 @@ The deterministic simplifier applies, in order:
 - Component Decomposition
 
 Component decomposition uses the incidence graph. Bounded-width reasoning uses the primal graph only.
+
+## Explicit XOR / Affine Prototype
+
+v0.9.0 adds a conservative XOR route over GF(2). It supports explicit sidecar
+equations and exact small CNF patterns only; it is not a CryptoMiniSat-style XOR
+extractor and does not claim to detect arbitrary algebraic structure hidden in
+CNF.
+
+An XOR sidecar file uses lines such as:
+
+```text
+xor 1 2 3 = 0
+xor 4 5 = 1
+```
+
+Run with:
+
+```bash
+python -m witnora_core.runner input.dimacs --xor input.xor --c 2
+python -m witnora_core.runner input.dimacs --detect-xor --c 2
+```
+
+The Gaussian elimination routine canonicalizes equations, cancels duplicate
+variables mod 2, assigns free variables deterministically `False`, and records
+rank, pivot variables, free variables, and an elimination trace.
+
+The CNF pattern detector is deliberately narrow:
+
+- `(not x or y) and (x or not y)` gives `x xor y = 0`,
+- `(x or y) and (not x or not y)` gives `x xor y = 1`,
+- exact 3-variable parity encodings are detected only when all four required
+  clauses are present.
+
+Detected pattern clauses are left in the CNF in v0.9.0. XOR equations are used
+as additional certified reasoning, and any SAT result must still verify the
+original CNF and all XOR equations.
+
+XOR-aware results may use:
+
+- `final_class: "XOR_AFFINE"`,
+- `final_class: "CNF_XOR_COMBINED"`,
+- `status: "UNSAT_XOR_NATIVE"` with `final_class: "XOR_UNSAT_NATIVE"`.
+
+XOR-native UNSAT is not DRAT-certified in v0.9.0. Public benchmark/reporting
+code classifies it as `UNSAT_XOR_NATIVE_NOT_DRAT`, not as
+`UNSAT_DRAT_EXPORTED_VERIFIED`.
 
 ## COMPONENTS_SOLVED
 
@@ -162,7 +208,7 @@ The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
 
 ## Public Benchmark Evaluation
 
-v0.8.5 includes official public benchmark integration and artifact writing. It
+v0.9.0 includes official public benchmark integration and artifact writing. It
 supports:
 
 - `--public-suite cnfgen-official`, using an official `cnfgen` CLI on PATH,
@@ -177,7 +223,7 @@ The built-in demo suites are not official benchmark evidence. Reports label
 them with `suite_source_type: BUILT_IN_DEMO` and must say they are built into
 Witnora for harness validation only.
 
-Official CNFgen is not bundled. If `cnfgen` is missing, v0.8.5 reports
+Official CNFgen is not bundled. If `cnfgen` is missing, v0.9.0 reports
 `suite_status: NOT_RUN` and `not_run_reason: OFFICIAL_CNFGEN_NOT_AVAILABLE`
 instead of silently falling back to built-in formulas. Install official CNFgen
 with:
@@ -198,12 +244,12 @@ python -m witnora_core.benchmark --public-suite satcomp --dimacs-dir path/to/sat
 python -m witnora_core.benchmark --public-suite demo-cnfgen-artifact --c 2 --out demo_results.json --csv demo.csv --report DEMO_REPORT.md --export-certs demo_certs/ --strict-unsat-external --drat-trim path/to/drat-trim
 ```
 
-v0.8.5 benchmark outputs should be packaged separately from source archives.
+v0.9.0 benchmark outputs should be packaged separately from source archives.
 The artifact writer creates `README.md`, `config.json`, `results.csv`,
 `results.json`, `REPORT.md`, `selected_instances.txt`, `environment.txt`,
 `strict_verification_summary.json`, `benchmark_manifest.json`, `drat_logs/`,
 `generated_dimacs/`, `raw_outputs/`, and `certs/` under an output directory such
-as `outputs/v0.8.5-public-benchmark/<suite_name>/`.
+as `outputs/v0.9.0-public-benchmark/<suite_name>/`.
 
 Each public benchmark instance receives exactly one category:
 
@@ -211,26 +257,28 @@ Each public benchmark instance receives exactly one category:
 - `UNSAT_DRAT_EXPORTED_VERIFIED`
 - `UNSAT_NOT_EXTERNALLY_VERIFIED`
 - `UNSUPPORTED_DRAT`
+- `UNSAT_XOR_NATIVE_NOT_DRAT`
 - `NO_COLLAPSE_FOUND`
 - `TIMEOUT`
 - `ERROR`
 
 Strict public reports should use `--strict-unsat-external`. In that mode, the
 CLI exits nonzero if any UNSAT result is not externally verified by real
-`drat-trim`. `UNSAT_NOT_EXTERNALLY_VERIFIED` and `UNSUPPORTED_DRAT` must not be
-aggregated with `UNSAT_DRAT_EXPORTED_VERIFIED`. `NO_COLLAPSE_FOUND` is still not
-a hardness claim.
+`drat-trim`. `UNSAT_NOT_EXTERNALLY_VERIFIED`, `UNSUPPORTED_DRAT`, and
+`UNSAT_XOR_NATIVE_NOT_DRAT` must not be aggregated with
+`UNSAT_DRAT_EXPORTED_VERIFIED`. `NO_COLLAPSE_FOUND` is still not a hardness
+claim.
 
 ## Official CNFgen Diagnostic Matrix
 
-v0.8.5 includes an official CNFgen diagnostic matrix runner. It is intended to
+v0.9.0 includes an official CNFgen diagnostic matrix runner. It is intended to
 measure the current collapse boundary across formula family and `c` value, not
 to make a broad solver-performance claim.
 
 Example:
 
 ```bash
-python -m witnora_core.cnfgen_matrix --out-root outputs/v0.8.5-cnfgen-diagnostic --families pigeonhole tseitin parity --c-values 2 3 4 --timeout-seconds 300 --strict-unsat-external --drat-trim path/to/drat-trim --zip witnora-core-v0.8.5-cnfgen-diagnostic-benchmark.zip
+python -m witnora_core.cnfgen_matrix --out-root outputs/v0.9.0-cnfgen-diagnostic --families pigeonhole tseitin parity --c-values 2 3 4 --timeout-seconds 300 --strict-unsat-external --drat-trim path/to/drat-trim --zip witnora-core-v0.9.0-cnfgen-diagnostic-benchmark.zip
 ```
 
 The matrix uses official CNFgen commands when available:
@@ -255,10 +303,10 @@ NP progress.
 
 ## Exact Treewidth / VE Ordering Audit
 
-v0.8.5 adds a diagnostic exact-width audit tool:
+v0.9.0 adds a diagnostic exact-width audit tool:
 
 ```bash
-python -m witnora_core.treewidth_audit --out-dir outputs/v0.8.5-treewidth-audit --timeout-seconds 60 --zip witnora-core-v0.8.5-treewidth-audit.zip
+python -m witnora_core.treewidth_audit --out-dir outputs/v0.9.0-treewidth-audit --timeout-seconds 60 --zip witnora-core-v0.9.0-treewidth-audit.zip
 ```
 
 The audit builds the primal graph of selected small CNFs, searches for exact
@@ -304,8 +352,9 @@ benchmark artifact separately from the source release. v0.8.2 demotes that
 built-in suite to demo status and adds official CNFgen, SATLIB-directory, and
 SAT-Competition-directory integration with NOT_RUN reporting. v0.8.4 added an
 official CNFgen diagnostic matrix over pigeonhole, Tseitin, and parity families
-for `c = 2, 3, 4`. v0.8.5 adds an exact treewidth / VE-ordering audit for small
-diagnostic CNFs.
+for `c = 2, 3, 4`. v0.9.0 adds an exact treewidth / VE-ordering audit for small
+diagnostic CNFs. v0.9.0 adds explicit XOR sidecars and exact small CNF XOR
+pattern detection as a prototype affine route.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -344,6 +393,8 @@ A `.wcert` directory contains:
 - `proof_trace.json`, only for supported native UNSAT traces
 - `proof.drat`, only when `--export-drat` succeeds for a supported UNSAT path
 - `drat_status.json`, when `--export-drat` is requested
+- `xor_system.json`, `xor_trace.json`, and `xor_status.json`, only when XOR
+  reasoning is used
 - `certificate_hash.txt`
 - `verifier_version.txt`
 
@@ -366,7 +417,7 @@ is counted as externally certified only when `proof.drat` is exported and real
 
 ## Minimal DRAT Bridge
 
-v0.8.2 can export a DRAT-style proof for supported end-to-end
+v0.9.0 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
@@ -404,7 +455,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.8.5",
+  "checker": "witnora_internal_rup_subset_checker_v0.9.0",
   "checked_against": "original.dimacs"
 }
 ```

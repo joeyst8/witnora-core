@@ -67,9 +67,9 @@ class OfficialPublicBenchmarkTest(unittest.TestCase):
             2,
         )
         config = {
-            "witnora_version": "0.8.5",
+            "witnora_version": "0.9.0",
             "commit": "abc",
-            "tag": "v0.8.5",
+            "tag": "v0.9.0",
             "suite_name": "cnfgen-official",
             "suite_source_type": SOURCE_OFFICIAL_CNFGEN,
             "suite_status": SUITE_NOT_RUN,
@@ -140,12 +140,12 @@ class OfficialPublicBenchmarkTest(unittest.TestCase):
             2,
         )
         with tempfile.TemporaryDirectory() as tmp:
-            artifact = Path(tmp) / "outputs" / "v0.8.5-public-benchmark" / "cnfgen-official"
+            artifact = Path(tmp) / "outputs" / "v0.9.0-public-benchmark" / "cnfgen-official"
             write_benchmark_artifact(
                 artifact,
                 data,
                 config={
-                    "witnora_version": "0.8.5",
+                    "witnora_version": "0.9.0",
                     "suite_name": "cnfgen-official",
                     "suite_source_type": SOURCE_OFFICIAL_CNFGEN,
                     "suite_status": SUITE_NOT_RUN,

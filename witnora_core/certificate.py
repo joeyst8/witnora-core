@@ -14,6 +14,7 @@ UNSAT = "UNSAT"
 NO_COLLAPSE = "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C"
 RECONSTRUCTION_FAILURE = "RECONSTRUCTION_FAILURE"
 TIMEOUT = "TIMEOUT"
+XOR_UNSAT_NATIVE = "UNSAT_XOR_NATIVE"
 
 SAT_LEVEL_NOT_SAT = "NOT_SAT"
 SAT_LEVEL_RECONSTRUCTED = "RECONSTRUCTED_ASSIGNMENT_VERIFIED_ORIGINAL"
@@ -25,11 +26,13 @@ UNSAT_LEVEL_2SAT_SCC = "INDEPENDENT_2SAT_SCC"
 UNSAT_LEVEL_INTERNAL_REPLAY = "INTERNAL_REPLAY_ONLY"
 UNSAT_LEVEL_EXTERNAL_STANDARD = "EXTERNAL_DRAT_LRAT_FRAT_VERIFIED"
 UNSAT_LEVEL_LRAT_FRAT_NOT_IMPLEMENTED = "LRAT_FRAT_NOT_IMPLEMENTED"
+UNSAT_LEVEL_XOR_NATIVE = "XOR_NATIVE_NOT_DRAT"
 
 PROOF_TRACE_SAT = "SAT_ASSIGNMENT_RECONSTRUCTION"
 PROOF_TRACE_UNSAT_EMPTY = "UNSAT_EXPLICIT_EMPTY_CLAUSE"
 PROOF_TRACE_UNSAT_2SAT = "UNSAT_2SAT_SCC_CONTRADICTION"
 PROOF_TRACE_UNSAT_INTERNAL = "UNSAT_INTERNAL_REPLAY_ONLY"
+PROOF_TRACE_XOR_UNSAT = "XOR_UNSAT_NATIVE"
 PROOF_TRACE_NO_COLLAPSE = "NO_COLLAPSE_REPORT"
 
 NATIVE_UNSAT_TRACE_FORMAT = "WITNORA_NATIVE_UNSAT_TRACE_V1"
@@ -74,6 +77,8 @@ def _contains_logged_empty_clause(steps: list["CollapseStep"]) -> bool:
 
 
 def unsat_certification_level_from_steps(status: str, steps: list["CollapseStep"]) -> str:
+    if status == XOR_UNSAT_NATIVE:
+        return UNSAT_LEVEL_XOR_NATIVE
     if status != UNSAT:
         return UNSAT_LEVEL_NOT_UNSAT
     if _contains_logged_empty_clause(steps):
@@ -89,6 +94,8 @@ def unsat_certification_level_from_steps(status: str, steps: list["CollapseStep"
 def proof_trace_class_from_status(status: str, unsat_level: str) -> str:
     if status == SAT:
         return PROOF_TRACE_SAT
+    if status == XOR_UNSAT_NATIVE:
+        return PROOF_TRACE_XOR_UNSAT
     if status == UNSAT:
         if unsat_level == UNSAT_LEVEL_EXPLICIT_EMPTY:
             return PROOF_TRACE_UNSAT_EMPTY
@@ -247,6 +254,7 @@ class CollapsePath:
     original_verification: bool = False
     component_results: list[dict[str, Any]] = field(default_factory=list)
     stats: dict[str, Any] = field(default_factory=dict)
+    xor_data: dict[str, Any] | None = None
 
     @property
     def sat_certification_level(self) -> str:
@@ -265,7 +273,7 @@ class CollapsePath:
         return native_unsat_trace_from_steps(self.status, self.steps)
 
     def certificate_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "original_formula_hash": self.original_formula_hash,
             "c_parameter": self.c_parameter,
             "collapse_path": [step.to_dict() for step in self.steps],
@@ -281,6 +289,9 @@ class CollapsePath:
             "proof_trace_class": self.proof_trace_class,
             "native_proof_trace": self.native_proof_trace,
         }
+        if self.xor_data is not None:
+            payload["xor_data"] = self.xor_data
+        return payload
 
     @property
     def certificate_hash(self) -> str:
@@ -288,7 +299,7 @@ class CollapsePath:
         return sha256(payload.encode("utf-8")).hexdigest()
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data = {
             "status": self.status,
             "original_formula_hash": self.original_formula_hash,
             "c_parameter": self.c_parameter,
@@ -308,3 +319,6 @@ class CollapsePath:
             "native_proof_trace": self.native_proof_trace,
             "stats": self.stats,
         }
+        if self.xor_data is not None:
+            data["xor_data"] = self.xor_data
+        return data

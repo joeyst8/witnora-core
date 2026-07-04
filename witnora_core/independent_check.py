@@ -13,9 +13,9 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.8.5"
+CHECKER = "independent_raw_checker_v0.9.0"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
-DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.8.5"
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.0"
 DRAT_CHECKED_AGAINST = "original.dimacs"
 DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
@@ -30,11 +30,13 @@ UNSAT_LEVEL_2SAT_SCC = "INDEPENDENT_2SAT_SCC"
 UNSAT_LEVEL_INTERNAL_REPLAY = "INTERNAL_REPLAY_ONLY"
 UNSAT_LEVEL_EXTERNAL_STANDARD = "EXTERNAL_DRAT_LRAT_FRAT_VERIFIED"
 UNSAT_LEVEL_LRAT_FRAT_NOT_IMPLEMENTED = "LRAT_FRAT_NOT_IMPLEMENTED"
+UNSAT_LEVEL_XOR_NATIVE = "XOR_NATIVE_NOT_DRAT"
 
 PROOF_TRACE_SAT = "SAT_ASSIGNMENT_RECONSTRUCTION"
 PROOF_TRACE_UNSAT_EMPTY = "UNSAT_EXPLICIT_EMPTY_CLAUSE"
 PROOF_TRACE_UNSAT_2SAT = "UNSAT_2SAT_SCC_CONTRADICTION"
 PROOF_TRACE_UNSAT_INTERNAL = "UNSAT_INTERNAL_REPLAY_ONLY"
+PROOF_TRACE_XOR_UNSAT = "XOR_UNSAT_NATIVE"
 PROOF_TRACE_NO_COLLAPSE = "NO_COLLAPSE_REPORT"
 
 NATIVE_UNSAT_TRACE_FORMAT = "WITNORA_NATIVE_UNSAT_TRACE_V1"
@@ -877,6 +879,8 @@ def _unsat_certification_level_raw(
     replay_checks: dict[str, Any] | None = None,
     collapse_path: list[dict[str, Any]] | None = None,
 ) -> str:
+    if status == "UNSAT_XOR_NATIVE":
+        return UNSAT_LEVEL_XOR_NATIVE
     if status != "UNSAT":
         return UNSAT_LEVEL_NOT_UNSAT
     if replay_checks is not None:
@@ -899,6 +903,8 @@ def _unsat_certification_level_raw(
 def _proof_trace_class_raw(status: str, unsat_level: str) -> str:
     if status == "SAT":
         return PROOF_TRACE_SAT
+    if status == "UNSAT_XOR_NATIVE":
+        return PROOF_TRACE_XOR_UNSAT
     if status == "UNSAT":
         if unsat_level == UNSAT_LEVEL_EXPLICIT_EMPTY:
             return PROOF_TRACE_UNSAT_EMPTY
@@ -1041,6 +1047,99 @@ def _normalise_component_results_for_hash(results: list[dict[str, Any]]) -> list
     return normalised
 
 
+def _canonical_xor_equation_raw(equation: dict[str, Any]) -> tuple[tuple[int, ...], int]:
+    parity: dict[int, int] = {}
+    for raw_var in equation.get("variables", []):
+        var = int(raw_var)
+        if var <= 0:
+            raise ValueError(f"invalid XOR variable {raw_var!r}")
+        parity[var] = parity.get(var, 0) ^ 1
+    variables = tuple(sorted(var for var, bit in parity.items() if bit))
+    rhs = int(equation.get("rhs", 0)) & 1
+    return variables, rhs
+
+
+def _xor_equations_from_data_raw(xor_data: dict[str, Any]) -> list[tuple[tuple[int, ...], int]]:
+    return [
+        _canonical_xor_equation_raw(equation)
+        for equation in xor_data.get("xor_system", {}).get("equations", [])
+    ]
+
+
+def _solve_xor_equations_raw(equations: list[tuple[tuple[int, ...], int]]) -> str:
+    pivots: dict[int, tuple[set[int], int]] = {}
+    for variables, rhs in equations:
+        row = (set(variables), rhs)
+        while row[0]:
+            pivot = min(row[0])
+            if pivot not in pivots:
+                pivots[pivot] = (set(row[0]), row[1])
+                break
+            row = (set(row[0]) ^ set(pivots[pivot][0]), row[1] ^ pivots[pivot][1])
+        if not row[0] and row[1] == 1:
+            return "UNSAT"
+    return "SAT"
+
+
+def _unit_assignment_raw(formula: FormulaRaw) -> dict[int, bool] | None:
+    assignment: dict[int, bool] = {}
+    for clause in formula:
+        if len(clause) != 1:
+            continue
+        lit = next(iter(clause))
+        var = abs(lit)
+        value = lit > 0
+        if var in assignment and assignment[var] != value:
+            return None
+        assignment[var] = value
+    return assignment
+
+
+def _substitute_xor_equations_raw(
+    equations: list[tuple[tuple[int, ...], int]],
+    assignment: dict[int, bool],
+) -> list[tuple[tuple[int, ...], int]]:
+    substituted: list[tuple[tuple[int, ...], int]] = []
+    for variables, rhs in equations:
+        remaining: list[int] = []
+        new_rhs = rhs
+        for var in variables:
+            if var in assignment:
+                new_rhs ^= int(bool(assignment[var]))
+            else:
+                remaining.append(var)
+        substituted.append((tuple(remaining), new_rhs))
+    return substituted
+
+
+def _xor_assignment_satisfies_raw(
+    xor_data: dict[str, Any],
+    assignment: dict[int, bool],
+) -> bool:
+    for variables, rhs in _xor_equations_from_data_raw(xor_data):
+        value = rhs
+        for var in variables:
+            if var not in assignment:
+                return False
+            value ^= int(bool(assignment[var]))
+        if value != 0:
+            return False
+    return True
+
+
+def _xor_native_unsat_verified_raw(
+    xor_data: dict[str, Any],
+    original_formula: FormulaRaw,
+) -> bool:
+    equations = _xor_equations_from_data_raw(xor_data)
+    if _solve_xor_equations_raw(equations) == "UNSAT":
+        return True
+    units = _unit_assignment_raw(original_formula)
+    if units is None:
+        return True
+    return _solve_xor_equations_raw(_substitute_xor_equations_raw(equations, units)) == "UNSAT"
+
+
 def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
     payload = {
         "original_formula_hash": result_data["original_formula_hash"],
@@ -1058,6 +1157,8 @@ def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
         "proof_trace_class": result_data.get("proof_trace_class"),
         "native_proof_trace": result_data.get("native_proof_trace"),
     }
+    if result_data.get("xor_data") is not None:
+        payload["xor_data"] = result_data.get("xor_data")
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return sha256_text_raw(encoded)
 
@@ -1135,7 +1236,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.8.5", "proof_trace")
+        return _fail("external_lrat_frat must remain false in v0.9.0", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
@@ -1195,6 +1296,23 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         return _fail("collapse_path.json differs from result.json", "collapse_path")
     if component_results != result_data.get("component_results", []):
         return _fail("component_results mismatch", "component_results")
+    if result_data.get("xor_data") is not None:
+        required_xor_files = {
+            "xor_system.json": "xor_system",
+            "xor_trace.json": "xor_trace",
+            "xor_status.json": "xor_status",
+        }
+        for file_name, key in required_xor_files.items():
+            if file_name not in files:
+                return _fail(f"missing {file_name}", "xor_certificate")
+            try:
+                loaded = json.loads(files[file_name])
+            except Exception as exc:
+                return _fail(f"invalid {file_name}: {exc}", "xor_certificate")
+            if loaded != result_data["xor_data"].get(key, {}):
+                return _fail(f"{file_name} differs from result.json", "xor_certificate")
+    elif result_data.get("status") == "UNSAT_XOR_NATIVE":
+        return _fail("XOR-native UNSAT missing xor_data", "xor_certificate")
     recomputed_hash = compute_certificate_hash_raw(result_data)
     if recomputed_hash != manifest.get("certificate_hash"):
         return _fail("certificate hash mismatch", "certificate_hash")
@@ -1263,6 +1381,11 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
             return _fail(str(exc), "reconstruction_trace")
         if not check_sat_assignment_against_original_raw(original, reconstructed):
             return _fail("SAT assignment does not satisfy original formula", "sat_assignment")
+        if result_data.get("xor_data") is not None and not _xor_assignment_satisfies_raw(
+            result_data["xor_data"],
+            reconstructed,
+        ):
+            return _fail("SAT assignment does not satisfy XOR equations", "xor_certificate")
         checks["sat_assignment"] = True
     elif status == "UNSAT":
         ok, reason = check_unsat_contradiction_raw(final_formula, replay_checks)
@@ -1285,6 +1408,23 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if proof_trace is not None or result_data.get("native_proof_trace") is not None:
             return _fail("NO_COLLAPSE certificate must not include proof_trace", "proof_trace")
         checks["no_collapse_report"] = True
+    elif status == "UNSAT_XOR_NATIVE":
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        if proof_trace is not None or result_data.get("native_proof_trace") is not None:
+            return _fail("XOR-native UNSAT certificate must not include clausal proof_trace", "proof_trace")
+        xor_data = result_data.get("xor_data")
+        if xor_data is None:
+            return _fail("XOR-native UNSAT missing xor_data", "xor_certificate")
+        xor_status = xor_data.get("xor_status", {})
+        if xor_status.get("xor_status") != "UNSAT":
+            return _fail("XOR-native UNSAT missing XOR contradiction status", "xor_certificate")
+        if xor_status.get("external_drat") is not False or xor_status.get("drat_claim") != "NOT_EXPORTED":
+            return _fail("XOR-native UNSAT falsely claims DRAT support", "xor_certificate")
+        if not _xor_native_unsat_verified_raw(xor_data, original):
+            return _fail("XOR-native contradiction not verified by raw GF(2) checker", "xor_certificate")
+        checks["xor_native_unsat_not_drat"] = True
     else:
         return _fail(f"unsupported status {status}", "status")
     return {

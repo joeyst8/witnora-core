@@ -17,6 +17,7 @@ from .certificate import (
     UNSAT_LEVEL_2SAT_SCC,
     UNSAT_LEVEL_EXPLICIT_EMPTY,
     UNSAT_LEVEL_NOT_UNSAT,
+    XOR_UNSAT_NATIVE,
     proof_trace_class_from_status,
     sat_certification_level,
     unsat_certification_level_from_steps,
@@ -28,10 +29,11 @@ from .drat_trim import run_drat_trim
 from .proof_trace import is_supported_native_unsat_trace, native_unsat_trace
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
+from .xor import XorEquation, XorSystem, verify_xor_assignment
 
-WITNORA_VERSION = "0.8.5"
+WITNORA_VERSION = "0.9.0"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.8.5"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.9.0"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -134,6 +136,10 @@ def _bundle_files(
     trace = native_unsat_trace(path)
     if trace is not None:
         files["proof_trace.json"] = stable_json(trace)
+    if path.xor_data is not None:
+        files["xor_system.json"] = stable_json(path.xor_data.get("xor_system", {}))
+        files["xor_trace.json"] = stable_json(path.xor_data.get("xor_trace", {}))
+        files["xor_status.json"] = stable_json(path.xor_data.get("xor_status", {}))
     if drat_export is not None:
         files["drat_status.json"] = stable_json(drat_export.status)
         if drat_export.proof_text is not None and drat_export.status.get("drat_export_status") == "EXPORTED":
@@ -224,6 +230,7 @@ def _manifest(
         "native_unsat_trace_scope": "END_TO_END_WITH_COLLAPSE_REPLAY",
         "external_drat": bool(drat_status.get("drat_export_status") == "EXPORTED"),
         "drat_export_status": drat_status.get("drat_export_status"),
+        "xor_used": path.xor_data is not None,
         "files": {
             name: {"sha256": sha256_text(content)}
             for name, content in sorted(files.items())
@@ -311,6 +318,7 @@ def collapse_path_from_result_dict(data: dict[str, Any]) -> CollapsePath:
         original_verification=bool(data.get("original_verification", False)),
         component_results=list(data.get("component_results", [])),
         stats=dict(data.get("stats", {})),
+        xor_data=data.get("xor_data"),
     )
 
 
@@ -369,7 +377,7 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     if manifest.get("proof_trace_class") != result_data.get("proof_trace_class"):
         return _fail("proof_trace_class manifest mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.8.5", "proof_trace_classification")
+        return _fail("external_lrat_frat must remain false in v0.9.0", "proof_trace_classification")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace_classification")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
@@ -389,6 +397,17 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         return _fail("component_results.json differs from result.json", "component_results")
     if stats != result_data.get("stats", {}):
         return _fail("stats.json differs from result.json", "stats")
+    if result_data.get("xor_data") is not None:
+        if "xor_system.json" not in files or "xor_trace.json" not in files or "xor_status.json" not in files:
+            return _fail("missing XOR certificate files", "xor_certificate")
+        if json.loads(files["xor_system.json"]) != result_data["xor_data"].get("xor_system", {}):
+            return _fail("xor_system.json differs from result.json", "xor_certificate")
+        if json.loads(files["xor_trace.json"]) != result_data["xor_data"].get("xor_trace", {}):
+            return _fail("xor_trace.json differs from result.json", "xor_certificate")
+        if json.loads(files["xor_status.json"]) != result_data["xor_data"].get("xor_status", {}):
+            return _fail("xor_status.json differs from result.json", "xor_certificate")
+    elif result_data.get("status") == XOR_UNSAT_NATIVE:
+        return _fail("XOR-native UNSAT certificate missing xor_data", "xor_certificate")
 
     try:
         original = parse_dimacs(files["original.dimacs"])
@@ -406,6 +425,34 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     path_obj = collapse_path_from_result_dict(result_data)
     if path_obj.certificate_hash != manifest.get("certificate_hash"):
         return _fail("recomputed certificate hash mismatch", "certificate_hash")
+
+    if path_obj.xor_data is not None:
+        try:
+            xor_system_data = path_obj.xor_data.get("xor_system", {})
+            xor_system = XorSystem(
+                XorEquation(
+                    equation.get("variables", []),
+                    int(equation.get("rhs", 0)),
+                    source=str(equation.get("source", "certificate")),
+                    source_clauses=equation.get("source_clauses", []),
+                )
+                for equation in xor_system_data.get("equations", [])
+            )
+            xor_status = dict(path_obj.xor_data.get("xor_status", {}))
+        except Exception as exc:
+            return _fail(f"invalid XOR certificate data: {exc}", "xor_certificate")
+        if path_obj.status == SAT and not verify_xor_assignment(
+            xor_system,
+            path_obj.reconstructed_original_assignment,
+        ):
+            return _fail("SAT assignment does not satisfy XOR equations", "xor_certificate")
+        if path_obj.status == XOR_UNSAT_NATIVE:
+            if xor_status.get("xor_status") != "UNSAT":
+                return _fail("XOR-native UNSAT missing XOR contradiction status", "xor_certificate")
+            if xor_status.get("external_drat") is not False:
+                return _fail("XOR-native UNSAT falsely claims external DRAT", "xor_certificate")
+            if xor_status.get("drat_claim") != "NOT_EXPORTED":
+                return _fail("XOR-native UNSAT falsely claims DRAT export", "xor_certificate")
 
     expected_unsat_level = unsat_certification_level(path_obj)
     expected_sat_level = sat_certification_level(
@@ -472,6 +519,8 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         checks["unsat_contradiction"] = True
     elif path_obj.status == NO_COLLAPSE:
         checks["no_collapse_report"] = True
+    elif path_obj.status == XOR_UNSAT_NATIVE:
+        checks["xor_native_unsat_not_drat"] = True
 
     return {
         "verified": True,

@@ -15,9 +15,10 @@ from .certificate import (
     RECONSTRUCTION_FAILURE,
     SAT,
     UNSAT,
+    XOR_UNSAT_NATIVE,
     StepLogger,
 )
-from .cnf import CNFFormula
+from .cnf import CNFFormula, formula_satisfied
 from .components import component_details, connected_components
 from .dimacs import load_dimacs, parse_dimacs
 from .proof import export_certificate_bundle
@@ -28,6 +29,15 @@ from .treewidth import find_elimination_order, verify_elimination_order
 from .two_sat import solve_2sat
 from .ve import run_variable_elimination
 from .verifier import verify_collapse_path
+from .xor import (
+    XorSystem,
+    detect_cnf_xor_patterns,
+    parse_xor_lines,
+    reconstruct_assignment as reconstruct_xor_assignment,
+    solve_xor_system_gaussian,
+    verify_xor_assignment,
+    xor_metadata,
+)
 
 
 @dataclass
@@ -405,6 +415,168 @@ def solve(formula: CNFFormula, c: int = 4) -> CollapsePath:
     )
 
 
+def _unit_assignments(formula: CNFFormula) -> dict[int, bool] | None:
+    assignment: dict[int, bool] = {}
+    for clause in formula.clauses:
+        if len(clause) != 1:
+            continue
+        lit = clause.literals[0]
+        var = abs(lit)
+        value = lit > 0
+        if var in assignment and assignment[var] != value:
+            return None
+        assignment[var] = value
+    return assignment
+
+
+def _xor_native_unsat_path(
+    formula: CNFFormula,
+    c: int,
+    system: XorSystem,
+    solution: dict[str, Any],
+    start: float,
+    *,
+    detected_system: XorSystem | None = None,
+) -> CollapsePath:
+    return CollapsePath(
+        original_formula_hash=formula.formula_hash,
+        c_parameter=c,
+        steps=[],
+        final_formula_hash=formula.formula_hash,
+        final_class="XOR_UNSAT_NATIVE",
+        status=XOR_UNSAT_NATIVE,
+        final_assignment={},
+        reconstructed_original_assignment={},
+        original_verification=False,
+        component_results=[],
+        stats={
+            "num_original_vars": formula.num_vars,
+            "num_original_clauses": formula.num_clauses,
+            "num_clauses_removed": 0,
+            "num_clauses_added": 0,
+            "num_vars_eliminated": 0,
+            "collapse_path_length": 0,
+            "time_ms": round((time.perf_counter() - start) * 1000.0, 3),
+        },
+        xor_data=xor_metadata(system, solution, verified=True, detected_system=detected_system),
+    )
+
+
+def solve_with_xor(
+    formula: CNFFormula,
+    c: int = 4,
+    *,
+    xor_system: XorSystem | None = None,
+    detect_cnf_xor: bool = False,
+) -> CollapsePath:
+    """Solve a CNF together with conservative explicit/detected XOR equations."""
+
+    start = time.perf_counter()
+    sidecar = xor_system or XorSystem()
+    detected = detect_cnf_xor_patterns(formula) if detect_cnf_xor else XorSystem()
+    system = XorSystem([*sidecar.equations, *detected.equations])
+    if not system.equations:
+        return solve(formula, c)
+
+    xor_solution = solve_xor_system_gaussian(system)
+    if xor_solution["status"] == "UNSAT":
+        return _xor_native_unsat_path(
+            formula,
+            c,
+            system,
+            xor_solution,
+            start,
+            detected_system=detected,
+        )
+
+    unit_assignment = _unit_assignments(formula)
+    if unit_assignment is None:
+        contradiction = {
+            "status": "UNSAT",
+            "assignment": {},
+            "rank": 0,
+            "pivot_variables": [],
+            "free_variables": [],
+            "forced_assignments": {},
+            "elimination_trace": [{"type": "cnf_unit_conflict"}],
+            "contradiction": {"variables": [], "rhs": 1},
+        }
+        return _xor_native_unsat_path(formula, c, system, contradiction, start, detected_system=detected)
+    if unit_assignment:
+        restricted = solve_xor_system_gaussian(system.substitute(unit_assignment))
+        if restricted["status"] == "UNSAT":
+            return _xor_native_unsat_path(
+                formula,
+                c,
+                system,
+                restricted,
+                start,
+                detected_system=detected,
+            )
+
+    cnf_path = solve(formula, c)
+    xor_assignment = reconstruct_xor_assignment(xor_solution)
+
+    if cnf_path.status == UNSAT:
+        cnf_path.xor_data = xor_metadata(system, xor_solution, verified=False, detected_system=detected)
+        return cnf_path
+
+    candidate_assignments: list[dict[int, bool]] = []
+    if cnf_path.status == SAT:
+        base = dict(cnf_path.reconstructed_original_assignment)
+        restricted = solve_xor_system_gaussian(system.substitute(base))
+        if restricted["status"] == "SAT":
+            merged = dict(base)
+            merged.update(reconstruct_xor_assignment(restricted))
+            candidate_assignments.append(merged)
+    candidate_assignments.append(dict(xor_assignment))
+
+    for assignment in candidate_assignments:
+        for var in formula.variables:
+            assignment.setdefault(var, False)
+        if formula_satisfied(formula, assignment) and verify_xor_assignment(system, assignment):
+            if cnf_path.status == SAT:
+                path = cnf_path
+            else:
+                path = CollapsePath(
+                    original_formula_hash=formula.formula_hash,
+                    c_parameter=c,
+                    steps=[],
+                    final_formula_hash=formula.formula_hash,
+                    final_class="XOR_AFFINE",
+                    status=SAT,
+                    final_assignment=assignment,
+                    reconstructed_original_assignment=assignment,
+                    original_verification=True,
+                    component_results=[],
+                    stats={
+                        "num_original_vars": formula.num_vars,
+                        "num_original_clauses": formula.num_clauses,
+                        "num_clauses_removed": 0,
+                        "num_clauses_added": 0,
+                        "num_vars_eliminated": 0,
+                        "collapse_path_length": 0,
+                        "time_ms": round((time.perf_counter() - start) * 1000.0, 3),
+                    },
+                )
+            path.final_class = "CNF_XOR_COMBINED" if formula.clauses else "XOR_AFFINE"
+            path.status = SAT
+            path.final_assignment = assignment
+            path.reconstructed_original_assignment = assignment
+            path.original_verification = True
+            verified_solution = dict(xor_solution)
+            verified_solution["assignment"] = {str(var): bool(value) for var, value in sorted(assignment.items())}
+            path.xor_data = xor_metadata(system, verified_solution, verified=True, detected_system=detected)
+            return path
+
+    cnf_path.xor_data = xor_metadata(system, xor_solution, verified=False, detected_system=detected)
+    if cnf_path.status == SAT:
+        cnf_path.status = NO_COLLAPSE
+        cnf_path.final_class = "UNRESOLVED"
+        cnf_path.original_verification = False
+    return cnf_path
+
+
 def solve_dimacs_file(path: str | Path, c: int = 4) -> CollapsePath:
     return solve(load_dimacs(path), c)
 
@@ -414,6 +586,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("dimacs", help="path to DIMACS CNF input")
     parser.add_argument("--c", "-c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--export-cert", help="write .wcert directory or .wcert.json certificate")
+    parser.add_argument("--xor", help="optional sidecar file containing explicit XOR equations")
+    parser.add_argument(
+        "--detect-xor",
+        action="store_true",
+        help="enable conservative exact CNF XOR pattern detection",
+    )
     parser.add_argument(
         "--export-drat",
         action="store_true",
@@ -427,7 +605,15 @@ def main(argv: list[str] | None = None) -> int:
     dimacs_path = Path(args.dimacs)
     original_text = dimacs_path.read_text(encoding="utf-8")
     formula = parse_dimacs(original_text)
-    path = solve(formula, args.c_parameter)
+    xor_system = None
+    if args.xor:
+        xor_system = parse_xor_lines(Path(args.xor).read_text(encoding="utf-8"))
+    path = solve_with_xor(
+        formula,
+        args.c_parameter,
+        xor_system=xor_system,
+        detect_cnf_xor=args.detect_xor,
+    ) if (xor_system is not None or args.detect_xor) else solve(formula, args.c_parameter)
     if args.export_cert:
         export_certificate_bundle(
             formula,

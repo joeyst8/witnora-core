@@ -104,7 +104,7 @@ class CNFgenMatrixTest(unittest.TestCase):
     def test_diagnostic_artifact_zip(self):
         row = summarize_matrix_run("pigeonhole", 2, sample_public_data())
         summary = {
-            "version": "0.8.5",
+            "version": "0.9.0",
             "cnfgen_version": "CNFgen (fixture)",
             "cnfgen_path": "fixture-cnfgen",
             "drat_trim_path": "fixture-drat-trim",
@@ -118,8 +118,8 @@ class CNFgenMatrixTest(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            artifact = root / "outputs" / "v0.8.5-cnfgen-diagnostic"
-            zip_path = root / "witnora-core-v0.8.5-cnfgen-diagnostic-benchmark.zip"
+            artifact = root / "outputs" / "v0.9.0-cnfgen-diagnostic"
+            zip_path = root / "witnora-core-v0.9.0-cnfgen-diagnostic-benchmark.zip"
             write_matrix_artifact(artifact, summary, zip_path=zip_path)
             self.assertTrue((artifact / "matrix_summary.json").exists())
             self.assertTrue((artifact / "matrix_summary.csv").exists())
@@ -127,9 +127,9 @@ class CNFgenMatrixTest(unittest.TestCase):
             self.assertTrue(zip_path.exists())
             with zipfile.ZipFile(zip_path) as archive:
                 names = set(archive.namelist())
-            self.assertIn("outputs/v0.8.5-cnfgen-diagnostic/matrix_summary.json", names)
+            self.assertIn("outputs/v0.9.0-cnfgen-diagnostic/matrix_summary.json", names)
             loaded = json.loads((artifact / "matrix_summary.json").read_text(encoding="utf-8"))
-        self.assertEqual(loaded["version"], "0.8.5")
+        self.assertEqual(loaded["version"], "0.9.0")
         print("CNFGEN_DIAGNOSTIC_ARTIFACT_PASS")
 
 

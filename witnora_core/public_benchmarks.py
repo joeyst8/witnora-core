@@ -22,7 +22,7 @@ from .benchmark import (
     structural_metrics,
     width_order_measurement,
 )
-from .certificate import NO_COLLAPSE, SAT, UNSAT
+from .certificate import NO_COLLAPSE, SAT, UNSAT, XOR_UNSAT_NATIVE
 from .cnf import CNFFormula
 from .dimacs import parse_dimacs
 from .families import (
@@ -38,6 +38,7 @@ SAT_ASSIGNMENT_VERIFIED = "SAT_ASSIGNMENT_VERIFIED"
 UNSAT_DRAT_EXPORTED_VERIFIED = "UNSAT_DRAT_EXPORTED_VERIFIED"
 UNSAT_NOT_EXTERNALLY_VERIFIED = "UNSAT_NOT_EXTERNALLY_VERIFIED"
 UNSUPPORTED_DRAT = "UNSUPPORTED_DRAT"
+UNSAT_XOR_NATIVE_NOT_DRAT = "UNSAT_XOR_NATIVE_NOT_DRAT"
 NO_COLLAPSE_FOUND = "NO_COLLAPSE_FOUND"
 TIMEOUT = "TIMEOUT"
 ERROR = "ERROR"
@@ -60,6 +61,7 @@ PUBLIC_CATEGORIES = [
     UNSAT_DRAT_EXPORTED_VERIFIED,
     UNSAT_NOT_EXTERNALLY_VERIFIED,
     UNSUPPORTED_DRAT,
+    UNSAT_XOR_NATIVE_NOT_DRAT,
     NO_COLLAPSE_FOUND,
     TIMEOUT,
     ERROR,
@@ -249,7 +251,7 @@ def demo_cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
                 source_suite="demo-cnfgen-artifact",
                 family=family,
                 dimacs_text=_formula_to_dimacs(formula),
-                source="generated:built_in_demo_v0.8.5",
+                source="generated:built_in_demo_v0.9.0",
                 notes=notes + "; this suite is built into Witnora and is for harness validation only",
                 source_type=SOURCE_BUILT_IN_DEMO,
             )
@@ -292,7 +294,7 @@ def official_cnfgen_cases(
 ) -> tuple[list[PublicBenchmarkCase], dict[str, Any]]:
     """Generate deterministic formulas with an official CNFgen CLI if present.
 
-    The command surface of CNFgen can vary by installed version. v0.8.5 uses
+    The command surface of CNFgen can vary by installed version. v0.9.0 uses
     conservative command attempts and records every command in the manifest. It
     does not silently fall back to built-in demo formulas.
     """
@@ -437,7 +439,7 @@ def missing_suite_data(
 ) -> dict[str, Any]:
     summary = summarize_public_results([])
     return {
-        "version": "0.8.5",
+        "version": "0.9.0",
         "benchmark_kind": "public",
         "suite_name": suite_name,
         "suite_source_type": source_type,
@@ -485,6 +487,8 @@ def _category_for_result(
         return SAT_ASSIGNMENT_VERIFIED if original_verification else ERROR
     if status == NO_COLLAPSE:
         return NO_COLLAPSE_FOUND
+    if status == XOR_UNSAT_NATIVE:
+        return UNSAT_XOR_NATIVE_NOT_DRAT
     if status != UNSAT:
         return ERROR
     if drat_status is None:
@@ -561,7 +565,7 @@ def _public_case_worker(
                 proof_path = str(proof_file)
 
         category = _category_for_result(path.status, path.original_verification, drat_status)
-        strict_pass = category not in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT}
+        strict_pass = category not in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_NOT_DRAT}
         result = {
             "instance_name": payload["instance_name"],
             "source_suite": payload["source_suite"],
@@ -717,7 +721,7 @@ def summarize_public_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         "strict_unsat_external_failures": [
             r.get("instance_name", "")
             for r in results
-            if r.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT}
+            if r.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_NOT_DRAT}
         ],
         "unsat_total": len(unsat),
         "externally_verified_unsat_count": sum(
@@ -727,6 +731,7 @@ def summarize_public_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             1 for r in results if r.get("public_category") == UNSAT_NOT_EXTERNALLY_VERIFIED
         ),
         "unsupported_drat_count": sum(1 for r in results if r.get("public_category") == UNSUPPORTED_DRAT),
+        "xor_native_unsat_count": sum(1 for r in results if r.get("public_category") == UNSAT_XOR_NATIVE_NOT_DRAT),
         "timeout_count": sum(1 for r in results if r.get("public_category") == TIMEOUT),
         "error_count": sum(1 for r in results if r.get("public_category") == ERROR),
         "average_collapse_path_length": round(
@@ -783,7 +788,7 @@ def run_public_benchmark(
     ]
     summary = summarize_public_results(results)
     data = {
-        "version": "0.8.5",
+        "version": "0.9.0",
         "benchmark_kind": "public",
         "suite_name": suite_name,
         "suite_source_type": suite_source_type,
