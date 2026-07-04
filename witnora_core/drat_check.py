@@ -11,7 +11,8 @@ from typing import Iterable, Any
 from .cnf import CNFFormula, Clause
 from .dimacs import parse_dimacs
 
-CHECKER = "witnora_internal_rup_subset_checker_v0.6"
+CHECKER = "witnora_internal_rup_subset_checker_v0.6.1"
+CHECKED_AGAINST = "original.dimacs"
 
 ClauseTuple = tuple[int, ...]
 
@@ -90,50 +91,88 @@ def is_rup(active: set[ClauseTuple], clause: ClauseTuple) -> bool:
     return _unit_propagation_conflicts(active, assumptions)
 
 
-def check_drat_text(original_formula: CNFFormula, proof_text: str) -> dict[str, Any]:
+def _result(
+    *,
+    verified: bool,
+    empty_clause_derived: bool,
+    failed_line: int | None,
+    error: str | None,
+    warnings: list[str] | None = None,
+) -> dict[str, Any]:
+    return {
+        "verified": verified,
+        "checker": CHECKER,
+        "checked_against": CHECKED_AGAINST,
+        "empty_clause_derived": empty_clause_derived,
+        "failed_line": failed_line,
+        "error": error,
+        "warnings": warnings or [],
+    }
+
+
+def check_drat_text(
+    original_formula: CNFFormula,
+    proof_text: str,
+    *,
+    strict_deletions: bool = False,
+) -> dict[str, Any]:
+    """Check a RUP-subset proof from the original CNF clause database."""
+
     active = {clause.literals for clause in original_formula.clauses}
     try:
         proof = parse_drat_text(proof_text)
     except Exception as exc:
-        return {
-            "verified": False,
-            "checker": CHECKER,
-            "empty_clause_derived": False,
-            "failed_line": None,
-            "error": str(exc),
-        }
+        return _result(
+            verified=False,
+            empty_clause_derived=False,
+            failed_line=None,
+            error=str(exc),
+        )
 
     empty_derived = False
+    warnings: list[str] = []
     for line_no, (deletion, clause) in enumerate(proof, start=1):
         if deletion:
-            active.discard(clause)
+            if clause in active:
+                active.remove(clause)
+            else:
+                message = "deletion clause not present in active database"
+                if strict_deletions:
+                    return _result(
+                        verified=False,
+                        empty_clause_derived=empty_derived,
+                        failed_line=line_no,
+                        error=message,
+                        warnings=warnings,
+                    )
+                warnings.append(f"line {line_no}: {message}")
             continue
         if not is_rup(active, clause):
-            return {
-                "verified": False,
-                "checker": CHECKER,
-                "empty_clause_derived": empty_derived,
-                "failed_line": line_no,
-                "error": "addition is not RUP-checkable",
-            }
+            return _result(
+                verified=False,
+                empty_clause_derived=empty_derived,
+                failed_line=line_no,
+                error="addition is not RUP-checkable",
+                warnings=warnings,
+            )
         active.add(clause)
         if clause == ():
             empty_derived = True
-            return {
-                "verified": True,
-                "checker": CHECKER,
-                "empty_clause_derived": True,
-                "failed_line": None,
-                "error": None,
-            }
+            return _result(
+                verified=True,
+                empty_clause_derived=True,
+                failed_line=None,
+                error=None,
+                warnings=warnings,
+            )
 
-    return {
-        "verified": False,
-        "checker": CHECKER,
-        "empty_clause_derived": empty_derived,
-        "failed_line": None,
-        "error": "empty clause was not derived",
-    }
+    return _result(
+        verified=False,
+        empty_clause_derived=empty_derived,
+        failed_line=None,
+        error="empty clause was not derived",
+        warnings=warnings,
+    )
 
 
 def check_drat_files(
@@ -141,10 +180,11 @@ def check_drat_files(
     proof_drat: str | Path,
     *,
     external_drat_trim: str | Path | None = None,
+    strict_deletions: bool = False,
 ) -> dict[str, Any]:
     formula = parse_dimacs(Path(original_dimacs).read_text(encoding="utf-8"))
     proof_text = Path(proof_drat).read_text(encoding="utf-8")
-    result = check_drat_text(formula, proof_text)
+    result = check_drat_text(formula, proof_text, strict_deletions=strict_deletions)
     result["external_checker"] = "NOT_RUN"
     result["external_checker_verified"] = False
     if external_drat_trim is not None:

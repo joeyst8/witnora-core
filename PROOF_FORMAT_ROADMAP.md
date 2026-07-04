@@ -13,9 +13,11 @@ Witnora-native UNSAT trace for explicit-empty-clause and independently checked
 native UNSAT traces are checked only against the final state obtained by
 independent replay of the collapse path from the original formula.
 
-Witnora-Core v0.6.0 adds a minimal DRAT-style bridge for supported
-RUP-checkable UNSAT paths. It does not implement full DRAT/RAT checking, LRAT,
-or FRAT output.
+Witnora-Core v0.6.0 added an initial DRAT-style final-state experiment.
+Witnora-Core v0.6.1 hardens this bridge: `proof.drat` is supported only when
+it is checked end-to-end from `original.dimacs` by the internal RUP-subset
+checker. v0.6.1 still does not implement full DRAT/RAT checking, LRAT, or FRAT
+output.
 
 ## What LRAT Is Appropriate For
 
@@ -71,11 +73,11 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.6 Minimal DRAT Bridge
+## v0.6.1 End-to-End RUP-Subset DRAT Bridge
 
-v0.6 exports `proof.drat` only for supported UNSAT paths whose proof additions
-are accepted by Witnora's internal RUP-subset checker. It also writes
-`drat_status.json`.
+v0.6.1 exports `proof.drat` only for supported UNSAT paths whose proof
+additions are accepted by Witnora's internal RUP-subset checker starting from
+the original CNF clause database. It also writes `drat_status.json`.
 
 Supported proof lines:
 
@@ -84,7 +86,34 @@ Supported proof lines:
 - RUP additions for VE-generated resolvents,
 - deletion lines for BCE, PLE, subsumption, and VE clause removals.
 
-Unsupported in v0.6:
+Proof generation walks the collapse path in order. VE resolvents are emitted
+before deleting eliminated-variable parent clauses. The final empty clause is
+accepted only if it is RUP-checkable from the active proof database obtained by
+processing the proof from `original.dimacs`. A proof containing only `0` is
+rejected for nontrivial transformed paths unless `0` is already RUP from the
+original CNF.
+
+Supported exports record:
+
+```json
+{
+  "proof_scope": "END_TO_END_FROM_ORIGINAL_CNF",
+  "checked_against": "original.dimacs",
+  "internal_rup_subset_checker_verified": true,
+  "requires_external_checker": false
+}
+```
+
+Unsupported or final-state-only paths are marked:
+
+```json
+{
+  "drat_export_status": "UNSUPPORTED",
+  "proof_scope": "FINAL_STATE_ONLY_UNSUPPORTED"
+}
+```
+
+Unsupported in v0.6.1:
 
 - conversion of arbitrary 2-SAT SCC contradictions to DRAT,
 - full RAT checking,
@@ -95,7 +124,7 @@ Unsupported in v0.6:
 The checker is named:
 
 ```text
-witnora_internal_rup_subset_checker_v0.6
+witnora_internal_rup_subset_checker_v0.6.1
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -133,9 +162,9 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.6.0 only claims DRAT-style proof export for supported
-RUP-checkable UNSAT paths. External verification is claimed only if an external
-checker actually ran and passed.
+proof checking. v0.6.1 only claims DRAT-style proof export for supported
+end-to-end RUP-checkable UNSAT paths. External verification is claimed only if
+an external checker actually ran and passed.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -183,7 +212,7 @@ v0.7 should focus on a conservative external proof bridge:
 
 ## Forbidden Claims
 
-Witnora-Core v0.6.0 does not claim:
+Witnora-Core v0.6.1 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

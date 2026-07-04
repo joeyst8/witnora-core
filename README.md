@@ -1,6 +1,6 @@
-# Witnora-Core v0.6.0
+# Witnora-Core v0.6.1
 
-Witnora-Core v0.6.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.6.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -167,8 +167,10 @@ independent raw checker. v0.5.0 cleaned up SAT/UNSAT certification metadata and
 added a Witnora-native UNSAT trace for supported explicit-empty-clause and
 2-SAT-SCC contradictions. v0.5.1 hardens the UNSAT path dependency: a native
 UNSAT trace is checked only after the independent raw checker replays the full
-collapse path from `original.dimacs`. v0.6.0 adds a minimal DRAT-style bridge
-for supported RUP-checkable UNSAT paths.
+collapse path from `original.dimacs`. v0.6.0 added a minimal DRAT-style bridge
+as an initial final-state experiment. v0.6.1 hardens that bridge: exported
+`proof.drat` files are supported only when the internal RUP-subset checker
+validates them end-to-end from `original.dimacs`.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -228,7 +230,8 @@ internal-replay only until DRAT/LRAT/FRAT proof export exists.
 
 ## Minimal DRAT Bridge
 
-v0.6.0 can export a DRAT-style proof for supported RUP-checkable UNSAT paths:
+v0.6.1 can export a DRAT-style proof for supported end-to-end
+RUP-checkable UNSAT paths:
 
 ```bash
 python -m witnora_core.runner examples/unsat_demo.dimacs --c 2 --export-cert out.wcert --export-drat
@@ -244,22 +247,42 @@ The bridge is intentionally narrow. It supports:
 - VE deletions after resolvent additions,
 - final explicit empty clause.
 
+The proof is generated from the original CNF proof state. VE resolvents are
+emitted before deleting their parent clauses, and the final empty clause must be
+RUP-checkable from the active clause database reached by processing the proof
+from `original.dimacs`. A proof containing only a final-state `0` is rejected
+for nontrivial transformed paths unless `0` is already RUP from the original
+CNF.
+
 It does not implement full DRAT/RAT checking. The included checker is an
 internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.6"
+  "checker": "witnora_internal_rup_subset_checker_v0.6.1",
+  "checked_against": "original.dimacs"
 }
 ```
 
-2-SAT SCC contradictions are not converted to DRAT in v0.6.0; they remain
+2-SAT SCC contradictions are not converted to DRAT in v0.6.1; they remain
 native-only and are marked `UNSUPPORTED` in `drat_status.json`.
 
 `drat_status.json` records whether `proof.drat` was exported, whether the
 internal RUP-subset checker verified it, and whether an optional external
-checker was run. External verification is `false` unless an external checker is
-actually provided and succeeds.
+checker was run. Supported exports use:
+
+```json
+{
+  "proof_scope": "END_TO_END_FROM_ORIGINAL_CNF",
+  "checked_against": "original.dimacs",
+  "internal_rup_subset_checker_verified": true,
+  "requires_external_checker": false
+}
+```
+
+Unsupported or final-state-only paths are marked with
+`proof_scope: "FINAL_STATE_ONLY_UNSUPPORTED"`. External verification is `false`
+unless an external checker is actually provided and succeeds.
 
 ## Certification Metadata
 
@@ -278,7 +301,7 @@ UNSAT certificates include an `unsat_certification_level`:
 - `EXTERNAL_DRAT_LRAT_FRAT_VERIFIED`
 - `LRAT_FRAT_NOT_IMPLEMENTED`
 
-Current v0.5 certificates use the most precise supported level. SAT results use
+Current certificates use the most precise supported level. SAT results use
 `NOT_UNSAT`. UNSAT results use `NOT_SAT` for the SAT level. No-collapse results
 must not claim a SAT or UNSAT proof.
 
@@ -304,7 +327,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.6.0 does not claim full
+This classification is deliberately conservative. v0.6.1 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 

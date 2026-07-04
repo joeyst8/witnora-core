@@ -13,8 +13,11 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.6"
+CHECKER = "independent_raw_checker_v0.6.1"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.6.1"
+DRAT_CHECKED_AGAINST = "original.dimacs"
+DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
 SAT_LEVEL_NOT_SAT = "NOT_SAT"
@@ -823,7 +826,8 @@ def check_drat_proof_raw(original_formula: FormulaRaw, proof_text: str) -> dict[
         except Exception as exc:
             return {
                 "verified": False,
-                "checker": "witnora_internal_rup_subset_checker_v0.6",
+                "checker": DRAT_CHECKER,
+                "checked_against": DRAT_CHECKED_AGAINST,
                 "empty_clause_derived": empty_derived,
                 "failed_line": line_no,
                 "error": str(exc),
@@ -834,7 +838,8 @@ def check_drat_proof_raw(original_formula: FormulaRaw, proof_text: str) -> dict[
         if not _is_rup_raw(active, clause):
             return {
                 "verified": False,
-                "checker": "witnora_internal_rup_subset_checker_v0.6",
+                "checker": DRAT_CHECKER,
+                "checked_against": DRAT_CHECKED_AGAINST,
                 "empty_clause_derived": empty_derived,
                 "failed_line": line_no,
                 "error": "addition is not RUP-checkable",
@@ -843,14 +848,16 @@ def check_drat_proof_raw(original_formula: FormulaRaw, proof_text: str) -> dict[
         if clause == ():
             return {
                 "verified": True,
-                "checker": "witnora_internal_rup_subset_checker_v0.6",
+                "checker": DRAT_CHECKER,
+                "checked_against": DRAT_CHECKED_AGAINST,
                 "empty_clause_derived": True,
                 "failed_line": None,
                 "error": None,
             }
     return {
         "verified": False,
-        "checker": "witnora_internal_rup_subset_checker_v0.6",
+        "checker": DRAT_CHECKER,
+        "checked_against": DRAT_CHECKED_AGAINST,
         "empty_clause_derived": empty_derived,
         "failed_line": None,
         "error": "empty clause was not derived",
@@ -1128,7 +1135,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.5", "proof_trace")
+        return _fail("external_lrat_frat must remain false in v0.6.1", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
@@ -1146,6 +1153,17 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
             drat_status.get("drat_export_status") == "EXPORTED"
         ):
             return _fail("external_drat manifest mismatch", "drat")
+        if drat_status.get("drat_export_status") == "EXPORTED":
+            if drat_status.get("proof_scope") != DRAT_PROOF_SCOPE_END_TO_END:
+                return _fail("DRAT proof is not scoped end-to-end from original CNF", "drat")
+            if drat_status.get("checked_against") != DRAT_CHECKED_AGAINST:
+                return _fail("DRAT proof is not checked against original.dimacs", "drat")
+            if drat_status.get("requires_external_checker") is not False:
+                return _fail("DRAT status incorrectly requires external checker", "drat")
+            if drat_status.get("internal_rup_subset_checker_verified") is not True:
+                return _fail("DRAT status does not record RUP-subset checker success", "drat")
+        elif drat_status.get("proof_scope") == "FINAL_STATE_ONLY_UNSUPPORTED" and "proof.drat" in files:
+            return _fail("final-state-only proof.drat is not supported", "drat")
     if hash_formula_raw(original) != manifest.get("original_formula_hash"):
         return _fail("original formula hash mismatch", "formula_hash")
     if hash_formula_raw(normalized) != manifest.get("normalized_formula_hash"):
@@ -1188,6 +1206,8 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
     })
     checks["drat_proof_present"] = "proof.drat" in files
     checks["internal_drat_checker_verified"] = False
+    checks["drat_checked_against_original"] = False
+    checks["internal_rup_subset_checker_verified"] = False
     checks["external_drat_verified"] = bool(
         drat_status.get("external_checker_verified", False)
     ) if drat_status is not None else False
@@ -1195,9 +1215,15 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         drat_check = check_drat_proof_raw(original, files["proof.drat"])
         if not drat_check.get("verified"):
             return _fail(str(drat_check.get("error")), "drat")
+        if drat_check.get("checked_against") != DRAT_CHECKED_AGAINST:
+            return _fail("DRAT proof was not checked against original.dimacs", "drat")
         if drat_status is not None and drat_status.get("internal_drat_checker_verified") is not True:
             return _fail("drat_status does not record internal checker success", "drat")
+        if drat_status is not None and drat_status.get("internal_rup_subset_checker_verified") is not True:
+            return _fail("drat_status does not record RUP-subset checker success", "drat")
         checks["internal_drat_checker_verified"] = True
+        checks["internal_rup_subset_checker_verified"] = True
+        checks["drat_checked_against_original"] = True
     status = result_data.get("status")
     if status == "SAT":
         metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)

@@ -50,6 +50,15 @@ def full_3var_unsat_clauses():
     ]
 
 
+def connected_bce_then_ve_unsat_clauses():
+    return full_3var_unsat_clauses() + [
+        [4, 5, 6],
+        [-4, -5],
+        [-4, -6],
+        [3, 4],
+    ]
+
+
 class DRATBridgeTest(unittest.TestCase):
     def test_drat_export_empty_conflict(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -114,7 +123,7 @@ class DRATBridgeTest(unittest.TestCase):
             (cert / "proof.drat").write_text("1 0\n", encoding="utf-8")
             checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
         self.assertFalse(checked["verified"])
-        self.assertEqual(checked["checker"], "witnora_internal_rup_subset_checker_v0.6")
+        self.assertEqual(checked["checker"], "witnora_internal_rup_subset_checker_v0.6.1")
         print("DRAT_TAMPER_REJECT_PASS")
 
     def test_drat_status_no_false_claim(self):
@@ -150,6 +159,122 @@ class DRATBridgeTest(unittest.TestCase):
         self.assertTrue(checked["checks"]["drat_proof_present"])
         self.assertTrue(checked["checks"]["internal_drat_checker_verified"])
         print("DRAT_CERT_BUNDLE_PASS")
+
+    def test_drat_end_to_end_empty_conflict(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "unit_unsat.dimacs"
+            write_dimacs(dimacs, [[1], [-1]], 1)
+            cert = root / "unit.wcert"
+            code, result = export_cert(dimacs, 2, cert)
+            status = read_json(cert / "drat_status.json")
+            proof = (cert / "proof.drat").read_text(encoding="utf-8")
+            checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["status"], "UNSAT")
+        self.assertEqual(proof, "0\n")
+        self.assertTrue(checked["verified"], checked)
+        self.assertEqual(checked["checked_against"], "original.dimacs")
+        self.assertEqual(status["proof_scope"], "END_TO_END_FROM_ORIGINAL_CNF")
+        print("DRAT_END_TO_END_EMPTY_CONFLICT_PASS")
+
+    def test_drat_end_to_end_ve_unsat(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "ve_unsat.dimacs"
+            write_dimacs(dimacs, full_3var_unsat_clauses(), 3)
+            cert = root / "ve.wcert"
+            code, result = export_cert(dimacs, 2, cert)
+            proof = (cert / "proof.drat").read_text(encoding="utf-8")
+            status = read_json(cert / "drat_status.json")
+            checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["status"], "UNSAT")
+        self.assertIn("-3 -2 0", proof)
+        self.assertIn("d -3 -2 -1 0", proof)
+        self.assertTrue(checked["verified"], checked)
+        self.assertEqual(checked["checked_against"], "original.dimacs")
+        self.assertEqual(status["proof_scope"], "END_TO_END_FROM_ORIGINAL_CNF")
+        print("DRAT_END_TO_END_VE_UNSAT_PASS")
+
+    def test_drat_rejects_final_state_only_proof(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "ve_unsat.dimacs"
+            write_dimacs(dimacs, full_3var_unsat_clauses(), 3)
+            cert = root / "ve.wcert"
+            export_cert(dimacs, 2, cert)
+            (cert / "proof.drat").write_text("0\n", encoding="utf-8")
+            checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
+        self.assertFalse(checked["verified"])
+        self.assertEqual(checked["checked_against"], "original.dimacs")
+        self.assertEqual(checked["failed_line"], 1)
+        self.assertEqual(checked["error"], "addition is not RUP-checkable")
+        print("DRAT_REJECTS_FINAL_STATE_ONLY_PROOF_PASS")
+
+    def test_drat_ve_resolvent_order(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "ve_unsat.dimacs"
+            write_dimacs(dimacs, full_3var_unsat_clauses(), 3)
+            cert = root / "ve.wcert"
+            export_cert(dimacs, 2, cert)
+            lines = (cert / "proof.drat").read_text(encoding="utf-8").splitlines()
+        first_delete = min(i for i, line in enumerate(lines) if line.startswith("d "))
+        first_resolvents = ["-3 -2 0", "-3 2 0", "-2 3 0", "2 3 0"]
+        for resolvent in first_resolvents:
+            self.assertLess(lines.index(resolvent), first_delete)
+        print("DRAT_VE_RESOLVENT_ORDER_PASS")
+
+    def test_drat_bce_deletion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "bce_ve_unsat.dimacs"
+            write_dimacs(dimacs, connected_bce_then_ve_unsat_clauses(), 6)
+            cert = root / "bce_ve.wcert"
+            code, result = export_cert(dimacs, 2, cert)
+            proof = (cert / "proof.drat").read_text(encoding="utf-8")
+            checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
+        self.assertEqual(code, 0)
+        self.assertEqual(result["status"], "UNSAT")
+        self.assertIn("d 4 5 6 0", proof)
+        self.assertTrue(checked["verified"], checked)
+        self.assertEqual(checked["checked_against"], "original.dimacs")
+        print("DRAT_BCE_DELETION_PASS")
+
+    def test_drat_status_scope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "ve_unsat.dimacs"
+            write_dimacs(dimacs, full_3var_unsat_clauses(), 3)
+            cert = root / "ve.wcert"
+            export_cert(dimacs, 2, cert)
+            status = read_json(cert / "drat_status.json")
+        self.assertEqual(status["drat_export_status"], "EXPORTED")
+        self.assertEqual(status["proof_scope"], "END_TO_END_FROM_ORIGINAL_CNF")
+        self.assertEqual(status["checked_against"], "original.dimacs")
+        self.assertTrue(status["internal_rup_subset_checker_verified"])
+        self.assertFalse(status["requires_external_checker"])
+        print("DRAT_STATUS_SCOPE_PASS")
+
+    def test_drat_unsupported_scc_still_native(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dimacs = root / "scc_unsat.dimacs"
+            write_dimacs(dimacs, [[1, 2], [1, -2], [-1, 2], [-1, -2]], 2)
+            cert = root / "scc.wcert"
+            code, result = export_cert(dimacs, 2, cert)
+            status = read_json(cert / "drat_status.json")
+            proof_exists = (cert / "proof.drat").exists()
+            native_checked = verify_wcert_raw(cert)
+        self.assertEqual(code, 0)
+        self.assertEqual(result["status"], "UNSAT")
+        self.assertFalse(proof_exists)
+        self.assertEqual(status["drat_export_status"], "UNSUPPORTED")
+        self.assertEqual(status["unsupported_reason"], "2SAT_SCC_TO_DRAT_NOT_IMPLEMENTED")
+        self.assertEqual(status["proof_scope"], "FINAL_STATE_ONLY_UNSUPPORTED")
+        self.assertTrue(native_checked["verified"], native_checked)
+        print("DRAT_UNSUPPORTED_SCC_STILL_NATIVE_PASS")
 
 
 if __name__ == "__main__":

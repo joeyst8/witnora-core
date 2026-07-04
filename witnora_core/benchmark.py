@@ -29,7 +29,7 @@ from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 
 WIDTH_FOUND = "FOUND"
 WIDTH_NOT_FOUND = "NOT_FOUND"
