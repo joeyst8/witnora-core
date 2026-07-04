@@ -1,6 +1,6 @@
-# Witnora-Core v0.0.2
+# Witnora-Core v0.1.0
 
-Witnora-Core v0.0.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.1.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -64,7 +64,7 @@ The runner never returns partial SAT for a failed component set.
 
 ## Why W_c Is Not Just Raw Bounded Treewidth
 
-Witnora-Core v0.0.2 includes an explicit strictness family:
+Witnora-Core includes an explicit strictness family:
 
 ```text
 F_n =
@@ -84,6 +84,50 @@ unbounded original primal treewidth that collapse to treewidth 1 after certified
 BCE. This is a strictness statement about the implemented preprocessing
 collapse class; it is not a P vs NP claim, a general SAT hardness claim, or a
 claim of full novelty over all preprocessing literature.
+
+## Benchmarking Collapse Behavior
+
+Witnora-Core v0.1.0 adds a benchmark and measurement layer. It does not change
+the certified solver; it runs the solver across synthetic or user-provided CNF
+cases and records whether deterministic simplification and component solving
+collapse formulas into:
+
+- `EMPTY`
+- `2SAT`
+- `TREEWIDTH_LEQ_C`
+- `COMPONENTS_SOLVED`
+- `UNSAT`
+- `NO_COLLAPSE`
+
+Run the synthetic suite:
+
+```bash
+python -m witnora_core.benchmark --suite synthetic --c 1 --out results_c1.json --determinism-check
+python -m witnora_core.benchmark --suite synthetic --c 2 --out results_c2.json --determinism-check
+```
+
+Run a directory of DIMACS files:
+
+```bash
+python -m witnora_core.benchmark --dimacs-dir path/to/dimacs --c 4 --out dimacs_results.json --determinism-check
+```
+
+Per-case metrics include original and post-`S` variable count, clause count,
+maximum clause width, primal edge count, max-clause clique lower bound,
+certificate hash, collapse path length, BCE removals, UP/PLE assignments,
+subsumption removals, VE eliminations, route, status, verification flag, and
+runtime.
+
+The `original_clique_lower_bound` is only the lower bound `max_clause_width - 1`.
+It is not an exact treewidth claim. The `post_s_width_order_found` field reports
+whether the exact bounded-width order search found an order for the configured
+`c`; for large formulas the benchmark can skip this measurement using
+`--max-width-search-vars`.
+
+`NO_COLLAPSE` in benchmark output is still not a hardness claim. It means only
+that the current grammar and `c` budget did not produce a certified collapse.
+
+The v0/v0.1 exact treewidth route remains scoped to `0 <= c <= 4`.
 
 ## certificate_hash
 
@@ -161,6 +205,11 @@ Expected pass markers include:
 - `BLOCKED_CLIQUE_COLLAPSE_PASS`
 - `STRICTNESS_TREEWIDTH_SIGNAL_PASS`
 - `FAMILY_SCALING_PASS`
+- `BENCHMARK_SYNTHETIC_PASS`
+- `BENCHMARK_DETERMINISM_PASS`
+- `BLOCKED_CLIQUE_METRICS_PASS`
+- `RANDOM_3SAT_NO_COLLAPSE_SAFE_PASS`
+- `DIMACS_DIR_BENCHMARK_PASS`
 - adversarial markers from `tests/test_adversarial_correctness.py`
 
 ## Run Examples

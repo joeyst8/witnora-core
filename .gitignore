@@ -4,3 +4,4 @@ __pycache__/
 *.zip
 zip_base64_chunks/
 .agents/
+benchmark_outputs/
