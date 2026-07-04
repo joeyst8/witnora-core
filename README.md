@@ -1,6 +1,6 @@
-# Witnora-Core v0.6.2
+# Witnora-Core v0.6.3
 
-Witnora-Core v0.6.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.6.3 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -172,6 +172,8 @@ as an initial final-state experiment. v0.6.1 hardens that bridge: exported
 `proof.drat` files are supported only when the internal RUP-subset checker
 validates them end-to-end from `original.dimacs`. v0.6.2 adds an optional
 `drat-trim` adapter for external verification of exported `proof.drat` files.
+v0.6.3 adds real `drat-trim` smoke tests that run when a real checker is
+available on PATH or through `WITNORA_DRAT_TRIM`.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -231,7 +233,7 @@ internal-replay only until DRAT/LRAT/FRAT proof export exists.
 
 ## Minimal DRAT Bridge
 
-v0.6.2 can export a DRAT-style proof for supported end-to-end
+v0.6.3 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
@@ -267,12 +269,12 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.6.2",
+  "checker": "witnora_internal_rup_subset_checker_v0.6.3",
   "checked_against": "original.dimacs"
 }
 ```
 
-2-SAT SCC contradictions are not converted to DRAT in v0.6.2; they remain
+2-SAT SCC contradictions are not converted to DRAT in v0.6.3; they remain
 native-only and are marked `UNSUPPORTED` in `drat_status.json`.
 
 `drat_status.json` records whether `proof.drat` was exported, whether the
@@ -299,6 +301,25 @@ and internally checked. `drat_status.json` records
 `external_checker_verified: true` only when the provided process actually runs
 and exits successfully. If no path is provided, the status remains
 `external_checker: "NOT_RUN"` and `external_checker_verified: false`.
+
+Install/build `drat-trim` from upstream if it is not available:
+
+```bash
+git clone https://github.com/marijnheule/drat-trim.git
+cd drat-trim
+make
+./drat-trim path/to/original.dimacs path/to/proof.drat
+```
+
+On Windows, build it in WSL, MSYS2, MinGW, or another environment with `make`
+and a C compiler, then pass the resulting executable with `--drat-trim` or set:
+
+```bash
+WITNORA_DRAT_TRIM=/path/to/drat-trim python -m unittest tests.test_real_drat_trim_smoke -v
+```
+
+If no real checker is found, the real smoke tests are skipped and external
+verification remains `NOT_RUN`.
 
 ## Certification Metadata
 
@@ -343,7 +364,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.6.2 does not claim full
+This classification is deliberately conservative. v0.6.3 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 

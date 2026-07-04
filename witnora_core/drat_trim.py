@@ -3,8 +3,24 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
 import subprocess
 from typing import Any
+
+
+def find_drat_trim(provided_path: str | Path | None = None) -> str | None:
+    """Return an executable drat-trim path from an explicit path or PATH."""
+
+    if provided_path is not None:
+        candidate = Path(provided_path)
+        if candidate.is_file():
+            return str(candidate)
+        return None
+    for name in ("drat-trim", "drat-trim.exe"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
 
 
 def run_drat_trim(
