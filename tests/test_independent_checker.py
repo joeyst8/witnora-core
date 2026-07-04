@@ -250,9 +250,9 @@ class IndependentCheckerTest(unittest.TestCase):
             result["final_class"] = "CONFLICT"
             result["original_verification"] = False
             trace = json.loads((cert / "reconstruction_trace.json").read_text(encoding="utf-8"))
-            trace["proof_trace_class"] = "UNSAT_INTERNAL_REPLAY"
+            trace["proof_trace_class"] = "UNSAT_INTERNAL_REPLAY_ONLY"
             collapse = json.loads((cert / "collapse_path.json").read_text(encoding="utf-8"))
-            collapse["proof_trace_class"] = "UNSAT_INTERNAL_REPLAY"
+            collapse["proof_trace_class"] = "UNSAT_INTERNAL_REPLAY_ONLY"
             (cert / "reconstruction_trace.json").write_text(stable_json_raw(trace), encoding="utf-8")
             (cert / "collapse_path.json").write_text(stable_json_raw(collapse), encoding="utf-8")
             sync_certificate_hash(cert, result)

@@ -13,9 +13,28 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.4"
+CHECKER = "independent_raw_checker_v0.5"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
+
+SAT_LEVEL_NOT_SAT = "NOT_SAT"
+SAT_LEVEL_RECONSTRUCTED = "RECONSTRUCTED_ASSIGNMENT_VERIFIED_ORIGINAL"
+SAT_LEVEL_INDEPENDENT_RAW = "INDEPENDENT_RAW_CHECKER_VERIFIED"
+
+UNSAT_LEVEL_NOT_UNSAT = "NOT_UNSAT"
+UNSAT_LEVEL_EXPLICIT_EMPTY = "EXPLICIT_EMPTY_CLAUSE"
+UNSAT_LEVEL_2SAT_SCC = "INDEPENDENT_2SAT_SCC"
+UNSAT_LEVEL_INTERNAL_REPLAY = "INTERNAL_REPLAY_ONLY"
+UNSAT_LEVEL_EXTERNAL_STANDARD = "EXTERNAL_DRAT_LRAT_FRAT_VERIFIED"
+UNSAT_LEVEL_LRAT_FRAT_NOT_IMPLEMENTED = "LRAT_FRAT_NOT_IMPLEMENTED"
+
+PROOF_TRACE_SAT = "SAT_ASSIGNMENT_RECONSTRUCTION"
+PROOF_TRACE_UNSAT_EMPTY = "UNSAT_EXPLICIT_EMPTY_CLAUSE"
+PROOF_TRACE_UNSAT_2SAT = "UNSAT_2SAT_SCC_CONTRADICTION"
+PROOF_TRACE_UNSAT_INTERNAL = "UNSAT_INTERNAL_REPLAY_ONLY"
+PROOF_TRACE_NO_COLLAPSE = "NO_COLLAPSE_REPORT"
+
+NATIVE_UNSAT_TRACE_FORMAT = "WITNORA_NATIVE_UNSAT_TRACE_V1"
 
 ClauseRaw = tuple[int, ...]
 FormulaRaw = tuple[ClauseRaw, ...]
@@ -496,6 +515,29 @@ def _scc_raw(graph: dict[int, set[int]]) -> dict[int, int]:
     return comp
 
 
+def _2sat_conflict_variable_raw(formula: FormulaRaw) -> int | None:
+    graph = _implication_graph_raw(formula)
+    comp = _scc_raw(graph)
+    for var in variables_raw(formula):
+        if comp.get(var) == comp.get(-var):
+            return var
+    return None
+
+
+def _scc_members_for_literal_raw(formula: FormulaRaw, literal: int) -> list[int]:
+    graph = _implication_graph_raw(formula)
+    comp = _scc_raw(graph)
+    target = comp.get(literal)
+    if target is None:
+        return []
+    return sorted(node for node, comp_id in comp.items() if comp_id == target)
+
+
+def _implication_edges_raw(formula: FormulaRaw) -> list[list[int]]:
+    graph = _implication_graph_raw(formula)
+    return [[src, dst] for src in sorted(graph) for dst in sorted(graph[src])]
+
+
 def check_2sat_result_raw(component_formula: FormulaRaw, log_entry: dict[str, Any]) -> tuple[FormulaRaw, bool]:
     if any(len(clause) > 2 for clause in component_formula):
         raise ValueError("2SAT_SOLVE formula is not 2-CNF")
@@ -513,11 +555,12 @@ def check_2sat_result_raw(component_formula: FormulaRaw, log_entry: dict[str, An
     if status == "UNSAT":
         if () in component_formula:
             return component_formula, True
-        graph = _implication_graph_raw(component_formula)
-        comp = _scc_raw(graph)
-        conflict = any(comp.get(var) == comp.get(-var) for var in variables_raw(component_formula))
-        if not conflict:
+        conflict_var = _2sat_conflict_variable_raw(component_formula)
+        if conflict_var is None:
             raise ValueError("2SAT_SOLVE UNSAT has no independent SCC contradiction")
+        logged_conflict = log_entry.get("details", {}).get("conflict_variable")
+        if logged_conflict is not None and int(logged_conflict) != conflict_var:
+            raise ValueError("2SAT_SOLVE conflict variable mismatch")
         return component_formula, True
     raise ValueError("2SAT_SOLVE status missing")
 
@@ -554,6 +597,8 @@ def replay_collapse_path_raw(
         "component_steps": True,
         "two_sat_steps": True,
         "treewidth_steps": True,
+        "unsat_2sat_conflict_variables": [],
+        "unsat_2sat_traces": [],
     }
     saw_unsat_2sat = False
     expected_step_id = 1
@@ -595,6 +640,24 @@ def replay_collapse_path_raw(
         elif step_type == "2SAT_SOLVE":
             next_formula, unsat = check_2sat_result_raw(context_formula, step)
             saw_unsat_2sat = saw_unsat_2sat or unsat
+            if unsat and () not in context_formula:
+                conflict_var = _2sat_conflict_variable_raw(context_formula)
+                if conflict_var is not None:
+                    checks["unsat_2sat_conflict_variables"].append(conflict_var)
+                    checks["unsat_2sat_traces"].append(
+                        {
+                            "variable": conflict_var,
+                            "positive_literal_scc": _scc_members_for_literal_raw(
+                                context_formula,
+                                conflict_var,
+                            ),
+                            "negative_literal_scc": _scc_members_for_literal_raw(
+                                context_formula,
+                                -conflict_var,
+                            ),
+                            "implication_edges": _implication_edges_raw(context_formula),
+                        }
+                    )
         elif step_type == "CD":
             child_states = check_component_decomposition_raw(context_formula, step)
             next_formula = context_formula
@@ -689,6 +752,131 @@ def check_unsat_contradiction_raw(final_state: FormulaRaw, replay_checks: dict[s
     return False, "UNSAT requires independently checkable contradiction or future LRAT/FRAT proof"
 
 
+def _sat_certification_level_raw(result_data: dict[str, Any]) -> str:
+    if result_data.get("status") != "SAT":
+        return SAT_LEVEL_NOT_SAT
+    if bool(result_data.get("original_verification", False)):
+        return SAT_LEVEL_RECONSTRUCTED
+    return SAT_LEVEL_NOT_SAT
+
+
+def _unsat_certification_level_raw(
+    status: str,
+    replay_checks: dict[str, Any] | None = None,
+    collapse_path: list[dict[str, Any]] | None = None,
+) -> str:
+    if status != "UNSAT":
+        return UNSAT_LEVEL_NOT_UNSAT
+    if replay_checks is not None:
+        if replay_checks.get("explicit_empty_clause"):
+            return UNSAT_LEVEL_EXPLICIT_EMPTY
+        if replay_checks.get("unsat_2sat_contradiction"):
+            return UNSAT_LEVEL_2SAT_SCC
+    collapse_path = collapse_path or []
+    if any(clause == [] for step in collapse_path for clause in step.get("added_clauses", [])):
+        return UNSAT_LEVEL_EXPLICIT_EMPTY
+    if any(
+        step.get("type") == "2SAT_SOLVE"
+        and step.get("details", {}).get("status") == "UNSAT"
+        for step in collapse_path
+    ):
+        return UNSAT_LEVEL_2SAT_SCC
+    return UNSAT_LEVEL_INTERNAL_REPLAY
+
+
+def _proof_trace_class_raw(status: str, unsat_level: str) -> str:
+    if status == "SAT":
+        return PROOF_TRACE_SAT
+    if status == "UNSAT":
+        if unsat_level == UNSAT_LEVEL_EXPLICIT_EMPTY:
+            return PROOF_TRACE_UNSAT_EMPTY
+        if unsat_level == UNSAT_LEVEL_2SAT_SCC:
+            return PROOF_TRACE_UNSAT_2SAT
+        return PROOF_TRACE_UNSAT_INTERNAL
+    return PROOF_TRACE_NO_COLLAPSE
+
+
+def _metadata_consistent_raw(
+    manifest: dict[str, Any],
+    result_data: dict[str, Any],
+    replay_checks: dict[str, Any] | None = None,
+) -> tuple[bool, str | None]:
+    status = result_data.get("status")
+    collapse_path = result_data.get("collapse_path", [])
+    expected_unsat = _unsat_certification_level_raw(status, replay_checks, collapse_path)
+    expected_sat = _sat_certification_level_raw(result_data)
+    expected_class = _proof_trace_class_raw(status, expected_unsat)
+    for key, expected in [
+        ("sat_certification_level", expected_sat),
+        ("unsat_certification_level", expected_unsat),
+        ("proof_trace_class", expected_class),
+    ]:
+        if result_data.get(key) != expected:
+            return False, f"result {key} mismatch"
+        if manifest.get(key) != expected:
+            return False, f"manifest {key} mismatch"
+    if manifest.get("external_lrat_frat") is not False:
+        return False, "external_lrat_frat must be false"
+    if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
+        return False, "external LRAT/FRAT verification falsely claimed"
+    return True, None
+
+
+def check_native_proof_trace_raw(
+    proof_trace: dict[str, Any] | None,
+    final_state: FormulaRaw,
+    replay_checks: dict[str, Any],
+    result_data: dict[str, Any],
+) -> bool:
+    expected_trace = result_data.get("native_proof_trace")
+    if expected_trace is None:
+        if proof_trace is not None:
+            raise ValueError("unexpected proof_trace.json")
+        return True
+    if proof_trace is None:
+        raise ValueError("missing proof_trace.json")
+    if proof_trace != expected_trace:
+        raise ValueError("proof_trace.json differs from result native trace")
+    if proof_trace.get("proof_trace_format") != NATIVE_UNSAT_TRACE_FORMAT:
+        raise ValueError("native proof trace format mismatch")
+    if proof_trace.get("external_standard") != "NONE":
+        raise ValueError("native proof trace falsely names an external standard")
+    if proof_trace.get("lrat_frat_status") != "NOT_EXPORTED":
+        raise ValueError("native proof trace falsely claims LRAT/FRAT export")
+    reason = proof_trace.get("unsat_reason")
+    if reason != result_data.get("unsat_certification_level"):
+        raise ValueError("native proof trace reason mismatch")
+    if reason == UNSAT_LEVEL_EXPLICIT_EMPTY:
+        if () not in final_state and not replay_checks.get("explicit_empty_clause"):
+            raise ValueError("native empty-clause trace has no replayed empty clause")
+        steps = proof_trace.get("steps", [])
+        if not steps or steps[0].get("type") != "UNIT_PROPAGATION_CONFLICT":
+            raise ValueError("native empty-clause trace missing conflict step")
+        if steps[0].get("derived_empty_clause") != []:
+            raise ValueError("native empty-clause trace derived clause mismatch")
+        return True
+    if reason == UNSAT_LEVEL_2SAT_SCC:
+        if not replay_checks.get("unsat_2sat_contradiction"):
+            raise ValueError("native 2-SAT trace has no replayed SCC contradiction")
+        variable = int(proof_trace.get("variable", 0))
+        if variable not in replay_checks.get("unsat_2sat_conflict_variables", []):
+            raise ValueError("native 2-SAT trace conflict variable mismatch")
+        if variable == 0:
+            raise ValueError("native 2-SAT trace missing variable")
+        expected = None
+        for item in replay_checks.get("unsat_2sat_traces", []):
+            if item.get("variable") == variable:
+                expected = item
+                break
+        if expected is None:
+            raise ValueError("native 2-SAT trace details missing")
+        for key in ["positive_literal_scc", "negative_literal_scc", "implication_edges"]:
+            if proof_trace.get(key) != expected.get(key):
+                raise ValueError(f"native 2-SAT trace {key} mismatch")
+        return True
+    raise ValueError("unsupported native proof trace reason")
+
+
 def _normalise_assignment_for_hash(assignment: dict[str, Any]) -> dict[str, bool]:
     return {
         str(int(var)): bool(value)
@@ -723,6 +911,10 @@ def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
         ),
         "original_verification": bool(result_data.get("original_verification", False)),
         "component_results": _normalise_component_results_for_hash(result_data.get("component_results", [])),
+        "sat_certification_level": result_data.get("sat_certification_level"),
+        "unsat_certification_level": result_data.get("unsat_certification_level"),
+        "proof_trace_class": result_data.get("proof_trace_class"),
+        "native_proof_trace": result_data.get("native_proof_trace"),
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return sha256_text_raw(encoded)
@@ -768,6 +960,11 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         collapse_data = json.loads(files["collapse_path.json"])
         component_results = json.loads(files["component_results.json"])
         reconstruction_trace = json.loads(files["reconstruction_trace.json"])
+        proof_trace = (
+            json.loads(files["proof_trace.json"])
+            if "proof_trace.json" in files
+            else None
+        )
         original = parse_dimacs_raw(files["original.dimacs"])
         normalized = parse_dimacs_raw(files["normalized.dimacs"])
     except Exception as exc:
@@ -780,6 +977,13 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         return _fail("manifest final_class mismatch", "manifest")
     if int(manifest.get("c_parameter", -1)) != int(result_data.get("c_parameter", -2)):
         return _fail("manifest c_parameter mismatch", "manifest")
+    for key in ["sat_certification_level", "unsat_certification_level", "proof_trace_class"]:
+        if manifest.get(key) != result_data.get(key):
+            return _fail(f"manifest {key} mismatch", "certification_metadata")
+    if manifest.get("external_lrat_frat") is not False:
+        return _fail("external_lrat_frat must remain false in v0.5", "proof_trace")
+    if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
+        return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if hash_formula_raw(original) != manifest.get("original_formula_hash"):
         return _fail("original formula hash mismatch", "formula_hash")
     if hash_formula_raw(normalized) != manifest.get("normalized_formula_hash"):
@@ -818,6 +1022,11 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
     })
     status = result_data.get("status")
     if status == "SAT":
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        if proof_trace is not None or result_data.get("native_proof_trace") is not None:
+            return _fail("SAT certificate must not include UNSAT proof trace", "proof_trace")
         final_assignment = {
             int(var): bool(value)
             for var, value in result_data.get("final_assignment", {}).items()
@@ -838,8 +1047,21 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         ok, reason = check_unsat_contradiction_raw(final_formula, replay_checks)
         if not ok:
             return _fail(reason, "unsat_external_certification")
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        try:
+            check_native_proof_trace_raw(proof_trace, final_formula, replay_checks, result_data)
+        except Exception as exc:
+            return _fail(str(exc), "proof_trace")
+        checks["proof_trace"] = True
         checks["unsat_contradiction"] = True
     elif status == "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C":
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        if proof_trace is not None or result_data.get("native_proof_trace") is not None:
+            return _fail("NO_COLLAPSE certificate must not include proof_trace", "proof_trace")
         checks["no_collapse_report"] = True
     else:
         return _fail(f"unsupported status {status}", "status")

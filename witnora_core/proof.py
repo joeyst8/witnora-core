@@ -7,15 +7,28 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .certificate import CollapsePath, CollapseStep, NO_COLLAPSE, SAT, UNSAT
+from .certificate import (
+    CollapsePath,
+    CollapseStep,
+    NO_COLLAPSE,
+    SAT,
+    UNSAT,
+    UNSAT_LEVEL_2SAT_SCC,
+    UNSAT_LEVEL_EXPLICIT_EMPTY,
+    UNSAT_LEVEL_NOT_UNSAT,
+    proof_trace_class_from_status,
+    sat_certification_level,
+    unsat_certification_level_from_steps,
+)
 from .cnf import CNFFormula, formula_satisfied
 from .dimacs import export_dimacs, parse_dimacs
+from .proof_trace import is_supported_native_unsat_trace, native_unsat_trace
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
 
-WITNORA_VERSION = "0.4.0"
+WITNORA_VERSION = "0.5.0"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.4.0"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.5.0"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -28,14 +41,8 @@ def sha256_text(text: str) -> str:
     return sha256(text.encode("utf-8")).hexdigest()
 
 
-def proof_trace_class(status: str) -> str:
-    if status == SAT:
-        return "SAT_ASSIGNMENT_RECONSTRUCTION"
-    if status == UNSAT:
-        return "UNSAT_INTERNAL_REPLAY"
-    if status == NO_COLLAPSE:
-        return "NO_COLLAPSE_REPORT"
-    return "UNSUPPORTED_FOR_EXTERNAL_LRAT"
+def proof_trace_class(status: str, unsat_level: str = UNSAT_LEVEL_NOT_UNSAT) -> str:
+    return proof_trace_class_from_status(status, unsat_level)
 
 
 def external_proof_status(step_type: str) -> str:
@@ -49,16 +56,7 @@ def external_proof_status(step_type: str) -> str:
 
 
 def unsat_certification_level(path: CollapsePath) -> str:
-    if path.status != UNSAT:
-        return "LRAT_FRAT_NOT_IMPLEMENTED"
-    if any(clause == [] for step in path.steps for clause in step.added_clauses):
-        return "EXPLICIT_EMPTY_CLAUSE"
-    if any(
-        step.type == "2SAT_SOLVE" and step.details.get("status") == "UNSAT"
-        for step in path.steps
-    ):
-        return "INDEPENDENT_2SAT_SCC"
-    return "INTERNAL_REPLAY_ONLY"
+    return unsat_certification_level_from_steps(path.status, path.steps)
 
 
 def _normalise_stats(stats: dict[str, Any]) -> dict[str, Any]:
@@ -68,13 +66,12 @@ def _normalise_stats(stats: dict[str, Any]) -> dict[str, Any]:
 def _result_without_timing(path: CollapsePath) -> dict[str, Any]:
     data = path.to_dict()
     data["stats"] = _normalise_stats(data.get("stats", {}))
-    data["proof_trace_class"] = proof_trace_class(path.status)
     return data
 
 
 def _collapse_path_payload(path: CollapsePath) -> dict[str, Any]:
     return {
-        "proof_trace_class": proof_trace_class(path.status),
+        "proof_trace_class": path.proof_trace_class,
         "steps": [
             {
                 **step.to_dict(),
@@ -88,7 +85,7 @@ def _collapse_path_payload(path: CollapsePath) -> dict[str, Any]:
 def _reconstruction_trace(path: CollapsePath) -> dict[str, Any]:
     return {
         "trace_format_version": "1",
-        "proof_trace_class": proof_trace_class(path.status),
+        "proof_trace_class": path.proof_trace_class,
         "start_assignment": {
             str(int(var)): bool(value)
             for var, value in sorted(path.final_assignment.items(), key=lambda item: int(item[0]))
@@ -119,7 +116,7 @@ def _bundle_files(
     original_dimacs_text: str,
 ) -> dict[str, str]:
     result = _result_without_timing(path)
-    return {
+    files = {
         "original.dimacs": original_dimacs_text if original_dimacs_text.endswith("\n") else original_dimacs_text + "\n",
         "normalized.dimacs": export_dimacs(original_formula),
         "result.json": stable_json(result),
@@ -130,6 +127,10 @@ def _bundle_files(
         "certificate_hash.txt": path.certificate_hash + "\n",
         "verifier_version.txt": VERIFIER_VERSION + "\n",
     }
+    trace = native_unsat_trace(path)
+    if trace is not None:
+        files["proof_trace.json"] = stable_json(trace)
+    return files
 
 
 def _manifest(
@@ -153,7 +154,10 @@ def _manifest(
             "independent_raw_checker": True,
             "external_lrat_frat": False,
         },
+        "sat_certification_level": path.sat_certification_level,
         "unsat_certification_level": unsat_certification_level(path),
+        "proof_trace_class": path.proof_trace_class,
+        "external_lrat_frat": False,
         "files": {
             name: {"sha256": sha256_text(content)}
             for name, content in sorted(files.items())
@@ -273,6 +277,11 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         component_results = json.loads(files["component_results.json"])
         stats = json.loads(files["stats.json"])
         reconstruction_trace = json.loads(files["reconstruction_trace.json"])
+        proof_trace = (
+            json.loads(files["proof_trace.json"])
+            if "proof_trace.json" in files
+            else None
+        )
     except Exception as exc:
         return _fail(str(exc), "json_parse")
 
@@ -282,6 +291,16 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         return _fail("certificate_hash.txt mismatch", "certificate_hash")
     if result_data.get("certificate_hash") != manifest.get("certificate_hash"):
         return _fail("result certificate hash mismatch", "certificate_hash")
+    if manifest.get("sat_certification_level") != result_data.get("sat_certification_level"):
+        return _fail("SAT certification level mismatch", "certification_metadata")
+    if manifest.get("unsat_certification_level") != result_data.get("unsat_certification_level"):
+        return _fail("UNSAT certification level mismatch", "certification_metadata")
+    if manifest.get("proof_trace_class") != result_data.get("proof_trace_class"):
+        return _fail("proof_trace_class manifest mismatch", "certification_metadata")
+    if manifest.get("external_lrat_frat") is not False:
+        return _fail("external_lrat_frat must remain false in v0.5", "proof_trace_classification")
+    if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
+        return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace_classification")
 
     stripped_steps = [
         {key: value for key, value in step.items() if key != "external_proof_status"}
@@ -315,7 +334,16 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     if path_obj.certificate_hash != manifest.get("certificate_hash"):
         return _fail("recomputed certificate hash mismatch", "certificate_hash")
 
-    expected_class = proof_trace_class(path_obj.status)
+    expected_unsat_level = unsat_certification_level(path_obj)
+    expected_sat_level = sat_certification_level(
+        path_obj.status,
+        path_obj.original_verification,
+    )
+    expected_class = path_obj.proof_trace_class
+    if result_data.get("sat_certification_level") != expected_sat_level:
+        return _fail("SAT certification level mismatch", "certification_metadata")
+    if result_data.get("unsat_certification_level") != expected_unsat_level:
+        return _fail("UNSAT certification level mismatch", "certification_metadata")
     if result_data.get("proof_trace_class") != expected_class:
         return _fail("proof_trace_class mismatch", "proof_trace_classification")
     if collapse_data.get("proof_trace_class") != expected_class:
@@ -331,6 +359,16 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         for k, v in sorted(path_obj.reconstructed_original_assignment.items())
     }:
         return _fail("reconstruction assignment mismatch", "reconstruction_trace")
+    expected_trace = native_unsat_trace(path_obj)
+    if proof_trace is not None:
+        if not is_supported_native_unsat_trace(proof_trace):
+            return _fail("unsupported native proof trace", "proof_trace")
+        if proof_trace != expected_trace:
+            return _fail("proof_trace.json mismatch", "proof_trace")
+        if proof_trace != result_data.get("native_proof_trace"):
+            return _fail("result native proof trace mismatch", "proof_trace")
+    elif expected_trace is not None:
+        return _fail("missing proof_trace.json", "proof_trace")
 
     replay = verify_collapse_path(original, path_obj)
     if not replay.ok:
@@ -353,6 +391,11 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
             return _fail("reconstruction replay mismatch", "reconstruction_trace")
         checks["sat_assignment"] = True
     elif path_obj.status == UNSAT:
+        if expected_unsat_level not in {UNSAT_LEVEL_EXPLICIT_EMPTY, UNSAT_LEVEL_2SAT_SCC}:
+            return _fail(
+                "UNSAT requires independently checkable contradiction or future LRAT/FRAT proof",
+                "unsat_external_certification",
+            )
         checks["unsat_contradiction"] = True
     elif path_obj.status == NO_COLLAPSE:
         checks["no_collapse_report"] = True

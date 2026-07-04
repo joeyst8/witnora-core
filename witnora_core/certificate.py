@@ -15,6 +15,25 @@ NO_COLLAPSE = "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C"
 RECONSTRUCTION_FAILURE = "RECONSTRUCTION_FAILURE"
 TIMEOUT = "TIMEOUT"
 
+SAT_LEVEL_NOT_SAT = "NOT_SAT"
+SAT_LEVEL_RECONSTRUCTED = "RECONSTRUCTED_ASSIGNMENT_VERIFIED_ORIGINAL"
+SAT_LEVEL_INDEPENDENT_RAW = "INDEPENDENT_RAW_CHECKER_VERIFIED"
+
+UNSAT_LEVEL_NOT_UNSAT = "NOT_UNSAT"
+UNSAT_LEVEL_EXPLICIT_EMPTY = "EXPLICIT_EMPTY_CLAUSE"
+UNSAT_LEVEL_2SAT_SCC = "INDEPENDENT_2SAT_SCC"
+UNSAT_LEVEL_INTERNAL_REPLAY = "INTERNAL_REPLAY_ONLY"
+UNSAT_LEVEL_EXTERNAL_STANDARD = "EXTERNAL_DRAT_LRAT_FRAT_VERIFIED"
+UNSAT_LEVEL_LRAT_FRAT_NOT_IMPLEMENTED = "LRAT_FRAT_NOT_IMPLEMENTED"
+
+PROOF_TRACE_SAT = "SAT_ASSIGNMENT_RECONSTRUCTION"
+PROOF_TRACE_UNSAT_EMPTY = "UNSAT_EXPLICIT_EMPTY_CLAUSE"
+PROOF_TRACE_UNSAT_2SAT = "UNSAT_2SAT_SCC_CONTRADICTION"
+PROOF_TRACE_UNSAT_INTERNAL = "UNSAT_INTERNAL_REPLAY_ONLY"
+PROOF_TRACE_NO_COLLAPSE = "NO_COLLAPSE_REPORT"
+
+NATIVE_UNSAT_TRACE_FORMAT = "WITNORA_NATIVE_UNSAT_TRACE_V1"
+
 
 def _normalise_assignment(assignment: dict[int, bool] | dict[str, bool]) -> dict[str, bool]:
     return {str(int(var)): bool(value) for var, value in sorted(assignment.items(), key=lambda kv: int(kv[0]))}
@@ -33,6 +52,109 @@ def _normalise_component_results(results: list[dict[str, Any]]) -> list[dict[str
             }
         )
     return normalised
+
+
+def sat_certification_level(
+    status: str,
+    original_verification: bool,
+    *,
+    independent_raw_checker_verified: bool = False,
+) -> str:
+    if status != SAT:
+        return SAT_LEVEL_NOT_SAT
+    if independent_raw_checker_verified:
+        return SAT_LEVEL_INDEPENDENT_RAW
+    if original_verification:
+        return SAT_LEVEL_RECONSTRUCTED
+    return SAT_LEVEL_NOT_SAT
+
+
+def _contains_logged_empty_clause(steps: list["CollapseStep"]) -> bool:
+    return any(clause == [] for step in steps for clause in step.added_clauses)
+
+
+def unsat_certification_level_from_steps(status: str, steps: list["CollapseStep"]) -> str:
+    if status != UNSAT:
+        return UNSAT_LEVEL_NOT_UNSAT
+    if _contains_logged_empty_clause(steps):
+        return UNSAT_LEVEL_EXPLICIT_EMPTY
+    if any(
+        step.type == "2SAT_SOLVE" and step.details.get("status") == "UNSAT"
+        for step in steps
+    ):
+        return UNSAT_LEVEL_2SAT_SCC
+    return UNSAT_LEVEL_INTERNAL_REPLAY
+
+
+def proof_trace_class_from_status(status: str, unsat_level: str) -> str:
+    if status == SAT:
+        return PROOF_TRACE_SAT
+    if status == UNSAT:
+        if unsat_level == UNSAT_LEVEL_EXPLICIT_EMPTY:
+            return PROOF_TRACE_UNSAT_EMPTY
+        if unsat_level == UNSAT_LEVEL_2SAT_SCC:
+            return PROOF_TRACE_UNSAT_2SAT
+        return PROOF_TRACE_UNSAT_INTERNAL
+    return PROOF_TRACE_NO_COLLAPSE
+
+
+def _scc_for_literal(sccs: list[list[int]], literal: int) -> list[int]:
+    for component in sccs:
+        if literal in component:
+            return list(component)
+    return []
+
+
+def native_unsat_trace_from_steps(status: str, steps: list["CollapseStep"]) -> dict[str, Any] | None:
+    level = unsat_certification_level_from_steps(status, steps)
+    if level == UNSAT_LEVEL_EXPLICIT_EMPTY:
+        for step in steps:
+            if [] not in step.added_clauses:
+                continue
+            shortened = step.details.get("shortened_clauses", [])
+            conflict_clause: list[int] = []
+            for item in shortened:
+                if item.get("to") == []:
+                    conflict_clause = list(item.get("from", []))
+                    break
+            return {
+                "proof_trace_format": NATIVE_UNSAT_TRACE_FORMAT,
+                "unsat_reason": UNSAT_LEVEL_EXPLICIT_EMPTY,
+                "steps": [
+                    {
+                        "type": "UNIT_PROPAGATION_CONFLICT",
+                        "source_step_id": step.step_id,
+                        "unit_literal": step.assigned_literals[0]
+                        if step.assigned_literals
+                        else step.details.get("assigned_literal"),
+                        "conflicting_clause": conflict_clause,
+                        "derived_empty_clause": [],
+                    }
+                ],
+                "external_standard": "NONE",
+                "lrat_frat_status": "NOT_EXPORTED",
+            }
+    if level == UNSAT_LEVEL_2SAT_SCC:
+        for step in steps:
+            if step.type != "2SAT_SOLVE" or step.details.get("status") != "UNSAT":
+                continue
+            variable = int(step.details.get("conflict_variable", 0))
+            sccs = [list(component) for component in step.details.get("sccs", [])]
+            return {
+                "proof_trace_format": NATIVE_UNSAT_TRACE_FORMAT,
+                "unsat_reason": UNSAT_LEVEL_2SAT_SCC,
+                "source_step_id": step.step_id,
+                "variable": variable,
+                "positive_literal_scc": _scc_for_literal(sccs, variable),
+                "negative_literal_scc": _scc_for_literal(sccs, -variable),
+                "implication_edges": [
+                    [int(src), int(dst)]
+                    for src, dst in step.details.get("edges", [])
+                ],
+                "external_standard": "NONE",
+                "lrat_frat_status": "NOT_EXPORTED",
+            }
+    return None
 
 
 @dataclass
@@ -106,6 +228,22 @@ class CollapsePath:
     component_results: list[dict[str, Any]] = field(default_factory=list)
     stats: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def sat_certification_level(self) -> str:
+        return sat_certification_level(self.status, self.original_verification)
+
+    @property
+    def unsat_certification_level(self) -> str:
+        return unsat_certification_level_from_steps(self.status, self.steps)
+
+    @property
+    def proof_trace_class(self) -> str:
+        return proof_trace_class_from_status(self.status, self.unsat_certification_level)
+
+    @property
+    def native_proof_trace(self) -> dict[str, Any] | None:
+        return native_unsat_trace_from_steps(self.status, self.steps)
+
     def certificate_payload(self) -> dict[str, Any]:
         return {
             "original_formula_hash": self.original_formula_hash,
@@ -118,6 +256,10 @@ class CollapsePath:
             ),
             "original_verification": self.original_verification,
             "component_results": _normalise_component_results(self.component_results),
+            "sat_certification_level": self.sat_certification_level,
+            "unsat_certification_level": self.unsat_certification_level,
+            "proof_trace_class": self.proof_trace_class,
+            "native_proof_trace": self.native_proof_trace,
         }
 
     @property
@@ -140,5 +282,9 @@ class CollapsePath:
             ),
             "original_verification": self.original_verification,
             "component_results": _normalise_component_results(self.component_results),
+            "sat_certification_level": self.sat_certification_level,
+            "unsat_certification_level": self.unsat_certification_level,
+            "proof_trace_class": self.proof_trace_class,
+            "native_proof_trace": self.native_proof_trace,
             "stats": self.stats,
         }

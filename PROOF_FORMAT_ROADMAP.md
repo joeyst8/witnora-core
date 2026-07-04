@@ -7,7 +7,11 @@ Witnora replay verifier for saved collapse paths. Witnora-Core v0.4.0 adds a
 smaller independent raw checker that avoids importing solver/collapse modules
 and recomputes supported checks from raw clauses.
 
-v0.4.0 does not implement full LRAT or FRAT output.
+Witnora-Core v0.5.0 adds precise SAT/UNSAT certification metadata and a
+Witnora-native UNSAT trace for explicit-empty-clause and independently checked
+2-SAT SCC contradictions.
+
+v0.5.0 does not implement full DRAT, LRAT, or FRAT output.
 
 ## What LRAT Is Appropriate For
 
@@ -28,18 +32,18 @@ not all plain clausal refutation steps.
 
 ## Witnora Step Classification
 
-Current v0.3 certificate bundles classify each step with
+Current certificate bundles classify each step with
 `external_proof_status`.
 
 - `UP`: checked by Witnora replay; future LRAT-compatible for UNSAT branches.
 - `PLE`: model-extension preprocessing; not a pure clausal refutation step.
 - `SUB`: checked by Witnora replay; deletion is straightforward to audit.
-- `BCE`: RAT-compatible in spirit, but v0.3 does not emit LRAT.
+- `BCE`: RAT-compatible in spirit, but v0.5 does not emit LRAT.
 - `CD`: decomposition bookkeeping; not a clausal refutation step.
 - `TREEWIDTH_SOLVE`: tractable solver boundary; not a clausal refutation step.
 - `VE`: resolution-style transformation; LRAT export is not implemented.
 - `2SAT_SOLVE`: internally checked SCC result; future UNSAT branch could emit a
-  clausal refutation, but v0.3 does not.
+  clausal refutation, but v0.5 does not.
 
 ## SAT Certificates
 
@@ -51,7 +55,7 @@ SAT certificates are not pure LRAT refutations. A SAT result is certified by:
 4. the reconstructed assignment,
 5. direct assignment verification against the original formula.
 
-This is why v0.3 uses `SAT_ASSIGNMENT_RECONSTRUCTION` as a proof trace class for
+This is why Witnora uses `SAT_ASSIGNMENT_RECONSTRUCTION` as a proof trace class for
 SAT results.
 
 ## UNSAT Certificates
@@ -62,6 +66,42 @@ independent raw checker only when replay reaches an explicit empty clause or an
 independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
+
+## v0.5 Native UNSAT Trace vs Standard SAT Proofs
+
+v0.5 introduces `WITNORA_NATIVE_UNSAT_TRACE_V1`. It is a Witnora-native trace,
+not DRAT, LRAT, or FRAT.
+
+For explicit empty-clause UNSAT, the native trace records the unit propagation
+conflict that produced the empty clause. The independent raw checker verifies
+that replay reaches an empty clause.
+
+For 2-SAT SCC UNSAT, the native trace records the conflict variable, SCC
+memberships for the positive and negative literals, and implication edges. The
+independent raw checker recomputes the implication graph and SCC contradiction
+from raw clauses.
+
+SAT results do not need an UNSAT refutation proof. They are certified through
+collapse-path replay, reconstruction, and direct assignment verification against
+the original CNF.
+
+UNSAT results eventually need DRAT/LRAT/FRAT output for SAT-community proof
+checking. v0.5 does not claim that support.
+
+Likely RAT-compatible or clausal-proof-compatible areas:
+
+- `BCE`, through blocked/RAT-style deletion reasoning.
+- Clause deletion and subsumption audit trails.
+- Variable elimination through explicit resolvent additions.
+- Unit propagation conflict to an empty clause.
+
+Steps needing special handling:
+
+- component decomposition,
+- reconstruction traces,
+- SAT assignments,
+- bounded-treewidth solve summaries,
+- non-refutational preprocessing that relies on model extension.
 
 ## v0.4 Independent Raw Checker
 
@@ -80,19 +120,23 @@ It is not formally verified and is not an independent third-party checker.
 
 ## Future Plan
 
-v0.5 should focus on an LRAT/FRAT bridge:
+v0.6/v0.7 should focus on a conservative external proof bridge:
 
-1. Map explicit UNSAT branches to DRAT/LRAT-compatible proof fragments.
-2. Add FRAT-style annotated transformation traces for preprocessing-heavy
+1. Emit DRAT for simple unit-conflict UNSAT.
+2. Emit DRAT/LRAT for VE-derived UNSAT where resolvents are explicit.
+3. Test emitted proofs with an external checker.
+4. Add FRAT-style annotated transformation traces for preprocessing-heavy
    certificates.
-3. Integrate an external checker for emitted refutation proofs.
-4. Keep SAT certificates assignment/reconstruction based.
-5. Optionally add Lean or Coq export for the structural replay layer.
+5. Keep SAT certificates assignment/reconstruction based.
+6. Only after external checker success, use
+   `EXTERNAL_DRAT_LRAT_FRAT_VERIFIED`.
+7. Optionally add Lean or Coq export for the structural replay layer.
 
 ## Forbidden Claims
 
-Witnora-Core v0.4.0 does not claim:
+Witnora-Core v0.5.0 does not claim:
 
+- DRAT support,
 - full LRAT support,
 - full FRAT support,
 - external checker validation,

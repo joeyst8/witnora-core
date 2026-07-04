@@ -97,6 +97,7 @@ def solve_2sat(formula: CNFFormula, logger: StepLogger | None = None) -> dict[st
             "conflict_variable": conflict_var,
             "num_implication_nodes": len(graph),
             "num_implication_edges": len(edges),
+            "edges": [[src, dst] for src, dst in edges],
             "sccs": components,
         }
         if logger is not None:
