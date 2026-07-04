@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.zip
+zip_base64_chunks/
+.agents/
