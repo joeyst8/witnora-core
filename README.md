@@ -1,6 +1,6 @@
-# Witnora-Core v0.9.3.1
+# Witnora-Core v0.9.4
 
-Witnora-Core v0.9.3.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata.
+Witnora-Core v0.9.4 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata; v0.9.4 adds an official CNFgen XOR diagnostic artifact runner.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
@@ -122,6 +122,27 @@ If detected-CNF XOR UNSAT is externally verified by real `drat-trim` against
 "UNSAT_DRAT_EXPORTED_VERIFIED"` with `discovery_route:
 "XOR_NATIVE_CONTRADICTION"` and `certification_level:
 "EXTERNAL_DRAT_VERIFIED"`. It is not reported as native-only.
+
+## Official CNFgen XOR Diagnostic
+
+v0.9.4 adds a reproducible diagnostic runner for official CNFgen parity,
+Tseitin, and pigeonhole instances:
+
+```bash
+python -m witnora_core.xor_diagnostic \
+  --out-root outputs/v0.9.4-official-xor-diagnostic \
+  --c-values 2 3 4 \
+  --sensitivity-max-k 4 5 6 \
+  --drat-trim path/to/drat-trim \
+  --zip witnora-core-v0.9.4-official-xor-diagnostic.zip
+```
+
+The diagnostic compares against the v0.8.4 official CNFgen matrix summary and
+reports public categories separately. It is not a competitive SAT benchmark.
+If a detected XOR contradiction is over the configured diagnostic proof cap, it
+is reported as `UNSAT_XOR_NATIVE_ONLY`; it is not counted as externally
+verified. No `UNSAT_DRAT_EXPORTED_VERIFIED` row is produced unless real
+`drat-trim` verifies `proof.drat` against `original.dimacs`.
 
 ## COMPONENTS_SOLVED
 

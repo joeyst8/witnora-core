@@ -32,9 +32,9 @@ from .verifier import verify_collapse_path
 from .xor import XorEquation, XorSystem, verify_xor_assignment
 from .xor_drat import export_xor_drat_for_path
 
-WITNORA_VERSION = "0.9.3.1"
+WITNORA_VERSION = "0.9.4"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.9.3.1"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.9.4"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 

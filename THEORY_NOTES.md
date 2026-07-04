@@ -133,3 +133,12 @@ Sidecar XOR equations do not have this status. They define a combined
 `CNF and XOR-sidecar` problem. Without first encoding those sidecar equations
 into a combined proof base, a sidecar contradiction must not be claimed as an
 original-CNF DRAT proof.
+
+## v0.9.4 Diagnostic Claim Boundary
+
+The official CNFgen XOR diagnostic is a measurement artifact, not a theorem
+upgrade. It can show that a particular instance moved from `NO_COLLAPSE_FOUND`
+to `UNSAT_XOR_NATIVE_ONLY` or to `UNSAT_DRAT_EXPORTED_VERIFIED`, but only the
+latter is externally DRAT verified against `original.dimacs`. A diagnostic
+proof-cap skip is not a hardness statement and not a DRAT failure theorem; it
+only means Witnora did not export a bounded proof under the configured cap.

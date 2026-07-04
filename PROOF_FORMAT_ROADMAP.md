@@ -405,6 +405,20 @@ Sidecar XOR equations are not necessarily implied by the original CNF. They
 define a combined input problem. v0.9.3 does not claim original-CNF DRAT for
 sidecar-only XOR contradictions.
 
+### v0.9.4 Official CNFgen XOR Diagnostic
+
+v0.9.4 adds an artifact runner for official CNFgen pigeonhole, Tseitin, and
+parity diagnostics with XOR detection enabled. This runner does not add solver
+logic or broaden XOR extraction. It records the v0.8.4 baseline summary, the
+v0.9.4 public categories, XOR detection counts, DRAT verification status, and
+any diagnostic proof-cap skips.
+
+The diagnostic is intentionally conservative: larger detected XOR
+contradictions may remain `UNSAT_XOR_NATIVE_ONLY` if the bounded XOR-to-DRAT
+bridge is over the configured diagnostic cap. These rows are not counted as
+externally verified UNSAT. `UNSAT_DRAT_EXPORTED_VERIFIED` is reported only when
+real `drat-trim` verifies `proof.drat` against `original.dimacs`.
+
 Likely RAT-compatible or clausal-proof-compatible areas:
 
 - `BCE`, through blocked/RAT-style deletion reasoning.
