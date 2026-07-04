@@ -2,9 +2,12 @@
 
 ## Scope
 
-Witnora-Core v0.3.0 adds a proof-carrying certificate bundle and standalone
-verifier for replaying saved collapse paths. It does not implement full LRAT or
-FRAT output.
+Witnora-Core v0.3.0 added a proof-carrying certificate bundle and standalone
+Witnora replay verifier for saved collapse paths. Witnora-Core v0.4.0 adds a
+smaller independent raw checker that avoids importing solver/collapse modules
+and recomputes supported checks from raw clauses.
+
+v0.4.0 does not implement full LRAT or FRAT output.
 
 ## What LRAT Is Appropriate For
 
@@ -53,27 +56,48 @@ SAT results.
 
 ## UNSAT Certificates
 
-UNSAT certificates in v0.3 are certified by internal replay of transformations
-and a final contradiction or 2-SAT SCC conflict. This is represented as
-`UNSAT_INTERNAL_REPLAY`.
+UNSAT certificates in v0.3 were certified by internal replay of transformations
+and a final contradiction or 2-SAT SCC conflict. v0.4 accepts UNSAT in the
+independent raw checker only when replay reaches an explicit empty clause or an
+independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
+## v0.4 Independent Raw Checker
+
+The independent raw checker:
+
+- parses DIMACS without using Witnora CNF classes,
+- recomputes canonical clause sets and formula hashes,
+- independently checks BCE resolvents,
+- independently checks VE resolvents and width caps,
+- independently checks component splits through the incidence graph,
+- independently checks SAT assignments for 2-SAT steps,
+- independently checks 2-SAT UNSAT through SCCs,
+- verifies reconstructed SAT assignments against the original formula.
+
+It is not formally verified and is not an independent third-party checker.
+
 ## Future Plan
 
-1. Add DRAT/LRAT export for supported UNSAT branches.
+v0.5 should focus on an LRAT/FRAT bridge:
+
+1. Map explicit UNSAT branches to DRAT/LRAT-compatible proof fragments.
 2. Add FRAT-style annotated transformation traces for preprocessing-heavy
    certificates.
 3. Integrate an external checker for emitted refutation proofs.
-4. Optionally add Lean or Coq export for the structural replay layer.
+4. Keep SAT certificates assignment/reconstruction based.
+5. Optionally add Lean or Coq export for the structural replay layer.
 
 ## Forbidden Claims
 
-Witnora-Core v0.3.0 does not claim:
+Witnora-Core v0.4.0 does not claim:
 
 - full LRAT support,
 - full FRAT support,
 - external checker validation,
+- independent third-party proof checking,
+- general UNSAT certification,
 - P = NP,
 - industrial SAT solver competitiveness,
 - hardness of no-collapse formulas.

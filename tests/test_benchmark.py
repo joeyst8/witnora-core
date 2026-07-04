@@ -26,7 +26,7 @@ class BenchmarkTest(unittest.TestCase):
         data = run_synthetic_benchmark(2, timestamp="TEST_TIMESTAMP")
         self.assertIn("per_case_results", data)
         self.assertIn("summary", data)
-        self.assertEqual(data["version"], "0.3.0")
+        self.assertEqual(data["version"], "0.4.0")
         self.assertEqual(data["c_parameter"], 2)
         self.assertEqual(data["scale"], "small")
         self.assertGreaterEqual(data["summary"]["total_cases"], 8)

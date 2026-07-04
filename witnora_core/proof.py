@@ -13,9 +13,9 @@ from .dimacs import export_dimacs, parse_dimacs
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
 
-WITNORA_VERSION = "0.3.0"
+WITNORA_VERSION = "0.4.0"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.3.0"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.4.0"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -46,6 +46,19 @@ def external_proof_status(step_type: str) -> str:
     if step_type in {"PLE", "CD", "TREEWIDTH_SOLVE"}:
         return "NOT_A_CLAUSAL_REFUTATION_STEP"
     return "CHECKED_BY_WITNORA_REPLAY"
+
+
+def unsat_certification_level(path: CollapsePath) -> str:
+    if path.status != UNSAT:
+        return "LRAT_FRAT_NOT_IMPLEMENTED"
+    if any(clause == [] for step in path.steps for clause in step.added_clauses):
+        return "EXPLICIT_EMPTY_CLAUSE"
+    if any(
+        step.type == "2SAT_SOLVE" and step.details.get("status") == "UNSAT"
+        for step in path.steps
+    ):
+        return "INDEPENDENT_2SAT_SCC"
+    return "INTERNAL_REPLAY_ONLY"
 
 
 def _normalise_stats(stats: dict[str, Any]) -> dict[str, Any]:
@@ -135,6 +148,12 @@ def _manifest(
         "c_parameter": path.c_parameter,
         "created_by": "witnora_core.runner",
         "forbidden_claims_absent": True,
+        "verification_levels": {
+            "witnora_replay_verifier": True,
+            "independent_raw_checker": True,
+            "external_lrat_frat": False,
+        },
+        "unsat_certification_level": unsat_certification_level(path),
         "files": {
             name: {"sha256": sha256_text(content)}
             for name, content in sorted(files.items())

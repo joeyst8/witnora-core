@@ -1,6 +1,6 @@
-# Witnora-Core v0.3.0
+# Witnora-Core v0.4.0
 
-Witnora-Core v0.3.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.4.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -162,7 +162,7 @@ The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
 
 ## Proof-Carrying Certificates
 
-Witnora-Core v0.3.0 adds portable certificate bundles. A certificate can be
+Witnora-Core v0.3.0 added portable certificate bundles. A certificate can be
 exported as either a `.wcert` directory or a single `.wcert.json` file.
 
 Export a certificate:
@@ -172,11 +172,18 @@ python -m witnora_core.runner examples/bce_demo.dimacs --c 2 --export-cert out.w
 python -m witnora_core.runner examples/bce_demo.dimacs --c 2 --export-cert out.wcert.json
 ```
 
-Verify a saved certificate without rerunning collapse search:
+Verify a saved certificate with the Witnora replay verifier:
 
 ```bash
 python -m witnora_core.verify_certificate out.wcert
 python -m witnora_core.verify_certificate out.wcert.json
+```
+
+Verify a saved certificate with the smaller independent raw checker:
+
+```bash
+python -m witnora_core.independent_check out.wcert
+python -m witnora_core.independent_check out.wcert.json
 ```
 
 A `.wcert` directory contains:
@@ -192,12 +199,20 @@ A `.wcert` directory contains:
 - `certificate_hash.txt`
 - `verifier_version.txt`
 
-The verifier checks file hashes, the deterministic certificate hash, formula
-hashes, collapse-path replay, component decomposition replay, reconstruction
-trace consistency, SAT assignment verification, and UNSAT contradictions.
+The Witnora replay verifier checks file hashes, the deterministic certificate
+hash, formula hashes, collapse-path replay, component decomposition replay,
+reconstruction trace consistency, SAT assignment verification, and UNSAT
+contradictions.
 
-The standalone verifier may reuse low-level checking utilities, but it does not
-call the solver runner or rediscover a collapse path.
+The independent raw checker in `witnora_core.independent_check` avoids importing
+solver/collapse modules. It reparses DIMACS, canonicalizes raw clauses, replays
+UP, PLE, SUB, BCE, VE, component decomposition, and 2-SAT checks from scratch,
+and verifies SAT assignments against the original CNF. Publication-facing
+claims should rely on the independent raw checker where possible.
+
+UNSAT is independently accepted only when replay reaches an explicit empty
+clause or when a 2-SAT SCC contradiction is independently checked. Other UNSAT
+forms remain internal-replay only until LRAT/FRAT proof export exists.
 
 ## proof_trace_class
 
@@ -213,7 +228,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.3.0 does not claim full
+This classification is deliberately conservative. v0.4.0 does not claim full
 LRAT or FRAT support, and SAT certificates remain assignment/reconstruction
 certificates rather than clausal refutations.
 
@@ -313,6 +328,15 @@ Expected pass markers include:
 - `ASSIGNMENT_TAMPER_REJECT_PASS`
 - `CERT_DETERMINISM_PASS`
 - `BENCHMARK_CERT_EXPORT_PASS`
+- `INDEPENDENT_CERT_SAT_PASS`
+- `INDEPENDENT_CERT_COMPONENTS_PASS`
+- `INDEPENDENT_CERT_UNSAT_EXPLICIT_PASS`
+- `INDEPENDENT_BCE_CHECK_PASS`
+- `INDEPENDENT_VE_CHECK_PASS`
+- `INDEPENDENT_COMPONENT_CHECK_PASS`
+- `INDEPENDENT_2SAT_CHECK_PASS`
+- `INDEPENDENT_TAMPER_REJECT_PASS`
+- `INDEPENDENT_UNSAT_LIMITATION_PASS`
 - adversarial markers from `tests/test_adversarial_correctness.py`
 
 ## Run Examples
