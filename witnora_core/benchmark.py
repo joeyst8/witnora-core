@@ -29,7 +29,7 @@ from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.7.1"
+VERSION = "0.8.0"
 
 WIDTH_FOUND = "FOUND"
 WIDTH_NOT_FOUND = "NOT_FOUND"
@@ -698,11 +698,17 @@ def write_csv(data: dict[str, Any], path: str | Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Witnora-Core benchmark runner")
     parser.add_argument("--suite", choices=["synthetic"], help="benchmark suite to run")
+    parser.add_argument("--public-suite", choices=["cnfgen-small"], help="public benchmark suite to run")
     parser.add_argument("--dimacs-dir", help="directory containing .cnf or .dimacs files")
     parser.add_argument("--c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--out", help="write JSON output to this path")
     parser.add_argument("--csv", dest="csv_path", help="write per-case CSV output to this path")
+    parser.add_argument("--report", help="write Markdown benchmark report to this path")
     parser.add_argument("--export-certs", help="write one .wcert certificate per benchmark case")
+    parser.add_argument("--drat-trim", help="optional drat-trim executable path for public UNSAT proof checking")
+    parser.add_argument("--strict-unsat-external", action="store_true")
+    parser.add_argument("--timeout-seconds", type=float, default=300.0)
+    parser.add_argument("--max-instances", type=int)
     parser.add_argument(
         "--scale",
         choices=["small", "medium"],
@@ -718,8 +724,49 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if bool(args.suite) == bool(args.dimacs_dir):
-        parser.error("provide exactly one of --suite synthetic or --dimacs-dir")
+    selected = [bool(args.suite), bool(args.public_suite), bool(args.dimacs_dir)]
+    if sum(1 for item in selected if item) != 1:
+        parser.error("provide exactly one of --suite synthetic, --public-suite, or --dimacs-dir")
+
+    public_mode = bool(args.public_suite) or bool(args.dimacs_dir)
+    if public_mode and not args.suite:
+        from .public_benchmarks import (
+            dimacs_dir_cases as public_dimacs_dir_cases,
+            generate_public_markdown_report,
+            public_suite_cases,
+            run_public_benchmark,
+            write_public_csv,
+        )
+
+        if args.public_suite:
+            cases = public_suite_cases(args.public_suite, max_instances=args.max_instances)
+        else:
+            cases = public_dimacs_dir_cases(
+                args.dimacs_dir,
+                source_suite="dimacs-dir",
+                max_instances=args.max_instances,
+            )
+        data = run_public_benchmark(
+            cases,
+            args.c_parameter,
+            timeout_seconds=args.timeout_seconds,
+            max_width_search_vars=args.max_width_search_vars,
+            strict_unsat_external=args.strict_unsat_external,
+            drat_trim_path=args.drat_trim,
+            export_certs_dir=args.export_certs,
+        )
+        payload = json.dumps(data, indent=2, sort_keys=True)
+        if args.out:
+            Path(args.out).write_text(payload + "\n", encoding="utf-8")
+        else:
+            print(payload)
+        if args.csv_path:
+            write_public_csv(data, args.csv_path)
+        if args.report:
+            Path(args.report).write_text(generate_public_markdown_report(data), encoding="utf-8")
+        if args.strict_unsat_external and not data.get("strict_unsat_external_pass", False):
+            return 2
+        return 0
 
     if args.suite == "synthetic":
         data = run_synthetic_benchmark(

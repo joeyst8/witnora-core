@@ -165,9 +165,19 @@ def build_2sat_scc_proof(
             continue
         pos_to_neg = _path_edges(pos_to_neg_nodes, sources)
         neg_to_pos = _path_edges(neg_to_pos_nodes, sources)
-        derived = _derive_path_clauses(pos_to_neg) + _derive_path_clauses(neg_to_pos)
-        expected_units = {_canonical_clause((-var,)), _canonical_clause((var,))}
-        if set(derived[-2:]) != expected_units:
+        pos_derived = _derive_path_clauses(pos_to_neg)
+        neg_derived = _derive_path_clauses(neg_to_pos)
+        if not pos_derived or not neg_derived:
+            raise ValueError("2-SAT SCC paths did not derive clauses")
+        if pos_derived[-1] != _canonical_clause((-var,)):
+            raise ValueError("positive-to-negative SCC path did not derive negative unit")
+        if neg_derived[-1] != _canonical_clause((var,)):
+            raise ValueError("negative-to-positive SCC path did not derive positive unit")
+        derived = pos_derived + neg_derived
+        if set((pos_derived[-1], neg_derived[-1])) != {
+            _canonical_clause((-var,)),
+            _canonical_clause((var,)),
+        }:
             raise ValueError("2-SAT SCC paths did not derive complementary units")
         return TwoSatSCCProof(
             variable=var,

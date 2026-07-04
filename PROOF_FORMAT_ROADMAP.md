@@ -29,6 +29,11 @@ deriving the empty clause. Witnora-Core v0.7.1 adds pre-benchmark real
 `drat-trim` smoke coverage for subsumption, pure literal elimination, and
 multi-component UNSAT certificates.
 
+Witnora-Core v0.8.0 adds the public benchmark evaluation harness. Public
+benchmark reports use strict categories that separate SAT assignment-verified
+results, externally verified UNSAT results, unverified/native UNSAT results,
+unsupported DRAT exports, no-collapse cases, timeouts, and errors.
+
 ## What LRAT Is Appropriate For
 
 LRAT is appropriate for checkable UNSAT/refutation proof workflows. It extends
@@ -84,9 +89,9 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.7.1 End-to-End RUP-Subset DRAT Bridge
+## v0.8.0 End-to-End RUP-Subset DRAT Bridge
 
-v0.7.1 exports `proof.drat` only for supported UNSAT paths whose proof
+v0.8.0 exports `proof.drat` only for supported UNSAT paths whose proof
 additions are accepted by Witnora's internal RUP-subset checker starting from
 the original CNF clause database. It also writes `drat_status.json`.
 
@@ -143,17 +148,17 @@ Unsupported or final-state-only paths are marked:
 }
 ```
 
-Unsupported in v0.7.1:
+Unsupported in v0.8.0:
 
 - full RAT checking,
 - LRAT export,
 - FRAT export,
 - claims of external verification unless an external checker actually ran.
 
-The checker is named:
+The v0.8.0 checker string is:
 
 ```text
-witnora_internal_rup_subset_checker_v0.7.1
+witnora_internal_rup_subset_checker_v0.8.0
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -204,18 +209,44 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.7.1 only claims DRAT-style proof export for supported
+proof checking. v0.8.0 only claims DRAT-style proof export for supported
 end-to-end RUP-checkable UNSAT paths, including supported 2-SAT SCC
 contradictions. External verification is claimed only if `drat-trim` or another
 recorded external checker actually ran and passed.
 
-Before public benchmarks, UNSAT result categories must distinguish successful
+For public benchmarks, UNSAT result categories must distinguish successful
 external proof checking from native-only or internally checked certificates.
-v0.7.1 adds a benchmark guard helper that classifies an UNSAT result as
+v0.8.0 classifies an UNSAT result as
 `UNSAT_DRAT_EXPORTED_VERIFIED` only when real `drat-trim` ran and accepted the
-exported `proof.drat`; otherwise the guard reports
-`UNSAT_NOT_EXTERNALLY_VERIFIED` or raises in strict mode. Public benchmark
-claims should count UNSAT as externally certified only in the first category.
+exported `proof.drat`. If Witnora reports UNSAT but `drat-trim` was not run or
+did not accept the proof, the category is `UNSAT_NOT_EXTERNALLY_VERIFIED`. If
+Witnora reports UNSAT but cannot export a supported end-to-end proof for that
+path, the category is `UNSUPPORTED_DRAT`. Public benchmark claims should count
+UNSAT as externally certified only in the first category.
+
+With `--strict-unsat-external`, the benchmark records
+`strict_unsat_external_pass: false` and the CLI exits nonzero when any UNSAT
+case is not externally verified. This is a reporting guard, not a solver
+feature.
+
+## v0.8.0 Public Benchmark Reporting
+
+The public benchmark harness supports a small in-repo `cnfgen-small` pilot
+suite and user-provided DIMACS directories for SATLIB or SAT Competition
+subsets. Unit tests do not download large public datasets. Public benchmark
+reports assign every case exactly one category:
+
+- `SAT_ASSIGNMENT_VERIFIED`
+- `UNSAT_DRAT_EXPORTED_VERIFIED`
+- `UNSAT_NOT_EXTERNALLY_VERIFIED`
+- `UNSUPPORTED_DRAT`
+- `NO_COLLAPSE_FOUND`
+- `TIMEOUT`
+- `ERROR`
+
+`NO_COLLAPSE_FOUND` is not a hardness claim. `UNSAT_NOT_EXTERNALLY_VERIFIED`
+and `UNSUPPORTED_DRAT` must not be counted as externally certified UNSAT.
+Timeout and error cases are reported separately and are not partial results.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -263,7 +294,7 @@ The next proof-format milestones should keep the bridge conservative:
 
 ## Forbidden Claims
 
-Witnora-Core v0.7.1 does not claim:
+Witnora-Core v0.8.0 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,
