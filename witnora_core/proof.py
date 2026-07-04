@@ -22,13 +22,14 @@ from .certificate import (
 )
 from .cnf import CNFFormula, formula_satisfied
 from .dimacs import export_dimacs, parse_dimacs
+from .drat import DRATExport, export_drat_for_path
 from .proof_trace import is_supported_native_unsat_trace, native_unsat_trace
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
 
-WITNORA_VERSION = "0.5.1"
+WITNORA_VERSION = "0.6.0"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.5.1"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.6.0"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -114,6 +115,7 @@ def _bundle_files(
     original_formula: CNFFormula,
     path: CollapsePath,
     original_dimacs_text: str,
+    drat_export: DRATExport | None = None,
 ) -> dict[str, str]:
     result = _result_without_timing(path)
     files = {
@@ -130,6 +132,10 @@ def _bundle_files(
     trace = native_unsat_trace(path)
     if trace is not None:
         files["proof_trace.json"] = stable_json(trace)
+    if drat_export is not None:
+        files["drat_status.json"] = stable_json(drat_export.status)
+        if drat_export.proof_text is not None and drat_export.status.get("drat_export_status") == "EXPORTED":
+            files["proof.drat"] = drat_export.proof_text
     return files
 
 
@@ -137,7 +143,11 @@ def _manifest(
     original_formula: CNFFormula,
     path: CollapsePath,
     files: dict[str, str],
+    drat_export: DRATExport | None = None,
 ) -> dict[str, Any]:
+    drat_status = drat_export.status if drat_export is not None else {
+        "drat_export_status": "NOT_REQUESTED",
+    }
     return {
         "witnora_version": WITNORA_VERSION,
         "certificate_format_version": CERTIFICATE_FORMAT_VERSION,
@@ -159,6 +169,8 @@ def _manifest(
         "proof_trace_class": path.proof_trace_class,
         "external_lrat_frat": False,
         "native_unsat_trace_scope": "END_TO_END_WITH_COLLAPSE_REPLAY",
+        "external_drat": bool(drat_status.get("drat_export_status") == "EXPORTED"),
+        "drat_export_status": drat_status.get("drat_export_status"),
         "files": {
             name: {"sha256": sha256_text(content)}
             for name, content in sorted(files.items())
@@ -172,13 +184,15 @@ def export_certificate_bundle(
     output_path: str | Path,
     *,
     original_dimacs_text: str | None = None,
+    export_drat: bool = False,
 ) -> Path:
     """Write a deterministic .wcert directory or .wcert.json certificate."""
 
     output = Path(output_path)
     original_text = original_dimacs_text or export_dimacs(original_formula)
-    files = _bundle_files(original_formula, path, original_text)
-    manifest = _manifest(original_formula, path, files)
+    drat_export = export_drat_for_path(original_formula, path) if export_drat else None
+    files = _bundle_files(original_formula, path, original_text, drat_export)
+    manifest = _manifest(original_formula, path, files, drat_export)
     manifest_text = stable_json(manifest)
 
     if output.suffix == ".json":

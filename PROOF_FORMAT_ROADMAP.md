@@ -13,7 +13,9 @@ Witnora-native UNSAT trace for explicit-empty-clause and independently checked
 native UNSAT traces are checked only against the final state obtained by
 independent replay of the collapse path from the original formula.
 
-v0.5.1 does not implement DRAT, LRAT, or FRAT output.
+Witnora-Core v0.6.0 adds a minimal DRAT-style bridge for supported
+RUP-checkable UNSAT paths. It does not implement full DRAT/RAT checking, LRAT,
+or FRAT output.
 
 ## What LRAT Is Appropriate For
 
@@ -69,6 +71,36 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
+## v0.6 Minimal DRAT Bridge
+
+v0.6 exports `proof.drat` only for supported UNSAT paths whose proof additions
+are accepted by Witnora's internal RUP-subset checker. It also writes
+`drat_status.json`.
+
+Supported proof lines:
+
+- RUP additions for UP-shortened clauses,
+- an empty-clause addition for explicit unit conflicts,
+- RUP additions for VE-generated resolvents,
+- deletion lines for BCE, PLE, subsumption, and VE clause removals.
+
+Unsupported in v0.6:
+
+- conversion of arbitrary 2-SAT SCC contradictions to DRAT,
+- full RAT checking,
+- LRAT export,
+- FRAT export,
+- claims of external verification unless an external checker actually ran.
+
+The checker is named:
+
+```text
+witnora_internal_rup_subset_checker_v0.6
+```
+
+It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
+or a formally verified proof checker.
+
 ## v0.5.1 Native UNSAT Trace vs Standard SAT Proofs
 
 v0.5 introduces `WITNORA_NATIVE_UNSAT_TRACE_V1`. v0.5.1 makes the dependency
@@ -100,9 +132,10 @@ SAT results do not need an UNSAT refutation proof. They are certified through
 collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
-UNSAT results eventually need DRAT/LRAT/FRAT output for SAT-community proof
-checking. v0.5.1 does not claim that support and does not claim certified UNSAT
-in the SAT-community proof-format sense.
+UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
+proof checking. v0.6.0 only claims DRAT-style proof export for supported
+RUP-checkable UNSAT paths. External verification is claimed only if an external
+checker actually ran and passed.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -136,11 +169,11 @@ It is not formally verified and is not an independent third-party checker.
 
 ## Future Plan
 
-v0.6/v0.7 should focus on a conservative external proof bridge:
+v0.7 should focus on a conservative external proof bridge:
 
-1. Emit DRAT for simple unit-conflict UNSAT.
-2. Emit DRAT/LRAT for VE-derived UNSAT where resolvents are explicit.
-3. Test emitted proofs with an external checker.
+1. Improve DRAT coverage while keeping internal proof checking honest.
+2. Test emitted proofs with `drat-trim` or another external checker.
+3. Add LRAT for supported DRAT/RUP fragments after external validation.
 4. Add FRAT-style annotated transformation traces for preprocessing-heavy
    certificates.
 5. Keep SAT certificates assignment/reconstruction based.
@@ -150,12 +183,12 @@ v0.6/v0.7 should focus on a conservative external proof bridge:
 
 ## Forbidden Claims
 
-Witnora-Core v0.5.1 does not claim:
+Witnora-Core v0.6.0 does not claim:
 
-- DRAT support,
+- full DRAT/RAT support,
 - full LRAT support,
 - full FRAT support,
-- external checker validation,
+- external checker validation unless an external checker actually ran,
 - independent third-party proof checking,
 - general SAT-community UNSAT certification,
 - standalone native UNSAT proofs,

@@ -1,6 +1,6 @@
-# Witnora-Core v0.5.1
+# Witnora-Core v0.6.0
 
-Witnora-Core v0.5.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.6.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -167,7 +167,8 @@ independent raw checker. v0.5.0 cleaned up SAT/UNSAT certification metadata and
 added a Witnora-native UNSAT trace for supported explicit-empty-clause and
 2-SAT-SCC contradictions. v0.5.1 hardens the UNSAT path dependency: a native
 UNSAT trace is checked only after the independent raw checker replays the full
-collapse path from `original.dimacs`.
+collapse path from `original.dimacs`. v0.6.0 adds a minimal DRAT-style bridge
+for supported RUP-checkable UNSAT paths.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -204,6 +205,8 @@ A `.wcert` directory contains:
 - `component_results.json`
 - `stats.json`
 - `proof_trace.json`, only for supported native UNSAT traces
+- `proof.drat`, only when `--export-drat` succeeds for a supported UNSAT path
+- `drat_status.json`, when `--export-drat` is requested
 - `certificate_hash.txt`
 - `verifier_version.txt`
 
@@ -222,6 +225,41 @@ UNSAT is independently accepted only when independent replay from the original
 formula reaches an explicit empty clause or when a 2-SAT SCC contradiction is
 independently checked in the replayed final state. Other UNSAT forms remain
 internal-replay only until DRAT/LRAT/FRAT proof export exists.
+
+## Minimal DRAT Bridge
+
+v0.6.0 can export a DRAT-style proof for supported RUP-checkable UNSAT paths:
+
+```bash
+python -m witnora_core.runner examples/unsat_demo.dimacs --c 2 --export-cert out.wcert --export-drat
+python -m witnora_core.drat_check out.wcert/original.dimacs out.wcert/proof.drat
+```
+
+The bridge is intentionally narrow. It supports:
+
+- explicit unit-propagation conflict to an empty clause,
+- UP-shortened clauses that are RUP-checkable,
+- PLE, subsumption, and BCE clause deletion lines,
+- VE resolvent additions when the logged resolvents exactly match recomputation,
+- VE deletions after resolvent additions,
+- final explicit empty clause.
+
+It does not implement full DRAT/RAT checking. The included checker is an
+internal RUP-subset checker:
+
+```json
+{
+  "checker": "witnora_internal_rup_subset_checker_v0.6"
+}
+```
+
+2-SAT SCC contradictions are not converted to DRAT in v0.6.0; they remain
+native-only and are marked `UNSUPPORTED` in `drat_status.json`.
+
+`drat_status.json` records whether `proof.drat` was exported, whether the
+internal RUP-subset checker verified it, and whether an optional external
+checker was run. External verification is `false` unless an external checker is
+actually provided and succeeds.
 
 ## Certification Metadata
 
@@ -266,7 +304,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.5.1 does not claim full
+This classification is deliberately conservative. v0.6.0 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 
@@ -304,6 +342,10 @@ confirms the replayed final state contains an empty clause. For 2-SAT SCC UNSAT
 it recomputes the implication graph and SCC contradiction from raw clauses. This
 native trace is not DRAT, LRAT, or FRAT and does not replace standard UNSAT
 proof formats.
+
+When `proof.drat` is exported, it is an additional bridge artifact. Native
+certificate verification remains required and still replays the collapse path
+from the original formula.
 
 See [PROOF_FORMAT_ROADMAP.md](PROOF_FORMAT_ROADMAP.md).
 
@@ -419,6 +461,12 @@ Expected pass markers include:
 - `NATIVE_UNSAT_TRACE_TAMPER_REJECT_PASS`
 - `PROOF_TRACE_CERT_BUNDLE_PASS`
 - `NO_FALSE_LRAT_FRAT_CLAIM_PASS`
+- `DRAT_EXPORT_EMPTY_CONFLICT_PASS`
+- `DRAT_EXPORT_VE_UNSAT_PASS`
+- `DRAT_UNSUPPORTED_2SAT_SCC_PASS`
+- `DRAT_TAMPER_REJECT_PASS`
+- `DRAT_STATUS_NO_FALSE_CLAIM_PASS`
+- `DRAT_CERT_BUNDLE_PASS`
 - `UNSAT_REJECTS_FAKE_BCE_EVEN_WITH_VALID_FINAL_TRACE_PASS`
 - `UNSAT_REJECTS_MISSING_VE_RESOLVENT_EVEN_WITH_VALID_FINAL_TRACE_PASS`
 - `UNSAT_REJECTS_FAKE_2SAT_SCC_TRACE_PASS`

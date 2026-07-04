@@ -414,6 +414,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("dimacs", help="path to DIMACS CNF input")
     parser.add_argument("--c", "-c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--export-cert", help="write .wcert directory or .wcert.json certificate")
+    parser.add_argument(
+        "--export-drat",
+        action="store_true",
+        help="with --export-cert, add proof.drat for supported UNSAT paths",
+    )
     args = parser.parse_args(argv)
     dimacs_path = Path(args.dimacs)
     original_text = dimacs_path.read_text(encoding="utf-8")
@@ -425,6 +430,7 @@ def main(argv: list[str] | None = None) -> int:
             path,
             args.export_cert,
             original_dimacs_text=original_text,
+            export_drat=args.export_drat,
         )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0
