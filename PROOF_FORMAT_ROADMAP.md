@@ -21,7 +21,8 @@ output. Witnora-Core v0.6.2 adds an optional `drat-trim` adapter and records
 external DRAT verification only when the provided checker process actually runs
 and accepts the exported proof. Witnora-Core v0.6.3 adds skipped-unless-present
 real `drat-trim` smoke tests for exported unit-conflict, VE-derived, and
-BCE+VE-derived UNSAT proofs.
+BCE+VE-derived UNSAT proofs. Witnora-Core v0.6.4 records these smoke examples
+passing with a real `drat-trim` binary built from the upstream source.
 
 ## What LRAT Is Appropriate For
 
@@ -77,9 +78,9 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.6.3 End-to-End RUP-Subset DRAT Bridge
+## v0.6.4 End-to-End RUP-Subset DRAT Bridge
 
-v0.6.3 exports `proof.drat` only for supported UNSAT paths whose proof
+v0.6.4 exports `proof.drat` only for supported UNSAT paths whose proof
 additions are accepted by Witnora's internal RUP-subset checker starting from
 the original CNF clause database. It also writes `drat_status.json`.
 
@@ -133,7 +134,7 @@ Unsupported or final-state-only paths are marked:
 }
 ```
 
-Unsupported in v0.6.3:
+Unsupported in v0.6.4:
 
 - conversion of arbitrary 2-SAT SCC contradictions to DRAT,
 - full RAT checking,
@@ -144,7 +145,7 @@ Unsupported in v0.6.3:
 The checker is named:
 
 ```text
-witnora_internal_rup_subset_checker_v0.6.3
+witnora_internal_rup_subset_checker_v0.6.4
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -195,7 +196,7 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.6.3 only claims DRAT-style proof export for supported
+proof checking. v0.6.4 only claims DRAT-style proof export for supported
 end-to-end RUP-checkable UNSAT paths. External verification is claimed only if
 `drat-trim` or another recorded external checker actually ran and passed.
 
@@ -245,7 +246,7 @@ v0.7 should focus on a conservative external proof bridge:
 
 ## Forbidden Claims
 
-Witnora-Core v0.6.3 does not claim:
+Witnora-Core v0.6.4 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

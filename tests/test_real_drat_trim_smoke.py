@@ -117,6 +117,25 @@ class RealDRATTrimSmokeTest(unittest.TestCase):
         self.assert_real_external_verified(status)
         print("REAL_DRAT_TRIM_BCE_VE_UNSAT_PASS")
 
+    def test_real_drat_trim_status_recording(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, result, status = export_with_real_drat_trim(
+                Path(tmp),
+                "unit_unsat",
+                [[1], [-1]],
+                1,
+                real_drat_trim_path(),
+            )
+        self.assertEqual(code, 0)
+        self.assertEqual(result["status"], "UNSAT")
+        self.assertEqual(status["external_checker"], "DRAT_TRIM")
+        self.assertTrue(status["external_checker_ran"])
+        self.assertTrue(status["external_checker_verified"])
+        self.assertEqual(status["external_checker_exit_code"], 0)
+        self.assertIn("VERIFIED", status["external_checker_stdout_excerpt"])
+        self.assertEqual(status["external_checker_stderr_excerpt"], "")
+        print("REAL_DRAT_TRIM_STATUS_RECORDING_PASS")
+
 
 if __name__ == "__main__":
     unittest.main()
