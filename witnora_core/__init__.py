@@ -1,4 +1,4 @@
-"""Witnora-Core v0.9.2 certified collapse-path engine."""
+"""Witnora-Core v0.9.3 certified collapse-path engine."""
 
 from .cnf import CNFFormula, Clause, Literal
 from .families import make_blocked_clique_collapse_family

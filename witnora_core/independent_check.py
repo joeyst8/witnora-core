@@ -13,9 +13,9 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.9.2"
+CHECKER = "independent_raw_checker_v0.9.3"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
-DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.2"
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.3"
 DRAT_CHECKED_AGAINST = "original.dimacs"
 DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
@@ -878,8 +878,14 @@ def _unsat_certification_level_raw(
     status: str,
     replay_checks: dict[str, Any] | None = None,
     collapse_path: list[dict[str, Any]] | None = None,
+    result_data: dict[str, Any] | None = None,
 ) -> str:
     if status == "UNSAT_XOR_NATIVE":
+        if (
+            result_data is not None
+            and result_data.get("xor_data", {}).get("xor_status", {}).get("external_drat") is True
+        ):
+            return UNSAT_LEVEL_EXTERNAL_STANDARD
         return UNSAT_LEVEL_XOR_NATIVE
     if status != "UNSAT":
         return UNSAT_LEVEL_NOT_UNSAT
@@ -921,7 +927,7 @@ def _metadata_consistent_raw(
 ) -> tuple[bool, str | None]:
     status = result_data.get("status")
     collapse_path = result_data.get("collapse_path", [])
-    expected_unsat = _unsat_certification_level_raw(status, replay_checks, collapse_path)
+    expected_unsat = _unsat_certification_level_raw(status, replay_checks, collapse_path, result_data)
     expected_sat = _sat_certification_level_raw(result_data)
     expected_class = _proof_trace_class_raw(status, expected_unsat)
     for key, expected in [
@@ -1063,6 +1069,14 @@ def _xor_equations_from_data_raw(xor_data: dict[str, Any]) -> list[tuple[tuple[i
     return [
         _canonical_xor_equation_raw(equation)
         for equation in xor_data.get("xor_system", {}).get("equations", [])
+    ]
+
+
+def _detected_xor_equations_from_data_raw(xor_data: dict[str, Any]) -> list[tuple[tuple[int, ...], int]]:
+    return [
+        _canonical_xor_equation_raw(equation)
+        for equation in xor_data.get("xor_system", {}).get("equations", [])
+        if equation.get("source") == "detected_cnf_pattern"
     ]
 
 
@@ -1325,7 +1339,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.9.2", "proof_trace")
+        return _fail("external_lrat_frat must remain false in v0.9.3", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
@@ -1400,6 +1414,15 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
                 return _fail(f"invalid {file_name}: {exc}", "xor_certificate")
             if loaded != result_data["xor_data"].get(key, {}):
                 return _fail(f"{file_name} differs from result.json", "xor_certificate")
+        if "xor_drat_status" in result_data["xor_data"]:
+            if "xor_drat_status.json" not in files:
+                return _fail("missing xor_drat_status.json", "xor_certificate")
+            try:
+                loaded_xor_drat = json.loads(files["xor_drat_status.json"])
+            except Exception as exc:
+                return _fail(f"invalid xor_drat_status.json: {exc}", "xor_certificate")
+            if loaded_xor_drat != result_data["xor_data"].get("xor_drat_status", {}):
+                return _fail("xor_drat_status.json differs from result.json", "xor_certificate")
         xor_ok, xor_error = _verify_xor_detected_equations_raw(result_data["xor_data"], original)
         if not xor_ok:
             return _fail(xor_error or "detected XOR certificate metadata mismatch", "xor_certificate")
@@ -1512,11 +1535,33 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         xor_status = xor_data.get("xor_status", {})
         if xor_status.get("xor_status") != "UNSAT":
             return _fail("XOR-native UNSAT missing XOR contradiction status", "xor_certificate")
-        if xor_status.get("external_drat") is not False or xor_status.get("drat_claim") != "NOT_EXPORTED":
-            return _fail("XOR-native UNSAT falsely claims DRAT support", "xor_certificate")
         if not _xor_native_unsat_verified_raw(xor_data, original):
             return _fail("XOR-native contradiction not verified by raw GF(2) checker", "xor_certificate")
-        checks["xor_native_unsat_not_drat"] = True
+        if xor_status.get("external_drat") is True:
+            xor_drat_status = xor_data.get("xor_drat_status", {})
+            if xor_drat_status.get("xor_drat_status") != "VERIFIED":
+                return _fail("XOR DRAT status is not VERIFIED", "xor_certificate")
+            if xor_status.get("drat_claim") != "EXPORTED_VERIFIED":
+                return _fail("XOR DRAT claim is not EXPORTED_VERIFIED", "xor_certificate")
+            if xor_status.get("proof_base") != "original_cnf":
+                return _fail("XOR original-CNF DRAT claim has wrong proof base", "xor_certificate")
+            if xor_status.get("source") != "detected_cnf_pattern":
+                return _fail("XOR original-CNF DRAT claim must come from detected CNF patterns", "xor_certificate")
+            if _solve_xor_equations_raw(_detected_xor_equations_from_data_raw(xor_data)) != "UNSAT":
+                return _fail("detected CNF XOR equations alone do not prove contradiction", "xor_certificate")
+            if drat_status is None or "proof.drat" not in files:
+                return _fail("XOR DRAT claim missing proof.drat or drat_status.json", "drat")
+            if drat_status.get("drat_export_status") != "EXPORTED":
+                return _fail("XOR DRAT claim without exported DRAT status", "drat")
+            if drat_status.get("external_checker") != "DRAT_TRIM":
+                return _fail("XOR DRAT claim must record DRAT_TRIM", "drat")
+            if drat_status.get("external_checker_ran") is not True or drat_status.get("external_checker_verified") is not True:
+                return _fail("XOR DRAT claim without recorded external verification", "drat")
+            checks["xor_drat_exported_verified"] = True
+        else:
+            if xor_status.get("drat_claim") not in {"NOT_EXPORTED", "FAILED"}:
+                return _fail("XOR-native UNSAT falsely claims DRAT support", "xor_certificate")
+            checks["xor_native_unsat_not_drat"] = True
     else:
         return _fail(f"unsupported status {status}", "status")
     return {

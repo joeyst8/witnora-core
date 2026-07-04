@@ -11,7 +11,7 @@ from .cnf import CNFFormula, Clause
 from .dimacs import parse_dimacs
 from .drat_trim import run_drat_trim
 
-CHECKER = "witnora_internal_rup_subset_checker_v0.9.2"
+CHECKER = "witnora_internal_rup_subset_checker_v0.9.3"
 CHECKED_AGAINST = "original.dimacs"
 
 ClauseTuple = tuple[int, ...]

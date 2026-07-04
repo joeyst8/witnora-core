@@ -53,6 +53,14 @@ Sidecar XOR equations define the combined input problem `CNF and XOR`; detected
 CNF patterns are implied constraints. XOR UNSAT is native-only in v0.9.2 and is
 not exported as DRAT, LRAT, or FRAT.
 
+Witnora-Core v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR
+contradictions. The bridge may claim original-CNF DRAT only when the exact XOR
+source clauses are already present in `original.dimacs`, the generated proof is
+internally RUP-subset checked, and real `drat-trim` accepts `proof.drat`
+against `original.dimacs`. Sidecar XOR contradictions remain native-only for
+the original CNF unless a future combined proof base is explicitly encoded and
+checked.
+
 ## What LRAT Is Appropriate For
 
 LRAT is appropriate for checkable UNSAT/refutation proof workflows. It extends
@@ -87,7 +95,8 @@ Current certificate bundles classify each step with
   by the empty clause.
 - `XOR`: v0.9 sidecar or exact-pattern affine reasoning. SAT is checked by
   assignment verification against CNF and XOR equations. XOR UNSAT is native
-  only and not a clausal DRAT/LRAT/FRAT refutation in v0.9.2.
+  only unless the v0.9.3 bounded detected-CNF XOR-to-DRAT bridge produces a
+  proof accepted by real `drat-trim` against `original.dimacs`.
 
 ## SAT Certificates
 
@@ -180,7 +189,7 @@ Unsupported in v0.9.1:
 The v0.9.1 checker string is:
 
 ```text
-witnora_internal_rup_subset_checker_v0.9.2
+witnora_internal_rup_subset_checker_v0.9.3
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -317,9 +326,9 @@ It is not new solver logic, not a hardness oracle, and not evidence that larger
 formulas are hard. Claims about specific formulas such as `php_4_3` are treated
 as hypotheses to test against the actual CNF encoding and primal graph.
 
-## v0.9.2 Explicit XOR / Affine Prototype
+## v0.9.3 Explicit XOR / Affine Prototype
 
-The v0.9.2 XOR route is intentionally conservative. It supports:
+The v0.9.3 XOR route is intentionally conservative. It supports:
 
 - explicit sidecar equations of the form `xor 1 2 3 = 0`,
 - exact two-variable equality and disequality CNF patterns,
@@ -328,20 +337,23 @@ The v0.9.2 XOR route is intentionally conservative. It supports:
 - exact k-variable full CNF parity encodings up to `--detect-xor-max-k`,
   default `k <= 6`,
 - Gaussian elimination over GF(2) with deterministic free-variable assignment.
+- bounded XOR-to-DRAT export for detected-CNF XOR contradictions when real
+  `drat-trim` verifies the proof against `original.dimacs`.
 
 It does not support:
 
 - broad heuristic XOR extraction,
 - CryptoMiniSat-style XOR discovery,
 - arbitrary large or over-cap CNF-to-XOR recovery,
-- DRAT/LRAT/FRAT export for XOR UNSAT.
+- DRAT/LRAT/FRAT export for sidecar-only XOR UNSAT as an original-CNF claim,
+- full or heuristic XOR DRAT export.
 
 For SAT, the certificate model is still assignment based: the reconstructed
 assignment must satisfy the original CNF and every XOR equation. Certificate
 bundles include `xor_system.json`, `xor_trace.json`, and `xor_status.json` when
 XOR reasoning is used.
 
-Detected CNF XOR patterns are used as implied constraints only. v0.9.2 records
+Detected CNF XOR patterns are used as implied constraints only. v0.9.3 records
 `detection_mode: "IMPLIED_CONSTRAINT_ONLY"`,
 `source_clauses_removed: false`, the exact source clauses, extra clauses
 touching the same variables, `exact_full_encoding: true`, and `safe_use: true`.
@@ -354,11 +366,14 @@ original CNF, exactly equal the full forbidden-assignment encoding for the
 claimed k-variable XOR relation, did not claim clause removal, and list the
 extra touching clauses deterministically.
 
-For UNSAT, v0.9.2 reports `UNSAT_XOR_NATIVE` and benchmark/public reporting
-maps this to `UNSAT_XOR_NATIVE_NOT_DRAT`. This category is not externally
-DRAT-certified and must not be counted with `UNSAT_DRAT_EXPORTED_VERIFIED`.
-Future DRAT/LRAT/FRAT work would need a separate sound proof bridge for the
-affine contradiction.
+For UNSAT, v0.9.3 reports `UNSAT_XOR_NATIVE` first. If the bounded detected-CNF
+XOR-to-DRAT bridge is disabled, over cap, unsupported, fails, or real
+`drat-trim` is unavailable, benchmark/public reporting maps this to
+`UNSAT_XOR_NATIVE_NOT_DRAT`. If the bridge verifies with real `drat-trim`
+against `original.dimacs`, metadata records `xor_drat_status: "VERIFIED"`,
+`proof_base: "original_cnf"`, and `drat_claim: "EXPORTED_VERIFIED"`.
+Sidecar XOR contradictions define `CNF and XOR-sidecar`; they do not prove the
+original CNF is UNSAT.
 
 ### XOR Exact Pattern Soundness
 
@@ -369,6 +384,19 @@ assignment. Therefore the conjunction of the source clauses is equivalent to
 the XOR equation on `V`. Adding the detected XOR equation as an implied
 constraint while retaining the source clauses is satisfiability-preserving for
 SAT witnesses.
+
+### Bounded XOR-to-DRAT Bridge Soundness
+
+For detected-CNF XOR equations whose exact full CNF encodings are present in
+the original formula, v0.9.3 may use Gaussian elimination to identify an
+inconsistent detected subsystem and then build a bounded resolution/RUP proof
+from the detected source clauses. Gaussian elimination is only a proof guide.
+The proof claim is accepted only if the generated `proof.drat` is checked
+internally and real `drat-trim` verifies it against `original.dimacs`.
+
+Sidecar XOR equations are not necessarily implied by the original CNF. They
+define a combined input problem. v0.9.3 does not claim original-CNF DRAT for
+sidecar-only XOR contradictions.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -416,7 +444,7 @@ The next proof-format milestones should keep the bridge conservative:
 
 ## Forbidden Claims
 
-Witnora-Core v0.9.2 does not claim:
+Witnora-Core v0.9.3 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

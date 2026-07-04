@@ -1,6 +1,6 @@
-# Witnora-Core v0.9.2
+# Witnora-Core v0.9.3
 
-Witnora-Core v0.9.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.2 extends the conservative explicit XOR/affine prototype with exact k-variable full-CNF XOR pattern detection.
+Witnora-Core v0.9.3 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
@@ -30,7 +30,7 @@ Component decomposition uses the incidence graph. Bounded-width reasoning uses t
 
 ## Explicit XOR / Affine Prototype
 
-v0.9.2 adds a conservative XOR route over GF(2). It supports explicit sidecar
+v0.9.3 adds a conservative XOR route over GF(2). It supports explicit sidecar
 equations and exact full-CNF XOR patterns only; it is not a CryptoMiniSat-style XOR
 extractor and does not claim to detect arbitrary algebraic structure hidden in
 CNF.
@@ -48,6 +48,7 @@ Run with:
 python -m witnora_core.runner input.dimacs --xor input.xor --c 2
 python -m witnora_core.runner input.dimacs --detect-xor --c 2
 python -m witnora_core.runner input.dimacs --detect-xor --detect-xor-max-k 6 --c 2
+python -m witnora_core.runner input.dimacs --detect-xor --export-cert out.wcert --export-drat --xor-drat --drat-trim path/to/drat-trim --c 2
 ```
 
 Sidecar XOR equations define the combined problem `CNF and XOR`; they are not
@@ -72,7 +73,7 @@ The default exact pattern cap is `k <= 6`. Witnora groups only by the exact
 variable set appearing in full-width clauses. It does not search arbitrary
 subsets and does not perform heuristic XOR mining.
 
-Detected pattern clauses are left in the CNF in v0.9.2. XOR equations are used
+Detected pattern clauses are left in the CNF in v0.9.3. XOR equations are used
 as additional implied constraints, not as replacements for CNF clauses. Any SAT
 result must still verify the original CNF and all XOR equations.
 
@@ -88,7 +89,7 @@ Every detected XOR equation records:
 Extra clauses touching the same variables are allowed only because the source
 CNF remains in force and final SAT assignments are checked against the original
 CNF. If local equivalence/replacement is added in a future release, it needs a
-separate explicit proof; v0.9.2 does not remove or replace XOR source clauses.
+separate explicit proof; v0.9.3 does not remove or replace XOR source clauses.
 
 XOR-aware results may use:
 
@@ -96,9 +97,18 @@ XOR-aware results may use:
 - `final_class: "CNF_XOR_COMBINED"`,
 - `status: "UNSAT_XOR_NATIVE"` with `final_class: "XOR_UNSAT_NATIVE"`.
 
-XOR-native UNSAT is not DRAT-certified in v0.9.2. Public benchmark/reporting
-code classifies it as `UNSAT_XOR_NATIVE_NOT_DRAT`, not as
-`UNSAT_DRAT_EXPORTED_VERIFIED`.
+XOR-native UNSAT is native-only unless the bounded XOR-to-DRAT bridge succeeds.
+v0.9.3 can export a DRAT/RUP proof for detected-CNF XOR contradictions only
+when the exact source clauses are already present in `original.dimacs` and real
+`drat-trim` verifies `proof.drat` against that original CNF. In that case
+metadata records `xor_drat_status: "VERIFIED"`, `proof_base: "original_cnf"`,
+and `drat_claim: "EXPORTED_VERIFIED"`.
+
+If the bridge is disabled, over cap, fails, or real `drat-trim` is unavailable,
+the result remains native-only and public reporting must classify it as
+`UNSAT_XOR_NATIVE_NOT_DRAT`. Sidecar XOR contradictions define the combined
+problem `CNF and XOR-sidecar`; v0.9.3 does not claim original-CNF DRAT for
+sidecar-only contradictions.
 
 ## COMPONENTS_SOLVED
 
@@ -384,6 +394,8 @@ pattern detection as a prototype affine route. v0.9.1 hardens exact pattern
 metadata and independent checking for extra-clause and malformed-pattern cases.
 v0.9.2 extends exact CNF XOR detection to full k-variable parity encodings up
 to a configurable cap, default `k <= 6`, while retaining all source clauses.
+v0.9.3 adds bounded XOR-to-DRAT export for detected-CNF XOR contradictions
+only when real `drat-trim` verifies the proof against `original.dimacs`.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -484,7 +496,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.9.2",
+  "checker": "witnora_internal_rup_subset_checker_v0.9.3",
   "checked_against": "original.dimacs"
 }
 ```

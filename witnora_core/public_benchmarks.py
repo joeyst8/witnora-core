@@ -488,6 +488,15 @@ def _category_for_result(
     if status == NO_COLLAPSE:
         return NO_COLLAPSE_FOUND
     if status == XOR_UNSAT_NATIVE:
+        if (
+            drat_status is not None
+            and drat_status.get("drat_export_status") == "EXPORTED"
+            and drat_status.get("external_checker") == "DRAT_TRIM"
+            and drat_status.get("external_checker_ran") is True
+            and drat_status.get("external_checker_verified") is True
+            and drat_status.get("proof_base") == "original_cnf"
+        ):
+            return UNSAT_DRAT_EXPORTED_VERIFIED
         return UNSAT_XOR_NATIVE_NOT_DRAT
     if status != UNSAT:
         return ERROR

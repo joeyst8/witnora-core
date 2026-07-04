@@ -262,6 +262,12 @@ class CollapsePath:
 
     @property
     def unsat_certification_level(self) -> str:
+        if (
+            self.status == XOR_UNSAT_NATIVE
+            and self.xor_data is not None
+            and self.xor_data.get("xor_status", {}).get("external_drat") is True
+        ):
+            return UNSAT_LEVEL_EXTERNAL_STANDARD
         return unsat_certification_level_from_steps(self.status, self.steps)
 
     @property

@@ -87,7 +87,7 @@ Therefore the conjunction of all forbidden-assignment clauses is satisfied
 exactly by the assignments whose parity is `b`. It is equivalent, on the
 variables `V`, to the XOR equation.
 
-Witnora-Core v0.9.2 uses this fact conservatively. When it detects that a set
+Witnora-Core v0.9.3 uses this fact conservatively. When it detects that a set
 of CNF clauses exactly equals the full forbidden-assignment encoding for an XOR
 equation, it may add that equation as an implied constraint while retaining the
 source clauses in the CNF. This is satisfiability-preserving for SAT witnesses:
@@ -97,5 +97,31 @@ detected XOR equations.
 This is not heuristic XOR mining and not a CryptoMiniSat-style extractor.
 Sidecar XOR equations have a different status: they define a combined
 `CNF and XOR` input problem and are not claimed to be implied by the CNF alone.
-XOR-native UNSAT remains native-only in v0.9.2 and is not claimed as DRAT,
-LRAT, or FRAT certified.
+XOR-native UNSAT remains native-only unless a separate proof bridge verifies.
+v0.9.3 adds such a bridge only for detected-CNF XOR contradictions whose source
+clauses are already present in the original CNF.
+
+## Bounded XOR-to-DRAT Bridge Soundness
+
+For detected-CNF XOR equations, the exact source clauses are part of the
+original formula. If those detected XOR equations are inconsistent, Witnora may
+use Gaussian elimination to guide a bounded resolution/RUP proof construction
+from those source clauses.
+
+Gaussian elimination is not treated as the certification authority. A DRAT
+claim is accepted only when:
+
+- the proof base is `original.dimacs`,
+- every claimed XOR equation used by the bridge came from detected CNF source
+  clauses already present in the original formula,
+- the generated `proof.drat` passes Witnora's internal RUP-subset checker, and
+- real `drat-trim` verifies `proof.drat` against `original.dimacs`.
+
+If any of these checks fails, or if the proof exceeds the configured width or
+proof-size cap, Witnora falls back to native XOR UNSAT and does not claim DRAT
+verification.
+
+Sidecar XOR equations do not have this status. They define a combined
+`CNF and XOR-sidecar` problem. Without first encoding those sidecar equations
+into a combined proof base, a sidecar contradiction must not be claimed as an
+original-CNF DRAT proof.

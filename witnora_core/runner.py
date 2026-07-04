@@ -605,6 +605,23 @@ def main(argv: list[str] | None = None) -> int:
         help="with --export-cert, add proof.drat for supported UNSAT paths",
     )
     parser.add_argument(
+        "--xor-drat",
+        action="store_true",
+        help="with --export-cert and --export-drat, attempt bounded XOR-to-DRAT export for detected-CNF XOR UNSAT",
+    )
+    parser.add_argument(
+        "--xor-drat-max-row-width",
+        type=int,
+        default=8,
+        help="maximum detected XOR row width for XOR-to-DRAT export",
+    )
+    parser.add_argument(
+        "--xor-drat-max-proof-clauses",
+        type=int,
+        default=50000,
+        help="maximum generated clauses for XOR-to-DRAT export",
+    )
+    parser.add_argument(
         "--drat-trim",
         help="optional drat-trim executable path for external proof.drat verification",
     )
@@ -630,6 +647,9 @@ def main(argv: list[str] | None = None) -> int:
             original_dimacs_text=original_text,
             export_drat=args.export_drat,
             drat_trim_path=args.drat_trim,
+            export_xor_drat=args.xor_drat,
+            xor_drat_max_row_width=args.xor_drat_max_row_width,
+            xor_drat_max_proof_clauses=args.xor_drat_max_proof_clauses,
         )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0
