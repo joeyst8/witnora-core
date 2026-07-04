@@ -125,7 +125,7 @@ class DRATBridgeTest(unittest.TestCase):
             (cert / "proof.drat").write_text("1 0\n", encoding="utf-8")
             checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
         self.assertFalse(checked["verified"])
-        self.assertEqual(checked["checker"], "witnora_internal_rup_subset_checker_v0.8.1")
+        self.assertEqual(checked["checker"], "witnora_internal_rup_subset_checker_v0.8.2")
         print("DRAT_TAMPER_REJECT_PASS")
 
     def test_drat_status_no_false_claim(self):

@@ -5,10 +5,13 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import gzip
 import json
 import multiprocessing
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import tempfile
 import time
 import traceback
@@ -38,6 +41,19 @@ UNSUPPORTED_DRAT = "UNSUPPORTED_DRAT"
 NO_COLLAPSE_FOUND = "NO_COLLAPSE_FOUND"
 TIMEOUT = "TIMEOUT"
 ERROR = "ERROR"
+
+SOURCE_OFFICIAL_CNFGEN = "OFFICIAL_CNFGEN"
+SOURCE_SATLIB_DIRECTORY = "SATLIB_DIRECTORY"
+SOURCE_SATCOMP_DIRECTORY = "SATCOMP_DIRECTORY"
+SOURCE_BUILT_IN_DEMO = "BUILT_IN_DEMO"
+
+SUITE_RUN = "RUN"
+SUITE_NOT_RUN = "NOT_RUN"
+REASON_OFFICIAL_CNFGEN_NOT_AVAILABLE = "OFFICIAL_CNFGEN_NOT_AVAILABLE"
+REASON_SATLIB_DIRECTORY_NOT_PROVIDED = "SATLIB_DIRECTORY_NOT_PROVIDED"
+REASON_SATCOMP_DIRECTORY_NOT_PROVIDED = "SATCOMP_DIRECTORY_NOT_PROVIDED"
+REASON_DIMACS_DIRECTORY_NOT_FOUND = "DIMACS_DIRECTORY_NOT_FOUND"
+REASON_NO_SUPPORTED_CNFGEN_COMMANDS_SUCCEEDED = "NO_SUPPORTED_CNFGEN_COMMANDS_SUCCEEDED"
 
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
@@ -97,6 +113,9 @@ class PublicBenchmarkCase:
     dimacs_text: str
     source: str
     notes: str = ""
+    source_type: str = SOURCE_BUILT_IN_DEMO
+    generation_command: str = ""
+    dimacs_source_path: str = ""
 
     def to_payload(self) -> dict[str, str]:
         return {
@@ -106,6 +125,9 @@ class PublicBenchmarkCase:
             "dimacs_text": self.dimacs_text,
             "source": self.source,
             "notes": self.notes,
+            "source_type": self.source_type,
+            "generation_command": self.generation_command,
+            "dimacs_source_path": self.dimacs_source_path,
         }
 
     def to_dict(self) -> dict[str, str]:
@@ -140,7 +162,7 @@ def _parity_pair_formula(name: str, rhs: int) -> tuple[str, CNFFormula]:
 
 
 def cnfgen_small_cases() -> list[PublicBenchmarkCase]:
-    """Small crafted CNFgen-style suite without requiring network or cnfgen."""
+    """Small built-in demo suite without requiring network or cnfgen."""
 
     formulas: list[tuple[str, str, CNFFormula, str]] = [
         ("php_2_1", "pigeonhole", _pigeonhole_formula(2, 1), "crafted pigeonhole"),
@@ -162,19 +184,19 @@ def cnfgen_small_cases() -> list[PublicBenchmarkCase]:
                 source_suite="cnfgen-small",
                 family=family,
                 dimacs_text=_formula_to_dimacs(formula),
-                source="generated:cnfgen_style_internal",
-                notes=notes,
+                source="generated:built_in_demo",
+                notes=notes + "; built into Witnora for harness validation only",
+                source_type=SOURCE_BUILT_IN_DEMO,
             )
         )
     return cases
 
 
-def cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
-    """Larger public-style crafted suite for v0.8.1 artifact runs.
+def demo_cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
+    """Larger built-in demo suite for harness validation.
 
-    These are generated in-repo when the external CNFgen package is unavailable.
-    They should be reported as public-style generated formulas, not as an
-    official CNFgen release dataset.
+    This is not official CNFgen output and must not be presented as external
+    benchmark evidence.
     """
 
     formulas: list[tuple[str, str, CNFFormula, str]] = []
@@ -185,7 +207,7 @@ def cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
                 f"php_{pigeons}_{holes}",
                 "pigeonhole",
                 _pigeonhole_formula(pigeons, holes),
-                "public-style pigeonhole; generated internally because cnfgen is unavailable",
+                "built-in demo pigeonhole; harness validation only",
             )
         )
     for n in [5, 8, 12, 16, 20]:
@@ -194,7 +216,7 @@ def cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
                 f"blocked_clique_n{n}",
                 "blocked_clique",
                 blocked_clique_collapse_family(n),
-                "public-style blocked clique collapse family",
+                "built-in demo blocked clique collapse family; harness validation only",
             )
         )
     for n in [5, 7, 9]:
@@ -203,7 +225,7 @@ def cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
                 f"bounded_chain_n{n}",
                 "bounded_treewidth_chain",
                 bounded_treewidth_chain_family(n),
-                "public-style bounded-treewidth chain",
+                "built-in demo bounded-treewidth chain; harness validation only",
             )
         )
     for n_vars, n_clauses, seed in [(8, 24, 13), (12, 42, 17), (16, 64, 19)]:
@@ -212,39 +234,155 @@ def cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
                 f"random_3sat_v{n_vars}_c{n_clauses}_s{seed}",
                 "random_3sat",
                 random_3sat_family(n_vars, n_clauses, seed),
-                "deterministic public-style random 3-SAT no-collapse probe",
+                "built-in demo deterministic random 3-SAT no-collapse probe",
             )
         )
     for name, rhs in [("parity_equal_pair", 0), ("parity_unequal_pair", 1)]:
         _unused_name, formula = _parity_pair_formula(name, rhs)
-        formulas.append((name, "parity", formula, "public-style two-variable parity encoding"))
+        formulas.append((name, "parity", formula, "built-in demo two-variable parity encoding"))
 
     cases: list[PublicBenchmarkCase] = []
     for name, family, formula, notes in formulas:
         cases.append(
             PublicBenchmarkCase(
                 instance_name=name,
-                source_suite="cnfgen-artifact",
+                source_suite="demo-cnfgen-artifact",
                 family=family,
                 dimacs_text=_formula_to_dimacs(formula),
-                source="generated:cnfgen_style_internal_v0.8.1",
-                notes=notes,
+                source="generated:built_in_demo_v0.8.2",
+                notes=notes + "; this suite is built into Witnora and is for harness validation only",
+                source_type=SOURCE_BUILT_IN_DEMO,
             )
         )
     return cases
+
+
+def find_cnfgen_cli(provided_path: str | Path | None = None) -> str | None:
+    if provided_path is not None:
+        candidate = Path(provided_path)
+        return str(candidate) if candidate.is_file() else None
+    return shutil.which("cnfgen")
+
+
+def official_cnfgen_install_instructions() -> str:
+    return (
+        "Official CNFgen CLI was not found. Install it with `pip install cnfgen` "
+        "or from the official CNFgen source, then rerun with --public-suite cnfgen-official."
+    )
+
+
+def _run_cnfgen_command(command: list[str], output_path: Path) -> tuple[bool, str, str]:
+    proc = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return False, proc.stdout, proc.stderr
+    output_path.write_text(proc.stdout, encoding="utf-8")
+    return True, proc.stdout, proc.stderr
+
+
+def official_cnfgen_cases(
+    generated_dimacs_dir: str | Path,
+    *,
+    cnfgen_path: str | Path | None = None,
+    max_instances: int | None = None,
+) -> tuple[list[PublicBenchmarkCase], dict[str, Any]]:
+    """Generate deterministic formulas with an official CNFgen CLI if present.
+
+    The command surface of CNFgen can vary by installed version. v0.8.2 uses
+    conservative command attempts and records every command in the manifest. It
+    does not silently fall back to built-in demo formulas.
+    """
+
+    cli = find_cnfgen_cli(cnfgen_path)
+    manifest: dict[str, Any] = {
+        "suite_name": "cnfgen-official",
+        "suite_source_type": SOURCE_OFFICIAL_CNFGEN,
+        "suite_status": SUITE_NOT_RUN,
+        "not_run_reason": REASON_OFFICIAL_CNFGEN_NOT_AVAILABLE,
+        "cnfgen_path": cli,
+        "generation_commands": [],
+        "dimacs_source_paths": [],
+        "selected_instances": [],
+        "instructions": official_cnfgen_install_instructions(),
+    }
+    if cli is None:
+        return [], manifest
+
+    out_dir = Path(generated_dimacs_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    requested: list[tuple[str, str, list[str]]] = []
+    for pigeons in range(3, 11):
+        holes = pigeons - 1
+        name = f"php_{pigeons}_{holes}"
+        requested.append((name, "pigeonhole", [cli, "php", str(pigeons), str(holes)]))
+
+    cases: list[PublicBenchmarkCase] = []
+    failures: list[dict[str, str]] = []
+    for name, family, command in requested:
+        if max_instances is not None and len(cases) >= max_instances:
+            break
+        output_path = out_dir / f"{name}.cnf"
+        ok, stdout, stderr = _run_cnfgen_command(command, output_path)
+        command_text = " ".join(command)
+        manifest["generation_commands"].append(command_text)
+        if not ok:
+            failures.append(
+                {
+                    "instance_name": name,
+                    "command": command_text,
+                    "stdout_excerpt": stdout[:500],
+                    "stderr_excerpt": stderr[:500],
+                }
+            )
+            continue
+        dimacs_text = output_path.read_text(encoding="utf-8")
+        cases.append(
+            PublicBenchmarkCase(
+                instance_name=name,
+                source_suite="cnfgen-official",
+                family=family,
+                dimacs_text=dimacs_text,
+                source=str(output_path),
+                notes="official CNFgen CLI output",
+                source_type=SOURCE_OFFICIAL_CNFGEN,
+                generation_command=command_text,
+                dimacs_source_path=str(output_path),
+            )
+        )
+        manifest["dimacs_source_paths"].append(str(output_path))
+        manifest["selected_instances"].append(name)
+
+    if cases:
+        manifest["suite_status"] = SUITE_RUN
+        manifest["not_run_reason"] = None
+        manifest["instance_count"] = len(cases)
+    else:
+        manifest["not_run_reason"] = REASON_NO_SUPPORTED_CNFGEN_COMMANDS_SUCCEEDED
+        manifest["instance_count"] = 0
+    manifest["generation_failures"] = failures
+    return cases, manifest
 
 
 def dimacs_dir_cases(
     dimacs_dir: str | Path,
     *,
     source_suite: str = "dimacs-dir",
+    source_type: str = "DIMACS_DIRECTORY",
     max_instances: int | None = None,
 ) -> list[PublicBenchmarkCase]:
     root = Path(dimacs_dir)
     paths = sorted(
         path
-        for path in root.iterdir()
-        if path.is_file() and path.suffix.lower() in {".cnf", ".dimacs"}
+        for path in root.rglob("*")
+        if path.is_file()
+        and (
+            path.suffix.lower() in {".cnf", ".dimacs"}
+            or path.name.lower().endswith((".cnf.gz", ".dimacs.gz"))
+        )
     )
     if max_instances is not None:
         paths = paths[:max_instances]
@@ -253,21 +391,80 @@ def dimacs_dir_cases(
             instance_name=path.stem,
             source_suite=source_suite,
             family="dimacs",
-            dimacs_text=path.read_text(encoding="utf-8"),
+            dimacs_text=read_dimacs_text(path),
             source=str(path),
             notes="user-provided public DIMACS directory",
+            source_type=source_type,
+            dimacs_source_path=str(path),
         )
         for path in paths
     ]
 
 
+def read_dimacs_text(path: str | Path) -> str:
+    source = Path(path)
+    if source.name.lower().endswith(".gz"):
+        with gzip.open(source, "rt", encoding="utf-8") as handle:
+            return handle.read()
+    return source.read_text(encoding="utf-8")
+
+
+def selected_dimacs_paths(dimacs_dir: str | Path, max_instances: int | None = None) -> list[Path]:
+    root = Path(dimacs_dir)
+    paths = sorted(
+        path
+        for path in root.rglob("*")
+        if path.is_file()
+        and (
+            path.suffix.lower() in {".cnf", ".dimacs"}
+            or path.name.lower().endswith((".cnf.gz", ".dimacs.gz"))
+        )
+    )
+    return paths[:max_instances] if max_instances is not None else paths
+
+
+def missing_suite_data(
+    suite_name: str,
+    reason: str,
+    source_type: str,
+    c: int,
+    *,
+    timeout_seconds: float = 300.0,
+    max_width_search_vars: int = 28,
+    strict_unsat_external: bool = True,
+    drat_trim_path: str | Path | None = None,
+    message: str = "",
+) -> dict[str, Any]:
+    summary = summarize_public_results([])
+    return {
+        "version": "0.8.2",
+        "benchmark_kind": "public",
+        "suite_name": suite_name,
+        "suite_source_type": source_type,
+        "suite_status": SUITE_NOT_RUN,
+        "not_run_reason": reason,
+        "not_run_message": message,
+        "c_parameter": c,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timeout_seconds": timeout_seconds,
+        "max_width_search_vars": max_width_search_vars,
+        "strict_unsat_external": strict_unsat_external,
+        "drat_trim_path": str(drat_trim_path) if drat_trim_path is not None else "",
+        "strict_unsat_external_pass": True,
+        "strict_unsat_external_failures": [],
+        "cases": [],
+        "per_case_results": [],
+        "summary": summary,
+    }
+
+
 def public_suite_cases(name: str, *, max_instances: int | None = None) -> list[PublicBenchmarkCase]:
     if name == "cnfgen-small":
         cases = cnfgen_small_cases()
-    elif name == "cnfgen-artifact":
-        cases = cnfgen_artifact_cases()
+    elif name == "demo-cnfgen-artifact":
+        cases = demo_cnfgen_artifact_cases()
     else:
-        raise ValueError("supported public suites: cnfgen-small, cnfgen-artifact")
+        raise ValueError("supported public suites: cnfgen-small, demo-cnfgen-artifact")
     return cases[:max_instances] if max_instances is not None else cases
 
 
@@ -563,6 +760,10 @@ def run_public_benchmark(
     drat_trim_path: str | Path | None = None,
     export_certs_dir: str | Path | None = None,
     timestamp: str | None = None,
+    suite_name: str = "public",
+    suite_source_type: str = "",
+    suite_status: str = SUITE_RUN,
+    not_run_reason: str | None = None,
 ) -> dict[str, Any]:
     case_list = list(cases)
     cert_root = Path(export_certs_dir) if export_certs_dir is not None else None
@@ -582,8 +783,12 @@ def run_public_benchmark(
     ]
     summary = summarize_public_results(results)
     data = {
-        "version": "0.8.1",
+        "version": "0.8.2",
         "benchmark_kind": "public",
+        "suite_name": suite_name,
+        "suite_source_type": suite_source_type,
+        "suite_status": suite_status,
+        "not_run_reason": not_run_reason,
         "c_parameter": c,
         "timestamp": timestamp or datetime.now(timezone.utc).isoformat(),
         "timeout_seconds": timeout_seconds,
@@ -630,7 +835,13 @@ def generate_public_markdown_report(data: dict[str, Any]) -> str:
     lines = ["# Witnora Public Benchmark Report", ""]
     lines.append("## Benchmark Source Description")
     suites = sorted({str(result.get("source_suite", "")) for result in results})
-    lines.append("Suites: " + ", ".join(suites))
+    lines.append("Suites: " + (", ".join(suites) if suites else str(data.get("suite_name", ""))))
+    lines.append(f"Suite source type: {data.get('suite_source_type', '')}")
+    lines.append(f"Suite status: {data.get('suite_status', SUITE_RUN)}")
+    if data.get("suite_status") == SUITE_NOT_RUN:
+        lines.append(f"NOT_RUN reason: {data.get('not_run_reason', '')}")
+        if data.get("not_run_message"):
+            lines.append(str(data.get("not_run_message")))
     lines.append("")
     lines.append("## Configuration")
     lines.extend(

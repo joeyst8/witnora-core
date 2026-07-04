@@ -1,6 +1,6 @@
-# Witnora-Core v0.8.1
+# Witnora-Core v0.8.2
 
-Witnora-Core v0.8.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.8.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -162,34 +162,48 @@ The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
 
 ## Public Benchmark Evaluation
 
-v0.8.1 includes the public benchmark harness and artifact writer for
-reproducible pilot runs. It supports:
+v0.8.2 includes official public benchmark integration and artifact writing. It
+supports:
 
-- `--public-suite cnfgen-small`, a small in-repo crafted CNFgen-style suite,
-- `--public-suite cnfgen-artifact`, a larger in-repo public-style artifact suite,
+- `--public-suite cnfgen-official`, using an official `cnfgen` CLI on PATH,
+- `--public-suite satlib --dimacs-dir path/to/satlib_subset`,
+- `--public-suite satcomp --dimacs-dir path/to/satcomp_subset`,
+- `--public-suite demo-cnfgen-artifact`, a built-in demo suite for harness validation only,
+- `--public-suite cnfgen-small`, a small built-in demo suite for unit tests,
 - `--dimacs-dir path/to/satlib_subset` for user-provided SATLIB CNFs,
 - `--dimacs-dir path/to/satcomp_subset` for user-provided SAT Competition CNFs.
 
+The built-in demo suites are not official benchmark evidence. Reports label
+them with `suite_source_type: BUILT_IN_DEMO` and must say they are built into
+Witnora for harness validation only.
+
+Official CNFgen is not bundled. If `cnfgen` is missing, v0.8.2 reports
+`suite_status: NOT_RUN` and `not_run_reason: OFFICIAL_CNFGEN_NOT_AVAILABLE`
+instead of silently falling back to built-in formulas. Install official CNFgen
+with:
+
+```bash
+pip install cnfgen
+```
+
 SATLIB and SAT Competition inputs are not bundled. Download or unpack public
-DIMACS CNFs separately, then point `--dimacs-dir` at a selected subset. CNFgen
-itself is not required for the built-in `cnfgen-small` pilot; if you want
-external CNFgen formulas, generate DIMACS files with CNFgen and benchmark the
-directory.
+DIMACS CNFs separately, then point `--dimacs-dir` at a selected subset.
 
 Example public benchmark commands:
 
 ```bash
-python -m witnora_core.benchmark --public-suite cnfgen-small --c 2 --out results.json --csv results.csv --report REPORT.md --export-certs certs/ --strict-unsat-external --drat-trim path/to/drat-trim
-python -m witnora_core.benchmark --public-suite cnfgen-artifact --c 2 --out results.json --csv results.csv --report REPORT.md --export-certs certs/ --strict-unsat-external --drat-trim path/to/drat-trim --timeout-seconds 300
-python -m witnora_core.benchmark --dimacs-dir path/to/satlib_subset --c 2 --out satlib_results.json --csv satlib.csv --report SATLIB_REPORT.md --export-certs certs_satlib/ --strict-unsat-external --drat-trim path/to/drat-trim --max-instances 50
-python -m witnora_core.benchmark --dimacs-dir path/to/satcomp_subset --c 2 --out satcomp_results.json --csv satcomp.csv --report SATCOMP_REPORT.md --export-certs certs_satcomp/ --strict-unsat-external --drat-trim path/to/drat-trim --timeout-seconds 300
+python -m witnora_core.benchmark --public-suite cnfgen-official --c 2 --out results.json --csv results.csv --report REPORT.md --export-certs certs/ --strict-unsat-external --drat-trim path/to/drat-trim --timeout-seconds 300
+python -m witnora_core.benchmark --public-suite satlib --dimacs-dir path/to/satlib_subset --c 2 --out satlib_results.json --csv satlib.csv --report SATLIB_REPORT.md --export-certs certs_satlib/ --strict-unsat-external --drat-trim path/to/drat-trim --max-instances 100
+python -m witnora_core.benchmark --public-suite satcomp --dimacs-dir path/to/satcomp_subset --c 2 --out satcomp_results.json --csv satcomp.csv --report SATCOMP_REPORT.md --export-certs certs_satcomp/ --strict-unsat-external --drat-trim path/to/drat-trim --timeout-seconds 300 --max-instances 50
+python -m witnora_core.benchmark --public-suite demo-cnfgen-artifact --c 2 --out demo_results.json --csv demo.csv --report DEMO_REPORT.md --export-certs demo_certs/ --strict-unsat-external --drat-trim path/to/drat-trim
 ```
 
-v0.8.1 benchmark outputs should be packaged separately from source archives.
+v0.8.2 benchmark outputs should be packaged separately from source archives.
 The artifact writer creates `README.md`, `config.json`, `results.csv`,
 `results.json`, `REPORT.md`, `selected_instances.txt`, `environment.txt`,
-`strict_verification_summary.json`, `drat_logs/`, and `certs/` under an output
-directory such as `outputs/v0.8.1-public-benchmark/`.
+`strict_verification_summary.json`, `benchmark_manifest.json`, `drat_logs/`,
+`generated_dimacs/`, `raw_outputs/`, and `certs/` under an output directory such
+as `outputs/v0.8.2-public-benchmark/<suite_name>/`.
 
 Each public benchmark instance receives exactly one category:
 
@@ -228,8 +242,10 @@ implication paths, then deriving the empty clause. v0.7.1 adds pre-benchmark
 proof-coverage smoke tests for subsumption, pure literal elimination, and
 multi-component UNSAT certificates. v0.8.0 added public benchmark categories,
 CSV/JSON/Markdown public reports, per-instance timeout handling, and strict
-UNSAT external verification mode. v0.8.1 packages a real public-style benchmark
-artifact separately from the source release.
+UNSAT external verification mode. v0.8.1 packaged a built-in public-style
+benchmark artifact separately from the source release. v0.8.2 demotes that
+built-in suite to demo status and adds official CNFgen, SATLIB-directory, and
+SAT-Competition-directory integration with NOT_RUN reporting.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -290,7 +306,7 @@ is counted as externally certified only when `proof.drat` is exported and real
 
 ## Minimal DRAT Bridge
 
-v0.8.1 can export a DRAT-style proof for supported end-to-end
+v0.8.2 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
@@ -328,7 +344,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.8.1",
+  "checker": "witnora_internal_rup_subset_checker_v0.8.2",
   "checked_against": "original.dimacs"
 }
 ```
@@ -426,7 +442,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.8.1 does not claim full
+This classification is deliberately conservative. v0.8.2 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 
@@ -434,7 +450,7 @@ assignment/reconstruction certificates rather than clausal refutations.
 
 Public benchmark reporting must separate UNSAT results that have real external
 proof checking from UNSAT results that are native-only or internally checked
-only. v0.8.1 exposes public benchmark categories:
+only. v0.8.2 exposes public benchmark categories:
 
 - `UNSAT_DRAT_EXPORTED_VERIFIED` when `proof.drat` exists and real
   `drat-trim` ran successfully,

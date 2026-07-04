@@ -24,8 +24,8 @@ from .public_benchmarks import (
     write_public_csv,
 )
 
-ARTIFACT_VERSION = "0.8.1"
-ARTIFACT_DIR_NAME = "v0.8.1-public-benchmark"
+ARTIFACT_VERSION = "0.8.2"
+ARTIFACT_DIR_NAME = "v0.8.2-public-benchmark"
 
 
 def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
@@ -68,7 +68,7 @@ def selected_instances_text(data: dict[str, Any]) -> str:
         str(result.get("instance_name", "")): result for result in data.get("per_case_results", [])
     }
     lines = [
-        "instance_name\tsource_suite\tfamily\tsource\tpublic_category\tstatus",
+        "instance_name\tsource_suite\tfamily\tsource_type\tsource\tgeneration_command\tdimacs_source_path\tpublic_category\tstatus",
     ]
     for case in cases:
         name = str(case.get("instance_name", ""))
@@ -79,7 +79,10 @@ def selected_instances_text(data: dict[str, Any]) -> str:
                     name,
                     str(case.get("source_suite", "")),
                     str(case.get("family", "")),
+                    str(case.get("source_type", "")),
                     str(case.get("source", "")),
+                    str(case.get("generation_command", "")),
+                    str(case.get("dimacs_source_path", "")),
                     str(result.get("public_category", "")),
                     str(result.get("status", "")),
                 ]
@@ -98,14 +101,14 @@ def environment_text(config: dict[str, Any]) -> str:
         f"processor: {platform.processor()}",
         f"drat_trim_path: {config.get('drat_trim_path', '')}",
         "memory_measurement: null",
-        "memory_measurement_note: memory was not measured by the v0.8.1 artifact runner",
+        "memory_measurement_note: memory was not measured by the v0.8.2 artifact runner",
     ]
     return "\n".join(lines) + "\n"
 
 
 def artifact_readme_text(config: dict[str, Any], sources_not_run: list[dict[str, str]]) -> str:
     lines = [
-        "# Witnora-Core v0.8.1 Public Benchmark Artifact",
+        "# Witnora-Core v0.8.2 Public Benchmark Artifact",
         "",
         "This artifact is separate from the Witnora source release archive.",
         "It contains benchmark outputs, certificates, DRAT proof files where exported, and summary reports.",
@@ -133,6 +136,7 @@ def artifact_readme_text(config: dict[str, Any], sources_not_run: list[dict[str,
             "## Files",
             "",
             "- `config.json`: benchmark configuration",
+            "- `benchmark_manifest.json`: official suite/run manifest",
             "- `results.json`: raw benchmark JSON",
             "- `results.csv`: per-instance CSV",
             "- `REPORT.md`: Markdown report",
@@ -141,10 +145,50 @@ def artifact_readme_text(config: dict[str, Any], sources_not_run: list[dict[str,
             "- `environment.txt`: execution environment",
             "- `certs/`: per-instance certificate bundles",
             "- `drat_logs/`: extracted `drat-trim` stdout/stderr excerpts from certificate metadata",
+            "- `generated_dimacs/`: generated official CNFgen DIMACS files when applicable",
+            "- `raw_outputs/`: command outputs or placeholder directory for raw logs",
             "",
         ]
     )
     return "\n".join(lines)
+
+
+def benchmark_manifest(
+    data: dict[str, Any],
+    config: dict[str, Any],
+    sources_not_run: list[dict[str, str]],
+) -> dict[str, Any]:
+    cases = list(data.get("cases", []))
+    return {
+        "witnora_version": str(config.get("witnora_version", ARTIFACT_VERSION)),
+        "commit": str(config.get("commit", "")),
+        "tag": str(config.get("tag", "")),
+        "benchmark_run_id": str(config.get("benchmark_run_id", "")),
+        "run_timestamp": str(config.get("created_utc", data.get("timestamp", ""))),
+        "suite_name": str(config.get("suite_name", data.get("suite_name", ""))),
+        "suite_source_type": str(config.get("suite_source_type", data.get("suite_source_type", ""))),
+        "suite_status": str(config.get("suite_status", data.get("suite_status", "RUN"))),
+        "not_run_reason": config.get("not_run_reason", data.get("not_run_reason")),
+        "instance_count": len(cases),
+        "selected_instances": [case.get("instance_name", "") for case in cases],
+        "generation_commands": [
+            case.get("generation_command", "")
+            for case in cases
+            if case.get("generation_command")
+        ],
+        "dimacs_source_paths": [
+            case.get("dimacs_source_path") or case.get("source", "")
+            for case in cases
+            if case.get("dimacs_source_path") or case.get("source")
+        ],
+        "drat_trim_path": str(config.get("drat_trim_path", data.get("drat_trim_path", ""))),
+        "strict_unsat_external": bool(config.get("strict_unsat_external", data.get("strict_unsat_external", False))),
+        "c_parameter": int(config.get("c_parameter", data.get("c_parameter", 0))),
+        "timeout_seconds": config.get("timeout_seconds", data.get("timeout_seconds")),
+        "max_instances": config.get("max_instances"),
+        "max_width_search_vars": config.get("max_width_search_vars", data.get("max_width_search_vars")),
+        "sources_not_run": sources_not_run,
+    }
 
 
 def enhanced_report_text(
@@ -220,6 +264,8 @@ def write_benchmark_artifact(
     artifact.mkdir(parents=True, exist_ok=True)
     (artifact / "certs").mkdir(parents=True, exist_ok=True)
     (artifact / "drat_logs").mkdir(parents=True, exist_ok=True)
+    (artifact / "generated_dimacs").mkdir(parents=True, exist_ok=True)
+    (artifact / "raw_outputs").mkdir(parents=True, exist_ok=True)
 
     sources_not_run = list(sources_not_run or [])
     benchmark_commands = list(benchmark_commands or [])
@@ -231,6 +277,11 @@ def write_benchmark_artifact(
 
     (artifact / "config.json").write_text(
         json.dumps(full_config, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    manifest = benchmark_manifest(data, full_config, sources_not_run)
+    (artifact / "benchmark_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     (artifact / "results.json").write_text(
@@ -257,6 +308,7 @@ def write_benchmark_artifact(
     drat_logs = write_drat_logs(artifact, data)
     return {
         "artifact_dir": str(artifact),
+        "benchmark_manifest": manifest,
         "strict_verification_summary": strict_summary,
         "drat_logs": drat_logs,
     }

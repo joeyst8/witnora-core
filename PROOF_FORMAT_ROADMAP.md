@@ -33,8 +33,11 @@ Witnora-Core v0.8.0 adds the public benchmark evaluation harness. Public
 benchmark reports use strict categories that separate SAT assignment-verified
 results, externally verified UNSAT results, unverified/native UNSAT results,
 unsupported DRAT exports, no-collapse cases, timeouts, and errors.
-Witnora-Core v0.8.1 packages a public-style benchmark artifact separately from
-the source archive without adding solver logic.
+Witnora-Core v0.8.1 packages a built-in public-style benchmark artifact
+separately from the source archive without adding solver logic. Witnora-Core
+v0.8.2 demotes that built-in suite to demo status and adds official CNFgen,
+SATLIB-directory, and SAT-Competition-directory integration with explicit
+NOT_RUN reporting when sources are unavailable.
 
 ## What LRAT Is Appropriate For
 
@@ -91,9 +94,9 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.8.1 End-to-End RUP-Subset DRAT Bridge
+## v0.8.2 End-to-End RUP-Subset DRAT Bridge
 
-v0.8.1 exports `proof.drat` only for supported UNSAT paths whose proof
+v0.8.2 exports `proof.drat` only for supported UNSAT paths whose proof
 additions are accepted by Witnora's internal RUP-subset checker starting from
 the original CNF clause database. It also writes `drat_status.json`.
 
@@ -150,17 +153,17 @@ Unsupported or final-state-only paths are marked:
 }
 ```
 
-Unsupported in v0.8.1:
+Unsupported in v0.8.2:
 
 - full RAT checking,
 - LRAT export,
 - FRAT export,
 - claims of external verification unless an external checker actually ran.
 
-The v0.8.1 checker string is:
+The v0.8.2 checker string is:
 
 ```text
-witnora_internal_rup_subset_checker_v0.8.1
+witnora_internal_rup_subset_checker_v0.8.2
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -211,14 +214,14 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.8.1 only claims DRAT-style proof export for supported
+proof checking. v0.8.2 only claims DRAT-style proof export for supported
 end-to-end RUP-checkable UNSAT paths, including supported 2-SAT SCC
 contradictions. External verification is claimed only if `drat-trim` or another
 recorded external checker actually ran and passed.
 
 For public benchmarks, UNSAT result categories must distinguish successful
 external proof checking from native-only or internally checked certificates.
-v0.8.1 classifies an UNSAT result as
+v0.8.2 classifies an UNSAT result as
 `UNSAT_DRAT_EXPORTED_VERIFIED` only when real `drat-trim` ran and accepted the
 exported `proof.drat`. If Witnora reports UNSAT but `drat-trim` was not run or
 did not accept the proof, the category is `UNSAT_NOT_EXTERNALLY_VERIFIED`. If
@@ -231,10 +234,11 @@ With `--strict-unsat-external`, the benchmark records
 case is not externally verified. This is a reporting guard, not a solver
 feature.
 
-## v0.8.1 Public Benchmark Reporting
+## v0.8.2 Public Benchmark Reporting
 
 The public benchmark harness supports a small in-repo `cnfgen-small` pilot
-suite, a larger in-repo `cnfgen-artifact` public-style suite, and user-provided
+suite for unit tests, an in-repo `demo-cnfgen-artifact` suite for harness
+validation only, official `cnfgen-official` CLI integration, and user-provided
 DIMACS directories for SATLIB or SAT Competition subsets. Unit tests do not
 download large public datasets. Public benchmark reports assign every case
 exactly one category:
@@ -251,11 +255,15 @@ exactly one category:
 and `UNSUPPORTED_DRAT` must not be counted as externally certified UNSAT.
 Timeout and error cases are reported separately and are not partial results.
 
-The v0.8.1 benchmark artifact writer creates a separate output tree with
+The v0.8.2 benchmark artifact writer creates a separate output tree with
 `config.json`, `results.json`, `results.csv`, `REPORT.md`,
 `selected_instances.txt`, `environment.txt`, `strict_verification_summary.json`,
-`drat_logs/`, and `certs/`. The artifact zip is separate from the source release
-zip.
+`benchmark_manifest.json`, `generated_dimacs/`, `raw_outputs/`, `drat_logs/`,
+and `certs/`. The artifact zip is separate from the source release zip.
+
+Built-in demo suites must not be used as evidence of public benchmark
+performance. Official CNFgen, SATLIB, and SAT Competition runs may be claimed
+only when their corresponding suite status is `RUN`.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -303,7 +311,7 @@ The next proof-format milestones should keep the bridge conservative:
 
 ## Forbidden Claims
 
-Witnora-Core v0.8.1 does not claim:
+Witnora-Core v0.8.2 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

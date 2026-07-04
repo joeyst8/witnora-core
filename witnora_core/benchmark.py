@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import tempfile
 from typing import Any, Iterable
 
 from .certificate import NO_COLLAPSE, SAT, UNSAT, StepLogger
@@ -29,7 +30,7 @@ from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.8.1"
+VERSION = "0.8.2"
 
 WIDTH_FOUND = "FOUND"
 WIDTH_NOT_FOUND = "NOT_FOUND"
@@ -700,10 +701,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--suite", choices=["synthetic"], help="benchmark suite to run")
     parser.add_argument(
         "--public-suite",
-        choices=["cnfgen-small", "cnfgen-artifact"],
+        choices=["cnfgen-small", "demo-cnfgen-artifact", "cnfgen-official", "satlib", "satcomp"],
         help="public benchmark suite to run",
     )
     parser.add_argument("--dimacs-dir", help="directory containing .cnf or .dimacs files")
+    parser.add_argument("--cnfgen-path", help="optional official cnfgen executable path")
+    parser.add_argument("--generated-dimacs-dir", help="directory for generated official CNFgen DIMACS files")
     parser.add_argument("--c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--out", help="write JSON output to this path")
     parser.add_argument("--csv", dest="csv_path", help="write per-case CSV output to this path")
@@ -728,37 +731,154 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    selected = [bool(args.suite), bool(args.public_suite), bool(args.dimacs_dir)]
-    if sum(1 for item in selected if item) != 1:
-        parser.error("provide exactly one of --suite synthetic, --public-suite, or --dimacs-dir")
+    if bool(args.suite) and (bool(args.public_suite) or bool(args.dimacs_dir)):
+        parser.error("do not combine --suite with public benchmark options")
+    if not args.suite and not args.public_suite and not args.dimacs_dir:
+        parser.error("provide --suite synthetic, --public-suite, or --dimacs-dir")
 
     public_mode = bool(args.public_suite) or bool(args.dimacs_dir)
     if public_mode and not args.suite:
         from .public_benchmarks import (
+            REASON_DIMACS_DIRECTORY_NOT_FOUND,
+            REASON_SATCOMP_DIRECTORY_NOT_PROVIDED,
+            REASON_SATLIB_DIRECTORY_NOT_PROVIDED,
+            SOURCE_OFFICIAL_CNFGEN,
+            SOURCE_SATCOMP_DIRECTORY,
+            SOURCE_SATLIB_DIRECTORY,
+            SUITE_RUN,
             dimacs_dir_cases as public_dimacs_dir_cases,
             generate_public_markdown_report,
+            missing_suite_data,
+            official_cnfgen_cases,
             public_suite_cases,
             run_public_benchmark,
             write_public_csv,
         )
 
-        if args.public_suite:
+        suite_name = args.public_suite or "dimacs-dir"
+        suite_source_type = ""
+        suite_status = SUITE_RUN
+        not_run_reason = None
+        if args.public_suite == "cnfgen-official":
+            generated_dir = args.generated_dimacs_dir
+            if generated_dir is None:
+                base = Path(args.out).parent if args.out else Path(tempfile.mkdtemp(prefix="witnora-cnfgen-"))
+                generated_dir = str(base / "generated_dimacs")
+            cases, manifest = official_cnfgen_cases(
+                generated_dir,
+                cnfgen_path=args.cnfgen_path,
+                max_instances=args.max_instances,
+            )
+            suite_source_type = SOURCE_OFFICIAL_CNFGEN
+            suite_status = str(manifest.get("suite_status", SUITE_RUN))
+            not_run_reason = manifest.get("not_run_reason")
+            if suite_status != SUITE_RUN:
+                data = missing_suite_data(
+                    "cnfgen-official",
+                    str(not_run_reason),
+                    SOURCE_OFFICIAL_CNFGEN,
+                    args.c_parameter,
+                    timeout_seconds=args.timeout_seconds,
+                    max_width_search_vars=args.max_width_search_vars,
+                    strict_unsat_external=args.strict_unsat_external,
+                    drat_trim_path=args.drat_trim,
+                    message=str(manifest.get("instructions", "")),
+                )
+            else:
+                data = run_public_benchmark(
+                    cases,
+                    args.c_parameter,
+                    timeout_seconds=args.timeout_seconds,
+                    max_width_search_vars=args.max_width_search_vars,
+                    strict_unsat_external=args.strict_unsat_external,
+                    drat_trim_path=args.drat_trim,
+                    export_certs_dir=args.export_certs,
+                    suite_name=suite_name,
+                    suite_source_type=suite_source_type,
+                    suite_status=suite_status,
+                    not_run_reason=not_run_reason,
+                )
+                data["generation_manifest"] = manifest
+        elif args.public_suite in {"satlib", "satcomp"}:
+            source_type = SOURCE_SATLIB_DIRECTORY if args.public_suite == "satlib" else SOURCE_SATCOMP_DIRECTORY
+            missing_reason = (
+                REASON_SATLIB_DIRECTORY_NOT_PROVIDED
+                if args.public_suite == "satlib"
+                else REASON_SATCOMP_DIRECTORY_NOT_PROVIDED
+            )
+            if not args.dimacs_dir:
+                data = missing_suite_data(
+                    args.public_suite,
+                    missing_reason,
+                    source_type,
+                    args.c_parameter,
+                    timeout_seconds=args.timeout_seconds,
+                    max_width_search_vars=args.max_width_search_vars,
+                    strict_unsat_external=args.strict_unsat_external,
+                    drat_trim_path=args.drat_trim,
+                    message="Provide --dimacs-dir with public DIMACS CNF files.",
+                )
+            elif not Path(args.dimacs_dir).exists():
+                data = missing_suite_data(
+                    args.public_suite,
+                    REASON_DIMACS_DIRECTORY_NOT_FOUND,
+                    source_type,
+                    args.c_parameter,
+                    timeout_seconds=args.timeout_seconds,
+                    max_width_search_vars=args.max_width_search_vars,
+                    strict_unsat_external=args.strict_unsat_external,
+                    drat_trim_path=args.drat_trim,
+                    message=f"DIMACS directory not found: {args.dimacs_dir}",
+                )
+            else:
+                cases = public_dimacs_dir_cases(
+                    args.dimacs_dir,
+                    source_suite=args.public_suite,
+                    source_type=source_type,
+                    max_instances=args.max_instances,
+                )
+                data = run_public_benchmark(
+                    cases,
+                    args.c_parameter,
+                    timeout_seconds=args.timeout_seconds,
+                    max_width_search_vars=args.max_width_search_vars,
+                    strict_unsat_external=args.strict_unsat_external,
+                    drat_trim_path=args.drat_trim,
+                    export_certs_dir=args.export_certs,
+                    suite_name=args.public_suite,
+                    suite_source_type=source_type,
+                )
+        elif args.public_suite:
             cases = public_suite_cases(args.public_suite, max_instances=args.max_instances)
+            source_type = "BUILT_IN_DEMO" if args.public_suite.startswith("demo-") or args.public_suite == "cnfgen-small" else ""
+            data = run_public_benchmark(
+                cases,
+                args.c_parameter,
+                timeout_seconds=args.timeout_seconds,
+                max_width_search_vars=args.max_width_search_vars,
+                strict_unsat_external=args.strict_unsat_external,
+                drat_trim_path=args.drat_trim,
+                export_certs_dir=args.export_certs,
+                suite_name=args.public_suite,
+                suite_source_type=source_type,
+            )
         else:
             cases = public_dimacs_dir_cases(
                 args.dimacs_dir,
                 source_suite="dimacs-dir",
                 max_instances=args.max_instances,
             )
-        data = run_public_benchmark(
-            cases,
-            args.c_parameter,
-            timeout_seconds=args.timeout_seconds,
-            max_width_search_vars=args.max_width_search_vars,
-            strict_unsat_external=args.strict_unsat_external,
-            drat_trim_path=args.drat_trim,
-            export_certs_dir=args.export_certs,
-        )
+            data = run_public_benchmark(
+                cases,
+                args.c_parameter,
+                timeout_seconds=args.timeout_seconds,
+                max_width_search_vars=args.max_width_search_vars,
+                strict_unsat_external=args.strict_unsat_external,
+                drat_trim_path=args.drat_trim,
+                export_certs_dir=args.export_certs,
+                suite_name="dimacs-dir",
+                suite_source_type="DIMACS_DIRECTORY",
+            )
         payload = json.dumps(data, indent=2, sort_keys=True)
         if args.out:
             Path(args.out).write_text(payload + "\n", encoding="utf-8")
