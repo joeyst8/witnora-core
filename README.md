@@ -1,6 +1,6 @@
-# Witnora-Core v0.5.0
+# Witnora-Core v0.5.1
 
-Witnora-Core v0.5.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.5.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -163,9 +163,11 @@ The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
 ## Proof-Carrying Certificates
 
 Witnora-Core v0.3.0 added portable certificate bundles. v0.4.0 added the
-independent raw checker. v0.5.0 cleans up SAT/UNSAT certification metadata and
-adds a Witnora-native UNSAT trace for supported explicit-empty-clause and
-2-SAT-SCC contradictions.
+independent raw checker. v0.5.0 cleaned up SAT/UNSAT certification metadata and
+added a Witnora-native UNSAT trace for supported explicit-empty-clause and
+2-SAT-SCC contradictions. v0.5.1 hardens the UNSAT path dependency: a native
+UNSAT trace is checked only after the independent raw checker replays the full
+collapse path from `original.dimacs`.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -216,9 +218,10 @@ UP, PLE, SUB, BCE, VE, component decomposition, and 2-SAT checks from scratch,
 and verifies SAT assignments against the original CNF. Publication-facing
 claims should rely on the independent raw checker where possible.
 
-UNSAT is independently accepted only when replay reaches an explicit empty
-clause or when a 2-SAT SCC contradiction is independently checked. Other UNSAT
-forms remain internal-replay only until LRAT/FRAT proof export exists.
+UNSAT is independently accepted only when independent replay from the original
+formula reaches an explicit empty clause or when a 2-SAT SCC contradiction is
+independently checked in the replayed final state. Other UNSAT forms remain
+internal-replay only until DRAT/LRAT/FRAT proof export exists.
 
 ## Certification Metadata
 
@@ -263,17 +266,18 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.5.0 does not claim full
+This classification is deliberately conservative. v0.5.1 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 
 ## Native UNSAT Trace
 
-For supported UNSAT cases, v0.5.0 may include `proof_trace.json` with:
+For supported UNSAT cases, v0.5.1 may include `proof_trace.json` with:
 
 ```json
 {
   "proof_trace_format": "WITNORA_NATIVE_UNSAT_TRACE_V1",
+  "depends_on_replayed_collapse_path": true,
   "external_standard": "NONE",
   "lrat_frat_status": "NOT_EXPORTED"
 }
@@ -284,11 +288,22 @@ Supported native UNSAT trace reasons are:
 - `EXPLICIT_EMPTY_CLAUSE`
 - `INDEPENDENT_2SAT_SCC`
 
-The independent raw checker verifies the native trace against its replayed final
-state. For explicit empty-clause UNSAT it confirms the replayed final state
-contains an empty clause. For 2-SAT SCC UNSAT it recomputes the implication graph
-and SCC contradiction from raw clauses. This native trace is not DRAT, LRAT, or
-FRAT.
+The native trace is not a standalone proof. It is valid only together with
+`original.dimacs`, `collapse_path.json`, `component_results.json` when present,
+and independent replay from the original formula. The manifest records:
+
+```json
+"native_unsat_trace_scope": "END_TO_END_WITH_COLLAPSE_REPLAY"
+```
+
+The independent raw checker verifies every collapse-path step first, including
+BCE blockedness, VE resolvents, and incidence-graph component decomposition.
+Only after that replay reaches the final formula state does it check the native
+trace against that replayed final state. For explicit empty-clause UNSAT it
+confirms the replayed final state contains an empty clause. For 2-SAT SCC UNSAT
+it recomputes the implication graph and SCC contradiction from raw clauses. This
+native trace is not DRAT, LRAT, or FRAT and does not replace standard UNSAT
+proof formats.
 
 See [PROOF_FORMAT_ROADMAP.md](PROOF_FORMAT_ROADMAP.md).
 
@@ -404,6 +419,11 @@ Expected pass markers include:
 - `NATIVE_UNSAT_TRACE_TAMPER_REJECT_PASS`
 - `PROOF_TRACE_CERT_BUNDLE_PASS`
 - `NO_FALSE_LRAT_FRAT_CLAIM_PASS`
+- `UNSAT_REJECTS_FAKE_BCE_EVEN_WITH_VALID_FINAL_TRACE_PASS`
+- `UNSAT_REJECTS_MISSING_VE_RESOLVENT_EVEN_WITH_VALID_FINAL_TRACE_PASS`
+- `UNSAT_REJECTS_FAKE_2SAT_SCC_TRACE_PASS`
+- `UNSAT_REJECTS_FAKE_COMPONENT_SPLIT_WITH_VALID_TRACE_PASS`
+- `UNSAT_EMPTY_FROM_VE_UNSUPPORTED_OR_DERIVED_PASS`
 - adversarial markers from `tests/test_adversarial_correctness.py`
 
 ## Run Examples

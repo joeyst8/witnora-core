@@ -26,9 +26,9 @@ from .proof_trace import is_supported_native_unsat_trace, native_unsat_trace
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
 
-WITNORA_VERSION = "0.5.0"
+WITNORA_VERSION = "0.5.1"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.5.0"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.5.1"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -158,6 +158,7 @@ def _manifest(
         "unsat_certification_level": unsat_certification_level(path),
         "proof_trace_class": path.proof_trace_class,
         "external_lrat_frat": False,
+        "native_unsat_trace_scope": "END_TO_END_WITH_COLLAPSE_REPLAY",
         "files": {
             name: {"sha256": sha256_text(content)}
             for name, content in sorted(files.items())
@@ -301,6 +302,8 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         return _fail("external_lrat_frat must remain false in v0.5", "proof_trace_classification")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace_classification")
+    if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
+        return _fail("native UNSAT trace scope mismatch", "certification_metadata")
 
     stripped_steps = [
         {key: value for key, value in step.items() if key != "external_proof_status"}

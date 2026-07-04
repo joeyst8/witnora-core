@@ -111,26 +111,45 @@ def native_unsat_trace_from_steps(status: str, steps: list["CollapseStep"]) -> d
         for step in steps:
             if [] not in step.added_clauses:
                 continue
-            shortened = step.details.get("shortened_clauses", [])
-            conflict_clause: list[int] = []
-            for item in shortened:
-                if item.get("to") == []:
-                    conflict_clause = list(item.get("from", []))
-                    break
+            trace_step: dict[str, Any]
+            if step.type == "VE":
+                generated_empty = next(
+                    (
+                        item
+                        for item in step.details.get("generated_resolvents", [])
+                        if item.get("resolvent") == []
+                    ),
+                    {},
+                )
+                trace_step = {
+                    "type": "VE_EMPTY_RESOLVENT",
+                    "source_step_id": step.step_id,
+                    "eliminated_variable": step.details.get("eliminated_variable"),
+                    "positive_clause": list(generated_empty.get("positive_clause", [])),
+                    "negative_clause": list(generated_empty.get("negative_clause", [])),
+                    "derived_empty_clause": [],
+                }
+            else:
+                shortened = step.details.get("shortened_clauses", [])
+                conflict_clause: list[int] = []
+                for item in shortened:
+                    if item.get("to") == []:
+                        conflict_clause = list(item.get("from", []))
+                        break
+                trace_step = {
+                    "type": "UNIT_PROPAGATION_CONFLICT",
+                    "source_step_id": step.step_id,
+                    "unit_literal": step.assigned_literals[0]
+                    if step.assigned_literals
+                    else step.details.get("assigned_literal"),
+                    "conflicting_clause": conflict_clause,
+                    "derived_empty_clause": [],
+                }
             return {
                 "proof_trace_format": NATIVE_UNSAT_TRACE_FORMAT,
                 "unsat_reason": UNSAT_LEVEL_EXPLICIT_EMPTY,
-                "steps": [
-                    {
-                        "type": "UNIT_PROPAGATION_CONFLICT",
-                        "source_step_id": step.step_id,
-                        "unit_literal": step.assigned_literals[0]
-                        if step.assigned_literals
-                        else step.details.get("assigned_literal"),
-                        "conflicting_clause": conflict_clause,
-                        "derived_empty_clause": [],
-                    }
-                ],
+                "depends_on_replayed_collapse_path": True,
+                "steps": [trace_step],
                 "external_standard": "NONE",
                 "lrat_frat_status": "NOT_EXPORTED",
             }
@@ -143,6 +162,7 @@ def native_unsat_trace_from_steps(status: str, steps: list["CollapseStep"]) -> d
             return {
                 "proof_trace_format": NATIVE_UNSAT_TRACE_FORMAT,
                 "unsat_reason": UNSAT_LEVEL_2SAT_SCC,
+                "depends_on_replayed_collapse_path": True,
                 "source_step_id": step.step_id,
                 "variable": variable,
                 "positive_literal_scc": _scc_for_literal(sccs, variable),

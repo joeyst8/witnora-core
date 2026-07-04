@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.5"
+CHECKER = "independent_raw_checker_v0.5.1"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -839,6 +839,8 @@ def check_native_proof_trace_raw(
         raise ValueError("proof_trace.json differs from result native trace")
     if proof_trace.get("proof_trace_format") != NATIVE_UNSAT_TRACE_FORMAT:
         raise ValueError("native proof trace format mismatch")
+    if proof_trace.get("depends_on_replayed_collapse_path") is not True:
+        raise ValueError("native proof trace must depend on collapse-path replay")
     if proof_trace.get("external_standard") != "NONE":
         raise ValueError("native proof trace falsely names an external standard")
     if proof_trace.get("lrat_frat_status") != "NOT_EXPORTED":
@@ -850,10 +852,38 @@ def check_native_proof_trace_raw(
         if () not in final_state and not replay_checks.get("explicit_empty_clause"):
             raise ValueError("native empty-clause trace has no replayed empty clause")
         steps = proof_trace.get("steps", [])
-        if not steps or steps[0].get("type") != "UNIT_PROPAGATION_CONFLICT":
+        if not steps:
             raise ValueError("native empty-clause trace missing conflict step")
-        if steps[0].get("derived_empty_clause") != []:
+        trace_step = steps[0]
+        if trace_step.get("type") not in {"UNIT_PROPAGATION_CONFLICT", "VE_EMPTY_RESOLVENT"}:
+            raise ValueError("native empty-clause trace has unsupported conflict step")
+        if trace_step.get("derived_empty_clause") != []:
             raise ValueError("native empty-clause trace derived clause mismatch")
+        source_step_id = int(trace_step.get("source_step_id", 0))
+        source_step = next(
+            (
+                step
+                for step in result_data.get("collapse_path", [])
+                if int(step.get("step_id", 0)) == source_step_id
+            ),
+            None,
+        )
+        if source_step is None:
+            raise ValueError("native empty-clause trace source step missing")
+        if trace_step.get("type") == "UNIT_PROPAGATION_CONFLICT":
+            if source_step.get("type") != "UP" or [] not in source_step.get("added_clauses", []):
+                raise ValueError("native unit-conflict trace source step mismatch")
+        if trace_step.get("type") == "VE_EMPTY_RESOLVENT":
+            if source_step.get("type") != "VE" or [] not in source_step.get("added_clauses", []):
+                raise ValueError("native VE-empty trace source step mismatch")
+            generated = source_step.get("details", {}).get("generated_resolvents", [])
+            expected = {
+                "positive_clause": trace_step.get("positive_clause", []),
+                "negative_clause": trace_step.get("negative_clause", []),
+                "resolvent": [],
+            }
+            if expected not in generated:
+                raise ValueError("native VE-empty trace resolvent evidence mismatch")
         return True
     if reason == UNSAT_LEVEL_2SAT_SCC:
         if not replay_checks.get("unsat_2sat_contradiction"):
@@ -941,10 +971,17 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
     checks: dict[str, bool] = {
         "file_hashes": False,
         "certificate_hash": False,
+        "collapse_path_replayed_from_original": False,
+        "bce_steps_recomputed": False,
+        "ve_steps_recomputed": False,
+        "component_decomposition_recomputed": False,
+        "proof_trace_checked_against_replayed_final_state": False,
+        "unsat_contradiction": False,
         "bce_steps": False,
         "ve_steps": False,
         "component_steps": False,
         "two_sat_steps": False,
+        "proof_trace": False,
         "sat_assignment": False,
     }
     if str(manifest.get("status", "")) in FORBIDDEN_STATUSES:
@@ -984,6 +1021,8 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         return _fail("external_lrat_frat must remain false in v0.5", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
+    if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
+        return _fail("native UNSAT trace scope mismatch", "certification_metadata")
     if hash_formula_raw(original) != manifest.get("original_formula_hash"):
         return _fail("original formula hash mismatch", "formula_hash")
     if hash_formula_raw(normalized) != manifest.get("normalized_formula_hash"):
@@ -1011,10 +1050,14 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
             int(result_data.get("c_parameter", 0)),
         )
     except Exception as exc:
-        return _fail(str(exc), "collapse_replay")
+        return _fail(str(exc), "collapse_path_replayed_from_original")
     if hash_formula_raw(final_formula) != result_data.get("final_formula_hash"):
-        return _fail("final formula hash mismatch", "collapse_replay")
+        return _fail("final formula hash mismatch", "collapse_path_replayed_from_original")
     checks.update({
+        "collapse_path_replayed_from_original": True,
+        "bce_steps_recomputed": replay_checks["bce_steps"],
+        "ve_steps_recomputed": replay_checks["ve_steps"],
+        "component_decomposition_recomputed": replay_checks["component_steps"],
         "bce_steps": replay_checks["bce_steps"],
         "ve_steps": replay_checks["ve_steps"],
         "component_steps": replay_checks["component_steps"],
@@ -1054,6 +1097,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
             check_native_proof_trace_raw(proof_trace, final_formula, replay_checks, result_data)
         except Exception as exc:
             return _fail(str(exc), "proof_trace")
+        checks["proof_trace_checked_against_replayed_final_state"] = True
         checks["proof_trace"] = True
         checks["unsat_contradiction"] = True
     elif status == "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C":
@@ -1073,6 +1117,35 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         "trusted_imports": TRUSTED_IMPORTS,
         "checks": checks,
     }
+
+
+def verify_unsat_certificate_end_to_end_raw(bundle: str | Path) -> dict[str, Any]:
+    """Verify an UNSAT certificate by raw replay before checking native trace.
+
+    This function intentionally delegates to ``verify_wcert_raw`` because that
+    checker performs file/hash checks, parses the original formula, replays the
+    full collapse path from raw clauses, and only then checks proof_trace.json
+    against the replayed final state.
+    """
+
+    result = verify_wcert_raw(bundle)
+    if not result.get("verified"):
+        return result
+    if result.get("status") != "UNSAT":
+        return _fail("certificate status is not UNSAT", "status")
+    required = [
+        "collapse_path_replayed_from_original",
+        "bce_steps_recomputed",
+        "ve_steps_recomputed",
+        "component_decomposition_recomputed",
+        "proof_trace_checked_against_replayed_final_state",
+        "unsat_contradiction",
+    ]
+    checks = result.get("checks", {})
+    missing = [key for key in required if checks.get(key) is not True]
+    if missing:
+        return _fail(f"missing UNSAT end-to-end checks: {missing}", "unsat_end_to_end")
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:

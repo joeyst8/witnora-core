@@ -9,9 +9,11 @@ and recomputes supported checks from raw clauses.
 
 Witnora-Core v0.5.0 adds precise SAT/UNSAT certification metadata and a
 Witnora-native UNSAT trace for explicit-empty-clause and independently checked
-2-SAT SCC contradictions.
+2-SAT SCC contradictions. Witnora-Core v0.5.1 hardens the path dependency:
+native UNSAT traces are checked only against the final state obtained by
+independent replay of the collapse path from the original formula.
 
-v0.5.0 does not implement full DRAT, LRAT, or FRAT output.
+v0.5.1 does not implement DRAT, LRAT, or FRAT output.
 
 ## What LRAT Is Appropriate For
 
@@ -67,26 +69,40 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.5 Native UNSAT Trace vs Standard SAT Proofs
+## v0.5.1 Native UNSAT Trace vs Standard SAT Proofs
 
-v0.5 introduces `WITNORA_NATIVE_UNSAT_TRACE_V1`. It is a Witnora-native trace,
-not DRAT, LRAT, or FRAT.
+v0.5 introduces `WITNORA_NATIVE_UNSAT_TRACE_V1`. v0.5.1 makes the dependency
+explicit with `depends_on_replayed_collapse_path: true` in `proof_trace.json`
+and `native_unsat_trace_scope: END_TO_END_WITH_COLLAPSE_REPLAY` in the manifest.
+It is a Witnora-native final-state trace, not DRAT, LRAT, or FRAT.
 
 For explicit empty-clause UNSAT, the native trace records the unit propagation
-conflict that produced the empty clause. The independent raw checker verifies
-that replay reaches an empty clause.
+conflict or VE empty resolvent that produced the empty clause. The independent
+raw checker verifies that replay reaches an empty clause before checking the
+native trace.
 
 For 2-SAT SCC UNSAT, the native trace records the conflict variable, SCC
 memberships for the positive and negative literals, and implication edges. The
 independent raw checker recomputes the implication graph and SCC contradiction
-from raw clauses.
+from raw clauses after replay reaches the logged 2-SAT solve step.
+
+The native trace is not a standalone proof. It is valid only with:
+
+- `original.dimacs`,
+- `collapse_path.json`,
+- `component_results.json` when present,
+- independent raw replay of every collapse-path step from the original formula.
+
+A valid-looking `proof_trace.json` cannot rescue a corrupted BCE step, missing
+VE resolvent, false component split, or forged 2-SAT SCC contradiction.
 
 SAT results do not need an UNSAT refutation proof. They are certified through
 collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need DRAT/LRAT/FRAT output for SAT-community proof
-checking. v0.5 does not claim that support.
+checking. v0.5.1 does not claim that support and does not claim certified UNSAT
+in the SAT-community proof-format sense.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -134,14 +150,15 @@ v0.6/v0.7 should focus on a conservative external proof bridge:
 
 ## Forbidden Claims
 
-Witnora-Core v0.5.0 does not claim:
+Witnora-Core v0.5.1 does not claim:
 
 - DRAT support,
 - full LRAT support,
 - full FRAT support,
 - external checker validation,
 - independent third-party proof checking,
-- general UNSAT certification,
+- general SAT-community UNSAT certification,
+- standalone native UNSAT proofs,
 - P = NP,
 - industrial SAT solver competitiveness,
 - hardness of no-collapse formulas.

@@ -28,6 +28,8 @@ def is_supported_native_unsat_trace(trace: dict[str, Any] | None) -> bool:
         return False
     if trace.get("proof_trace_format") != NATIVE_UNSAT_TRACE_FORMAT:
         return False
+    if trace.get("depends_on_replayed_collapse_path") is not True:
+        return False
     if trace.get("external_standard") != "NONE":
         return False
     if trace.get("lrat_frat_status") != "NOT_EXPORTED":
