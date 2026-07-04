@@ -29,9 +29,9 @@ from .proof_trace import is_supported_native_unsat_trace, native_unsat_trace
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
 
-WITNORA_VERSION = "0.8.2"
+WITNORA_VERSION = "0.8.4"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.8.2"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.8.4"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -369,7 +369,7 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     if manifest.get("proof_trace_class") != result_data.get("proof_trace_class"):
         return _fail("proof_trace_class manifest mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.8.2", "proof_trace_classification")
+        return _fail("external_lrat_frat must remain false in v0.8.4", "proof_trace_classification")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace_classification")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":

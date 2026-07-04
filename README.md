@@ -1,6 +1,6 @@
-# Witnora-Core v0.8.2
+# Witnora-Core v0.8.4
 
-Witnora-Core v0.8.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.8.4 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -162,7 +162,7 @@ The v0 exact treewidth route remains scoped to `0 <= c <= 4`.
 
 ## Public Benchmark Evaluation
 
-v0.8.2 includes official public benchmark integration and artifact writing. It
+v0.8.4 includes official public benchmark integration and artifact writing. It
 supports:
 
 - `--public-suite cnfgen-official`, using an official `cnfgen` CLI on PATH,
@@ -177,7 +177,7 @@ The built-in demo suites are not official benchmark evidence. Reports label
 them with `suite_source_type: BUILT_IN_DEMO` and must say they are built into
 Witnora for harness validation only.
 
-Official CNFgen is not bundled. If `cnfgen` is missing, v0.8.2 reports
+Official CNFgen is not bundled. If `cnfgen` is missing, v0.8.4 reports
 `suite_status: NOT_RUN` and `not_run_reason: OFFICIAL_CNFGEN_NOT_AVAILABLE`
 instead of silently falling back to built-in formulas. Install official CNFgen
 with:
@@ -198,12 +198,12 @@ python -m witnora_core.benchmark --public-suite satcomp --dimacs-dir path/to/sat
 python -m witnora_core.benchmark --public-suite demo-cnfgen-artifact --c 2 --out demo_results.json --csv demo.csv --report DEMO_REPORT.md --export-certs demo_certs/ --strict-unsat-external --drat-trim path/to/drat-trim
 ```
 
-v0.8.2 benchmark outputs should be packaged separately from source archives.
+v0.8.4 benchmark outputs should be packaged separately from source archives.
 The artifact writer creates `README.md`, `config.json`, `results.csv`,
 `results.json`, `REPORT.md`, `selected_instances.txt`, `environment.txt`,
 `strict_verification_summary.json`, `benchmark_manifest.json`, `drat_logs/`,
 `generated_dimacs/`, `raw_outputs/`, and `certs/` under an output directory such
-as `outputs/v0.8.2-public-benchmark/<suite_name>/`.
+as `outputs/v0.8.4-public-benchmark/<suite_name>/`.
 
 Each public benchmark instance receives exactly one category:
 
@@ -220,6 +220,38 @@ CLI exits nonzero if any UNSAT result is not externally verified by real
 `drat-trim`. `UNSAT_NOT_EXTERNALLY_VERIFIED` and `UNSUPPORTED_DRAT` must not be
 aggregated with `UNSAT_DRAT_EXPORTED_VERIFIED`. `NO_COLLAPSE_FOUND` is still not
 a hardness claim.
+
+## Official CNFgen Diagnostic Matrix
+
+v0.8.4 adds an official CNFgen diagnostic matrix runner. It is intended to
+measure the current collapse boundary across formula family and `c` value, not
+to make a broad solver-performance claim.
+
+Example:
+
+```bash
+python -m witnora_core.cnfgen_matrix --out-root outputs/v0.8.4-cnfgen-diagnostic --families pigeonhole tseitin parity --c-values 2 3 4 --timeout-seconds 300 --strict-unsat-external --drat-trim path/to/drat-trim --zip witnora-core-v0.8.4-cnfgen-diagnostic-benchmark.zip
+```
+
+The matrix uses official CNFgen commands when available:
+
+- pigeonhole: `cnfgen php 3 2` through `cnfgen php 10 9`
+- Tseitin: deterministic seeded `cnfgen --seed N tseitin N`
+- parity: deterministic seeded `cnfgen --seed N parity N`
+
+The artifact includes `matrix_summary.json`, `matrix_summary.csv`,
+`MATRIX_SUMMARY.md`, per-family/per-`c` JSON/CSV/Markdown reports, generated
+DIMACS files, certificate bundles, DRAT logs, environment metadata, and the
+exact commands run. Unsupported or unavailable families are marked `NOT_RUN`
+with a reason. The runner must not fall back to built-in demo formulas and call
+them official.
+
+Allowed interpretation: the diagnostic matrix reports where the current
+collapse grammar succeeds, fails to collapse, times out, or produces externally
+verified UNSAT certificates. Forbidden interpretation: it does not prove
+hardness, does not claim Witnora solves pigeonhole generally, does not claim
+XOR/affine collapse is necessary from parity failures, and does not imply P vs
+NP progress.
 
 ## Proof-Carrying Certificates
 
@@ -245,7 +277,9 @@ CSV/JSON/Markdown public reports, per-instance timeout handling, and strict
 UNSAT external verification mode. v0.8.1 packaged a built-in public-style
 benchmark artifact separately from the source release. v0.8.2 demotes that
 built-in suite to demo status and adds official CNFgen, SATLIB-directory, and
-SAT-Competition-directory integration with NOT_RUN reporting.
+SAT-Competition-directory integration with NOT_RUN reporting. v0.8.4 adds an
+official CNFgen diagnostic matrix over pigeonhole, Tseitin, and parity families
+for `c = 2, 3, 4`.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -344,7 +378,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.8.2",
+  "checker": "witnora_internal_rup_subset_checker_v0.8.4",
   "checked_against": "original.dimacs"
 }
 ```
