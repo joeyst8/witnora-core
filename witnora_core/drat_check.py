@@ -5,13 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-import subprocess
 from typing import Iterable, Any
 
 from .cnf import CNFFormula, Clause
 from .dimacs import parse_dimacs
+from .drat_trim import run_drat_trim
 
-CHECKER = "witnora_internal_rup_subset_checker_v0.6.1"
+CHECKER = "witnora_internal_rup_subset_checker_v0.6.2"
 CHECKED_AGAINST = "original.dimacs"
 
 ClauseTuple = tuple[int, ...]
@@ -180,25 +180,29 @@ def check_drat_files(
     proof_drat: str | Path,
     *,
     external_drat_trim: str | Path | None = None,
+    drat_trim: str | Path | None = None,
     strict_deletions: bool = False,
+    timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
     formula = parse_dimacs(Path(original_dimacs).read_text(encoding="utf-8"))
     proof_text = Path(proof_drat).read_text(encoding="utf-8")
     result = check_drat_text(formula, proof_text, strict_deletions=strict_deletions)
-    result["external_checker"] = "NOT_RUN"
-    result["external_checker_verified"] = False
-    if external_drat_trim is not None:
-        proc = subprocess.run(
-            [str(external_drat_trim), str(original_dimacs), str(proof_drat)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        result["external_checker"] = "DRAT_TRIM"
-        result["external_checker_verified"] = proc.returncode == 0
-        result["external_checker_returncode"] = proc.returncode
-        result["external_checker_stdout"] = proc.stdout
-        result["external_checker_stderr"] = proc.stderr
+    trim_path = drat_trim if drat_trim is not None else external_drat_trim
+    trim_result = run_drat_trim(
+        original_dimacs,
+        proof_drat,
+        trim_path,
+        timeout_seconds=timeout_seconds,
+    )
+    result["external_checker"] = trim_result["external_checker"]
+    result["external_checker_path"] = trim_result.get("external_checker_path")
+    result["external_checker_ran"] = bool(trim_result.get("external_checker_ran", False))
+    result["external_checker_verified"] = bool(trim_result.get("external_checker_verified", False))
+    result["external_checker_exit_code"] = trim_result.get("exit_code")
+    result["external_checker_stdout"] = trim_result.get("stdout", "")
+    result["external_checker_stderr"] = trim_result.get("stderr", "")
+    result["external_checker_timeout"] = bool(trim_result.get("timeout", False))
+    result["external_checker_error"] = trim_result.get("error")
     return result
 
 
@@ -207,11 +211,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("original_dimacs")
     parser.add_argument("proof_drat")
     parser.add_argument("--external-drat-trim")
+    parser.add_argument("--drat-trim")
+    parser.add_argument("--timeout-seconds", type=float)
     args = parser.parse_args(argv)
     result = check_drat_files(
         args.original_dimacs,
         args.proof_drat,
         external_drat_trim=args.external_drat_trim,
+        drat_trim=args.drat_trim,
+        timeout_seconds=args.timeout_seconds,
     )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result.get("verified") else 1

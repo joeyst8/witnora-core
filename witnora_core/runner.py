@@ -419,6 +419,10 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="with --export-cert, add proof.drat for supported UNSAT paths",
     )
+    parser.add_argument(
+        "--drat-trim",
+        help="optional drat-trim executable path for external proof.drat verification",
+    )
     args = parser.parse_args(argv)
     dimacs_path = Path(args.dimacs)
     original_text = dimacs_path.read_text(encoding="utf-8")
@@ -431,6 +435,7 @@ def main(argv: list[str] | None = None) -> int:
             args.export_cert,
             original_dimacs_text=original_text,
             export_drat=args.export_drat,
+            drat_trim_path=args.drat_trim,
         )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0

@@ -17,7 +17,9 @@ Witnora-Core v0.6.0 added an initial DRAT-style final-state experiment.
 Witnora-Core v0.6.1 hardens this bridge: `proof.drat` is supported only when
 it is checked end-to-end from `original.dimacs` by the internal RUP-subset
 checker. v0.6.1 still does not implement full DRAT/RAT checking, LRAT, or FRAT
-output.
+output. Witnora-Core v0.6.2 adds an optional `drat-trim` adapter and records
+external DRAT verification only when the provided checker process actually runs
+and accepts the exported proof.
 
 ## What LRAT Is Appropriate For
 
@@ -73,9 +75,9 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.6.1 End-to-End RUP-Subset DRAT Bridge
+## v0.6.2 End-to-End RUP-Subset DRAT Bridge
 
-v0.6.1 exports `proof.drat` only for supported UNSAT paths whose proof
+v0.6.2 exports `proof.drat` only for supported UNSAT paths whose proof
 additions are accepted by Witnora's internal RUP-subset checker starting from
 the original CNF clause database. It also writes `drat_status.json`.
 
@@ -100,7 +102,23 @@ Supported exports record:
   "proof_scope": "END_TO_END_FROM_ORIGINAL_CNF",
   "checked_against": "original.dimacs",
   "internal_rup_subset_checker_verified": true,
-  "requires_external_checker": false
+  "requires_external_checker": false,
+  "external_checker": "NOT_RUN",
+  "external_checker_ran": false,
+  "external_checker_verified": false
+}
+```
+
+If `--drat-trim path/to/drat-trim` is provided, Witnora runs that process only
+as a proof checker, never as a solver. External verification is recorded only
+when it runs and exits successfully:
+
+```json
+{
+  "external_checker": "DRAT_TRIM",
+  "external_checker_ran": true,
+  "external_checker_verified": true,
+  "external_checker_exit_code": 0
 }
 ```
 
@@ -113,7 +131,7 @@ Unsupported or final-state-only paths are marked:
 }
 ```
 
-Unsupported in v0.6.1:
+Unsupported in v0.6.2:
 
 - conversion of arbitrary 2-SAT SCC contradictions to DRAT,
 - full RAT checking,
@@ -124,11 +142,12 @@ Unsupported in v0.6.1:
 The checker is named:
 
 ```text
-witnora_internal_rup_subset_checker_v0.6.1
+witnora_internal_rup_subset_checker_v0.6.2
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
-or a formally verified proof checker.
+or a formally verified proof checker. The `drat-trim` adapter is optional and
+`drat-trim` is not bundled.
 
 ## v0.5.1 Native UNSAT Trace vs Standard SAT Proofs
 
@@ -162,9 +181,9 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.6.1 only claims DRAT-style proof export for supported
+proof checking. v0.6.2 only claims DRAT-style proof export for supported
 end-to-end RUP-checkable UNSAT paths. External verification is claimed only if
-an external checker actually ran and passed.
+`drat-trim` or another recorded external checker actually ran and passed.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -212,7 +231,7 @@ v0.7 should focus on a conservative external proof bridge:
 
 ## Forbidden Claims
 
-Witnora-Core v0.6.1 does not claim:
+Witnora-Core v0.6.2 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

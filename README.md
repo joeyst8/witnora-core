@@ -1,6 +1,6 @@
-# Witnora-Core v0.6.1
+# Witnora-Core v0.6.2
 
-Witnora-Core v0.6.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.6.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -170,7 +170,8 @@ UNSAT trace is checked only after the independent raw checker replays the full
 collapse path from `original.dimacs`. v0.6.0 added a minimal DRAT-style bridge
 as an initial final-state experiment. v0.6.1 hardens that bridge: exported
 `proof.drat` files are supported only when the internal RUP-subset checker
-validates them end-to-end from `original.dimacs`.
+validates them end-to-end from `original.dimacs`. v0.6.2 adds an optional
+`drat-trim` adapter for external verification of exported `proof.drat` files.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -230,12 +231,19 @@ internal-replay only until DRAT/LRAT/FRAT proof export exists.
 
 ## Minimal DRAT Bridge
 
-v0.6.1 can export a DRAT-style proof for supported end-to-end
+v0.6.2 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
 python -m witnora_core.runner examples/unsat_demo.dimacs --c 2 --export-cert out.wcert --export-drat
 python -m witnora_core.drat_check out.wcert/original.dimacs out.wcert/proof.drat
+```
+
+Optionally run an installed `drat-trim` checker:
+
+```bash
+python -m witnora_core.runner examples/unsat_demo.dimacs --c 2 --export-cert out.wcert --export-drat --drat-trim path/to/drat-trim
+python -m witnora_core.drat_check out.wcert/original.dimacs out.wcert/proof.drat --drat-trim path/to/drat-trim
 ```
 
 The bridge is intentionally narrow. It supports:
@@ -259,12 +267,12 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.6.1",
+  "checker": "witnora_internal_rup_subset_checker_v0.6.2",
   "checked_against": "original.dimacs"
 }
 ```
 
-2-SAT SCC contradictions are not converted to DRAT in v0.6.1; they remain
+2-SAT SCC contradictions are not converted to DRAT in v0.6.2; they remain
 native-only and are marked `UNSUPPORTED` in `drat_status.json`.
 
 `drat_status.json` records whether `proof.drat` was exported, whether the
@@ -283,6 +291,14 @@ checker was run. Supported exports use:
 Unsupported or final-state-only paths are marked with
 `proof_scope: "FINAL_STATE_ONLY_UNSUPPORTED"`. External verification is `false`
 unless an external checker is actually provided and succeeds.
+
+`drat-trim` is not bundled and is not used to solve formulas. It is only an
+optional proof checker for a `proof.drat` file that Witnora already exported
+and internally checked. `drat_status.json` records
+`external_checker: "DRAT_TRIM"`, `external_checker_ran: true`, and
+`external_checker_verified: true` only when the provided process actually runs
+and exits successfully. If no path is provided, the status remains
+`external_checker: "NOT_RUN"` and `external_checker_verified: false`.
 
 ## Certification Metadata
 
@@ -327,7 +343,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.6.1 does not claim full
+This classification is deliberately conservative. v0.6.2 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 

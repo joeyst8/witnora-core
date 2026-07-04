@@ -13,9 +13,9 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.6.1"
+CHECKER = "independent_raw_checker_v0.6.2"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
-DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.6.1"
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.6.2"
 DRAT_CHECKED_AGAINST = "original.dimacs"
 DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
@@ -1135,7 +1135,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.6.1", "proof_trace")
+        return _fail("external_lrat_frat must remain false in v0.6.2", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
@@ -1162,6 +1162,23 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
                 return _fail("DRAT status incorrectly requires external checker", "drat")
             if drat_status.get("internal_rup_subset_checker_verified") is not True:
                 return _fail("DRAT status does not record RUP-subset checker success", "drat")
+            external_verified = bool(drat_status.get("external_checker_verified", False))
+            external_checker = drat_status.get("external_checker")
+            external_ran = bool(drat_status.get("external_checker_ran", False))
+            external_exit_code = drat_status.get("external_checker_exit_code")
+            if external_verified:
+                if external_checker != "DRAT_TRIM":
+                    return _fail("external DRAT verification must name DRAT_TRIM", "drat")
+                if not external_ran:
+                    return _fail("external DRAT verification claimed without checker run", "drat")
+                if external_exit_code is None or int(external_exit_code) != 0:
+                    return _fail("external DRAT verification claimed with nonzero exit code", "drat")
+            elif external_checker == "NOT_RUN":
+                if external_ran:
+                    return _fail("DRAT status says NOT_RUN but external checker ran", "drat")
+            elif external_checker == "DRAT_TRIM":
+                if external_verified:
+                    return _fail("unreachable external verification mismatch", "drat")
         elif drat_status.get("proof_scope") == "FINAL_STATE_ONLY_UNSUPPORTED" and "proof.drat" in files:
             return _fail("final-state-only proof.drat is not supported", "drat")
     if hash_formula_raw(original) != manifest.get("original_formula_hash"):

@@ -5,6 +5,7 @@ from __future__ import annotations
 from hashlib import sha256
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from .certificate import (
@@ -23,13 +24,14 @@ from .certificate import (
 from .cnf import CNFFormula, formula_satisfied
 from .dimacs import export_dimacs, parse_dimacs
 from .drat import DRATExport, export_drat_for_path
+from .drat_trim import run_drat_trim
 from .proof_trace import is_supported_native_unsat_trace, native_unsat_trace
 from .reconstruction import reconstruct_assignment
 from .verifier import verify_collapse_path
 
-WITNORA_VERSION = "0.6.1"
+WITNORA_VERSION = "0.6.2"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.6.1"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.6.2"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -139,6 +141,57 @@ def _bundle_files(
     return files
 
 
+def _excerpt(text: str, limit: int = 2000) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + "\n...[truncated]"
+
+
+def _with_drat_trim_result(
+    drat_export: DRATExport,
+    original_dimacs_text: str,
+    drat_trim_path: str | Path | None,
+) -> DRATExport:
+    if (
+        drat_trim_path is None
+        or drat_export.proof_text is None
+        or drat_export.status.get("drat_export_status") != "EXPORTED"
+    ):
+        return drat_export
+
+    with TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        original_path = root / "original.dimacs"
+        proof_path = root / "proof.drat"
+        original_path.write_text(
+            original_dimacs_text if original_dimacs_text.endswith("\n") else original_dimacs_text + "\n",
+            encoding="utf-8",
+        )
+        proof_path.write_text(drat_export.proof_text, encoding="utf-8")
+        trim_result = run_drat_trim(original_path, proof_path, drat_trim_path)
+
+    status = dict(drat_export.status)
+    status.update(
+        {
+            "external_checker": trim_result.get("external_checker", "NOT_RUN"),
+            "external_checker_path": trim_result.get("external_checker_path"),
+            "external_checker_ran": bool(trim_result.get("external_checker_ran", False)),
+            "external_checker_verified": bool(trim_result.get("external_checker_verified", False)),
+            "external_checker_exit_code": trim_result.get("exit_code"),
+            "external_checker_stdout_excerpt": _excerpt(str(trim_result.get("stdout", ""))),
+            "external_checker_stderr_excerpt": _excerpt(str(trim_result.get("stderr", ""))),
+            "external_checker_timeout": bool(trim_result.get("timeout", False)),
+            "external_checker_error": trim_result.get("error"),
+        }
+    )
+    if not status["external_checker_verified"] and status["external_checker_ran"]:
+        status["supported_reason"] = (
+            status.get("supported_reason")
+            or "internal RUP-subset checker verified proof; external checker did not accept"
+        )
+    return DRATExport(drat_export.proof_text, status)
+
+
 def _manifest(
     original_formula: CNFFormula,
     path: CollapsePath,
@@ -185,12 +238,15 @@ def export_certificate_bundle(
     *,
     original_dimacs_text: str | None = None,
     export_drat: bool = False,
+    drat_trim_path: str | Path | None = None,
 ) -> Path:
     """Write a deterministic .wcert directory or .wcert.json certificate."""
 
     output = Path(output_path)
     original_text = original_dimacs_text or export_dimacs(original_formula)
     drat_export = export_drat_for_path(original_formula, path) if export_drat else None
+    if drat_export is not None:
+        drat_export = _with_drat_trim_result(drat_export, original_text, drat_trim_path)
     files = _bundle_files(original_formula, path, original_text, drat_export)
     manifest = _manifest(original_formula, path, files, drat_export)
     manifest_text = stable_json(manifest)
@@ -313,7 +369,7 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     if manifest.get("proof_trace_class") != result_data.get("proof_trace_class"):
         return _fail("proof_trace_class manifest mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.6.1", "proof_trace_classification")
+        return _fail("external_lrat_frat must remain false in v0.6.2", "proof_trace_classification")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace_classification")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
