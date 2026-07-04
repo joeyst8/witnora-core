@@ -1,6 +1,6 @@
-# Witnora-Core v0.6.4
+# Witnora-Core v0.7.0
 
-Witnora-Core v0.6.4 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.7.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -175,7 +175,9 @@ validates them end-to-end from `original.dimacs`. v0.6.2 adds an optional
 v0.6.3 adds real `drat-trim` smoke tests that run when a real checker is
 available on PATH or through `WITNORA_DRAT_TRIM`. v0.6.4 records real
 `drat-trim` verification passing for the supported smoke examples when the
-checker is built from upstream source.
+checker is built from upstream source. v0.7.0 adds DRAT-style export for
+supported 2-SAT SCC contradictions by deriving complementary units from logged
+implication paths, then deriving the empty clause.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -235,7 +237,7 @@ internal-replay only until DRAT/LRAT/FRAT proof export exists.
 
 ## Minimal DRAT Bridge
 
-v0.6.4 can export a DRAT-style proof for supported end-to-end
+v0.7.0 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
@@ -257,6 +259,8 @@ The bridge is intentionally narrow. It supports:
 - PLE, subsumption, and BCE clause deletion lines,
 - VE resolvent additions when the logged resolvents exactly match recomputation,
 - VE deletions after resolvent additions,
+- 2-SAT SCC contradictions by extracting paths `x -> -x` and `-x -> x`,
+  deriving `(-x)` and `(x)`, then deriving the empty clause,
 - final explicit empty clause.
 
 The proof is generated from the original CNF proof state. VE resolvents are
@@ -271,13 +275,16 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.6.4",
+  "checker": "witnora_internal_rup_subset_checker_v0.7.0",
   "checked_against": "original.dimacs"
 }
 ```
 
-2-SAT SCC contradictions are not converted to DRAT in v0.6.4; they remain
-native-only and are marked `UNSUPPORTED` in `drat_status.json`.
+For supported 2-SAT SCC contradictions, `drat_status.json` records
+`supported_reason: "2SAT_SCC_TO_DRAT_EXPORTED"` and includes the extracted
+paths and derived clauses under `two_sat_scc_proof`. If a path cannot be
+extracted or the derived clauses are not RUP-checkable from the active proof
+state, the export is marked unsupported instead of being overclaimed.
 
 `drat_status.json` records whether `proof.drat` was exported, whether the
 internal RUP-subset checker verified it, and whether an optional external
@@ -366,7 +373,7 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.6.4 does not claim full
+This classification is deliberately conservative. v0.7.0 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
 
@@ -525,7 +532,14 @@ Expected pass markers include:
 - `NO_FALSE_LRAT_FRAT_CLAIM_PASS`
 - `DRAT_EXPORT_EMPTY_CONFLICT_PASS`
 - `DRAT_EXPORT_VE_UNSAT_PASS`
-- `DRAT_UNSUPPORTED_2SAT_SCC_PASS`
+- `DRAT_2SAT_SCC_EXPORTED_PASS`
+- `TWO_SAT_SCC_DRAT_EXPORT_PASS`
+- `TWO_SAT_SCC_DRAT_TRIM_PASS` when real `drat-trim` is available
+- `TWO_SAT_SCC_PATH_EXTRACTION_PASS`
+- `TWO_SAT_SCC_FAKE_EDGE_REJECT_PASS`
+- `TWO_SAT_SCC_FINAL_STATE_ONLY_REJECT_PASS`
+- `TWO_SAT_SCC_AFTER_VE_DRAT_PASS`
+- `DRAT_STATUS_2SAT_NO_LONGER_UNSUPPORTED_PASS`
 - `DRAT_TAMPER_REJECT_PASS`
 - `DRAT_STATUS_NO_FALSE_CLAIM_PASS`
 - `DRAT_CERT_BUNDLE_PASS`

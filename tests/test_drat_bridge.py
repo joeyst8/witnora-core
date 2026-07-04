@@ -95,7 +95,7 @@ class DRATBridgeTest(unittest.TestCase):
         self.assertTrue(checked["verified"], checked)
         print("DRAT_EXPORT_VE_UNSAT_PASS")
 
-    def test_drat_unsupported_2sat_scc(self):
+    def test_drat_export_2sat_scc(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             dimacs = root / "scc_unsat.dimacs"
@@ -104,14 +104,16 @@ class DRATBridgeTest(unittest.TestCase):
             code, result = export_cert(dimacs, 2, cert)
             status = read_json(cert / "drat_status.json")
             proof_exists = (cert / "proof.drat").exists()
+            checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
             native_checked = verify_wcert_raw(cert)
         self.assertEqual(code, 0)
         self.assertEqual(result["status"], "UNSAT")
-        self.assertEqual(status["drat_export_status"], "UNSUPPORTED")
-        self.assertEqual(status["unsupported_reason"], "2SAT_SCC_TO_DRAT_NOT_IMPLEMENTED")
-        self.assertFalse(proof_exists)
+        self.assertEqual(status["drat_export_status"], "EXPORTED")
+        self.assertEqual(status["supported_reason"], "2SAT_SCC_TO_DRAT_EXPORTED")
+        self.assertTrue(proof_exists)
+        self.assertTrue(checked["verified"], checked)
         self.assertTrue(native_checked["verified"], native_checked)
-        print("DRAT_UNSUPPORTED_2SAT_SCC_PASS")
+        print("DRAT_2SAT_SCC_EXPORTED_PASS")
 
     def test_drat_tamper_reject(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -123,7 +125,7 @@ class DRATBridgeTest(unittest.TestCase):
             (cert / "proof.drat").write_text("1 0\n", encoding="utf-8")
             checked = check_drat_files(cert / "original.dimacs", cert / "proof.drat")
         self.assertFalse(checked["verified"])
-        self.assertEqual(checked["checker"], "witnora_internal_rup_subset_checker_v0.6.4")
+        self.assertEqual(checked["checker"], "witnora_internal_rup_subset_checker_v0.7.0")
         print("DRAT_TAMPER_REJECT_PASS")
 
     def test_drat_status_no_false_claim(self):
@@ -257,7 +259,7 @@ class DRATBridgeTest(unittest.TestCase):
         self.assertFalse(status["requires_external_checker"])
         print("DRAT_STATUS_SCOPE_PASS")
 
-    def test_drat_unsupported_scc_still_native(self):
+    def test_drat_scc_now_exported_still_native(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             dimacs = root / "scc_unsat.dimacs"
@@ -269,12 +271,12 @@ class DRATBridgeTest(unittest.TestCase):
             native_checked = verify_wcert_raw(cert)
         self.assertEqual(code, 0)
         self.assertEqual(result["status"], "UNSAT")
-        self.assertFalse(proof_exists)
-        self.assertEqual(status["drat_export_status"], "UNSUPPORTED")
-        self.assertEqual(status["unsupported_reason"], "2SAT_SCC_TO_DRAT_NOT_IMPLEMENTED")
-        self.assertEqual(status["proof_scope"], "FINAL_STATE_ONLY_UNSUPPORTED")
+        self.assertTrue(proof_exists)
+        self.assertEqual(status["drat_export_status"], "EXPORTED")
+        self.assertEqual(status["supported_reason"], "2SAT_SCC_TO_DRAT_EXPORTED")
+        self.assertEqual(status["proof_scope"], "END_TO_END_FROM_ORIGINAL_CNF")
         self.assertTrue(native_checked["verified"], native_checked)
-        print("DRAT_UNSUPPORTED_SCC_STILL_NATIVE_PASS")
+        print("DRAT_SCC_EXPORTED_STILL_NATIVE_PASS")
 
 
 if __name__ == "__main__":

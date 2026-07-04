@@ -23,6 +23,9 @@ and accepts the exported proof. Witnora-Core v0.6.3 adds skipped-unless-present
 real `drat-trim` smoke tests for exported unit-conflict, VE-derived, and
 BCE+VE-derived UNSAT proofs. Witnora-Core v0.6.4 records these smoke examples
 passing with a real `drat-trim` binary built from the upstream source.
+Witnora-Core v0.7.0 adds DRAT-style export for supported 2-SAT SCC
+contradictions by deriving complementary units from implication paths and then
+deriving the empty clause.
 
 ## What LRAT Is Appropriate For
 
@@ -53,8 +56,9 @@ Current certificate bundles classify each step with
 - `CD`: decomposition bookkeeping; not a clausal refutation step.
 - `TREEWIDTH_SOLVE`: tractable solver boundary; not a clausal refutation step.
 - `VE`: resolution-style transformation; LRAT export is not implemented.
-- `2SAT_SOLVE`: internally checked SCC result; future UNSAT branch could emit a
-  clausal refutation, but v0.5 does not.
+- `2SAT_SOLVE`: internally checked SCC result. v0.7 can export supported
+  UNSAT SCC contradictions as RUP-checkable path-derived unit clauses followed
+  by the empty clause.
 
 ## SAT Certificates
 
@@ -78,9 +82,9 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.6.4 End-to-End RUP-Subset DRAT Bridge
+## v0.7.0 End-to-End RUP-Subset DRAT Bridge
 
-v0.6.4 exports `proof.drat` only for supported UNSAT paths whose proof
+v0.7.0 exports `proof.drat` only for supported UNSAT paths whose proof
 additions are accepted by Witnora's internal RUP-subset checker starting from
 the original CNF clause database. It also writes `drat_status.json`.
 
@@ -89,7 +93,10 @@ Supported proof lines:
 - RUP additions for UP-shortened clauses,
 - an empty-clause addition for explicit unit conflicts,
 - RUP additions for VE-generated resolvents,
-- deletion lines for BCE, PLE, subsumption, and VE clause removals.
+- deletion lines for BCE, PLE, subsumption, and VE clause removals,
+- RUP additions for supported 2-SAT SCC contradictions. The exporter extracts
+  paths `x -> -x` and `-x -> x`, resolves the path clauses to derive `(-x)` and
+  `(x)`, then emits the empty clause.
 
 Proof generation walks the collapse path in order. VE resolvents are emitted
 before deleting eliminated-variable parent clauses. The final empty clause is
@@ -134,9 +141,8 @@ Unsupported or final-state-only paths are marked:
 }
 ```
 
-Unsupported in v0.6.4:
+Unsupported in v0.7.0:
 
-- conversion of arbitrary 2-SAT SCC contradictions to DRAT,
 - full RAT checking,
 - LRAT export,
 - FRAT export,
@@ -145,7 +151,7 @@ Unsupported in v0.6.4:
 The checker is named:
 
 ```text
-witnora_internal_rup_subset_checker_v0.6.4
+witnora_internal_rup_subset_checker_v0.7.0
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -196,9 +202,10 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.6.4 only claims DRAT-style proof export for supported
-end-to-end RUP-checkable UNSAT paths. External verification is claimed only if
-`drat-trim` or another recorded external checker actually ran and passed.
+proof checking. v0.7.0 only claims DRAT-style proof export for supported
+end-to-end RUP-checkable UNSAT paths, including supported 2-SAT SCC
+contradictions. External verification is claimed only if `drat-trim` or another
+recorded external checker actually ran and passed.
 
 Likely RAT-compatible or clausal-proof-compatible areas:
 
@@ -232,7 +239,7 @@ It is not formally verified and is not an independent third-party checker.
 
 ## Future Plan
 
-v0.7 should focus on a conservative external proof bridge:
+The next proof-format milestones should keep the bridge conservative:
 
 1. Improve DRAT coverage while keeping internal proof checking honest.
 2. Test emitted proofs with `drat-trim` or another external checker.
@@ -246,7 +253,7 @@ v0.7 should focus on a conservative external proof bridge:
 
 ## Forbidden Claims
 
-Witnora-Core v0.6.4 does not claim:
+Witnora-Core v0.7.0 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,

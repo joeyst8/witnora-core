@@ -8,6 +8,7 @@ from typing import Any
 from .certificate import CollapsePath, SAT, UNSAT
 from .cnf import CNFFormula, Clause, has_tautology
 from .drat_check import CHECKED_AGAINST, check_drat_text, is_rup
+from .two_sat_proof import build_2sat_scc_proof
 
 PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 PROOF_SCOPE_FINAL_STATE_ONLY_UNSUPPORTED = "FINAL_STATE_ONLY_UNSUPPORTED"
@@ -111,19 +112,18 @@ def _append_deletion(
     return None
 
 
-def _export_lines(original_formula: CNFFormula, path: CollapsePath) -> tuple[list[str], str | None]:
+def _export_lines(
+    original_formula: CNFFormula,
+    path: CollapsePath,
+) -> tuple[list[str], str | None, dict[str, Any] | None]:
     if path.status == SAT:
-        return [], "NOT_APPLICABLE_SAT"
+        return [], "NOT_APPLICABLE_SAT", None
     if path.status != UNSAT:
-        return [], "NOT_UNSAT"
-    if any(
-        step.type == "2SAT_SOLVE" and step.details.get("status") == "UNSAT"
-        for step in path.steps
-    ):
-        return [], "2SAT_SCC_TO_DRAT_NOT_IMPLEMENTED"
+        return [], "NOT_UNSAT", None
 
     active = {clause.literals for clause in original_formula.clauses}
     lines: list[str] = []
+    two_sat_scc_proof: dict[str, Any] | None = None
 
     for step in path.steps:
         step_type = step.type
@@ -132,26 +132,26 @@ def _export_lines(original_formula: CNFFormula, path: CollapsePath) -> tuple[lis
                 shortened = _canonical(list(item.get("to", [])))
                 error = _append_rup_addition(lines, active, shortened)
                 if error is not None:
-                    return lines, error
+                    return lines, error, two_sat_scc_proof
                 if shortened == ():
-                    return lines, None
+                    return lines, None, two_sat_scc_proof
             for clause in step.removed_clauses:
                 error = _append_deletion(lines, active, clause)
                 if error is not None:
-                    return lines, error
+                    return lines, error, two_sat_scc_proof
             continue
 
         if step_type in {"PLE", "SUB", "BCE"}:
             for clause in step.removed_clauses:
                 error = _append_deletion(lines, active, clause)
                 if error is not None:
-                    return lines, error
+                    return lines, error, two_sat_scc_proof
             continue
 
         if step_type == "VE":
             var = int(step.reconstruction_data.get("eliminated_variable", 0))
             if var <= 0:
-                return lines, "VE_ELIMINATED_VARIABLE_MISSING"
+                return lines, "VE_ELIMINATED_VARIABLE_MISSING", two_sat_scc_proof
             pos = sorted(clause for clause in active if var in clause)
             neg = sorted(clause for clause in active if -var in clause)
             expected: set[tuple[int, ...]] = set()
@@ -162,37 +162,55 @@ def _export_lines(original_formula: CNFFormula, path: CollapsePath) -> tuple[lis
                         expected.add(resolvent)
             logged = {_canonical(clause) for clause in step.added_clauses}
             if expected != logged:
-                return lines, "VE_RESOLVENT_LOG_MISMATCH"
+                return lines, "VE_RESOLVENT_LOG_MISMATCH", two_sat_scc_proof
             for resolvent in sorted(expected):
                 error = _append_rup_addition(lines, active, resolvent)
                 if error is not None:
-                    return lines, error
+                    return lines, error, two_sat_scc_proof
                 if resolvent == ():
-                    return lines, None
+                    return lines, None, two_sat_scc_proof
             for clause in step.removed_clauses:
                 error = _append_deletion(lines, active, clause)
                 if error is not None:
-                    return lines, error
+                    return lines, error, two_sat_scc_proof
             continue
 
         if step_type in {"CD", "TREEWIDTH_SOLVE"}:
             continue
 
         if step_type == "2SAT_SOLVE":
-            continue
+            if step.details.get("status") != "UNSAT":
+                continue
+            conflict_var = int(step.details.get("conflict_variable", 0))
+            if conflict_var <= 0:
+                return lines, "2SAT_SCC_CONFLICT_VARIABLE_MISSING", two_sat_scc_proof
+            implication_clauses = sorted(clause for clause in active if len(clause) <= 2)
+            try:
+                proof = build_2sat_scc_proof(implication_clauses, conflict_var)
+            except Exception as exc:
+                return lines, f"2SAT_SCC_PROOF_EXTRACTION_FAILED: {exc}", two_sat_scc_proof
+            two_sat_scc_proof = proof.to_dict()
+            for derived in proof.derived_clauses:
+                error = _append_rup_addition(lines, active, derived)
+                if error is not None:
+                    return lines, f"2SAT_SCC_DERIVED_CLAUSE_{error}", two_sat_scc_proof
+            error = _append_rup_addition(lines, active, ())
+            if error is not None:
+                return lines, f"2SAT_SCC_EMPTY_CLAUSE_{error}", two_sat_scc_proof
+            return lines, None, two_sat_scc_proof
 
-        return lines, f"UNSUPPORTED_STEP_{step_type}"
+        return lines, f"UNSUPPORTED_STEP_{step_type}", two_sat_scc_proof
 
     if any(clause == () for clause in active):
         error = _append_rup_addition(lines, active, ())
         if error is not None:
-            return lines, error
-        return lines, None
-    return lines, "NO_EXPLICIT_EMPTY_CLAUSE_DERIVED"
+            return lines, error, two_sat_scc_proof
+        return lines, None, two_sat_scc_proof
+    return lines, "NO_EXPLICIT_EMPTY_CLAUSE_DERIVED", two_sat_scc_proof
 
 
 def export_drat_for_path(original_formula: CNFFormula, path: CollapsePath) -> DRATExport:
-    lines, unsupported = _export_lines(original_formula, path)
+    lines, unsupported, two_sat_scc_proof = _export_lines(original_formula, path)
     if unsupported == "NOT_APPLICABLE_SAT":
         return DRATExport(
             None,
@@ -235,13 +253,21 @@ def export_drat_for_path(original_formula: CNFFormula, path: CollapsePath) -> DR
                 proof_scope=PROOF_SCOPE_FINAL_STATE_ONLY_UNSUPPORTED,
             ),
         )
+    supported_reason = (
+        "2SAT_SCC_TO_DRAT_EXPORTED"
+        if two_sat_scc_proof is not None
+        else "end-to-end RUP-checkable UNSAT path from original CNF"
+    )
+    status = _base_status(
+        "EXPORTED",
+        supported_reason=supported_reason,
+        internal_verified=True,
+        proof_file="proof.drat",
+        proof_scope=PROOF_SCOPE_END_TO_END,
+    )
+    if two_sat_scc_proof is not None:
+        status["two_sat_scc_proof"] = two_sat_scc_proof
     return DRATExport(
         proof_text,
-        _base_status(
-            "EXPORTED",
-            supported_reason="end-to-end RUP-checkable UNSAT path from original CNF",
-            internal_verified=True,
-            proof_file="proof.drat",
-            proof_scope=PROOF_SCOPE_END_TO_END,
-        ),
+        status,
     )
