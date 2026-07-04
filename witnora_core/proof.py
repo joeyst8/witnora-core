@@ -32,9 +32,9 @@ from .verifier import verify_collapse_path
 from .xor import XorEquation, XorSystem, verify_xor_assignment
 from .xor_drat import export_xor_drat_for_path
 
-WITNORA_VERSION = "0.9.3"
+WITNORA_VERSION = "0.9.3.1"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.9.3"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.9.3.1"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -229,6 +229,7 @@ def _manifest(
         "sat_certification_level": path.sat_certification_level,
         "unsat_certification_level": unsat_certification_level(path),
         "proof_trace_class": path.proof_trace_class,
+        **path.public_metadata(),
         "external_lrat_frat": False,
         "native_unsat_trace_scope": "END_TO_END_WITH_COLLAPSE_REPLAY",
         "external_drat": bool(drat_status.get("drat_export_status") == "EXPORTED"),
@@ -397,6 +398,16 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         return _fail("UNSAT certification level mismatch", "certification_metadata")
     if manifest.get("proof_trace_class") != result_data.get("proof_trace_class"):
         return _fail("proof_trace_class manifest mismatch", "certification_metadata")
+    for key in [
+        "logical_status",
+        "discovery_route",
+        "certification_level",
+        "public_category",
+        "drat_claim",
+        "proof_base",
+    ]:
+        if manifest.get(key) != result_data.get(key):
+            return _fail(f"{key} manifest mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
         return _fail("external_lrat_frat must remain false in v0.9.3", "proof_trace_classification")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
@@ -496,6 +507,9 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
         return _fail("UNSAT certification level mismatch", "certification_metadata")
     if result_data.get("proof_trace_class") != expected_class:
         return _fail("proof_trace_class mismatch", "proof_trace_classification")
+    for key, expected in path_obj.public_metadata().items():
+        if result_data.get(key) != expected:
+            return _fail(f"{key} mismatch", "certification_metadata")
     if collapse_data.get("proof_trace_class") != expected_class:
         return _fail("collapse proof_trace_class mismatch", "proof_trace_classification")
     if reconstruction_trace.get("proof_trace_class") != expected_class:

@@ -1,6 +1,6 @@
-# Witnora-Core v0.9.3
+# Witnora-Core v0.9.3.1
 
-Witnora-Core v0.9.3 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`.
+Witnora-Core v0.9.3.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
@@ -91,11 +91,18 @@ CNF remains in force and final SAT assignments are checked against the original
 CNF. If local equivalence/replacement is added in a future release, it needs a
 separate explicit proof; v0.9.3 does not remove or replace XOR source clauses.
 
-XOR-aware results may use:
+XOR-aware final classes may use:
 
 - `final_class: "XOR_AFFINE"`,
 - `final_class: "CNF_XOR_COMBINED"`,
-- `status: "UNSAT_XOR_NATIVE"` with `final_class: "XOR_UNSAT_NATIVE"`.
+- internal `status: "UNSAT_XOR_NATIVE"` with `final_class: "XOR_UNSAT_NATIVE"`.
+
+Public reports separate logical result, discovery route, and certification:
+
+- logical `status`: `SAT`, `UNSAT`, `NO_COLLAPSE_FOUND`, `TIMEOUT`, or `ERROR`,
+- `discovery_route`: for example `XOR_NATIVE_CONTRADICTION` or `XOR_SIDECAR_CONTRADICTION`,
+- `certification_level`: for example `EXTERNAL_DRAT_VERIFIED` or `NATIVE_XOR_ONLY`,
+- `public_category`: the benchmark/reporting bucket.
 
 XOR-native UNSAT is native-only unless the bounded XOR-to-DRAT bridge succeeds.
 v0.9.3 can export a DRAT/RUP proof for detected-CNF XOR contradictions only
@@ -106,9 +113,15 @@ and `drat_claim: "EXPORTED_VERIFIED"`.
 
 If the bridge is disabled, over cap, fails, or real `drat-trim` is unavailable,
 the result remains native-only and public reporting must classify it as
-`UNSAT_XOR_NATIVE_NOT_DRAT`. Sidecar XOR contradictions define the combined
+`UNSAT_XOR_NATIVE_ONLY`. Sidecar XOR contradictions define the combined
 problem `CNF and XOR-sidecar`; v0.9.3 does not claim original-CNF DRAT for
 sidecar-only contradictions.
+
+If detected-CNF XOR UNSAT is externally verified by real `drat-trim` against
+`original.dimacs`, public reporting uses `public_category:
+"UNSAT_DRAT_EXPORTED_VERIFIED"` with `discovery_route:
+"XOR_NATIVE_CONTRADICTION"` and `certification_level:
+"EXTERNAL_DRAT_VERIFIED"`. It is not reported as native-only.
 
 ## COMPONENTS_SOLVED
 
@@ -291,9 +304,9 @@ Each public benchmark instance receives exactly one category:
 
 - `SAT_ASSIGNMENT_VERIFIED`
 - `UNSAT_DRAT_EXPORTED_VERIFIED`
+- `UNSAT_XOR_NATIVE_ONLY`
 - `UNSAT_NOT_EXTERNALLY_VERIFIED`
 - `UNSUPPORTED_DRAT`
-- `UNSAT_XOR_NATIVE_NOT_DRAT`
 - `NO_COLLAPSE_FOUND`
 - `TIMEOUT`
 - `ERROR`
@@ -301,7 +314,7 @@ Each public benchmark instance receives exactly one category:
 Strict public reports should use `--strict-unsat-external`. In that mode, the
 CLI exits nonzero if any UNSAT result is not externally verified by real
 `drat-trim`. `UNSAT_NOT_EXTERNALLY_VERIFIED`, `UNSUPPORTED_DRAT`, and
-`UNSAT_XOR_NATIVE_NOT_DRAT` must not be aggregated with
+`UNSAT_XOR_NATIVE_ONLY` must not be aggregated with
 `UNSAT_DRAT_EXPORTED_VERIFIED`. `NO_COLLAPSE_FOUND` is still not a hardness
 claim.
 

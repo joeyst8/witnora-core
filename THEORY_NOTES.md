@@ -121,6 +121,14 @@ If any of these checks fails, or if the proof exceeds the configured width or
 proof-size cap, Witnora falls back to native XOR UNSAT and does not claim DRAT
 verification.
 
+v0.9.3.1 separates public labels from internal route labels. A detected-CNF XOR
+contradiction may be discovered by the native XOR route, but if real
+`drat-trim` verifies the exported proof against `original.dimacs`, the public
+benchmark category is `UNSAT_DRAT_EXPORTED_VERIFIED`. Native-only XOR
+contradictions, including sidecar-only contradictions that define a combined
+`CNF and XOR` problem, are reported separately as `UNSAT_XOR_NATIVE_ONLY` and
+are not counted as externally verified original-CNF UNSAT.
+
 Sidecar XOR equations do not have this status. They define a combined
 `CNF and XOR-sidecar` problem. Without first encoding those sidecar equations
 into a combined proof base, a sidecar contradiction must not be claimed as an

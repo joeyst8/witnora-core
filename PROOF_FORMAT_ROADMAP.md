@@ -366,14 +366,21 @@ original CNF, exactly equal the full forbidden-assignment encoding for the
 claimed k-variable XOR relation, did not claim clause removal, and list the
 extra touching clauses deterministically.
 
-For UNSAT, v0.9.3 reports `UNSAT_XOR_NATIVE` first. If the bounded detected-CNF
-XOR-to-DRAT bridge is disabled, over cap, unsupported, fails, or real
-`drat-trim` is unavailable, benchmark/public reporting maps this to
-`UNSAT_XOR_NATIVE_NOT_DRAT`. If the bridge verifies with real `drat-trim`
-against `original.dimacs`, metadata records `xor_drat_status: "VERIFIED"`,
-`proof_base: "original_cnf"`, and `drat_claim: "EXPORTED_VERIFIED"`.
-Sidecar XOR contradictions define `CNF and XOR-sidecar`; they do not prove the
-original CNF is UNSAT.
+For UNSAT, v0.9.3.1 separates the internal discovery status from public
+certification labels. The internal status may remain `UNSAT_XOR_NATIVE`, but
+public reports use logical `status: "UNSAT"`, a `discovery_route`, a
+`certification_level`, and a `public_category`.
+
+If the bounded detected-CNF XOR-to-DRAT bridge is disabled, over cap,
+unsupported, fails, or real `drat-trim` is unavailable, public reporting maps
+the result to `public_category: "UNSAT_XOR_NATIVE_ONLY"` with
+`certification_level: "NATIVE_XOR_ONLY"`. If the bridge verifies with real
+`drat-trim` against `original.dimacs`, metadata records `xor_drat_status:
+"VERIFIED"`, `proof_base: "original_cnf"`, and `drat_claim:
+"EXPORTED_VERIFIED"`, and public reporting maps the instance to
+`public_category: "UNSAT_DRAT_EXPORTED_VERIFIED"` with
+`certification_level: "EXTERNAL_DRAT_VERIFIED"`. Sidecar XOR contradictions
+define `CNF and XOR-sidecar`; they do not prove the original CNF is UNSAT.
 
 ### XOR Exact Pattern Soundness
 

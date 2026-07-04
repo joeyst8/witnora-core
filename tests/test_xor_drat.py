@@ -8,7 +8,7 @@ from witnora_core.cnf import CNFFormula
 from witnora_core.drat_trim import find_drat_trim
 from witnora_core.independent_check import verify_wcert_raw
 from witnora_core.proof import export_certificate_bundle
-from witnora_core.public_benchmarks import UNSAT_XOR_NATIVE_NOT_DRAT, _category_for_result
+from witnora_core.public_benchmarks import UNSAT_XOR_NATIVE_ONLY, _category_for_result
 from witnora_core.runner import solve_with_xor
 from witnora_core.xor import canonical_xor_cnf_clauses, parse_xor_lines
 from witnora_core.xor_drat import (
@@ -106,7 +106,7 @@ class XorDRATTest(unittest.TestCase):
         drat_status = json.loads((cert / "drat_status.json").read_text(encoding="utf-8"))
         self.assertFalse(xor_status["external_drat"])
         self.assertEqual(xor_status["drat_claim"], "NOT_EXPORTED")
-        self.assertEqual(_category_for_result(path.status, False, drat_status), UNSAT_XOR_NATIVE_NOT_DRAT)
+        self.assertEqual(_category_for_result(path.status, False, drat_status), UNSAT_XOR_NATIVE_ONLY)
         print("XOR_DRAT_NO_FALSE_CLAIM_PASS")
 
     def test_sidecar_no_original_cnf_claim(self):

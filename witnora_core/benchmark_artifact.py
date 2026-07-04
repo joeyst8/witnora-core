@@ -19,7 +19,7 @@ from .public_benchmarks import (
     TIMEOUT,
     UNSAT_DRAT_EXPORTED_VERIFIED,
     UNSAT_NOT_EXTERNALLY_VERIFIED,
-    UNSAT_XOR_NATIVE_NOT_DRAT,
+    UNSAT_XOR_NATIVE_ONLY,
     UNSUPPORTED_DRAT,
     generate_public_markdown_report,
     write_public_csv,
@@ -35,7 +35,7 @@ def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
     uncertified = [
         result
         for result in results
-        if result.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_NOT_DRAT}
+        if result.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_ONLY}
     ]
     return {
         "artifact_version": ARTIFACT_VERSION,
@@ -48,7 +48,7 @@ def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
         "xor_native_unsat_count": int(summary.get("xor_native_unsat_count", 0)),
         "certified_unsat_rule": (
             "Only UNSAT_DRAT_EXPORTED_VERIFIED counts as externally certified UNSAT; "
-            "UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, and UNSAT_XOR_NATIVE_NOT_DRAT are not aggregated with it."
+            "UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, and UNSAT_XOR_NATIVE_ONLY are not aggregated with it."
         ),
         "uncertified_unsat_instances": [
             {

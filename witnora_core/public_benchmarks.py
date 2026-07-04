@@ -38,10 +38,19 @@ SAT_ASSIGNMENT_VERIFIED = "SAT_ASSIGNMENT_VERIFIED"
 UNSAT_DRAT_EXPORTED_VERIFIED = "UNSAT_DRAT_EXPORTED_VERIFIED"
 UNSAT_NOT_EXTERNALLY_VERIFIED = "UNSAT_NOT_EXTERNALLY_VERIFIED"
 UNSUPPORTED_DRAT = "UNSUPPORTED_DRAT"
-UNSAT_XOR_NATIVE_NOT_DRAT = "UNSAT_XOR_NATIVE_NOT_DRAT"
+UNSAT_XOR_NATIVE_ONLY = "UNSAT_XOR_NATIVE_ONLY"
+UNSAT_XOR_NATIVE_NOT_DRAT = UNSAT_XOR_NATIVE_ONLY
 NO_COLLAPSE_FOUND = "NO_COLLAPSE_FOUND"
 TIMEOUT = "TIMEOUT"
 ERROR = "ERROR"
+
+CERTIFICATION_SAT_ASSIGNMENT = "SAT_ASSIGNMENT_VERIFIED"
+CERTIFICATION_EXTERNAL_DRAT = "EXTERNAL_DRAT_VERIFIED"
+CERTIFICATION_NATIVE_XOR = "NATIVE_XOR_ONLY"
+CERTIFICATION_NOT_EXTERNAL = "NOT_EXTERNALLY_VERIFIED"
+
+DISCOVERY_XOR_NATIVE = "XOR_NATIVE_CONTRADICTION"
+DISCOVERY_XOR_SIDECAR = "XOR_SIDECAR_CONTRADICTION"
 
 SOURCE_OFFICIAL_CNFGEN = "OFFICIAL_CNFGEN"
 SOURCE_SATLIB_DIRECTORY = "SATLIB_DIRECTORY"
@@ -59,9 +68,9 @@ REASON_NO_SUPPORTED_CNFGEN_COMMANDS_SUCCEEDED = "NO_SUPPORTED_CNFGEN_COMMANDS_SU
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
     UNSAT_DRAT_EXPORTED_VERIFIED,
+    UNSAT_XOR_NATIVE_ONLY,
     UNSAT_NOT_EXTERNALLY_VERIFIED,
     UNSUPPORTED_DRAT,
-    UNSAT_XOR_NATIVE_NOT_DRAT,
     NO_COLLAPSE_FOUND,
     TIMEOUT,
     ERROR,
@@ -73,6 +82,9 @@ PUBLIC_CSV_COLUMNS = [
     "family",
     "public_category",
     "status",
+    "internal_status",
+    "discovery_route",
+    "certification_level",
     "final_class",
     "c_parameter",
     "original_num_vars",
@@ -100,6 +112,9 @@ PUBLIC_CSV_COLUMNS = [
     "external_checker",
     "external_checker_ran",
     "external_checker_verified",
+    "external_drat",
+    "drat_claim",
+    "proof_base",
     "strict_unsat_external_pass",
     "error_message",
 ]
@@ -497,7 +512,7 @@ def _category_for_result(
             and drat_status.get("proof_base") == "original_cnf"
         ):
             return UNSAT_DRAT_EXPORTED_VERIFIED
-        return UNSAT_XOR_NATIVE_NOT_DRAT
+        return UNSAT_XOR_NATIVE_ONLY
     if status != UNSAT:
         return ERROR
     if drat_status is None:
@@ -512,6 +527,45 @@ def _category_for_result(
     ):
         return UNSAT_DRAT_EXPORTED_VERIFIED
     return UNSAT_NOT_EXTERNALLY_VERIFIED
+
+
+def _xor_discovery_route_from_status(drat_status: dict[str, Any] | None) -> str:
+    if drat_status and drat_status.get("source") == "detected_cnf_pattern":
+        return DISCOVERY_XOR_NATIVE
+    return DISCOVERY_XOR_SIDECAR
+
+
+def _public_metadata_for_result(
+    status: str,
+    original_verification: bool,
+    drat_status: dict[str, Any] | None,
+    *,
+    discovery_route: str = "",
+) -> dict[str, Any]:
+    category = _category_for_result(status, original_verification, drat_status)
+    logical_status = "UNSAT" if status in {UNSAT, XOR_UNSAT_NATIVE} else NO_COLLAPSE_FOUND if status == NO_COLLAPSE else status
+    external_verified = category == UNSAT_DRAT_EXPORTED_VERIFIED
+    if status == SAT and category == SAT_ASSIGNMENT_VERIFIED:
+        certification = CERTIFICATION_SAT_ASSIGNMENT
+    elif external_verified:
+        certification = CERTIFICATION_EXTERNAL_DRAT
+    elif category == UNSAT_XOR_NATIVE_ONLY:
+        certification = CERTIFICATION_NATIVE_XOR
+    else:
+        certification = CERTIFICATION_NOT_EXTERNAL
+    route = discovery_route
+    if status == XOR_UNSAT_NATIVE:
+        route = _xor_discovery_route_from_status(drat_status)
+    return {
+        "status": logical_status,
+        "internal_status": status,
+        "discovery_route": route,
+        "certification_level": certification,
+        "public_category": category,
+        "external_drat": external_verified,
+        "drat_claim": "EXPORTED_VERIFIED" if external_verified else str((drat_status or {}).get("drat_claim", "NOT_EXPORTED")),
+        "proof_base": "original_cnf" if external_verified else (drat_status or {}).get("proof_base"),
+    }
 
 
 def _extract_drat_trim_seconds(drat_status: dict[str, Any] | None) -> float | None:
@@ -573,14 +627,19 @@ def _public_case_worker(
             if proof_file.exists():
                 proof_path = str(proof_file)
 
-        category = _category_for_result(path.status, path.original_verification, drat_status)
-        strict_pass = category not in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_NOT_DRAT}
+        public_metadata = _public_metadata_for_result(
+            path.status,
+            path.original_verification,
+            drat_status,
+            discovery_route=path.discovery_route,
+        )
+        category = public_metadata["public_category"]
+        strict_pass = category not in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_ONLY}
         result = {
             "instance_name": payload["instance_name"],
             "source_suite": payload["source_suite"],
             "family": payload["family"],
-            "public_category": category,
-            "status": path.status,
+            **public_metadata,
             "final_class": path.final_class,
             "c_parameter": c,
             "original_formula_hash": formula.formula_hash,
@@ -637,10 +696,16 @@ def _public_case_worker(
                 "family": payload.get("family", ""),
                 "public_category": ERROR,
                 "status": ERROR,
+                "internal_status": ERROR,
+                "discovery_route": "ERROR",
+                "certification_level": CERTIFICATION_NOT_EXTERNAL,
                 "final_class": ERROR,
                 "c_parameter": c,
                 "total_time_seconds": round(time.perf_counter() - started, 6),
                 "strict_unsat_external_pass": False,
+                "external_drat": False,
+                "drat_claim": "NOT_EXPORTED",
+                "proof_base": None,
                 "error_message": f"{exc}\n{traceback.format_exc()}",
             }
         )
@@ -653,12 +718,18 @@ def _timeout_result(case: PublicBenchmarkCase, c: int, timeout_seconds: float) -
         "family": case.family,
         "public_category": TIMEOUT,
         "status": TIMEOUT,
+        "internal_status": TIMEOUT,
+        "discovery_route": "TIMEOUT",
+        "certification_level": CERTIFICATION_NOT_EXTERNAL,
         "final_class": TIMEOUT,
         "c_parameter": c,
         "timeout_seconds": timeout_seconds,
         "timeout_stage": "benchmark_instance",
         "total_time_seconds": timeout_seconds,
         "strict_unsat_external_pass": True,
+        "external_drat": False,
+        "drat_claim": "NOT_EXPORTED",
+        "proof_base": None,
         "error_message": "",
     }
 
@@ -705,9 +776,15 @@ def run_public_case(
         "family": case.family,
         "public_category": ERROR,
         "status": ERROR,
+        "internal_status": ERROR,
+        "discovery_route": "ERROR",
+        "certification_level": CERTIFICATION_NOT_EXTERNAL,
         "final_class": ERROR,
         "c_parameter": c,
         "strict_unsat_external_pass": False,
+        "external_drat": False,
+        "drat_claim": "NOT_EXPORTED",
+        "proof_base": None,
         "error_message": f"worker exited without result, exit_code={process.exitcode}",
     }
 
@@ -730,7 +807,7 @@ def summarize_public_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         "strict_unsat_external_failures": [
             r.get("instance_name", "")
             for r in results
-            if r.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_NOT_DRAT}
+            if r.get("public_category") in {UNSAT_NOT_EXTERNALLY_VERIFIED, UNSUPPORTED_DRAT, UNSAT_XOR_NATIVE_ONLY}
         ],
         "unsat_total": len(unsat),
         "externally_verified_unsat_count": sum(
@@ -740,7 +817,7 @@ def summarize_public_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             1 for r in results if r.get("public_category") == UNSAT_NOT_EXTERNALLY_VERIFIED
         ),
         "unsupported_drat_count": sum(1 for r in results if r.get("public_category") == UNSUPPORTED_DRAT),
-        "xor_native_unsat_count": sum(1 for r in results if r.get("public_category") == UNSAT_XOR_NATIVE_NOT_DRAT),
+        "xor_native_unsat_count": sum(1 for r in results if r.get("public_category") == UNSAT_XOR_NATIVE_ONLY),
         "timeout_count": sum(1 for r in results if r.get("public_category") == TIMEOUT),
         "error_count": sum(1 for r in results if r.get("public_category") == ERROR),
         "average_collapse_path_length": round(

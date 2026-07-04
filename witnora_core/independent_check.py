@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.9.3"
+CHECKER = "independent_raw_checker_v0.9.3.1"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
 DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.3"
 DRAT_CHECKED_AGAINST = "original.dimacs"
@@ -40,6 +40,29 @@ PROOF_TRACE_XOR_UNSAT = "XOR_UNSAT_NATIVE"
 PROOF_TRACE_NO_COLLAPSE = "NO_COLLAPSE_REPORT"
 
 NATIVE_UNSAT_TRACE_FORMAT = "WITNORA_NATIVE_UNSAT_TRACE_V1"
+
+PUBLIC_CATEGORY_SAT = "SAT_ASSIGNMENT_VERIFIED"
+PUBLIC_CATEGORY_UNSAT_DRAT = "UNSAT_DRAT_EXPORTED_VERIFIED"
+PUBLIC_CATEGORY_UNSAT_XOR_NATIVE = "UNSAT_XOR_NATIVE_ONLY"
+PUBLIC_CATEGORY_UNSAT_NOT_EXTERNAL = "UNSAT_NOT_EXTERNALLY_VERIFIED"
+PUBLIC_CATEGORY_NO_COLLAPSE = "NO_COLLAPSE_FOUND"
+PUBLIC_CATEGORY_TIMEOUT = "TIMEOUT"
+PUBLIC_CATEGORY_ERROR = "ERROR"
+
+CERT_LEVEL_SAT_ASSIGNMENT = "SAT_ASSIGNMENT_VERIFIED"
+CERT_LEVEL_EXTERNAL_DRAT = "EXTERNAL_DRAT_VERIFIED"
+CERT_LEVEL_NATIVE_XOR = "NATIVE_XOR_ONLY"
+CERT_LEVEL_NOT_EXTERNAL = "NOT_EXTERNALLY_VERIFIED"
+
+DISCOVERY_UNIT_CONFLICT = "UNIT_CONFLICT"
+DISCOVERY_TWO_SAT_SCC = "TWO_SAT_SCC"
+DISCOVERY_VE_BCE_ROUTE = "VE_BCE_ROUTE"
+DISCOVERY_XOR_NATIVE = "XOR_NATIVE_CONTRADICTION"
+DISCOVERY_XOR_SIDECAR = "XOR_SIDECAR_CONTRADICTION"
+DISCOVERY_NO_COLLAPSE = "NO_COLLAPSE"
+DISCOVERY_TIMEOUT = "TIMEOUT"
+DISCOVERY_ERROR = "ERROR"
+DISCOVERY_SAT_ASSIGNMENT = "SAT_ASSIGNMENT"
 
 ClauseRaw = tuple[int, ...]
 FormulaRaw = tuple[ClauseRaw, ...]
@@ -920,6 +943,98 @@ def _proof_trace_class_raw(status: str, unsat_level: str) -> str:
     return PROOF_TRACE_NO_COLLAPSE
 
 
+def _xor_has_original_cnf_drat_raw(result_data: dict[str, Any]) -> bool:
+    xor_status = result_data.get("xor_data", {}).get("xor_status", {})
+    return (
+        xor_status.get("external_drat") is True
+        and xor_status.get("drat_claim") == "EXPORTED_VERIFIED"
+        and xor_status.get("proof_base") == "original_cnf"
+    )
+
+
+def _xor_discovery_route_raw(result_data: dict[str, Any]) -> str:
+    equations = result_data.get("xor_data", {}).get("xor_system", {}).get("equations", [])
+    if any(equation.get("source") != "detected_cnf_pattern" for equation in equations):
+        return DISCOVERY_XOR_SIDECAR
+    return DISCOVERY_XOR_NATIVE
+
+
+def _public_metadata_raw(result_data: dict[str, Any]) -> dict[str, Any]:
+    status = str(result_data.get("status", ""))
+    if status == "SAT":
+        return {
+            "status": "SAT",
+            "discovery_route": DISCOVERY_SAT_ASSIGNMENT,
+            "certification_level": CERT_LEVEL_SAT_ASSIGNMENT
+            if result_data.get("original_verification") is True
+            else CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_SAT
+            if result_data.get("original_verification") is True
+            else PUBLIC_CATEGORY_ERROR,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    if status == "UNSAT_XOR_NATIVE":
+        external_drat = _xor_has_original_cnf_drat_raw(result_data)
+        xor_status = result_data.get("xor_data", {}).get("xor_status", {})
+        return {
+            "status": "UNSAT",
+            "discovery_route": _xor_discovery_route_raw(result_data),
+            "certification_level": CERT_LEVEL_EXTERNAL_DRAT if external_drat else CERT_LEVEL_NATIVE_XOR,
+            "public_category": PUBLIC_CATEGORY_UNSAT_DRAT if external_drat else PUBLIC_CATEGORY_UNSAT_XOR_NATIVE,
+            "external_drat": external_drat,
+            "drat_claim": str(xor_status.get("drat_claim", "NOT_EXPORTED")),
+            "proof_base": xor_status.get("proof_base"),
+        }
+    if status == "UNSAT":
+        return {
+            "status": "UNSAT",
+            "discovery_route": DISCOVERY_TWO_SAT_SCC
+            if any(
+                step.get("type") == "2SAT_SOLVE" and step.get("details", {}).get("status") == "UNSAT"
+                for step in result_data.get("collapse_path", [])
+            )
+            else DISCOVERY_VE_BCE_ROUTE
+            if any(step.get("type") in {"VE", "BCE"} for step in result_data.get("collapse_path", []))
+            else DISCOVERY_UNIT_CONFLICT,
+            "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_UNSAT_NOT_EXTERNAL,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    if status == "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C":
+        return {
+            "status": PUBLIC_CATEGORY_NO_COLLAPSE,
+            "discovery_route": DISCOVERY_NO_COLLAPSE,
+            "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_NO_COLLAPSE,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    if status == "TIMEOUT":
+        return {
+            "status": PUBLIC_CATEGORY_TIMEOUT,
+            "discovery_route": DISCOVERY_TIMEOUT,
+            "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_TIMEOUT,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    return {
+        "status": PUBLIC_CATEGORY_ERROR,
+        "discovery_route": DISCOVERY_ERROR,
+        "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+        "public_category": PUBLIC_CATEGORY_ERROR,
+        "external_drat": False,
+        "drat_claim": "NOT_EXPORTED",
+        "proof_base": None,
+    }
+
+
 def _metadata_consistent_raw(
     manifest: dict[str, Any],
     result_data: dict[str, Any],
@@ -939,6 +1054,14 @@ def _metadata_consistent_raw(
             return False, f"result {key} mismatch"
         if manifest.get(key) != expected:
             return False, f"manifest {key} mismatch"
+    expected_public = _public_metadata_raw(result_data)
+    result_key_map = {"status": "logical_status"}
+    for key, expected in expected_public.items():
+        result_key = result_key_map.get(key, key)
+        if result_data.get(result_key) != expected:
+            return False, f"result {result_key} mismatch"
+        if result_key != "external_drat" and manifest.get(result_key) != expected:
+            return False, f"manifest {result_key} mismatch"
     if manifest.get("external_lrat_frat") is not False:
         return False, "external_lrat_frat must be false"
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
@@ -1259,6 +1382,13 @@ def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
         "unsat_certification_level": result_data.get("unsat_certification_level"),
         "proof_trace_class": result_data.get("proof_trace_class"),
         "native_proof_trace": result_data.get("native_proof_trace"),
+        "logical_status": result_data.get("logical_status"),
+        "discovery_route": result_data.get("discovery_route"),
+        "certification_level": result_data.get("certification_level"),
+        "public_category": result_data.get("public_category"),
+        "external_drat": bool(result_data.get("external_drat", False)),
+        "drat_claim": result_data.get("drat_claim"),
+        "proof_base": result_data.get("proof_base"),
     }
     if result_data.get("xor_data") is not None:
         payload["xor_data"] = result_data.get("xor_data")
@@ -1336,6 +1466,16 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
     if int(manifest.get("c_parameter", -1)) != int(result_data.get("c_parameter", -2)):
         return _fail("manifest c_parameter mismatch", "manifest")
     for key in ["sat_certification_level", "unsat_certification_level", "proof_trace_class"]:
+        if manifest.get(key) != result_data.get(key):
+            return _fail(f"manifest {key} mismatch", "certification_metadata")
+    for key in [
+        "logical_status",
+        "discovery_route",
+        "certification_level",
+        "public_category",
+        "drat_claim",
+        "proof_base",
+    ]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
@@ -1564,9 +1704,17 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
             checks["xor_native_unsat_not_drat"] = True
     else:
         return _fail(f"unsupported status {status}", "status")
+    public_metadata = _public_metadata_raw(result_data)
     return {
         "verified": True,
-        "status": status,
+        "status": public_metadata["status"],
+        "internal_status": status,
+        "discovery_route": public_metadata["discovery_route"],
+        "certification_level": public_metadata["certification_level"],
+        "public_category": public_metadata["public_category"],
+        "external_drat": public_metadata["external_drat"],
+        "drat_claim": public_metadata["drat_claim"],
+        "proof_base": public_metadata["proof_base"],
         "certificate_hash": recomputed_hash,
         "checker": CHECKER,
         "trusted_imports": TRUSTED_IMPORTS,

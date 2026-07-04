@@ -15,6 +15,31 @@ NO_COLLAPSE = "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C"
 RECONSTRUCTION_FAILURE = "RECONSTRUCTION_FAILURE"
 TIMEOUT = "TIMEOUT"
 XOR_UNSAT_NATIVE = "UNSAT_XOR_NATIVE"
+PUBLIC_STATUS_NO_COLLAPSE = "NO_COLLAPSE_FOUND"
+
+DISCOVERY_UNIT_CONFLICT = "UNIT_CONFLICT"
+DISCOVERY_TWO_SAT_SCC = "TWO_SAT_SCC"
+DISCOVERY_WIDTH_ROUTE = "WIDTH_ROUTE"
+DISCOVERY_VE_BCE_ROUTE = "VE_BCE_ROUTE"
+DISCOVERY_XOR_NATIVE = "XOR_NATIVE_CONTRADICTION"
+DISCOVERY_XOR_SIDECAR = "XOR_SIDECAR_CONTRADICTION"
+DISCOVERY_NO_COLLAPSE = "NO_COLLAPSE"
+DISCOVERY_TIMEOUT = "TIMEOUT"
+DISCOVERY_ERROR = "ERROR"
+DISCOVERY_SAT_ASSIGNMENT = "SAT_ASSIGNMENT"
+
+CERT_LEVEL_SAT_ASSIGNMENT = "SAT_ASSIGNMENT_VERIFIED"
+CERT_LEVEL_EXTERNAL_DRAT = "EXTERNAL_DRAT_VERIFIED"
+CERT_LEVEL_NATIVE_XOR = "NATIVE_XOR_ONLY"
+CERT_LEVEL_NOT_EXTERNAL = "NOT_EXTERNALLY_VERIFIED"
+
+PUBLIC_CATEGORY_SAT = "SAT_ASSIGNMENT_VERIFIED"
+PUBLIC_CATEGORY_UNSAT_DRAT = "UNSAT_DRAT_EXPORTED_VERIFIED"
+PUBLIC_CATEGORY_UNSAT_XOR_NATIVE = "UNSAT_XOR_NATIVE_ONLY"
+PUBLIC_CATEGORY_UNSAT_NOT_EXTERNAL = "UNSAT_NOT_EXTERNALLY_VERIFIED"
+PUBLIC_CATEGORY_NO_COLLAPSE = "NO_COLLAPSE_FOUND"
+PUBLIC_CATEGORY_TIMEOUT = "TIMEOUT"
+PUBLIC_CATEGORY_ERROR = "ERROR"
 
 SAT_LEVEL_NOT_SAT = "NOT_SAT"
 SAT_LEVEL_RECONSTRUCTED = "RECONSTRUCTED_ASSIGNMENT_VERIFIED_ORIGINAL"
@@ -55,6 +80,26 @@ def _normalise_component_results(results: list[dict[str, Any]]) -> list[dict[str
             }
         )
     return normalised
+
+
+def _xor_has_original_cnf_drat(xor_data: dict[str, Any] | None) -> bool:
+    if xor_data is None:
+        return False
+    xor_status = xor_data.get("xor_status", {})
+    return (
+        xor_status.get("external_drat") is True
+        and xor_status.get("drat_claim") == "EXPORTED_VERIFIED"
+        and xor_status.get("proof_base") == "original_cnf"
+    )
+
+
+def _xor_discovery_route(xor_data: dict[str, Any] | None) -> str:
+    if xor_data is None:
+        return DISCOVERY_XOR_NATIVE
+    equations = xor_data.get("xor_system", {}).get("equations", [])
+    if any(equation.get("source") != "detected_cnf_pattern" for equation in equations):
+        return DISCOVERY_XOR_SIDECAR
+    return DISCOVERY_XOR_NATIVE
 
 
 def sat_certification_level(
@@ -275,6 +320,93 @@ class CollapsePath:
         return proof_trace_class_from_status(self.status, self.unsat_certification_level)
 
     @property
+    def logical_status(self) -> str:
+        if self.status == XOR_UNSAT_NATIVE:
+            return UNSAT
+        if self.status == NO_COLLAPSE:
+            return PUBLIC_STATUS_NO_COLLAPSE
+        return self.status
+
+    @property
+    def discovery_route(self) -> str:
+        if self.status == XOR_UNSAT_NATIVE:
+            return _xor_discovery_route(self.xor_data)
+        if self.status == SAT:
+            if self.final_class == "TREEWIDTH_LEQ_C":
+                return DISCOVERY_WIDTH_ROUTE
+            if any(step.type == "VE" for step in self.steps):
+                return DISCOVERY_VE_BCE_ROUTE
+            return DISCOVERY_SAT_ASSIGNMENT
+        if self.status == UNSAT:
+            if any(step.type == "UP" and [] in step.added_clauses for step in self.steps):
+                return DISCOVERY_UNIT_CONFLICT
+            if any(step.type == "2SAT_SOLVE" and step.details.get("status") == "UNSAT" for step in self.steps):
+                return DISCOVERY_TWO_SAT_SCC
+            if any(step.type == "VE" for step in self.steps) or any(step.type == "BCE" for step in self.steps):
+                return DISCOVERY_VE_BCE_ROUTE
+            return DISCOVERY_UNIT_CONFLICT
+        if self.status == NO_COLLAPSE:
+            return DISCOVERY_NO_COLLAPSE
+        if self.status == TIMEOUT:
+            return DISCOVERY_TIMEOUT
+        return DISCOVERY_ERROR
+
+    @property
+    def external_drat(self) -> bool:
+        return _xor_has_original_cnf_drat(self.xor_data)
+
+    @property
+    def drat_claim(self) -> str:
+        if self.xor_data is None:
+            return "NOT_EXPORTED"
+        return str(self.xor_data.get("xor_status", {}).get("drat_claim", "NOT_EXPORTED"))
+
+    @property
+    def proof_base(self) -> str | None:
+        if self.xor_data is None:
+            return None
+        return self.xor_data.get("xor_status", {}).get("proof_base")
+
+    @property
+    def public_certification_level(self) -> str:
+        if self.status == SAT and self.original_verification:
+            return CERT_LEVEL_SAT_ASSIGNMENT
+        if self.status == XOR_UNSAT_NATIVE:
+            if self.external_drat:
+                return CERT_LEVEL_EXTERNAL_DRAT
+            return CERT_LEVEL_NATIVE_XOR
+        if self.status == UNSAT:
+            return CERT_LEVEL_NOT_EXTERNAL
+        return CERT_LEVEL_NOT_EXTERNAL
+
+    @property
+    def public_category(self) -> str:
+        if self.status == SAT:
+            return PUBLIC_CATEGORY_SAT if self.original_verification else PUBLIC_CATEGORY_ERROR
+        if self.status == XOR_UNSAT_NATIVE:
+            if self.external_drat:
+                return PUBLIC_CATEGORY_UNSAT_DRAT
+            return PUBLIC_CATEGORY_UNSAT_XOR_NATIVE
+        if self.status == UNSAT:
+            return PUBLIC_CATEGORY_UNSAT_NOT_EXTERNAL
+        if self.status == NO_COLLAPSE:
+            return PUBLIC_CATEGORY_NO_COLLAPSE
+        if self.status == TIMEOUT:
+            return PUBLIC_CATEGORY_TIMEOUT
+        return PUBLIC_CATEGORY_ERROR
+
+    def public_metadata(self) -> dict[str, Any]:
+        return {
+            "logical_status": self.logical_status,
+            "discovery_route": self.discovery_route,
+            "certification_level": self.public_certification_level,
+            "public_category": self.public_category,
+            "external_drat": self.external_drat,
+            "drat_claim": self.drat_claim,
+            "proof_base": self.proof_base,
+        }
+
+    @property
     def native_proof_trace(self) -> dict[str, Any] | None:
         return native_unsat_trace_from_steps(self.status, self.steps)
 
@@ -294,6 +426,7 @@ class CollapsePath:
             "unsat_certification_level": self.unsat_certification_level,
             "proof_trace_class": self.proof_trace_class,
             "native_proof_trace": self.native_proof_trace,
+            **self.public_metadata(),
         }
         if self.xor_data is not None:
             payload["xor_data"] = self.xor_data
@@ -324,6 +457,7 @@ class CollapsePath:
             "proof_trace_class": self.proof_trace_class,
             "native_proof_trace": self.native_proof_trace,
             "stats": self.stats,
+            **self.public_metadata(),
         }
         if self.xor_data is not None:
             data["xor_data"] = self.xor_data
