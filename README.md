@@ -1,6 +1,6 @@
-# Witnora-Core v0.1.0
+# Witnora-Core v0.2.0
 
-Witnora-Core v0.1.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.2.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -87,7 +87,7 @@ claim of full novelty over all preprocessing literature.
 
 ## Benchmarking Collapse Behavior
 
-Witnora-Core v0.1.0 adds a benchmark and measurement layer. It does not change
+Witnora-Core includes a benchmark and measurement layer. It does not change
 the certified solver; it runs the solver across synthetic or user-provided CNF
 cases and records whether deterministic simplification and component solving
 collapse formulas into:
@@ -102,14 +102,32 @@ collapse formulas into:
 Run the synthetic suite:
 
 ```bash
-python -m witnora_core.benchmark --suite synthetic --c 1 --out results_c1.json --determinism-check
-python -m witnora_core.benchmark --suite synthetic --c 2 --out results_c2.json --determinism-check
+python -m witnora_core.benchmark --suite synthetic --scale small --c 1 --out results_c1.json --determinism-check
+python -m witnora_core.benchmark --suite synthetic --scale medium --c 2 --out results_c2.json --determinism-check
 ```
 
 Run a directory of DIMACS files:
 
 ```bash
 python -m witnora_core.benchmark --dimacs-dir path/to/dimacs --c 4 --out dimacs_results.json --determinism-check
+```
+
+Export per-case CSV alongside JSON:
+
+```bash
+python -m witnora_core.benchmark --suite synthetic --scale medium --c 2 --out results.json --csv results.csv --determinism-check
+```
+
+Generate a Markdown benchmark report:
+
+```bash
+python -m witnora_core.report results.json --out REPORT.md
+```
+
+Compare two benchmark runs:
+
+```bash
+python -m witnora_core.compare synthetic_c1.json synthetic_c2.json --out COMPARE.md
 ```
 
 Per-case metrics include original and post-`S` variable count, clause count,
@@ -119,9 +137,16 @@ subsumption removals, VE eliminations, route, status, verification flag, and
 runtime.
 
 The `original_clique_lower_bound` is only the lower bound `max_clause_width - 1`.
-It is not an exact treewidth claim. The `post_s_width_order_found` field reports
-whether the exact bounded-width order search found an order for the configured
-`c`; for large formulas the benchmark can skip this measurement using
+It is not an exact treewidth claim. The `post_s_width_order_status` field is one
+of:
+
+- `FOUND`
+- `NOT_FOUND`
+- `SKIPPED_SIZE_CAP`
+
+When width measurement is skipped, `post_s_width_order_skip_reason` records
+`num_vars_exceeds_max_width_search_vars`. The benchmark can skip exact
+post-simplification width search for large formulas using
 `--max-width-search-vars`.
 
 `NO_COLLAPSE` in benchmark output is still not a hardness claim. It means only
@@ -210,6 +235,11 @@ Expected pass markers include:
 - `BLOCKED_CLIQUE_METRICS_PASS`
 - `RANDOM_3SAT_NO_COLLAPSE_SAFE_PASS`
 - `DIMACS_DIR_BENCHMARK_PASS`
+- `WIDTH_SKIP_REPORTING_PASS`
+- `BENCHMARK_MEDIUM_SAFE_PASS`
+- `BENCHMARK_CSV_EXPORT_PASS`
+- `BENCHMARK_REPORT_GENERATION_PASS`
+- `BENCHMARK_COMPARE_PASS`
 - adversarial markers from `tests/test_adversarial_correctness.py`
 
 ## Run Examples

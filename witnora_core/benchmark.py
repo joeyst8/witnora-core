@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -27,7 +28,37 @@ from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
+
+WIDTH_FOUND = "FOUND"
+WIDTH_NOT_FOUND = "NOT_FOUND"
+WIDTH_SKIPPED_SIZE_CAP = "SKIPPED_SIZE_CAP"
+
+CSV_COLUMNS = [
+    "case_name",
+    "family",
+    "status",
+    "final_class",
+    "solved_route",
+    "c_parameter",
+    "original_num_vars",
+    "original_num_clauses",
+    "post_s_num_vars",
+    "post_s_num_clauses",
+    "original_max_clause_width",
+    "post_s_max_clause_width",
+    "original_clique_lower_bound",
+    "post_s_width_order_status",
+    "collapse_path_length",
+    "num_bce_removed",
+    "num_ple_assignments",
+    "num_up_assignments",
+    "num_subsumed_clauses",
+    "num_vars_eliminated",
+    "original_verification",
+    "time_ms",
+    "certificate_hash",
+]
 
 
 @dataclass(frozen=True)
@@ -65,6 +96,7 @@ class BenchmarkCase:
 @dataclass(frozen=True)
 class BenchmarkResult:
     case_name: str
+    family: str
     status: str
     final_class: str
     c_parameter: int
@@ -80,6 +112,8 @@ class BenchmarkResult:
     post_s_primal_edges: int
     original_clique_lower_bound: int
     post_s_width_order_found: bool | None
+    post_s_width_order_status: str
+    post_s_width_order_skip_reason: str | None
     solved_route: str
     collapse_path_length: int
     num_bce_removed: int
@@ -95,6 +129,7 @@ class BenchmarkResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "case_name": self.case_name,
+            "family": self.family,
             "status": self.status,
             "final_class": self.final_class,
             "c_parameter": self.c_parameter,
@@ -110,6 +145,8 @@ class BenchmarkResult:
             "post_s_primal_edges": self.post_s_primal_edges,
             "original_clique_lower_bound": self.original_clique_lower_bound,
             "post_s_width_order_found": self.post_s_width_order_found,
+            "post_s_width_order_status": self.post_s_width_order_status,
+            "post_s_width_order_skip_reason": self.post_s_width_order_skip_reason,
             "solved_route": self.solved_route,
             "collapse_path_length": self.collapse_path_length,
             "num_bce_removed": self.num_bce_removed,
@@ -196,6 +233,23 @@ def width_order_found_for_c(
     return find_elimination_order(graph, c) is not None
 
 
+def width_order_measurement(
+    formula: CNFFormula,
+    c: int,
+    *,
+    max_width_search_vars: int = 28,
+) -> tuple[bool | None, str, str | None]:
+    graph = primal_graph(formula)
+    if len(graph) > max_width_search_vars:
+        return (
+            None,
+            WIDTH_SKIPPED_SIZE_CAP,
+            "num_vars_exceeds_max_width_search_vars",
+        )
+    found = find_elimination_order(graph, c) is not None
+    return found, WIDTH_FOUND if found else WIDTH_NOT_FOUND, None
+
+
 def solved_route(status: str, final_class: str) -> str:
     if status == NO_COLLAPSE:
         return "NO_COLLAPSE"
@@ -236,6 +290,11 @@ def run_case(
     post_s = post_s_formula(case.formula)
     post = structural_metrics(post_s)
     path = solve(case.formula, c)
+    width_found, width_status, width_skip_reason = width_order_measurement(
+        post_s,
+        c,
+        max_width_search_vars=max_width_search_vars,
+    )
 
     determinism_pass: bool | None = None
     if determinism_check:
@@ -244,6 +303,7 @@ def run_case(
 
     return BenchmarkResult(
         case_name=case.name,
+        family=case.family,
         status=path.status,
         final_class=path.final_class,
         c_parameter=c,
@@ -258,11 +318,9 @@ def run_case(
         original_primal_edges=original["primal_edges"],
         post_s_primal_edges=post["primal_edges"],
         original_clique_lower_bound=original["clique_lower_bound"],
-        post_s_width_order_found=width_order_found_for_c(
-            post_s,
-            c,
-            max_width_search_vars=max_width_search_vars,
-        ),
+        post_s_width_order_found=width_found,
+        post_s_width_order_status=width_status,
+        post_s_width_order_skip_reason=width_skip_reason,
         solved_route=solved_route(path.status, path.final_class),
         collapse_path_length=len(path.steps),
         num_bce_removed=sum(len(step.removed_clauses) for step in path.steps if step.type == "BCE"),
@@ -331,8 +389,11 @@ def summarize_results(results: Iterable[BenchmarkResult]) -> BenchmarkSummary:
     )
 
 
-def synthetic_cases() -> list[BenchmarkCase]:
-    return [
+def synthetic_cases(scale: str = "small") -> list[BenchmarkCase]:
+    if scale not in {"small", "medium"}:
+        raise ValueError("scale must be 'small' or 'medium'")
+
+    small = [
         BenchmarkCase(
             "blocked_clique_n6",
             "blocked_clique_collapse",
@@ -390,6 +451,89 @@ def synthetic_cases() -> list[BenchmarkCase]:
             "tautological clauses removed during normalization",
         ),
     ]
+    if scale == "small":
+        return small
+
+    cases: list[BenchmarkCase] = []
+    for n in [5, 10, 20, 30]:
+        cases.append(
+            BenchmarkCase(
+                f"blocked_clique_n{n}",
+                "blocked_clique_collapse",
+                blocked_clique_collapse_family(n),
+                "synthetic",
+                "BCE strictness family",
+            )
+        )
+    for n_vars, n_clauses, seed in [(10, 20, 1), (20, 40, 2), (30, 60, 3)]:
+        cases.append(
+            BenchmarkCase(
+                f"random_2sat_v{n_vars}_c{n_clauses}_s{seed}",
+                "random_2sat",
+                random_2sat_family(n_vars, n_clauses, seed),
+                "synthetic",
+                "deterministic random 2-CNF",
+            )
+        )
+    for n_vars, n_clauses, seed in [(10, 30, 11), (16, 64, 13), (24, 96, 17)]:
+        cases.append(
+            BenchmarkCase(
+                f"random_3sat_v{n_vars}_c{n_clauses}_s{seed}",
+                "random_3sat",
+                random_3sat_family(n_vars, n_clauses, seed),
+                "synthetic",
+                "deterministic random 3-CNF no-collapse probe",
+            )
+        )
+    for n in [5, 7, 9]:
+        cases.append(
+            BenchmarkCase(
+                f"bounded_treewidth_chain_n{n}",
+                "bounded_treewidth_chain",
+                bounded_treewidth_chain_family(n),
+                "synthetic",
+                "non-2-CNF bounded-width chain",
+            )
+        )
+    for width, count in [(4, 2), (6, 3), (8, 4)]:
+        cases.append(
+            BenchmarkCase(
+                f"bce_heavy_w{width}_k{count}",
+                "bce_heavy",
+                bce_heavy_family(width, count),
+                "synthetic",
+                "multiple blocked-clique components",
+            )
+        )
+    for n in [3, 5, 8]:
+        cases.append(
+            BenchmarkCase(
+                f"component_mixed_n{n}",
+                "component_mixed",
+                component_mixed_family(n),
+                "synthetic",
+                "independent BCE, 2-SAT, and bounded-treewidth components",
+            )
+        )
+    cases.extend(
+        [
+            BenchmarkCase(
+                "unsat_unit_conflict",
+                "unsat_unit_conflict",
+                unsat_unit_conflict_family(),
+                "synthetic",
+                "minimal UP contradiction",
+            ),
+            BenchmarkCase(
+                "tautology_noise_n12",
+                "tautology_noise",
+                tautology_noise_family(12),
+                "synthetic",
+                "tautological clauses removed during normalization",
+            ),
+        ]
+    )
+    return cases
 
 
 def dimacs_cases(dimacs_dir: str | Path) -> list[BenchmarkCase]:
@@ -421,6 +565,7 @@ def run_benchmark(
     determinism_check: bool = False,
     max_width_search_vars: int = 28,
     timestamp: str | None = None,
+    scale: str | None = None,
 ) -> dict[str, Any]:
     case_list = list(cases)
     results = [
@@ -436,6 +581,7 @@ def run_benchmark(
     return {
         "version": VERSION,
         "c_parameter": c,
+        "scale": scale,
         "timestamp": timestamp or datetime.now(timezone.utc).isoformat(),
         "cases": [case.to_dict() for case in case_list],
         "per_case_results": [result.to_dict() for result in results],
@@ -446,16 +592,18 @@ def run_benchmark(
 def run_synthetic_benchmark(
     c: int,
     *,
+    scale: str = "small",
     determinism_check: bool = False,
     max_width_search_vars: int = 28,
     timestamp: str | None = None,
 ) -> dict[str, Any]:
     return run_benchmark(
-        synthetic_cases(),
+        synthetic_cases(scale),
         c,
         determinism_check=determinism_check,
         max_width_search_vars=max_width_search_vars,
         timestamp=timestamp,
+        scale=scale,
     )
 
 
@@ -473,7 +621,17 @@ def run_dimacs_dir_benchmark(
         determinism_check=determinism_check,
         max_width_search_vars=max_width_search_vars,
         timestamp=timestamp,
+        scale=None,
     )
+
+
+def write_csv(data: dict[str, Any], path: str | Path) -> None:
+    rows = data.get("per_case_results", [])
+    with Path(path).open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -482,6 +640,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dimacs-dir", help="directory containing .cnf or .dimacs files")
     parser.add_argument("--c", type=int, default=4, dest="c_parameter")
     parser.add_argument("--out", help="write JSON output to this path")
+    parser.add_argument("--csv", dest="csv_path", help="write per-case CSV output to this path")
+    parser.add_argument(
+        "--scale",
+        choices=["small", "medium"],
+        default="small",
+        help="synthetic suite scale",
+    )
     parser.add_argument("--determinism-check", action="store_true")
     parser.add_argument(
         "--max-width-search-vars",
@@ -497,6 +662,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.suite == "synthetic":
         data = run_synthetic_benchmark(
             args.c_parameter,
+            scale=args.scale,
             determinism_check=args.determinism_check,
             max_width_search_vars=args.max_width_search_vars,
         )
@@ -513,6 +679,8 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.out).write_text(payload + "\n", encoding="utf-8")
     else:
         print(payload)
+    if args.csv_path:
+        write_csv(data, args.csv_path)
     return 0
 
 
