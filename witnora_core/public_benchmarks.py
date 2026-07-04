@@ -249,7 +249,7 @@ def demo_cnfgen_artifact_cases() -> list[PublicBenchmarkCase]:
                 source_suite="demo-cnfgen-artifact",
                 family=family,
                 dimacs_text=_formula_to_dimacs(formula),
-                source="generated:built_in_demo_v0.8.4",
+                source="generated:built_in_demo_v0.8.5",
                 notes=notes + "; this suite is built into Witnora and is for harness validation only",
                 source_type=SOURCE_BUILT_IN_DEMO,
             )
@@ -292,7 +292,7 @@ def official_cnfgen_cases(
 ) -> tuple[list[PublicBenchmarkCase], dict[str, Any]]:
     """Generate deterministic formulas with an official CNFgen CLI if present.
 
-    The command surface of CNFgen can vary by installed version. v0.8.4 uses
+    The command surface of CNFgen can vary by installed version. v0.8.5 uses
     conservative command attempts and records every command in the manifest. It
     does not silently fall back to built-in demo formulas.
     """
@@ -437,7 +437,7 @@ def missing_suite_data(
 ) -> dict[str, Any]:
     summary = summarize_public_results([])
     return {
-        "version": "0.8.4",
+        "version": "0.8.5",
         "benchmark_kind": "public",
         "suite_name": suite_name,
         "suite_source_type": source_type,
@@ -783,7 +783,7 @@ def run_public_benchmark(
     ]
     summary = summarize_public_results(results)
     data = {
-        "version": "0.8.4",
+        "version": "0.8.5",
         "benchmark_kind": "public",
         "suite_name": suite_name,
         "suite_source_type": suite_source_type,
