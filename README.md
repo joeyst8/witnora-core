@@ -1,6 +1,6 @@
-# Witnora-Core v0.7.0
+# Witnora-Core v0.7.1
 
-Witnora-Core v0.7.0 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.7.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -177,7 +177,9 @@ available on PATH or through `WITNORA_DRAT_TRIM`. v0.6.4 records real
 `drat-trim` verification passing for the supported smoke examples when the
 checker is built from upstream source. v0.7.0 adds DRAT-style export for
 supported 2-SAT SCC contradictions by deriving complementary units from logged
-implication paths, then deriving the empty clause.
+implication paths, then deriving the empty clause. v0.7.1 adds pre-benchmark
+proof-coverage smoke tests for subsumption, pure literal elimination, and
+multi-component UNSAT certificates.
 
 A certificate can be exported as either a `.wcert` directory or a single
 `.wcert.json` file.
@@ -237,7 +239,7 @@ internal-replay only until DRAT/LRAT/FRAT proof export exists.
 
 ## Minimal DRAT Bridge
 
-v0.7.0 can export a DRAT-style proof for supported end-to-end
+v0.7.1 can export a DRAT-style proof for supported end-to-end
 RUP-checkable UNSAT paths:
 
 ```bash
@@ -275,7 +277,7 @@ internal RUP-subset checker:
 
 ```json
 {
-  "checker": "witnora_internal_rup_subset_checker_v0.7.0",
+  "checker": "witnora_internal_rup_subset_checker_v0.7.1",
   "checked_against": "original.dimacs"
 }
 ```
@@ -373,9 +375,25 @@ Each collapse step also receives an `external_proof_status`, such as
 `CHECKED_BY_WITNORA_REPLAY`, `RAT_COMPATIBLE`,
 `LRAT_EXPORT_NOT_IMPLEMENTED`, or `NOT_A_CLAUSAL_REFUTATION_STEP`.
 
-This classification is deliberately conservative. v0.7.0 does not claim full
+This classification is deliberately conservative. v0.7.1 does not claim full
 DRAT, LRAT, or FRAT support, and SAT certificates remain
 assignment/reconstruction certificates rather than clausal refutations.
+
+## Pre-Benchmark UNSAT Verification Guard
+
+Public benchmark reporting must separate UNSAT results that have real external
+proof checking from UNSAT results that are native-only or internally checked
+only. v0.7.1 adds a benchmark guard helper:
+
+- `UNSAT_DRAT_EXPORTED_VERIFIED` when `proof.drat` exists and real
+  `drat-trim` ran successfully,
+- `UNSAT_NOT_EXTERNALLY_VERIFIED` when an UNSAT result lacks successful external
+  `drat-trim` verification.
+
+Future public benchmark modes that require external UNSAT verification should
+fail or separate the case whenever the category is
+`UNSAT_NOT_EXTERNALLY_VERIFIED`. SAT benchmark results remain assignment
+verified against the original CNF.
 
 ## Native UNSAT Trace
 
@@ -540,6 +558,10 @@ Expected pass markers include:
 - `TWO_SAT_SCC_FINAL_STATE_ONLY_REJECT_PASS`
 - `TWO_SAT_SCC_AFTER_VE_DRAT_PASS`
 - `DRAT_STATUS_2SAT_NO_LONGER_UNSUPPORTED_PASS`
+- `REAL_DRAT_TRIM_SUBSUMPTION_PASS`
+- `REAL_DRAT_TRIM_PLE_PASS`
+- `REAL_DRAT_TRIM_MULTI_COMPONENT_UNSAT_PASS`
+- `BENCHMARK_UNSAT_EXTERNAL_VERIFICATION_GUARD_PASS`
 - `DRAT_TAMPER_REJECT_PASS`
 - `DRAT_STATUS_NO_FALSE_CLAIM_PASS`
 - `DRAT_CERT_BUNDLE_PASS`

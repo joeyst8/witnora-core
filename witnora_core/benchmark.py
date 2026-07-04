@@ -29,11 +29,13 @@ from .runner import solve
 from .simplify import simplify
 from .treewidth import find_elimination_order
 
-VERSION = "0.7.0"
+VERSION = "0.7.1"
 
 WIDTH_FOUND = "FOUND"
 WIDTH_NOT_FOUND = "NOT_FOUND"
 WIDTH_SKIPPED_SIZE_CAP = "SKIPPED_SIZE_CAP"
+UNSAT_DRAT_EXPORTED_VERIFIED = "UNSAT_DRAT_EXPORTED_VERIFIED"
+UNSAT_NOT_EXTERNALLY_VERIFIED = "UNSAT_NOT_EXTERNALLY_VERIFIED"
 
 CSV_COLUMNS = [
     "case_name",
@@ -270,6 +272,39 @@ def failure_reason(status: str) -> str:
     if status not in {SAT, UNSAT}:
         return status
     return ""
+
+
+def unsat_external_verification_category(
+    status: str,
+    drat_status: dict[str, Any] | None,
+) -> str | None:
+    """Classify whether an UNSAT benchmark result has external DRAT verification."""
+
+    if status != UNSAT:
+        return None
+    if (
+        drat_status is not None
+        and drat_status.get("drat_export_status") == "EXPORTED"
+        and drat_status.get("external_checker") == "DRAT_TRIM"
+        and drat_status.get("external_checker_ran") is True
+        and drat_status.get("external_checker_verified") is True
+    ):
+        return UNSAT_DRAT_EXPORTED_VERIFIED
+    return UNSAT_NOT_EXTERNALLY_VERIFIED
+
+
+def enforce_unsat_external_verification(
+    status: str,
+    drat_status: dict[str, Any] | None,
+    *,
+    strict: bool = False,
+) -> str | None:
+    """Guard for future benchmark modes requiring externally checked UNSAT."""
+
+    category = unsat_external_verification_category(status, drat_status)
+    if strict and category == UNSAT_NOT_EXTERNALLY_VERIFIED:
+        raise ValueError("UNSAT result lacks external drat-trim verification")
+    return category
 
 
 def compare_deterministic_run(first: Any, second: Any) -> bool:
