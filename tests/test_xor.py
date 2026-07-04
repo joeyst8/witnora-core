@@ -28,6 +28,30 @@ def xor3_clauses(rhs: int):
     return clauses
 
 
+def signed_xor_clauses(literals: list[int], rhs: int):
+    variables = sorted({abs(lit) for lit in literals})
+    clauses = []
+    for mask in range(1 << len(variables)):
+        assignment = {
+            var: bool((mask >> index) & 1)
+            for index, var in enumerate(variables)
+        }
+        parity = 0
+        for lit in literals:
+            value = assignment[abs(lit)]
+            if lit < 0:
+                value = not value
+            parity ^= int(value)
+        if parity == rhs:
+            continue
+        clause = []
+        for var in variables:
+            value = assignment[var]
+            clause.append(-var if value else var)
+        clauses.append(clause)
+    return clauses
+
+
 class XorTest(unittest.TestCase):
     def test_gaussian_solve(self):
         system = XorSystem([XorEquation([1, 2], 1), XorEquation([2, 3], 0)])
@@ -82,6 +106,71 @@ class XorTest(unittest.TestCase):
         self.assertTrue(verify_xor_assignment(detected, path.reconstructed_original_assignment))
         print("XOR_DISEQUALITY_PATTERN_DETECT_PASS")
 
+    def test_extra_clause_safe_implied_constraint(self):
+        formula = CNFFormula.from_raw_clauses([[1, 2], [-1, -2], [1]])
+        detected = detect_cnf_xor_patterns(formula, include_3var=False)
+        self.assertEqual(len(detected.equations), 1)
+        equation = detected.equations[0]
+        self.assertEqual((equation.variables, equation.rhs), ((1, 2), 1))
+        self.assertEqual(equation.detection_mode, "IMPLIED_CONSTRAINT_ONLY")
+        self.assertFalse(equation.source_clauses_removed)
+        self.assertIn((1,), equation.extra_clauses_touching_variables)
+        path = solve_with_xor(formula, c=2, detect_cnf_xor=True)
+        assignment = path.reconstructed_original_assignment
+        self.assertEqual(path.status, SAT)
+        self.assertTrue(formula_satisfied(formula, assignment))
+        self.assertTrue(verify_xor_assignment(detected, assignment))
+        print("XOR_EXTRA_CLAUSE_SAFE_PASS")
+
+    def test_extra_clause_no_replacement_metadata(self):
+        formula = CNFFormula.from_raw_clauses([[1, 2], [-1, -2], [1]])
+        detected = detect_cnf_xor_patterns(formula, include_3var=False)
+        equation = detected.equations[0]
+        self.assertEqual(equation.detection_mode, "IMPLIED_CONSTRAINT_ONLY")
+        self.assertFalse(equation.source_clauses_removed)
+        self.assertEqual(equation.pattern_size, 2)
+        self.assertTrue(equation.safe_use)
+        self.assertTrue({tuple(clause.literals) for clause in formula.clauses}.issuperset(equation.source_clauses))
+        print("XOR_EXTRA_CLAUSE_NO_REPLACEMENT_PASS")
+
+    def test_incomplete_2var_reject(self):
+        formula = CNFFormula.from_raw_clauses([[-1, 2]])
+        detected = detect_cnf_xor_patterns(formula, include_3var=False)
+        self.assertEqual(detected.equations, ())
+        print("XOR_INCOMPLETE_2VAR_REJECT_PASS")
+
+    def test_incomplete_3var_reject(self):
+        formula = CNFFormula.from_raw_clauses(xor3_clauses(1)[:-1])
+        detected = detect_cnf_xor_patterns(formula, include_3var=True)
+        self.assertEqual(detected.equations, ())
+        print("XOR_INCOMPLETE_3VAR_REJECT_PASS")
+
+    def test_duplicate_clause_safe(self):
+        formula = CNFFormula.from_raw_clauses([[-1, 2], [-1, 2]])
+        detected = detect_cnf_xor_patterns(formula, include_3var=False)
+        self.assertEqual(detected.equations, ())
+        print("XOR_DUPLICATE_CLAUSE_SAFE_PASS")
+
+    def test_larger_clause_pollution_reject(self):
+        formula = CNFFormula.from_raw_clauses([[-1, 2, 3], [1, -2]])
+        detected = detect_cnf_xor_patterns(formula, include_3var=False)
+        self.assertEqual(detected.equations, ())
+        print("XOR_LARGER_CLAUSE_POLLUTION_REJECT_PASS")
+
+    def test_polarity_normalization_2var(self):
+        cases = [
+            ([1, 2], 0, 0),
+            ([1, 2], 1, 1),
+            ([-1, 2], 0, 1),
+            ([1, -2], 0, 1),
+            ([-1, -2], 0, 0),
+        ]
+        for literals, literal_rhs, expected_rhs in cases:
+            formula = CNFFormula.from_raw_clauses(signed_xor_clauses(literals, literal_rhs))
+            detected = detect_cnf_xor_patterns(formula, include_3var=False)
+            self.assertIn(((1, 2), expected_rhs), [(eq.variables, eq.rhs) for eq in detected.equations])
+        print("XOR_POLARITY_NORMALIZATION_PASS")
+
     def test_final_assignment_verifies_cnf_and_xor(self):
         formula = CNFFormula.from_raw_clauses([[1, 2], [-1, -2]])
         system = XorSystem([XorEquation([1, 2], 1)])
@@ -116,11 +205,84 @@ class XorTest(unittest.TestCase):
         self.assertTrue(independent["checks"]["xor_native_unsat_not_drat"])
         print("XOR_NO_FALSE_DRAT_CLAIM_PASS")
 
+    def test_cert_source_clauses_verify(self):
+        formula = CNFFormula.from_raw_clauses([[1, 2], [-1, -2], [1]])
+        path = solve_with_xor(formula, c=2, detect_cnf_xor=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            cert = Path(tmp) / "xor_extra.wcert"
+            export_certificate_bundle(
+                formula,
+                path,
+                cert,
+                original_dimacs_text=formula.canonical_dimacs(),
+                export_drat=True,
+            )
+            system = json.loads((cert / "xor_system.json").read_text(encoding="utf-8"))
+            independent = verify_wcert_raw(cert)
+        equation = system["equations"][0]
+        self.assertEqual(equation["detection_mode"], "IMPLIED_CONSTRAINT_ONLY")
+        self.assertFalse(equation["source_clauses_removed"])
+        self.assertEqual(equation["extra_clauses_touching_variables"], [[1]])
+        self.assertTrue(independent["verified"])
+        print("XOR_CERT_SOURCE_CLAUSES_VERIFY_PASS")
+
+    def test_independent_checker_extra_clause(self):
+        formula = CNFFormula.from_raw_clauses([[1, 2], [-1, -2], [1]])
+        path = solve_with_xor(formula, c=2, detect_cnf_xor=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            cert = Path(tmp) / "xor_extra.wcert"
+            export_certificate_bundle(
+                formula,
+                path,
+                cert,
+                original_dimacs_text=formula.canonical_dimacs(),
+            )
+            independent = verify_wcert_raw(cert)
+        self.assertTrue(independent["verified"])
+        self.assertTrue(independent["checks"]["sat_assignment"])
+        print("XOR_INDEPENDENT_CHECKER_EXTRA_CLAUSE_PASS")
+
+    def test_unsat_native_no_drat_from_cnf_propagation(self):
+        formula = CNFFormula.from_raw_clauses([[1, 2], [-1, -2], [1], [2]])
+        path = solve_with_xor(formula, c=2, detect_cnf_xor=True)
+        self.assertEqual(path.status, XOR_UNSAT_NATIVE)
+        self.assertEqual(path.final_class, "XOR_UNSAT_NATIVE")
+        self.assertFalse(path.xor_data["xor_status"]["external_drat"])
+        with tempfile.TemporaryDirectory() as tmp:
+            cert = Path(tmp) / "xor_conflict.wcert"
+            export_certificate_bundle(
+                formula,
+                path,
+                cert,
+                original_dimacs_text=formula.canonical_dimacs(),
+                export_drat=True,
+            )
+            manifest = json.loads((cert / "manifest.json").read_text(encoding="utf-8"))
+            independent = verify_wcert_raw(cert)
+        self.assertFalse(manifest["external_drat"])
+        self.assertNotEqual(manifest["drat_export_status"], "EXPORTED")
+        self.assertTrue(independent["verified"])
+        self.assertTrue(independent["checks"]["xor_native_unsat_not_drat"])
+        print("XOR_UNSAT_NATIVE_NO_DRAT_PASS")
+
     def test_3var_pattern_detect(self):
         formula = CNFFormula.from_raw_clauses(xor3_clauses(1))
         detected = detect_cnf_xor_patterns(formula, include_3var=True)
         self.assertIn(((1, 2, 3), 1), [(eq.variables, eq.rhs) for eq in detected.equations])
         print("XOR_3VAR_PATTERN_DETECT_PASS")
+
+    def test_3var_rhs_parity(self):
+        for rhs in (0, 1):
+            formula = CNFFormula.from_raw_clauses(xor3_clauses(rhs))
+            detected = detect_cnf_xor_patterns(formula, include_3var=True)
+            self.assertIn(((1, 2, 3), rhs), [(eq.variables, eq.rhs) for eq in detected.equations])
+        print("XOR_3VAR_RHS_PARITY_PASS")
+
+    def test_3var_polarity_normalization(self):
+        formula = CNFFormula.from_raw_clauses(signed_xor_clauses([-1, 2, 3], 0))
+        detected = detect_cnf_xor_patterns(formula, include_3var=True)
+        self.assertIn(((1, 2, 3), 1), [(eq.variables, eq.rhs) for eq in detected.equations])
+        print("XOR_3VAR_POLARITY_NORMALIZATION_PASS")
 
     def test_3var_pattern_reject_incomplete(self):
         clauses = xor3_clauses(1)

@@ -1,4 +1,4 @@
-"""Official CNFgen diagnostic matrix runner for Witnora-Core v0.9.0."""
+"""Official CNFgen diagnostic matrix runner for Witnora-Core v0.9.1."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ from .public_benchmarks import (
     write_public_csv,
 )
 
-MATRIX_VERSION = "0.9.0"
+MATRIX_VERSION = "0.9.1"
 DEFAULT_C_VALUES = [2, 3, 4]
 DEFAULT_TIMEOUT_SECONDS = 300.0
 DEFAULT_MAX_WIDTH_SEARCH_VARS = 28
@@ -204,7 +204,7 @@ def write_matrix_summary_csv(rows: list[dict[str, Any]], path: str | Path) -> No
 def matrix_markdown(summary: dict[str, Any]) -> str:
     rows = list(summary.get("rows", []))
     lines = [
-        "# Witnora-Core v0.9.0 Official CNFgen Diagnostic Matrix",
+        "# Witnora-Core v0.9.1 Official CNFgen Diagnostic Matrix",
         "",
         "This is an official CNFgen diagnostic benchmark. It measures the current collapse boundary across formula family and c value.",
         "It is not a solver-performance claim. `NO_COLLAPSE_FOUND` is not hardness.",
@@ -306,7 +306,7 @@ def write_matrix_artifact(
     _write_text(artifact / "MATRIX_SUMMARY.md", matrix_markdown(summary))
     _write_text(
         artifact / "README.md",
-        "# Witnora-Core v0.9.0 CNFgen Diagnostic Benchmark Artifact\n\n"
+        "# Witnora-Core v0.9.1 CNFgen Diagnostic Benchmark Artifact\n\n"
         "This artifact is separate from the source release. It contains official CNFgen generated DIMACS files, per-run reports, certificates, and strict-category summaries.\n",
     )
     _write_json(artifact / "config.json", dict(summary.get("config", {})))
@@ -440,7 +440,7 @@ def run_cnfgen_matrix(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run official CNFgen diagnostic matrix")
-    parser.add_argument("--out-root", default="outputs/v0.9.0-cnfgen-diagnostic")
+    parser.add_argument("--out-root", default="outputs/v0.9.1-cnfgen-diagnostic")
     parser.add_argument("--families", nargs="+", default=["pigeonhole", "tseitin", "parity"])
     parser.add_argument("--c-values", nargs="+", type=int, default=DEFAULT_C_VALUES)
     parser.add_argument("--cnfgen-path")
@@ -448,7 +448,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--max-width-search-vars", type=int, default=DEFAULT_MAX_WIDTH_SEARCH_VARS)
     parser.add_argument("--strict-unsat-external", action="store_true")
-    parser.add_argument("--zip", dest="zip_path", default="witnora-core-v0.9.0-cnfgen-diagnostic-benchmark.zip")
+    parser.add_argument("--zip", dest="zip_path", default="witnora-core-v0.9.1-cnfgen-diagnostic-benchmark.zip")
     args = parser.parse_args(argv)
 
     summary = run_cnfgen_matrix(

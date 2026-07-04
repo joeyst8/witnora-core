@@ -10,6 +10,8 @@ from .cnf import CNFFormula, Clause
 
 XOR_SAT = "SAT"
 XOR_UNSAT = "UNSAT"
+XOR_DETECTION_IMPLIED_ONLY = "IMPLIED_CONSTRAINT_ONLY"
+XOR_DETECTION_SIDECAR = "EXPLICIT_SIDECAR"
 
 
 @dataclass(frozen=True)
@@ -18,6 +20,11 @@ class XorEquation:
     rhs: int
     source: str = "sidecar"
     source_clauses: tuple[tuple[int, ...], ...] = field(default_factory=tuple)
+    pattern_size: int | None = None
+    detection_mode: str = XOR_DETECTION_SIDECAR
+    source_clauses_removed: bool = False
+    extra_clauses_touching_variables: tuple[tuple[int, ...], ...] = field(default_factory=tuple)
+    safe_use: bool = True
 
     def __init__(
         self,
@@ -26,6 +33,11 @@ class XorEquation:
         *,
         source: str = "sidecar",
         source_clauses: Iterable[Iterable[int]] = (),
+        pattern_size: int | None = None,
+        detection_mode: str | None = None,
+        source_clauses_removed: bool = False,
+        extra_clauses_touching_variables: Iterable[Iterable[int]] = (),
+        safe_use: bool = True,
     ):
         counts: dict[int, int] = {}
         for var in variables:
@@ -41,6 +53,22 @@ class XorEquation:
             "source_clauses",
             tuple(tuple(sorted(int(lit) for lit in clause)) for clause in source_clauses),
         )
+        object.__setattr__(self, "pattern_size", pattern_size)
+        object.__setattr__(
+            self,
+            "detection_mode",
+            detection_mode or (XOR_DETECTION_IMPLIED_ONLY if source == "detected_cnf_pattern" else XOR_DETECTION_SIDECAR),
+        )
+        object.__setattr__(self, "source_clauses_removed", bool(source_clauses_removed))
+        object.__setattr__(
+            self,
+            "extra_clauses_touching_variables",
+            tuple(
+                tuple(sorted(int(lit) for lit in clause))
+                for clause in extra_clauses_touching_variables
+            ),
+        )
+        object.__setattr__(self, "safe_use", bool(safe_use))
 
     @property
     def is_tautology(self) -> bool:
@@ -71,6 +99,11 @@ class XorEquation:
             rhs,
             source=self.source,
             source_clauses=self.source_clauses,
+            pattern_size=self.pattern_size,
+            detection_mode=self.detection_mode,
+            source_clauses_removed=self.source_clauses_removed,
+            extra_clauses_touching_variables=self.extra_clauses_touching_variables,
+            safe_use=self.safe_use,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -78,7 +111,14 @@ class XorEquation:
             "variables": list(self.variables),
             "rhs": self.rhs,
             "source": self.source,
+            "pattern_size": self.pattern_size,
             "source_clauses": [list(clause) for clause in self.source_clauses],
+            "detection_mode": self.detection_mode,
+            "source_clauses_removed": self.source_clauses_removed,
+            "extra_clauses_touching_variables": [
+                list(clause) for clause in self.extra_clauses_touching_variables
+            ],
+            "safe_use": self.safe_use,
         }
 
 
@@ -232,6 +272,46 @@ def _clause_for_forbidden_assignment(variables: tuple[int, ...], bits: tuple[int
     return tuple(sorted((-var if bit else var) for var, bit in zip(variables, bits)))
 
 
+def _extra_touching_clauses(
+    formula_clauses: set[tuple[int, ...]],
+    variables: tuple[int, ...],
+    source_clauses: Iterable[tuple[int, ...]],
+) -> tuple[tuple[int, ...], ...]:
+    variable_set = set(variables)
+    source_set = set(source_clauses)
+    return tuple(
+        sorted(
+            clause
+            for clause in formula_clauses
+            if clause not in source_set and any(abs(lit) in variable_set for lit in clause)
+        )
+    )
+
+
+def _detected_equation(
+    variables: tuple[int, ...],
+    rhs: int,
+    source_clauses: Iterable[tuple[int, ...]],
+    formula_clauses: set[tuple[int, ...]],
+) -> XorEquation:
+    source_tuple = tuple(sorted(source_clauses))
+    return XorEquation(
+        variables,
+        rhs,
+        source="detected_cnf_pattern",
+        source_clauses=source_tuple,
+        pattern_size=len(variables),
+        detection_mode=XOR_DETECTION_IMPLIED_ONLY,
+        source_clauses_removed=False,
+        extra_clauses_touching_variables=_extra_touching_clauses(
+            formula_clauses,
+            variables,
+            source_tuple,
+        ),
+        safe_use=True,
+    )
+
+
 def detect_cnf_xor_patterns(formula: CNFFormula, *, include_3var: bool = True) -> XorSystem:
     clauses = {tuple(clause.literals) for clause in formula.clauses}
     equations: list[XorEquation] = []
@@ -245,12 +325,12 @@ def detect_cnf_xor_patterns(formula: CNFFormula, *, include_3var: bool = True) -
         disequality_clauses = (tuple(sorted((x, y))), tuple(sorted((-x, -y))))
         if all(clause in clauses for clause in equality_clauses) and eq0 not in seen:
             equations.append(
-                XorEquation((x, y), 0, source="detected_cnf_pattern", source_clauses=equality_clauses)
+                _detected_equation((x, y), 0, equality_clauses, clauses)
             )
             seen.add(eq0)
         if all(clause in clauses for clause in disequality_clauses) and eq1 not in seen:
             equations.append(
-                XorEquation((x, y), 1, source="detected_cnf_pattern", source_clauses=disequality_clauses)
+                _detected_equation((x, y), 1, disequality_clauses, clauses)
             )
             seen.add(eq1)
 
@@ -267,11 +347,11 @@ def detect_cnf_xor_patterns(formula: CNFFormula, *, include_3var: bool = True) -
                 )
                 if all(clause in clauses for clause in required):
                     equations.append(
-                        XorEquation(
+                        _detected_equation(
                             triple,
                             rhs,
-                            source="detected_cnf_pattern",
-                            source_clauses=required,
+                            required,
+                            clauses,
                         )
                     )
                     seen.add(key)

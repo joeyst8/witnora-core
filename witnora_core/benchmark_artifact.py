@@ -25,8 +25,8 @@ from .public_benchmarks import (
     write_public_csv,
 )
 
-ARTIFACT_VERSION = "0.9.0"
-ARTIFACT_DIR_NAME = "v0.9.0-public-benchmark"
+ARTIFACT_VERSION = "0.9.1"
+ARTIFACT_DIR_NAME = "v0.9.1-public-benchmark"
 
 
 def strict_verification_summary(data: dict[str, Any]) -> dict[str, Any]:
@@ -103,14 +103,14 @@ def environment_text(config: dict[str, Any]) -> str:
         f"processor: {platform.processor()}",
         f"drat_trim_path: {config.get('drat_trim_path', '')}",
         "memory_measurement: null",
-        "memory_measurement_note: memory was not measured by the v0.9.0 artifact runner",
+        "memory_measurement_note: memory was not measured by the v0.9.1 artifact runner",
     ]
     return "\n".join(lines) + "\n"
 
 
 def artifact_readme_text(config: dict[str, Any], sources_not_run: list[dict[str, str]]) -> str:
     lines = [
-        "# Witnora-Core v0.9.0 Public Benchmark Artifact",
+        "# Witnora-Core v0.9.1 Public Benchmark Artifact",
         "",
         "This artifact is separate from the Witnora source release archive.",
         "It contains benchmark outputs, certificates, DRAT proof files where exported, and summary reports.",

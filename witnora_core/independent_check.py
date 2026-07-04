@@ -13,9 +13,9 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.9.0"
+CHECKER = "independent_raw_checker_v0.9.1"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
-DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.0"
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.1"
 DRAT_CHECKED_AGAINST = "original.dimacs"
 DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
@@ -1140,6 +1140,94 @@ def _xor_native_unsat_verified_raw(
     return _solve_xor_equations_raw(_substitute_xor_equations_raw(equations, units)) == "UNSAT"
 
 
+def _extra_touching_clauses_raw(
+    formula: FormulaRaw,
+    variables: tuple[int, ...],
+    source_clauses: set[ClauseRaw],
+) -> list[list[int]]:
+    variable_set = set(variables)
+    return [
+        list(clause)
+        for clause in sorted(formula)
+        if clause not in source_clauses and any(abs(lit) in variable_set for lit in clause)
+    ]
+
+
+def _clause_eval_for_local_assignment_raw(clause: ClauseRaw, assignment: dict[int, bool]) -> bool:
+    return any(
+        assignment[abs(lit)] if lit > 0 else not assignment[abs(lit)]
+        for lit in clause
+    )
+
+
+def _source_clauses_equivalent_to_xor_raw(
+    variables: tuple[int, ...],
+    rhs: int,
+    source_clauses: set[ClauseRaw],
+) -> bool:
+    if len(variables) not in {2, 3}:
+        return False
+    for mask in range(1 << len(variables)):
+        assignment = {
+            var: bool((mask >> index) & 1)
+            for index, var in enumerate(variables)
+        }
+        source_satisfied = all(
+            _clause_eval_for_local_assignment_raw(clause, assignment)
+            for clause in source_clauses
+        )
+        parity = 0
+        for var in variables:
+            parity ^= int(assignment[var])
+        xor_satisfied = parity == rhs
+        if source_satisfied != xor_satisfied:
+            return False
+    return True
+
+
+def _verify_xor_detected_equations_raw(
+    xor_data: dict[str, Any],
+    original_formula: FormulaRaw,
+) -> tuple[bool, str | None]:
+    original_clauses = set(original_formula)
+    for equation in xor_data.get("xor_system", {}).get("equations", []):
+        if equation.get("source") != "detected_cnf_pattern":
+            continue
+        variables, rhs = _canonical_xor_equation_raw(equation)
+        if int(equation.get("pattern_size", 0)) != len(variables):
+            return False, "detected XOR pattern_size mismatch"
+        if equation.get("detection_mode") != "IMPLIED_CONSTRAINT_ONLY":
+            return False, "detected XOR must use IMPLIED_CONSTRAINT_ONLY mode"
+        if equation.get("source_clauses_removed") is not False:
+            return False, "detected XOR source clauses must not be removed"
+        if equation.get("safe_use") is not True:
+            return False, "detected XOR safe_use must be true"
+        try:
+            source_clauses = {
+                canonicalize_clause_raw(clause)
+                for clause in equation.get("source_clauses", [])
+            }
+        except Exception as exc:
+            return False, f"invalid detected XOR source clause: {exc}"
+        if None in source_clauses:
+            return False, "detected XOR source clause is tautological"
+        typed_source = {clause for clause in source_clauses if clause is not None}
+        if len(typed_source) != (2 if len(variables) == 2 else 4):
+            return False, "detected XOR source clause count mismatch"
+        if not typed_source <= original_clauses:
+            return False, "detected XOR source clause missing from original CNF"
+        if not _source_clauses_equivalent_to_xor_raw(variables, rhs, typed_source):
+            return False, "detected XOR source clauses do not exactly encode equation"
+        expected_extra = _extra_touching_clauses_raw(original_formula, variables, typed_source)
+        recorded_extra = [
+            list(canonicalize_clause_raw(clause) or ())
+            for clause in equation.get("extra_clauses_touching_variables", [])
+        ]
+        if sorted(recorded_extra) != sorted(expected_extra):
+            return False, "detected XOR extra touching clauses mismatch"
+    return True, None
+
+
 def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
     payload = {
         "original_formula_hash": result_data["original_formula_hash"],
@@ -1236,7 +1324,7 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         if manifest.get(key) != result_data.get(key):
             return _fail(f"manifest {key} mismatch", "certification_metadata")
     if manifest.get("external_lrat_frat") is not False:
-        return _fail("external_lrat_frat must remain false in v0.9.0", "proof_trace")
+        return _fail("external_lrat_frat must remain false in v0.9.1", "proof_trace")
     if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
         return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
     if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
@@ -1311,6 +1399,9 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
                 return _fail(f"invalid {file_name}: {exc}", "xor_certificate")
             if loaded != result_data["xor_data"].get(key, {}):
                 return _fail(f"{file_name} differs from result.json", "xor_certificate")
+        xor_ok, xor_error = _verify_xor_detected_equations_raw(result_data["xor_data"], original)
+        if not xor_ok:
+            return _fail(xor_error or "detected XOR certificate metadata mismatch", "xor_certificate")
     elif result_data.get("status") == "UNSAT_XOR_NATIVE":
         return _fail("XOR-native UNSAT missing xor_data", "xor_certificate")
     recomputed_hash = compute_certificate_hash_raw(result_data)

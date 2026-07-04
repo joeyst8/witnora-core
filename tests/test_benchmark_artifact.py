@@ -20,7 +20,7 @@ from witnora_core.public_benchmarks import (
 
 def sample_benchmark_data():
     return {
-        "version": "0.9.0",
+        "version": "0.9.1",
         "benchmark_kind": "public",
         "c_parameter": 2,
         "timeout_seconds": 30,
@@ -122,7 +122,7 @@ class BenchmarkArtifactTest(unittest.TestCase):
     def test_public_artifact_schema(self):
         data = sample_benchmark_data()
         with tempfile.TemporaryDirectory() as tmp:
-            artifact = Path(tmp) / "outputs" / "v0.9.0-public-benchmark"
+            artifact = Path(tmp) / "outputs" / "v0.9.1-public-benchmark"
             write_benchmark_artifact(
                 artifact,
                 data,
@@ -168,16 +168,16 @@ class BenchmarkArtifactTest(unittest.TestCase):
         data = sample_benchmark_data()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            artifact = root / "outputs" / "v0.9.0-public-benchmark"
+            artifact = root / "outputs" / "v0.9.1-public-benchmark"
             write_benchmark_artifact(artifact, data, config={"c_parameter": 2})
-            zip_path = root / "witnora-core-v0.9.0-public-benchmark.zip"
+            zip_path = root / "witnora-core-v0.9.1-public-benchmark.zip"
             create_artifact_zip(artifact, zip_path)
             self.assertTrue(zip_path.exists())
             with zipfile.ZipFile(zip_path) as archive:
                 names = set(archive.namelist())
-            self.assertIn("outputs/v0.9.0-public-benchmark/README.md", names)
-            self.assertIn("outputs/v0.9.0-public-benchmark/results.csv", names)
-            self.assertIn("outputs/v0.9.0-public-benchmark/strict_verification_summary.json", names)
+            self.assertIn("outputs/v0.9.1-public-benchmark/README.md", names)
+            self.assertIn("outputs/v0.9.1-public-benchmark/results.csv", names)
+            self.assertIn("outputs/v0.9.1-public-benchmark/strict_verification_summary.json", names)
         print("BENCHMARK_ARTIFACT_ZIP_PASS")
 
 

@@ -39,14 +39,15 @@ v0.8.2 demotes that built-in suite to demo status and adds official CNFgen,
 SATLIB-directory, and SAT-Competition-directory integration with explicit
 NOT_RUN reporting when sources are unavailable. Witnora-Core v0.8.4 adds an
 official CNFgen diagnostic matrix over pigeonhole, Tseitin, and parity families
-for `c = 2, 3, 4`. Witnora-Core v0.9.0 adds an exact treewidth / VE-ordering
+for `c = 2, 3, 4`. Witnora-Core v0.8.5 adds an exact treewidth / VE-ordering
 audit for small diagnostic CNFs.
 
 Witnora-Core v0.9.0 adds a conservative explicit XOR/affine reasoning
-prototype. It accepts sidecar XOR equations and exact small CNF-encoded XOR
+prototype. Witnora-Core v0.9.1 hardens its soundness metadata and independent
+checking. It accepts sidecar XOR equations and exact small CNF-encoded XOR
 patterns, solves the resulting affine system by Gaussian elimination over
 GF(2), and verifies SAT assignments against both the original CNF and the XOR
-equations. XOR UNSAT is native-only in v0.9.0 and is not exported as DRAT,
+equations. XOR UNSAT is native-only in v0.9.1 and is not exported as DRAT,
 LRAT, or FRAT.
 
 ## What LRAT Is Appropriate For
@@ -83,7 +84,7 @@ Current certificate bundles classify each step with
   by the empty clause.
 - `XOR`: v0.9 sidecar or exact-pattern affine reasoning. SAT is checked by
   assignment verification against CNF and XOR equations. XOR UNSAT is native
-  only and not a clausal DRAT/LRAT/FRAT refutation in v0.9.0.
+  only and not a clausal DRAT/LRAT/FRAT refutation in v0.9.1.
 
 ## SAT Certificates
 
@@ -107,9 +108,9 @@ independently checked 2-SAT SCC contradiction.
 
 This is not a claim of external LRAT or FRAT support.
 
-## v0.9.0 End-to-End RUP-Subset DRAT Bridge
+## v0.9.1 End-to-End RUP-Subset DRAT Bridge
 
-v0.9.0 exports `proof.drat` only for supported UNSAT paths whose proof
+v0.9.1 exports `proof.drat` only for supported UNSAT paths whose proof
 additions are accepted by Witnora's internal RUP-subset checker starting from
 the original CNF clause database. It also writes `drat_status.json`.
 
@@ -166,17 +167,17 @@ Unsupported or final-state-only paths are marked:
 }
 ```
 
-Unsupported in v0.9.0:
+Unsupported in v0.9.1:
 
 - full RAT checking,
 - LRAT export,
 - FRAT export,
 - claims of external verification unless an external checker actually ran.
 
-The v0.9.0 checker string is:
+The v0.9.1 checker string is:
 
 ```text
-witnora_internal_rup_subset_checker_v0.9.0
+witnora_internal_rup_subset_checker_v0.9.1
 ```
 
 It is an internal RUP-subset proof checker, not a replacement for `drat-trim`
@@ -227,14 +228,14 @@ collapse-path replay, reconstruction, and direct assignment verification against
 the original CNF.
 
 UNSAT results eventually need broader DRAT/LRAT/FRAT output for SAT-community
-proof checking. v0.9.0 only claims DRAT-style proof export for supported
+proof checking. v0.9.1 only claims DRAT-style proof export for supported
 end-to-end RUP-checkable UNSAT paths, including supported 2-SAT SCC
 contradictions. External verification is claimed only if `drat-trim` or another
 recorded external checker actually ran and passed.
 
 For public benchmarks, UNSAT result categories must distinguish successful
 external proof checking from native-only or internally checked certificates.
-v0.9.0 classifies an UNSAT result as
+v0.9.1 classifies an UNSAT result as
 `UNSAT_DRAT_EXPORTED_VERIFIED` only when real `drat-trim` ran and accepted the
 exported `proof.drat`. If Witnora reports UNSAT but `drat-trim` was not run or
 did not accept the proof, the category is `UNSAT_NOT_EXTERNALLY_VERIFIED`. If
@@ -247,7 +248,7 @@ With `--strict-unsat-external`, the benchmark records
 case is not externally verified. This is a reporting guard, not a solver
 feature.
 
-## v0.9.0 Public Benchmark Reporting
+## v0.9.1 Public Benchmark Reporting
 
 The public benchmark harness supports a small in-repo `cnfgen-small` pilot
 suite for unit tests, an in-repo `demo-cnfgen-artifact` suite for harness
@@ -268,7 +269,7 @@ exactly one category:
 and `UNSUPPORTED_DRAT` must not be counted as externally certified UNSAT.
 Timeout and error cases are reported separately and are not partial results.
 
-The v0.9.0 benchmark artifact writer creates a separate output tree with
+The v0.9.1 benchmark artifact writer creates a separate output tree with
 `config.json`, `results.json`, `results.csv`, `REPORT.md`,
 `selected_instances.txt`, `environment.txt`, `strict_verification_summary.json`,
 `benchmark_manifest.json`, `generated_dimacs/`, `raw_outputs/`, `drat_logs/`,
@@ -278,9 +279,9 @@ Built-in demo suites must not be used as evidence of public benchmark
 performance. Official CNFgen, SATLIB, and SAT Competition runs may be claimed
 only when their corresponding suite status is `RUN`.
 
-## v0.9.0 Official CNFgen Diagnostic Matrix
+## v0.9.1 Official CNFgen Diagnostic Matrix
 
-The v0.9.0 diagnostic matrix runner uses official CNFgen, when installed, to
+The v0.9.1 diagnostic matrix runner uses official CNFgen, when installed, to
 generate pigeonhole, Tseitin, and parity formulas. It runs each available family
 with `c = 2, 3, 4`, records strict public categories, and packages a separate
 artifact containing `matrix_summary.json`, `matrix_summary.csv`,
@@ -294,9 +295,9 @@ performance, pigeonhole scalability, hardness of no-collapse cases, XOR
 necessity from parity failures, full DRAT/RAT/LRAT/FRAT support, or P vs NP
 progress.
 
-## v0.9.0 Exact Treewidth / VE Ordering Audit
+## v0.9.1 Exact Treewidth / VE Ordering Audit
 
-The v0.9.0 treewidth audit is a diagnostic tool for small CNFs. It builds the
+The v0.9.1 treewidth audit is a diagnostic tool for small CNFs. It builds the
 primal graph, searches exact bounded elimination orders from low `c` up to a
 configured cap, independently verifies any order, and compares that result with
 Witnora's normal solver output.
@@ -313,9 +314,9 @@ It is not new solver logic, not a hardness oracle, and not evidence that larger
 formulas are hard. Claims about specific formulas such as `php_4_3` are treated
 as hypotheses to test against the actual CNF encoding and primal graph.
 
-## v0.9.0 Explicit XOR / Affine Prototype
+## v0.9.1 Explicit XOR / Affine Prototype
 
-The v0.9.0 XOR route is intentionally conservative. It supports:
+The v0.9.1 XOR route is intentionally conservative. It supports:
 
 - explicit sidecar equations of the form `xor 1 2 3 = 0`,
 - exact two-variable equality and disequality CNF patterns,
@@ -335,7 +336,18 @@ assignment must satisfy the original CNF and every XOR equation. Certificate
 bundles include `xor_system.json`, `xor_trace.json`, and `xor_status.json` when
 XOR reasoning is used.
 
-For UNSAT, v0.9.0 reports `UNSAT_XOR_NATIVE` and benchmark/public reporting
+Detected CNF XOR patterns are used as implied constraints only. v0.9.1 records
+`detection_mode: "IMPLIED_CONSTRAINT_ONLY"`,
+`source_clauses_removed: false`, the exact source clauses, extra clauses
+touching the same variables, and `safe_use: true`. The source clauses remain in
+the CNF. Extra clauses are safe only because Witnora still verifies the original
+CNF; detected XOR is not a local replacement.
+
+The independent raw checker verifies that detected source clauses exist in the
+original CNF, exactly encode the claimed 2- or 3-variable XOR relation, did not
+claim clause removal, and list the extra touching clauses deterministically.
+
+For UNSAT, v0.9.1 reports `UNSAT_XOR_NATIVE` and benchmark/public reporting
 maps this to `UNSAT_XOR_NATIVE_NOT_DRAT`. This category is not externally
 DRAT-certified and must not be counted with `UNSAT_DRAT_EXPORTED_VERIFIED`.
 Future DRAT/LRAT/FRAT work would need a separate sound proof bridge for the
@@ -387,7 +399,7 @@ The next proof-format milestones should keep the bridge conservative:
 
 ## Forbidden Claims
 
-Witnora-Core v0.9.0 does not claim:
+Witnora-Core v0.9.1 does not claim:
 
 - full DRAT/RAT support,
 - full LRAT support,
