@@ -1,8 +1,15 @@
 """Witnora-Core v0 certified collapse-path engine."""
 
 from .cnf import CNFFormula, Clause, Literal
+from .families import make_blocked_clique_collapse_family
 
-__all__ = ["CNFFormula", "Clause", "Literal", "solve"]
+__all__ = [
+    "CNFFormula",
+    "Clause",
+    "Literal",
+    "make_blocked_clique_collapse_family",
+    "solve",
+]
 
 
 def solve(*args, **kwargs):

@@ -1,6 +1,6 @@
-# Witnora-Core v0.0.1
+# Witnora-Core v0.0.2
 
-Witnora-Core v0.0.1 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
+Witnora-Core v0.0.2 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, or brute-force solver for arbitrary formulas is included.
 
@@ -61,6 +61,29 @@ The runner never returns partial SAT for a failed component set.
 ## NO_COLLAPSE_FOUND Is Not HARD
 
 `NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C` means only that the implemented grammar and current `c` budget did not find a certified collapse route. It is not a hardness claim and must not be read as `HARD`, `UNKNOWN`, or probabilistic UNSAT.
+
+## Why W_c Is Not Just Raw Bounded Treewidth
+
+Witnora-Core v0.0.2 includes an explicit strictness family:
+
+```text
+F_n =
+(x or y_1 or y_2 or ... or y_n)
+and
+AND_{i=1..n} (not x or not y_i)
+```
+
+The long clause creates a clique of size `n + 1` in the original primal graph,
+so the original primal treewidth is at least `n`. That long clause is blocked
+on `x`: resolving it with each `(not x or not y_i)` produces a tautological
+resolvent containing both `y_i` and `not y_i`.
+
+After BCE removes the long clause, the remaining primal graph is a star
+centered at `x`, which has treewidth 1. Therefore `W_1` includes formulas with
+unbounded original primal treewidth that collapse to treewidth 1 after certified
+BCE. This is a strictness statement about the implemented preprocessing
+collapse class; it is not a P vs NP claim, a general SAT hardness claim, or a
+claim of full novelty over all preprocessing literature.
 
 ## certificate_hash
 
@@ -135,6 +158,9 @@ Expected pass markers include:
 - `DETERMINISM_PASS`
 - `COMPONENT_SOLVE_PASS`
 - `COMPONENT_NO_COLLAPSE_PASS`
+- `BLOCKED_CLIQUE_COLLAPSE_PASS`
+- `STRICTNESS_TREEWIDTH_SIGNAL_PASS`
+- `FAMILY_SCALING_PASS`
 - adversarial markers from `tests/test_adversarial_correctness.py`
 
 ## Run Examples
