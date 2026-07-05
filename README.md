@@ -1,5 +1,15 @@
 # Witnora-Core v0.9.8
 
+## v2.0 Collapse Theory Lab
+
+v2.0 adds Collapse Theory Lab, a research framework for comparing bounded
+collapse grammars and identifying certificate-backed strictness witnesses. It
+does not claim P vs NP progress, SAT solver competitiveness, broad XOR
+extraction, or general lower bounds. The allowed v2.0 claim is bounded:
+Witnora formalizes collapse grammar comparisons and demonstrates examples where
+adding exact XOR reasoning changes selected formula families from no-collapse to
+certified collapse under configured resource bounds.
+
 Witnora-Core v0.9.8 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata; v0.9.4 adds an official CNFgen XOR diagnostic artifact runner; v0.9.5 externally certifies official CNFgen `tseitin_10`; v0.9.6 diagnoses the `tseitin_15` proof blowup; v0.9.7 makes the sparse/min-fill XOR elimination trace deterministic, certificate-recorded, independently replayable, and usable for DRAT export; v0.9.8 runs a full official Tseitin min-fill diagnostic to measure the current scaling boundary.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
