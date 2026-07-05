@@ -1,0 +1,19 @@
+name: Witnora Verify Docker Partial Replay
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: joeyst8/witnora-verify-action@v1
+        with:
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: largest
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,ACTION_INPUT_MISMATCH,UNVERIFIED_CLAIM
+          out-dir: witnora-verify-out

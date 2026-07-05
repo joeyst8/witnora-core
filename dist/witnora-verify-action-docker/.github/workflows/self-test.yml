@@ -1,0 +1,29 @@
+name: Docker Action Self-Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check action package files
+        run: |
+          test -f action.yml
+          test -f Dockerfile
+          test -f entrypoint.sh
+          test -f README.md
+          test -d examples
+          grep -q "runs:" action.yml
+          grep -q "using: docker" action.yml
+          grep -q "does not rerun the solver" README.md
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker action image
+        run: docker build --build-arg WITNORA_CORE_REF=v1.6-marketplace-action-repo-package -t witnora-verify-action:test .

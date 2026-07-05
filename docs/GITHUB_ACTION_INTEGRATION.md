@@ -48,6 +48,32 @@ repository with `action.yml` or `action.yaml` at the repository root. The
 `marketplace-action/` directory in this repository is a ready-to-copy scaffold
 for that dedicated public action repository.
 
+## Composite Action vs Docker Action
+
+Witnora currently maintains two action package shapes:
+
+- Composite action: lighter and easier to inspect. It expects the workflow to
+  install Python and Witnora-Core before invoking the action.
+- Docker action: heavier, but self-contained. It builds an image with Python
+  and installs Witnora-Core from a tagged source ref, reducing setup friction
+  for external repositories.
+
+The Docker package lives at:
+
+```text
+dist/witnora-verify-action-docker/
+```
+
+Both packages preserve the same verification semantics:
+
+- metadata mode reports `ARTIFACT_INTEGRITY_VERIFIED`
+- partial mode reports `PARTIAL_REPLAY_VERIFIED_WITH_SCOPE_LIMITS`
+- full mode remains unsupported unless a future release actually implements it
+
+Neither package reruns the solver, regenerates CNFgen instances, regenerates
+DRAT proofs, reruns the full benchmark diagnostic, or proves claims outside the
+selected evidence.
+
 ## Inputs
 
 Required:

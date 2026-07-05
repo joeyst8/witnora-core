@@ -65,6 +65,13 @@ and release-note snippets for trust cards and verification reports; it does not
 require a GitHub token in dry-run mode and does not create new scientific
 claims.
 
+v1.7 adds a Docker action package for the same verifier. The Docker runner is
+self-contained in the sense that the image installs Python dependencies and
+Witnora-Core from a tagged source ref, so external workflows do not need to
+prepare Witnora-Core manually. This improves packaging reproducibility, but it
+does not add solver capability, benchmark coverage, proof-export capability, or
+new scientific claims.
+
 The current depth ladder is:
 
 - `metadata_hash_checks_only`: artifact integrity and claim-boundary scanning

@@ -1,0 +1,17 @@
+name: Witnora Verify Docker Metadata
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: joeyst8/witnora-verify-action@v1
+        with:
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: metadata
+          out-dir: witnora-verify-out
