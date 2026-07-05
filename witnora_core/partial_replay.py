@@ -284,6 +284,7 @@ def _drat_trim_replay(
     index: DiagnosticEntryIndex,
     row: dict[str, Any],
     drat_trim_path: str | Path | None,
+    timeout_seconds: float | None,
 ) -> dict[str, Any]:
     checker = find_drat_trim(drat_trim_path)
     if checker is None:
@@ -311,9 +312,10 @@ def _drat_trim_replay(
         proof_path = _extract_zip_file(archive, proof_entry, tmp_root / "proof.drat")
         original_path = _extract_zip_file(archive, original_entry, tmp_root / "original.dimacs")
         start = time.perf_counter()
-        result = run_drat_trim(original_path, proof_path, checker)
+        result = run_drat_trim(original_path, proof_path, checker, timeout_seconds=timeout_seconds)
         runtime = time.perf_counter() - start
     verified = bool(result.get("external_checker_verified"))
+    timed_out = bool(result.get("timeout"))
     return {
         "name": "drat_trim_replay",
         "status": "PASS" if verified else "FAIL",
@@ -323,6 +325,8 @@ def _drat_trim_replay(
         "evidence_path": proof_entry,
         "runtime_seconds": runtime,
         "exit_code": result.get("exit_code"),
+        "timeout": timed_out,
+        "checker_version": None,
         "stdout_excerpt": str(result.get("stdout", ""))[:1000],
         "stderr_excerpt": str(result.get("stderr", ""))[:1000],
         "message": "drat-trim replay verified" if verified else str(result.get("error", "drat-trim replay failed")),
@@ -336,6 +340,7 @@ def partial_replay_diagnostic_artifact(
     rerun_drat_trim: bool = False,
     drat_trim_path: str | Path | None = None,
     max_replay_proofs: int = 3,
+    replay_timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
     zip_path = Path(diagnostic_zip)
     if not zip_path.is_file():
@@ -379,7 +384,7 @@ def partial_replay_diagnostic_artifact(
         independent_replays = [_independent_checker_replay(archive, index, row) for row in selected_rows]
         replay_rows = selected_rows[: max(0, max_replay_proofs)] if rerun_drat_trim else []
         drat_replays = [
-            _drat_trim_replay(archive, index, row, drat_trim_path)
+            _drat_trim_replay(archive, index, row, drat_trim_path, replay_timeout_seconds)
             for row in replay_rows
         ]
 

@@ -52,6 +52,12 @@ selected conditions such as hash mismatch or overclaim detection, and records
 replayed. This is CI packaging for the existing verifier, not a new SAT
 capability and not a new benchmark result.
 
+v1.4 makes the Action easier to use outside this repository: marketplace-style
+metadata, risk-flag and verdict fail policies, selected-instance controls,
+drat-trim replay timeouts, clearer CI log summaries, and optional report/trust
+card upload. It remains a scoped artifact verification integration, not a
+complete security audit or production proof-verification product.
+
 The current depth ladder is:
 
 - `metadata_hash_checks_only`: artifact integrity and claim-boundary scanning

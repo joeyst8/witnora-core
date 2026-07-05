@@ -19,6 +19,12 @@ or new benchmark claims.
 See [docs/GITHUB_ACTION_INTEGRATION.md](docs/GITHUB_ACTION_INTEGRATION.md) for
 inputs, outputs, fail-on behavior, and a copyable workflow example.
 
+v1.4 hardens that integration for marketplace-style use: richer Action
+metadata, explicit risk-flag and verdict fail policies, selected-instance
+controls, replay timeouts, clearer CI logs, and optional report/trust-card
+artifact upload. This remains release verification infrastructure, not a new
+solver or benchmark result.
+
 ## Implemented Theorem Scope
 
 For a fixed `c` with v0 support for `0 <= c <= 4`, Witnora implements the accepted 2-SAT collapse theorem route:

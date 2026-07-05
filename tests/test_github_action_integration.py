@@ -19,18 +19,29 @@ def _write_dimacs(path: Path, clauses: list[list[int]], num_vars: int) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _fake_checker(path: Path, *, success: bool = True) -> Path:
+def _fake_checker(path: Path, *, success: bool = True, delay_seconds: float = 0.0) -> Path:
     if os.name == "nt":
         checker = path.with_suffix(".cmd")
-        checker.write_text(
-            "@echo off\n"
-            + ("echo s VERIFIED\nexit /b 0\n" if success else "echo s FAILED 1>&2\nexit /b 7\n"),
-            encoding="utf-8",
-        )
+        if delay_seconds:
+            script = path.with_suffix(".py")
+            script.write_text(
+                "import sys, time\n"
+                f"time.sleep({delay_seconds!r})\n"
+                + ("print('s VERIFIED')\nraise SystemExit(0)\n" if success else "print('s FAILED', file=sys.stderr)\nraise SystemExit(7)\n"),
+                encoding="utf-8",
+            )
+            checker.write_text(f"@echo off\n{sys.executable} \"{script}\" %*\nexit /b %ERRORLEVEL%\n", encoding="utf-8")
+        else:
+            checker.write_text(
+                "@echo off\n"
+                + ("echo s VERIFIED\nexit /b 0\n" if success else "echo s FAILED 1>&2\nexit /b 7\n"),
+                encoding="utf-8",
+            )
         return checker
     script = path.with_suffix(".py")
     script.write_text(
-        "import sys\n"
+        "import sys, time\n"
+        f"time.sleep({delay_seconds!r})\n"
         f"print({'s VERIFIED' if success else 's FAILED'!r}, file=sys.{'stdout' if success else 'stderr'})\n"
         f"raise SystemExit({0 if success else 7})\n",
         encoding="utf-8",
@@ -69,6 +80,7 @@ class GitHubActionIntegrationTest(unittest.TestCase):
         dimacs = cls.root / "unit_unsat.dimacs"
         _write_dimacs(dimacs, [[1], [-1]], 1)
         cls.fake_checker = _fake_checker(cls.root / "fake_drat_trim", success=True)
+        cls.slow_checker = _fake_checker(cls.root / "slow_drat_trim", success=True, delay_seconds=2.0)
         cert = cls.root / "unit.wcert"
         with contextlib.redirect_stdout(io.StringIO()):
             runner_main(
@@ -170,19 +182,30 @@ class GitHubActionIntegrationTest(unittest.TestCase):
     def test_github_action_metadata(self):
         action = Path(".github/actions/witnora-verify/action.yml").read_text(encoding="utf-8")
         for required in [
+            "author:",
+            "branding:",
             "source-zip:",
             "diagnostic-zip:",
             "manifest:",
             "depth:",
             "select:",
+            "select-instance:",
             "rerun-drat-trim:",
+            "replay-timeout-seconds:",
             "fail-on:",
+            "fail-on-risk-flags:",
+            "fail-on-verdict:",
+            "upload-artifacts:",
             "verdict:",
             "certification_level:",
+            "risk_flags:",
+            "selected_evidence:",
             "trust_card_path:",
             "python -m witnora_core.ci",
         ]:
             self.assertIn(required, action)
+        print("ACTION_MARKETPLACE_METADATA_PASS")
+        print("ACTION_INPUTS_OUTPUTS_COMPLETE_PASS")
         print("GITHUB_ACTION_METADATA_PASS")
 
     def test_ci_wrapper_metadata_mode(self):
@@ -223,6 +246,50 @@ class GitHubActionIntegrationTest(unittest.TestCase):
         self.assertIn("HASH_MISMATCH", report["risk_flags"])
         print("CI_FAIL_ON_HASH_MISMATCH_PASS")
 
+    def test_ci_fail_on_risk_flags(self):
+        out_dir = self.root / "risk_fail"
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            code = ci_main(
+                [
+                    "--source-zip",
+                    str(self.source_zip),
+                    "--diagnostic-zip",
+                    str(self.diagnostic_zip),
+                    "--manifest",
+                    str(self.bad_manifest),
+                    "--fail-on-risk-flags",
+                    "HASH_MISMATCH",
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+        self.assertNotEqual(code, 0)
+        self.assertIn("risk_flag:HASH_MISMATCH", stdout.getvalue())
+        print("CI_FAIL_ON_RISK_FLAGS_PASS")
+
+    def test_ci_fail_on_verdict(self):
+        out_dir = self.root / "verdict_fail"
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            code = ci_main(
+                [
+                    "--source-zip",
+                    str(self.source_zip),
+                    "--diagnostic-zip",
+                    str(self.diagnostic_zip),
+                    "--manifest",
+                    str(self.bad_manifest),
+                    "--fail-on-verdict",
+                    "PARTIALLY_VERIFIED",
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+        self.assertNotEqual(code, 0)
+        self.assertIn("verdict:PARTIALLY_VERIFIED", stdout.getvalue())
+        print("CI_FAIL_ON_VERDICT_PASS")
+
     def test_ci_no_fail_on_metadata_drat_not_rerun(self):
         code, report, output = self._ci("--depth", "metadata", out_name="metadata_no_drat")
         self.assertEqual(code, 0, output)
@@ -237,6 +304,82 @@ class GitHubActionIntegrationTest(unittest.TestCase):
         trust_card = (self.root / "limited" / "trust_card.md").read_text(encoding="utf-8")
         self.assertIn("Only selected proof evidence was replayed", trust_card)
         print("PROOF_SELECTION_LIMITED_FLAG_PASS")
+
+    def test_ci_select_instance(self):
+        _code, report, _output = self._ci(
+            "--depth",
+            "partial",
+            "--select",
+            "instance",
+            "--select-instance",
+            "tseitin_10:c=2",
+            out_name="select_instance",
+        )
+        self.assertEqual(report["selected_evidence"][0]["instance_id"], "tseitin_10")
+        self.assertEqual(str(report["selected_evidence"][0]["c"]), "2")
+        print("CI_SELECT_INSTANCE_PASS")
+
+    def test_ci_select_all(self):
+        _code, report, _output = self._ci("--depth", "partial", "--select", "all", out_name="select_all")
+        self.assertEqual(report["selected_evidence_count"], 2)
+        self.assertNotIn("PROOF_SELECTION_LIMITED", report["risk_flags"])
+        print("CI_SELECT_ALL_PASS")
+
+    def test_ci_proof_selection_none(self):
+        _code, report, _output = self._ci(
+            "--depth",
+            "partial",
+            "--select",
+            "instance",
+            "--select-instance",
+            "missing:c=2",
+            out_name="select_none",
+        )
+        self.assertEqual(report["selected_evidence_count"], 0)
+        self.assertIn("PROOF_SELECTION_NONE", report["risk_flags"])
+        self.assertNotIn("INDEPENDENT_CHECKER_RERUN", report["risk_flags"])
+        print("CI_PROOF_SELECTION_NONE_PASS")
+
+    def test_ci_drat_trim_timeout_flag(self):
+        out_dir = self.root / "timeout"
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            code = ci_main(
+                [
+                    "--source-zip",
+                    str(self.source_zip),
+                    "--diagnostic-zip",
+                    str(self.diagnostic_zip),
+                    "--manifest",
+                    str(self.manifest),
+                    "--depth",
+                    "partial",
+                    "--select",
+                    "largest",
+                    "--rerun-drat-trim",
+                    "--drat-trim",
+                    str(self.slow_checker),
+                    "--replay-timeout-seconds",
+                    "0.01",
+                    "--fail-on-risk-flags",
+                    "DRAT_TRIM_TIMEOUT",
+                    "--out-dir",
+                    str(out_dir),
+                ]
+            )
+        report = json.loads((out_dir / "release_verification_report.json").read_text(encoding="utf-8"))
+        self.assertNotEqual(code, 0)
+        self.assertIn("DRAT_TRIM_TIMEOUT", report["risk_flags"])
+        self.assertEqual(report["drat_trim_replay"][0]["status"], "FAIL")
+        self.assertTrue(report["drat_trim_replay"][0]["timeout"])
+        print("CI_DRAT_TRIM_TIMEOUT_FLAG_PASS")
+
+    def test_ci_log_summary_scope(self):
+        code, _report, output = self._ci("--depth", "partial", "--select", "largest", out_name="log_scope")
+        self.assertEqual(code, 0, output)
+        self.assertIn("Witnora Verify CI Summary", output)
+        self.assertIn("did not rerun the solver, regenerate CNFgen instances, regenerate DRAT proofs", output)
+        print("CI_LOG_SUMMARY_SCOPE_PASS")
 
     def test_github_output_writing(self):
         output_file = self.root / "github_output.txt"
@@ -254,7 +397,19 @@ class GitHubActionIntegrationTest(unittest.TestCase):
         self.assertIn(f"verdict={report['verdict']}", lines)
         self.assertIn("report_path=", lines)
         self.assertIn("trust_card_path=", lines)
+        self.assertIn("risk_flags=", lines)
+        self.assertIn("selected_evidence=", lines)
+        print("GITHUB_OUTPUT_RISK_FLAGS_PASS")
         print("GITHUB_OUTPUT_WRITING_PASS")
+
+    def test_workflow_examples_present(self):
+        for path in [
+            ".github/workflows/witnora-verify-example.yml",
+            "examples/github_action_demo/release_workflow.yml",
+            "examples/github_action_demo/README.md",
+        ]:
+            self.assertTrue(Path(path).is_file(), path)
+        print("WORKFLOW_EXAMPLES_PRESENT_PASS")
 
     def test_github_action_no_solver_logic_change(self):
         combined = (

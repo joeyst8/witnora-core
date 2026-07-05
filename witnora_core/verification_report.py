@@ -348,6 +348,7 @@ def verification_report_for_release(
     rerun_drat_trim: bool = False,
     drat_trim_path: str | Path | None = None,
     max_replay_proofs: int = 3,
+    replay_timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
     requested_depth = depth.strip().lower()
     if requested_depth == "full":
@@ -396,6 +397,7 @@ def verification_report_for_release(
         check_name = "source_archive_sha256" if path == source_path else "diagnostic_artifact_sha256"
         if expected is None:
             risk_flags.append("UNVERIFIED_CLAIM")
+            risk_flags.append("ACTION_INPUT_MISMATCH")
             checker_results.append({"checker": "sha256_manifest_match", "path": str(path), "passed": False, "error": "not listed in manifest"})
             checks_performed.append({"name": check_name, "status": "FAIL", "depth": DEPTH_METADATA_HASH_CHECKS_ONLY})
         elif evidence_item["status"] == "MISSING":
@@ -488,6 +490,7 @@ def verification_report_for_release(
         rerun_drat_trim=rerun_drat_trim,
         drat_trim_path=drat_trim_path,
         max_replay_proofs=max_replay_proofs,
+        replay_timeout_seconds=replay_timeout_seconds,
     )
 
 
@@ -508,6 +511,7 @@ def _with_partial_replay(
     rerun_drat_trim: bool,
     drat_trim_path: str | Path | None,
     max_replay_proofs: int,
+    replay_timeout_seconds: float | None,
 ) -> dict[str, Any]:
     replay = partial_replay_diagnostic_artifact(
         diagnostic_path,
@@ -515,6 +519,7 @@ def _with_partial_replay(
         rerun_drat_trim=rerun_drat_trim,
         drat_trim_path=drat_trim_path,
         max_replay_proofs=max_replay_proofs,
+        replay_timeout_seconds=replay_timeout_seconds,
     )
     report["verification_depth"] = DEPTH_PARTIAL_REPLAY
     report["selection_policy"] = selection_policy
@@ -534,8 +539,11 @@ def _with_partial_replay(
     report["checks_performed"].extend(report["drat_trim_replay"])
 
     flags = _without_flags(list(report.get("risk_flags", [])), "METADATA_ONLY")
-    flags = _with_flag(flags, "PROOF_SYNTAX_CHECKED")
-    flags = _with_flag(flags, "PROOF_LOGS_CHECKED")
+    if selected_count:
+        flags = _with_flag(flags, "PROOF_SYNTAX_CHECKED")
+        flags = _with_flag(flags, "PROOF_LOGS_CHECKED")
+    else:
+        flags = _with_flag(flags, "PROOF_SELECTION_NONE")
     if candidate_count and selected_count < candidate_count:
         flags = _with_flag(flags, "PROOF_SELECTION_LIMITED")
     if replay.get("independent_checker_passed"):
@@ -546,6 +554,10 @@ def _with_partial_replay(
         flags = _with_flag(flags, "DRAT_TRIM_RERUN")
     elif rerun_drat_trim:
         flags = _with_flag(flags, "DRAT_TRIM_REPLAY_FAILED_OR_SKIPPED")
+    if any(check.get("timeout") for check in report["drat_trim_replay"]):
+        flags = _with_flag(flags, "DRAT_TRIM_TIMEOUT")
+    if any(check.get("name") == "drat_trim_replay" and check.get("checker_version") is None for check in report["drat_trim_replay"]):
+        flags = _with_flag(flags, "CHECKER_VERSION_NOT_RECORDED")
 
     syntax_and_logs_passed = bool(replay.get("passed"))
     independent_passed = bool(replay.get("independent_checker_passed"))

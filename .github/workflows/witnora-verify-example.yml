@@ -4,27 +4,65 @@ on:
   workflow_dispatch:
 
 jobs:
-  verify-release-artifacts:
+  metadata-only:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Run Witnora Verify
+      - name: Metadata-only verification
         uses: ./.github/actions/witnora-verify
         with:
-          source-zip: witnora-core-v1.0-public-preprint-final.zip
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: metadata
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,UNVERIFIED_CLAIM
+          fail-on-verdict: NOT_VERIFIED,PARTIALLY_VERIFIED,OVERCLAIM
+          out-dir: witnora-verify-metadata
+          upload-artifacts: "true"
+
+  partial-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Partial replay verification
+        uses: ./.github/actions/witnora-verify
+        with:
+          source-zip: witnora-core-v1.0-public-preprint.zip
           diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
           manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
           depth: partial
           select: largest
           rerun-drat-trim: "false"
           max-replay-proofs: "1"
-          fail-on: hash_mismatch,overclaim,missing_file,partial_or_not_verified
-          out-dir: witnora-verify-out
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,UNVERIFIED_CLAIM
+          fail-on-verdict: NOT_VERIFIED,PARTIALLY_VERIFIED,OVERCLAIM
+          out-dir: witnora-verify-partial
+          upload-artifacts: "true"
 
-      - name: Upload verification reports
-        uses: actions/upload-artifact@v4
+  partial-replay-with-drat-trim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Partial replay with drat-trim rerun
+        uses: ./.github/actions/witnora-verify
         with:
-          name: witnora-verify-report
-          path: witnora-verify-out/
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: instance
+          select-instance: tseitin_20:c=2
+          rerun-drat-trim: "true"
+          drat-trim: /usr/local/bin/drat-trim
+          max-replay-proofs: "1"
+          replay-timeout-seconds: "120"
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,UNVERIFIED_CLAIM,DRAT_TRIM_TIMEOUT
+          fail-on-verdict: NOT_VERIFIED,PARTIALLY_VERIFIED,OVERCLAIM
+          out-dir: witnora-verify-drat
+          upload-artifacts: "true"

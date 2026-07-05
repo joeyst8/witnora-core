@@ -14,7 +14,10 @@ jobs:
           diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
           manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
           depth: partial
-          select: largest
+          select: instance
+          select-instance: tseitin_20:c=2
           rerun-drat-trim: "false"
-          fail-on: hash_mismatch,overclaim,missing_file,partial_or_not_verified
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,UNVERIFIED_CLAIM,ACTION_INPUT_MISMATCH
+          fail-on-verdict: NOT_VERIFIED,PARTIALLY_VERIFIED,OVERCLAIM
+          upload-artifacts: "true"
           out-dir: witnora-verify-out

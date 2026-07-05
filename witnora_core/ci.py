@@ -24,6 +24,10 @@ from .verification_report import (
 
 
 DEFAULT_FAIL_ON = "hash_mismatch,overclaim,missing_file"
+SCOPE_LOG_TEXT = (
+    "Witnora Verify did not rerun the solver, regenerate CNFgen instances, "
+    "regenerate DRAT proofs, or rerun the full benchmark diagnostic."
+)
 
 
 def _parse_fail_on(value: str) -> set[str]:
@@ -59,6 +63,67 @@ def evaluate_fail_conditions(report: dict[str, Any], fail_on: set[str]) -> list[
     return reasons
 
 
+def evaluate_marketplace_fail_conditions(
+    report: dict[str, Any],
+    *,
+    fail_on_risk_flags: set[str],
+    fail_on_verdict: set[str],
+) -> list[str]:
+    risk_flags = {str(flag).upper() for flag in report.get("risk_flags", [])}
+    verdict = str(report.get("verdict", "")).upper()
+    reasons = [f"risk_flag:{flag}" for flag in sorted(fail_on_risk_flags & risk_flags)]
+    if verdict in fail_on_verdict:
+        reasons.append(f"verdict:{verdict}")
+    return reasons
+
+
+def _json_compact(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def _selection_policy(select: str, select_instance: str | None) -> str:
+    if select_instance:
+        parts = select_instance.split(":c=")
+        if len(parts) == 2:
+            return f"instance:{parts[0]}:c:{parts[1]}"
+        return f"instance:{select_instance}"
+    if select == "instance":
+        return "instance:"
+    return select
+
+
+def render_ci_log_summary(report: dict[str, Any], failure_reasons: list[str]) -> str:
+    selected = report.get("selected_evidence", [])
+    selected_lines = [
+        f"- {item.get('instance_id')} c={item.get('c')} ({item.get('public_category')})"
+        for item in selected
+    ] or ["- none"]
+    checks = report.get("checks_performed", [])
+    checked_names = [str(check.get("name", "check")) for check in checks[:12]]
+    if len(checks) > 12:
+        checked_names.append(f"... {len(checks) - 12} more")
+    checked_lines = [f"- {name}" for name in checked_names] or ["- none"]
+    risk_lines = [f"- {flag}" for flag in report.get("risk_flags", [])] or ["- none"]
+    failure_lines = [f"- {reason}" for reason in failure_reasons] or ["- none"]
+    lines = [
+        "Witnora Verify CI Summary",
+        f"Verdict: {report.get('verdict')}",
+        f"Verification depth: {report.get('verification_depth')}",
+        f"Replay depth: {report.get('replay_depth')}",
+        "Selected evidence:",
+        *selected_lines,
+        "Risk flags:",
+        *risk_lines,
+        "Checks performed:",
+        *checked_lines,
+        "What was not checked:",
+        f"- {SCOPE_LOG_TEXT}",
+        "Failure reasons:",
+        *failure_lines,
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def _write_trust_card(card: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
     json_path = out_dir / "trust_card.json"
     md_path = out_dir / "trust_card.md"
@@ -85,10 +150,11 @@ def run_ci(args: argparse.Namespace) -> tuple[int, dict[str, Any], dict[str, Any
         diagnostic_zip=args.diagnostic_zip,
         manifest=args.manifest,
         depth=args.depth,
-        selection_policy=args.select,
+        selection_policy=_selection_policy(args.select, args.select_instance),
         rerun_drat_trim=args.rerun_drat_trim,
         drat_trim_path=args.drat_trim,
         max_replay_proofs=args.max_replay_proofs,
+        replay_timeout_seconds=args.replay_timeout_seconds,
     )
     report_json = out_dir / "release_verification_report.json"
     report_md = out_dir / "release_verification_report.md"
@@ -98,11 +164,22 @@ def run_ci(args: argparse.Namespace) -> tuple[int, dict[str, Any], dict[str, Any
     trust_json, trust_md = _write_trust_card(card, out_dir)
 
     failure_reasons = evaluate_fail_conditions(report, _parse_fail_on(args.fail_on))
+    failure_reasons.extend(
+        evaluate_marketplace_fail_conditions(
+            report,
+            fail_on_risk_flags={item.upper() for item in _parse_fail_on(args.fail_on_risk_flags)},
+            fail_on_verdict={item.upper() for item in _parse_fail_on(args.fail_on_verdict)},
+        )
+    )
+    failure_reasons = sorted(set(failure_reasons))
     _write_github_outputs(
         {
             "verdict": str(report.get("verdict", "")),
             "certification_level": str(report.get("certification_level", "")),
             "verification_depth": str(report.get("verification_depth", "")),
+            "replay_depth": str(report.get("replay_depth") or ""),
+            "risk_flags": _json_compact(report.get("risk_flags", [])),
+            "selected_evidence": _json_compact(report.get("selected_evidence", [])),
             "report_path": str(report_json),
             "trust_card_path": str(trust_md),
         }
@@ -119,6 +196,7 @@ def run_ci(args: argparse.Namespace) -> tuple[int, dict[str, Any], dict[str, Any
         "failure_reasons": failure_reasons,
         "trust_card_json_path": str(trust_json),
     }
+    print(render_ci_log_summary(report, failure_reasons))
     print(stable_json(summary), end="")
     return (1 if failure_reasons else 0), report, card, failure_reasons
 
@@ -129,11 +207,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--diagnostic-zip", required=True)
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--depth", choices=["metadata", "partial", "full"], default="metadata")
-    parser.add_argument("--select", default="largest")
+    parser.add_argument("--select", choices=["largest", "first", "all", "instance"], default="largest")
+    parser.add_argument("--select-instance", default=None, help="selected instance, for example tseitin_20:c=2")
     parser.add_argument("--rerun-drat-trim", action="store_true")
     parser.add_argument("--drat-trim", default=None)
     parser.add_argument("--max-replay-proofs", type=int, default=1)
+    parser.add_argument("--replay-timeout-seconds", type=float, default=120.0)
     parser.add_argument("--fail-on", default=DEFAULT_FAIL_ON)
+    parser.add_argument("--fail-on-risk-flags", default="")
+    parser.add_argument("--fail-on-verdict", default="")
     parser.add_argument("--out-dir", default="witnora-verify-out")
     return parser
 

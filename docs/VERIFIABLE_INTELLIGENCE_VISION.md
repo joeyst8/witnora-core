@@ -35,6 +35,12 @@ It can generate verification reports and trust cards during release workflows an
 fail CI on selected evidence problems. It does not add solver logic, proof-export
 logic, XOR-solving logic, or new benchmark claims.
 
+v1.4 turns that local action into a marketplace-ready integration surface:
+explicit fail-on-risk-flags and fail-on-verdict controls, selected-instance
+replay, timeout risk flags, clearer CI summaries, and optional report/trust-card
+artifact upload. These are workflow controls around the verifier, not broader
+scientific proof claims.
+
 ## Verification Depths
 
 Witnora uses explicit depth labels:
