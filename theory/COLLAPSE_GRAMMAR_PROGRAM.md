@@ -50,6 +50,11 @@ pigeonhole assignment variables `x[pigeon,hole]`, checks ALO/AMO clauses
 against the original CNF, and emits a native counting certificate for `n > m`.
 This is native certification, not DRAT and not a complete PB solver.
 
+v2.4 adds an Operator Genesis layer. It extracts obstruction fingerprints and
+generates candidate operator schemas with trigger signatures, preservation
+obligations, certificate sketches, promotion criteria, and theorem-candidate
+queue entries. Generated schemas are not implemented operators.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -92,3 +97,5 @@ not a general SAT-solving result.
    accepts them.
 8. For cardinality/counting operators, verify the exact original-CNF structure
    before emitting native semantic certificates.
+9. Treat generated operator schemas as research objects until implemented,
+   independently checked, tested, red-teamed, and frozen.

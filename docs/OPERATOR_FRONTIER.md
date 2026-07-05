@@ -63,3 +63,15 @@ The next frontier split is now explicit:
 `php_n_m`: exact ALO/AMO detection over assignment variables plus a native
 counting certificate. The frontier remains open for nonstandard encodings,
 larger certificate compression, and DRAT export.
+
+## v2.4 Operator Genesis Update
+
+The frontier now feeds `witnora_core.operator_genesis`. The genesis engine
+does more than map fingerprints to a fixed list: it emits operator schemas with
+trigger signatures, preservation obligations, certificate sketches, safety
+risks, promotion criteria, and theorem-candidate queue entries.
+
+This is still a planning layer. A generated schema is not an implemented
+operator, not a proof, and not a benchmark result. The next operator becomes
+trusted only after implementation, independent checking, targeted tests,
+red-team review, and a frozen artifact.

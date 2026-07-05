@@ -40,7 +40,7 @@ from .runner import solve, solve_with_xor
 from .theorem_candidates import initial_theorem_candidates, theorem_candidates_markdown
 from .xor import canonical_xor_cnf_clauses, detect_cnf_xor_patterns
 
-THEORY_VERSION = "2.3"
+THEORY_VERSION = "2.4"
 OPERATOR_STUB_NOT_EXECUTED = "OPERATOR_STUB_NOT_EXECUTED"
 
 WITHIN_BOUNDS = "WITHIN_BOUNDS"
@@ -2586,6 +2586,12 @@ def main(argv: list[str] | None = None) -> int:
     check_pigeonhole_parser = sub.add_parser("check-pigeonhole-cert")
     check_pigeonhole_parser.add_argument("--cnf", required=True)
     check_pigeonhole_parser.add_argument("--certificate", required=True)
+
+    genesis_parser = sub.add_parser("run-operator-genesis")
+    genesis_parser.add_argument("--families", nargs="+", default=["pigeonhole", "parity", "graph-coloring", "clique", "subset-sum", "adversarial-mixed", "random-structured"])
+    genesis_parser.add_argument("--out-root", default="outputs/v2.4-operator-genesis")
+    genesis_parser.add_argument("--strict", action="store_true")
+    genesis_parser.add_argument("--zip", default="witnora-core-v2.4-operator-genesis.zip")
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2628,6 +2634,14 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_pigeonhole_certificate(formula, data)))
+        return 0
+
+    if args.command == "run-operator-genesis":
+        from .operator_genesis import run_operator_genesis
+
+        result = run_operator_genesis(families=args.families, out_root=args.out_root, strict=args.strict)
+        digest = make_zip(args.out_root, args.zip)
+        print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": {"fingerprint_count": len(result["obstruction_fingerprints"]), "candidate_count": len(result["generated_operator_candidates"])}}))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)

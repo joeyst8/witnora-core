@@ -1,5 +1,22 @@
 # Witnora-Core v0.9.8
 
+## v2.4 Operator Genesis Engine
+
+v2.4 adds `witnora_core.operator_genesis`, a research engine that extracts
+obstruction fingerprints from failed or non-collapsed families and generates
+candidate collapse-operator schemas.
+
+The generated candidates include trigger signatures, intended transformations,
+certificate-obligation sketches, safety risks, novelty/evidence/risk scores,
+promotion records, and theorem-candidate queue entries. They are not
+implemented operators and are not solver results.
+
+Allowed v2.4 claim: Witnora generates and ranks candidate collapse-operator
+schemas from obstruction fingerprints, with certificate obligations and
+theorem-candidate queues. It does not claim P vs NP progress, generated theorem
+status, lower bounds, fake DRAT, fake certificates, or that any generated
+operator solved a formula.
+
 ## v2.3 Certified Symmetry + Cardinality/PB Pigeonhole Collapse
 
 v2.3 adds `G3_SYMMETRY_CARDINALITY_CERTIFIED`, a native cardinality/counting

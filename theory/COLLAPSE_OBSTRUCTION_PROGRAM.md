@@ -61,6 +61,17 @@ assignment-grid ALO/AMO detection plus a native counting contradiction. This
 removes the `CARDINALITY_STRUCTURE_UNSUPPORTED` obstruction for those standard
 rows, while leaving nonstandard encodings and DRAT export as future work.
 
+## v2.4 Operator Genesis
+
+v2.4 upgrades obstruction triage into candidate-schema generation. For each
+selected family, the genesis engine records deterministic fingerprints,
+candidate operator schemas, certificate obligations, promotion records, and
+theorem-candidate queue entries.
+
+The generated candidates are not implemented. The promotion queue only says
+which schemas are eligible for prototype planning, and only when safety risks,
+test families, and certificate sketches are explicit.
+
 ## Relationship to Verifier-to-Witness Research
 
 The long-term program is to discover operators that turn verifier obstructions

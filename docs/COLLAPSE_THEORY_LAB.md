@@ -82,6 +82,21 @@ holes accept at most `m` pigeons.
 This is native semantic certification. It is not DRAT, not PB solving, and not
 a proof-complexity lower bound.
 
+## v2.4 Operator Genesis
+
+v2.4 adds an Operator Genesis Engine. Instead of naming the next operator by
+hand, the lab now extracts obstruction fingerprints from selected failed or
+non-collapsed rows and generates candidate operator schemas.
+
+Generated candidates record trigger signatures, intended transformations,
+certificate obligations, safety risks, promotion criteria, novelty scores,
+evidence scores, and risk scores. They remain `GENERATED_CANDIDATE` records
+unless a future release implements and verifies them.
+
+This layer is a theorem-discovery and operator-planning tool. It is not a solver
+extension and does not claim that generated operators are implemented,
+certified, or theorem-proven.
+
 ## Claim Boundary
 
 Allowed claim:
