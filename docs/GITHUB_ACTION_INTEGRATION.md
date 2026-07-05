@@ -153,6 +153,7 @@ replay never implies full benchmark replay.
 | `MISSING_FILE` | Required asset is absent. | Missing artifact path. | Attach or download the missing file. |
 | `REPORT_ARTIFACT_NOT_UPLOADED` | Report upload failed when requested. | Workflow upload issue. | Inspect Actions logs. |
 | `GITHUB_CLI_NOT_AVAILABLE` | Release upload helper could not find `gh`. | `gh` not installed. | Install `gh` or use dry-run output manually. |
+| `RELEASE_TAG_NOT_FOUND` | Upload mode requested but the GitHub Release tag was not found. | Release was not created or tag name is wrong. | Create the release first or check the tag name before uploading trust-card assets. |
 
 ## Fail-On Policy Examples
 
@@ -246,6 +247,8 @@ python scripts/attach_release_trust_card.py `
 Optional upload mode uses `gh release upload <tag> <files>...` if the GitHub CLI
 is available. If `gh` is unavailable, the helper reports
 `GITHUB_CLI_NOT_AVAILABLE` rather than pretending upload succeeded.
+If `gh release view <tag>` cannot find the target release, the helper reports
+`RELEASE_TAG_NOT_FOUND` and does not attempt upload.
 
 ## Limitations
 

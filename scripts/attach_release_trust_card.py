@@ -111,6 +111,22 @@ def build_upload_plan(
             upload_status = "MISSING_ASSET"
             messages.append("missing upload asset(s): " + ", ".join(missing_assets))
         else:
+            view_command = [gh_path, "release", "view", release_tag]
+            view_completed = subprocess.run(view_command, capture_output=True, text=True, check=False)
+            if view_completed.returncode != 0:
+                return {
+                    "release_tag": release_tag,
+                    "mode": mode,
+                    "generated_at": utc_timestamp(),
+                    "assets": assets,
+                    "upload_status": "RELEASE_TAG_NOT_FOUND",
+                    "risk_flags": ["RELEASE_TAG_NOT_FOUND"],
+                    "messages": messages + [
+                        "GitHub release tag was not found; no upload attempted.",
+                        f"gh_release_view_exit_code={view_completed.returncode}",
+                    ],
+                    "release_notes_snippet": _release_notes_snippet(release_tag, assets),
+                }
             command = [gh_path, "release", "upload", release_tag, *[asset["path"] for asset in assets]]
             completed = subprocess.run(command, capture_output=True, text=True, check=False)
             upload_status = "UPLOADED" if completed.returncode == 0 else "UPLOAD_FAILED"
@@ -126,6 +142,7 @@ def build_upload_plan(
         "generated_at": utc_timestamp(),
         "assets": assets,
         "upload_status": upload_status,
+        "risk_flags": [] if upload_status in {"DRY_RUN", "UPLOADED"} else [upload_status],
         "messages": messages,
         "release_notes_snippet": _release_notes_snippet(release_tag, assets),
     }
@@ -145,7 +162,7 @@ def write_upload_plan(plan: dict[str, Any], out_dir: str | Path) -> tuple[Path, 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Prepare Witnora release trust-card upload plan")
-    parser.add_argument("--tag", required=True, help="GitHub Release tag")
+    parser.add_argument("--tag", "--release-tag", dest="tag", required=True, help="GitHub Release tag")
     parser.add_argument("--trust-card", required=True, help="trust_card.md path")
     parser.add_argument("--report", required=True, help="release_verification_report.json path")
     parser.add_argument("--manifest", required=True, help="release asset manifest path")

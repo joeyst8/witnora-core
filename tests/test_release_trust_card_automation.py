@@ -1,5 +1,8 @@
 import json
+import os
 from pathlib import Path
+import stat
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -34,15 +37,19 @@ def _manifest(path: Path, source: Path, diagnostic: Path) -> None:
 
 
 class ReleaseTrustCardAutomationTest(unittest.TestCase):
+    def _basic_release_files(self, root: Path) -> tuple[Path, Path, Path]:
+        trust = root / "trust_card.md"
+        report = root / "release_verification_report.json"
+        manifest = root / "manifest.md"
+        trust.write_text("# Trust Card\n", encoding="utf-8")
+        report.write_text('{"verdict":"ARTIFACT_INTEGRITY_VERIFIED"}\n', encoding="utf-8")
+        manifest.write_text("# Manifest\n", encoding="utf-8")
+        return trust, report, manifest
+
     def test_release_trust_card_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            trust = root / "trust_card.md"
-            report = root / "release_verification_report.json"
-            manifest = root / "manifest.md"
-            trust.write_text("# Trust Card\n", encoding="utf-8")
-            report.write_text('{"verdict":"ARTIFACT_INTEGRITY_VERIFIED"}\n', encoding="utf-8")
-            manifest.write_text("# Manifest\n", encoding="utf-8")
+            trust, report, manifest = self._basic_release_files(root)
 
             plan = build_upload_plan(
                 release_tag="v1",
@@ -59,15 +66,55 @@ class ReleaseTrustCardAutomationTest(unittest.TestCase):
             self.assertIn("trust_card.md", md_path.read_text(encoding="utf-8"))
             print("RELEASE_TRUST_CARD_DRY_RUN_PASS")
 
+    def test_release_tag_alias(self):
+        from scripts.attach_release_trust_card import main as attach_main
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trust, report, manifest = self._basic_release_files(root)
+            out_tag = root / "out_tag"
+            out_alias = root / "out_alias"
+            code_tag = attach_main(
+                [
+                    "--tag",
+                    "v1",
+                    "--trust-card",
+                    str(trust),
+                    "--report",
+                    str(report),
+                    "--manifest",
+                    str(manifest),
+                    "--out-dir",
+                    str(out_tag),
+                ]
+            )
+            code_alias = attach_main(
+                [
+                    "--release-tag",
+                    "v1",
+                    "--trust-card",
+                    str(trust),
+                    "--report",
+                    str(report),
+                    "--manifest",
+                    str(manifest),
+                    "--out-dir",
+                    str(out_alias),
+                ]
+            )
+            self.assertEqual(code_tag, 0)
+            self.assertEqual(code_alias, 0)
+            tag_plan = json.loads((out_tag / "release_upload_plan.json").read_text(encoding="utf-8"))
+            alias_plan = json.loads((out_alias / "release_upload_plan.json").read_text(encoding="utf-8"))
+            self.assertEqual(tag_plan["release_tag"], alias_plan["release_tag"])
+            self.assertEqual(tag_plan["upload_status"], alias_plan["upload_status"])
+            self.assertEqual([asset["name"] for asset in tag_plan["assets"]], [asset["name"] for asset in alias_plan["assets"]])
+            print("RELEASE_TAG_ALIAS_PASS")
+
     def test_release_trust_card_no_gh_cli(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            trust = root / "trust_card.md"
-            report = root / "release_verification_report.json"
-            manifest = root / "manifest.md"
-            trust.write_text("# Trust Card\n", encoding="utf-8")
-            report.write_text('{"verdict":"ARTIFACT_INTEGRITY_VERIFIED"}\n', encoding="utf-8")
-            manifest.write_text("# Manifest\n", encoding="utf-8")
+            trust, report, manifest = self._basic_release_files(root)
 
             plan = build_upload_plan(
                 release_tag="v1",
@@ -80,6 +127,85 @@ class ReleaseTrustCardAutomationTest(unittest.TestCase):
             self.assertEqual(plan["upload_status"], "GITHUB_CLI_NOT_AVAILABLE")
             self.assertIn("gh CLI was not available", " ".join(plan["messages"]))
             print("RELEASE_TRUST_CARD_NO_GH_CLI_PASS")
+
+    def _fake_gh(self, root: Path, *, view_success: bool) -> Path:
+        if os.name == "nt":
+            script = root / "fake_gh.py"
+            log = root / "gh_calls.log"
+            script.write_text(
+                "import pathlib, sys\n"
+                f"log = pathlib.Path({str(log)!r})\n"
+                "log.write_text(log.read_text() + ' '.join(sys.argv[1:]) + '\\n' if log.exists() else ' '.join(sys.argv[1:]) + '\\n')\n"
+                "args = sys.argv[1:]\n"
+                "if args[:2] == ['release', 'view']:\n"
+                f"    raise SystemExit({0 if view_success else 1})\n"
+                "if args[:2] == ['release', 'upload']:\n"
+                "    if '--clobber' in args:\n"
+                "        raise SystemExit(9)\n"
+                "    raise SystemExit(0)\n"
+                "raise SystemExit(2)\n",
+                encoding="utf-8",
+            )
+            wrapper = root / "fake_gh.cmd"
+            wrapper.write_text(f"@echo off\n{sys.executable} \"{script}\" %*\nexit /b %ERRORLEVEL%\n", encoding="utf-8")
+            return wrapper
+        wrapper = root / "fake_gh"
+        log = root / "gh_calls.log"
+        wrapper.write_text(
+            "#! /bin/sh\n"
+            f"echo \"$@\" >> {str(log)!r}\n"
+            "if [ \"$1 $2\" = \"release view\" ]; then\n"
+            f"  exit {0 if view_success else 1}\n"
+            "fi\n"
+            "if [ \"$1 $2\" = \"release upload\" ]; then\n"
+            "  for arg in \"$@\"; do [ \"$arg\" = \"--clobber\" ] && exit 9; done\n"
+            "  exit 0\n"
+            "fi\n"
+            "exit 2\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(wrapper.stat().st_mode | stat.S_IXUSR)
+        return wrapper
+
+    def test_release_tag_not_found(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trust, report, manifest = self._basic_release_files(root)
+            fake_gh = self._fake_gh(root, view_success=False)
+            plan = build_upload_plan(
+                release_tag="missing-tag",
+                trust_card_path=trust,
+                report_path=report,
+                manifest_path=manifest,
+                mode="upload",
+                gh_cli=str(fake_gh),
+            )
+            self.assertEqual(plan["upload_status"], "RELEASE_TAG_NOT_FOUND")
+            self.assertIn("RELEASE_TAG_NOT_FOUND", plan["risk_flags"])
+            self.assertIn("no upload attempted", " ".join(plan["messages"]))
+            calls = (root / "gh_calls.log").read_text(encoding="utf-8")
+            self.assertIn("release view missing-tag", calls)
+            self.assertNotIn("release upload", calls)
+            print("RELEASE_TAG_NOT_FOUND_PASS")
+
+    def test_release_trust_upload_no_clobber_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trust, report, manifest = self._basic_release_files(root)
+            fake_gh = self._fake_gh(root, view_success=True)
+            plan = build_upload_plan(
+                release_tag="v1",
+                trust_card_path=trust,
+                report_path=report,
+                manifest_path=manifest,
+                mode="upload",
+                gh_cli=str(fake_gh),
+            )
+            self.assertEqual(plan["upload_status"], "UPLOADED")
+            calls = (root / "gh_calls.log").read_text(encoding="utf-8")
+            self.assertIn("release upload v1", calls)
+            self.assertNotIn("--clobber", calls)
+            print("RELEASE_TRUST_UPLOAD_NO_CLOBBER_DEFAULT_PASS")
 
     def test_proof_file_missing_risk_flag(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -128,6 +254,13 @@ class ReleaseTrustCardAutomationTest(unittest.TestCase):
             self.assertEqual(report["verdict"], "PARTIALLY_VERIFIED")
             self.assertNotEqual(report["verdict"], "PARTIAL_REPLAY_VERIFIED_WITH_SCOPE_LIMITS")
             print("PROOF_FILE_MISSING_RISK_FLAG_PASS")
+
+    def test_release_automation_no_solver_logic_change(self):
+        helper = Path("scripts/attach_release_trust_card.py").read_text(encoding="utf-8")
+        self.assertNotIn("from witnora_core.runner", helper)
+        self.assertNotIn("import witnora_core.runner", helper)
+        self.assertNotIn("solve_formula", helper)
+        print("RELEASE_AUTOMATION_NO_SOLVER_LOGIC_CHANGE_PASS")
 
 
 if __name__ == "__main__":

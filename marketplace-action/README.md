@@ -119,6 +119,7 @@ fail-on-risk-flags: PROOF_SELECTION_LIMITED,PROOF_SELECTION_NONE
 | `MISSING_FILE` | Required asset is absent. | Missing artifact path. | Attach or download the missing file. |
 | `REPORT_ARTIFACT_NOT_UPLOADED` | Report upload failed when requested. | Workflow upload issue. | Inspect Actions logs. |
 | `GITHUB_CLI_NOT_AVAILABLE` | Release upload helper could not find `gh`. | `gh` not installed. | Install `gh` or use dry-run output manually. |
+| `RELEASE_TAG_NOT_FOUND` | Upload mode requested but the GitHub Release tag was not found. | Release was not created or tag name is wrong. | Create the release first or check the tag name before uploading trust-card assets. |
 
 ## Troubleshooting
 
@@ -130,6 +131,8 @@ fail-on-risk-flags: PROOF_SELECTION_LIMITED,PROOF_SELECTION_NONE
   value or replay fewer proofs.
 - If `PROOF_SELECTION_NONE` appears, check `select-instance` formatting:
   `instance_id:c=value`, for example `tseitin_20:c=2`.
+- If `RELEASE_TAG_NOT_FOUND` appears, create the GitHub Release first or check
+  the release tag name before uploading trust-card assets.
 
 ## Example Trust Card
 
