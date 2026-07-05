@@ -40,3 +40,20 @@ a larger verified set, the card includes `PROOF_SELECTION_LIMITED`.
 Witnora Verify does not rerun the solver, regenerate CNFgen instances,
 regenerate DRAT proofs, rerun the full benchmark diagnostic, or prove claims
 outside selected evidence.
+
+## Release Trust-Card Dry Run
+
+```yaml
+- name: Prepare release trust-card upload plan
+  run: |
+    python scripts/attach_release_trust_card.py \
+      --tag v1.0-public-preprint-final \
+      --trust-card witnora-verify-out/trust_card.md \
+      --report witnora-verify-out/release_verification_report.json \
+      --manifest RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md \
+      --out-dir release-trust-plan
+```
+
+The dry-run helper creates `release_upload_plan.json`,
+`release_upload_plan.md`, and `release_notes_snippet.md`. It does not require a
+GitHub token and does not upload assets.

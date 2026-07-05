@@ -58,6 +58,13 @@ drat-trim replay timeouts, clearer CI log summaries, and optional report/trust
 card upload. It remains a scoped artifact verification integration, not a
 complete security audit or production proof-verification product.
 
+v1.5 prepares a dedicated Marketplace action scaffold and release trust-card
+automation. The scaffold is intended for a future public action repository with
+`action.yml` at the repository root. The release helper prepares upload plans
+and release-note snippets for trust cards and verification reports; it does not
+require a GitHub token in dry-run mode and does not create new scientific
+claims.
+
 The current depth ladder is:
 
 - `metadata_hash_checks_only`: artifact integrity and claim-boundary scanning

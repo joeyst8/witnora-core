@@ -558,6 +558,9 @@ def _with_partial_replay(
         flags = _with_flag(flags, "DRAT_TRIM_TIMEOUT")
     if any(check.get("name") == "drat_trim_replay" and check.get("checker_version") is None for check in report["drat_trim_replay"]):
         flags = _with_flag(flags, "CHECKER_VERSION_NOT_RECORDED")
+    for check in report["proof_syntax_checks"]:
+        for risk_flag in check.get("risk_flags", []):
+            flags = _with_flag(flags, str(risk_flag))
 
     syntax_and_logs_passed = bool(replay.get("passed"))
     independent_passed = bool(replay.get("independent_checker_passed"))

@@ -62,8 +62,9 @@ def _instance_number(instance_id: str) -> int:
     return int(digits[-1]) if digits else -1
 
 
-def _row_sort_key(row: dict[str, Any]) -> tuple[int, int, int, str, str]:
+def _row_sort_key(row: dict[str, Any]) -> tuple[int, int, int, int, str, str]:
     return (
+        int(row.get("proof_file_size_bytes") or row.get("proof_bytes") or 0),
         int(row.get("original_num_vars") or 0),
         int(row.get("original_num_clauses") or 0),
         _instance_number(str(row.get("instance_id", ""))),
@@ -143,6 +144,7 @@ def _validate_proof_syntax(
         original_entry = index.find(str(row.get("certificate_path") or "").rstrip("\\/") + "\\original.dimacs")
 
     messages: list[str] = []
+    risk_flags: list[str] = []
     passed = True
     proof_line_count = 0
     has_empty_clause = False
@@ -150,6 +152,7 @@ def _validate_proof_syntax(
     if not proof_entry:
         passed = False
         messages.append("proof.drat missing")
+        risk_flags.append("PROOF_FILE_MISSING")
     else:
         proof_text = _read_text_from_zip(archive, proof_entry)
         proof_lines = [line.strip() for line in proof_text.splitlines() if line.strip()]
@@ -191,6 +194,7 @@ def _validate_proof_syntax(
         "original_dimacs_path": original_entry,
         "proof_line_count": proof_line_count,
         "has_final_empty_clause": has_empty_clause,
+        "risk_flags": risk_flags,
         "message": "; ".join(messages) if messages else "proof.drat and original.dimacs syntax checks passed",
     }
 

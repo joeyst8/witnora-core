@@ -41,6 +41,11 @@ replay, timeout risk flags, clearer CI summaries, and optional report/trust-card
 artifact upload. These are workflow controls around the verifier, not broader
 scientific proof claims.
 
+v1.5 adds a dedicated Marketplace action package scaffold and dry-run release
+trust-card automation. This helps outside repositories adopt the verifier and
+attach scoped trust evidence to releases. It does not add SAT solving
+capability, new proof export, new XOR reasoning, or new benchmark claims.
+
 ## Verification Depths
 
 Witnora uses explicit depth labels:
