@@ -437,6 +437,22 @@ remains `UNSAT_XOR_NATIVE_ONLY`.
 This is still not full DRAT/RAT/LRAT/FRAT support and not broad XOR extraction.
 Parity remains deferred.
 
+### v0.9.6 Tseitin_15 Scaling Diagnostic
+
+v0.9.6 keeps the v0.9.5 proof method and asks whether it scales from official
+CNFgen `tseitin_10` to `tseitin_15`. It adds explicit proof-generation
+diagnostics: initial/peak/final XOR row width, deterministic elimination order,
+proof-generation runtime, internal RUP runtime, proof clause counts, proof byte
+size, and exact cap/skip reasons.
+
+The v0.9.6 diagnostic does not add new XOR detection, parity support, or a new
+proof system. Under the recorded profiles, `tseitin_10` remains externally
+verified, while `tseitin_15 c=2` remains `UNSAT_XOR_NATIVE_ONLY`: the
+conservative profile is stopped by row-width cap and the medium/high profiles
+are stopped by proof-size caps before a checked `proof.drat` is available.
+These native-only rows are not counted as externally verified UNSAT. The
+recommended next step is proof-size reduction, not broader XOR mining.
+
 Likely RAT-compatible or clausal-proof-compatible areas:
 
 - `BCE`, through blocked/RAT-style deletion reasoning.

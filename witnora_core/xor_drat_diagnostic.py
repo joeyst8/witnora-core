@@ -1,4 +1,4 @@
-"""Focused Tseitin XOR-to-DRAT diagnostic for Witnora-Core v0.9.5."""
+"""Focused Tseitin XOR-to-DRAT diagnostic for Witnora-Core."""
 
 from __future__ import annotations
 
@@ -23,8 +23,9 @@ from .public_benchmarks import (
     find_cnfgen_cli,
 )
 from .runner import solve_with_xor
+from .xor_drat import _detected_equations, _sparse_xor_elimination_order
 
-DIAGNOSTIC_VERSION = "0.9.5"
+DIAGNOSTIC_VERSION = "0.9.6"
 DEFAULT_INSTANCES = ["tseitin_10", "tseitin_15", "tseitin_20", "tseitin_30"]
 DEFAULT_C_VALUES = [2, 3, 4]
 DEFAULT_CAP_PROFILES = {
@@ -38,13 +39,19 @@ DEFAULT_CAP_PROFILES = {
         "max_row_width": 14,
         "max_proof_clauses": 100000,
         "max_proof_bytes": 10_000_000,
-        "timeout_seconds": 180.0,
+        "timeout_seconds": 300.0,
     },
     "high": {
-        "max_row_width": 22,
+        "max_row_width": 16,
         "max_proof_clauses": 250000,
         "max_proof_bytes": 25_000_000,
-        "timeout_seconds": 240.0,
+        "timeout_seconds": 600.0,
+    },
+    "diagnostic-high": {
+        "max_row_width": 18,
+        "max_proof_clauses": 500000,
+        "max_proof_bytes": 50_000_000,
+        "timeout_seconds": 900.0,
     },
 }
 
@@ -117,6 +124,8 @@ def run_attempt(
     original_text = dimacs_path.read_text(encoding="utf-8")
     formula = parse_dimacs(original_text)
     path = solve_with_xor(formula, c=c, detect_cnf_xor=True, detect_xor_max_k=detect_xor_max_k)
+    detected = _detected_equations(path)
+    sparse_order, sparse_order_stats = _sparse_xor_elimination_order(detected)
     cert_dir = out_root / "certs" / profile_name / f"c{c}" / f"{instance_id}.wcert"
     export_certificate_bundle(
         formula,
@@ -164,6 +173,15 @@ def run_attempt(
         "xor_drat_status": xor_drat_status.get("xor_drat_status", ""),
         "skip_reason": xor_drat_status.get("skip_reason"),
         "row_width": xor_drat_status.get("row_width"),
+        "row_width_initial": xor_drat_status.get("row_width_initial"),
+        "row_width_peak": xor_drat_status.get("row_width_peak"),
+        "row_width_final_contradiction": xor_drat_status.get("row_width_final_contradiction"),
+        "xor_elimination_order": xor_drat_status.get("xor_elimination_order", []),
+        "xor_elimination_order_strategy": xor_drat_status.get("xor_elimination_order_strategy"),
+        "sparse_order": sparse_order,
+        "sparse_row_width_peak": sparse_order_stats.get("row_width_peak"),
+        "sparse_row_width_initial": sparse_order_stats.get("row_width_initial"),
+        "sparse_row_width_final_contradiction": sparse_order_stats.get("row_width_final_contradiction"),
         "max_row_width_cap": xor_drat_status.get("max_row_width_cap"),
         "proof_clause_count_estimate": xor_drat_status.get("proof_clause_count_estimate"),
         "proof_clause_count_actual": xor_drat_status.get("proof_clause_count_actual"),
@@ -172,6 +190,8 @@ def run_attempt(
         "proof_file_size_bytes": xor_drat_status.get("proof_file_size_bytes"),
         "max_proof_bytes": xor_drat_status.get("max_proof_bytes"),
         "internal_rup_status": xor_drat_status.get("internal_rup_status"),
+        "proof_generation_runtime_seconds": xor_drat_status.get("proof_generation_runtime_seconds"),
+        "internal_rup_runtime_seconds": xor_drat_status.get("internal_rup_runtime_seconds"),
         "drat_trim_status": xor_drat_status.get("drat_trim_status"),
         "drat_trim_runtime_seconds": xor_drat_status.get("drat_trim_runtime_seconds"),
         "original_num_vars": xor_drat_status.get("original_num_vars"),
@@ -197,12 +217,19 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "xor_drat_status",
         "skip_reason",
         "row_width",
+        "row_width_initial",
+        "row_width_peak",
+        "row_width_final_contradiction",
+        "xor_elimination_order_strategy",
+        "sparse_row_width_peak",
         "max_row_width_cap",
         "proof_clause_count_actual",
         "max_proof_clause_cap",
         "proof_clause_max_width",
         "proof_file_size_bytes",
         "max_proof_bytes",
+        "proof_generation_runtime_seconds",
+        "internal_rup_runtime_seconds",
         "internal_rup_status",
         "drat_trim_status",
         "drat_trim_runtime_seconds",
@@ -229,6 +256,7 @@ def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     verified = [row for row in rows if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED]
     native = [row for row in rows if row.get("public_category") == UNSAT_XOR_NATIVE_ONLY]
     return {
+        "total_profiles_attempted": len(rows),
         "total_tseitin_rows_attempted": len(rows),
         "UNSAT_DRAT_EXPORTED_VERIFIED": len(verified),
         "UNSAT_XOR_NATIVE_ONLY": len(native),
@@ -240,6 +268,36 @@ def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "false_drat_claims": sum(1 for row in rows if row.get("false_drat_claim")),
         "best_verified_instance": verified[0]["instance_id"] if verified else "",
         "largest_verified_instance": verified[-1]["instance_id"] if verified else "",
+        "tseitin_15_verified_profiles": [
+            row["cap_profile"]
+            for row in rows
+            if row.get("instance_id") == "tseitin_15" and row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED
+        ],
+        "best_tseitin_15_public_category": next(
+            (
+                row.get("public_category")
+                for row in rows
+                if row.get("instance_id") == "tseitin_15" and row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED
+            ),
+            next((row.get("public_category") for row in rows if row.get("instance_id") == "tseitin_15"), ""),
+        ),
+        "peak_row_width_by_profile": {
+            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("row_width_peak", row.get("row_width"))
+            for row in rows
+        },
+        "proof_clause_count_by_profile": {
+            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("proof_clause_count_actual")
+            for row in rows
+        },
+        "proof_size_by_profile": {
+            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("proof_file_size_bytes")
+            for row in rows
+        },
+        "skip_reason_by_profile": {
+            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("skip_reason")
+            for row in rows
+        },
+        "recommended_next_step": _recommended_next_step(rows),
         "proof_size_by_instance": {
             f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("proof_file_size_bytes")
             for row in rows
@@ -253,9 +311,21 @@ def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _recommended_next_step(rows: list[dict[str, Any]]) -> str:
+    if any(row.get("instance_id") == "tseitin_15" and row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED for row in rows):
+        return "attempt tseitin_20 with the verified cap profile"
+    if any(row.get("xor_drat_status") == "SKIPPED_PROOF_SIZE_CAP" for row in rows):
+        return "reduce proof generation before raising proof-size caps"
+    if any(row.get("xor_drat_status") == "SKIPPED_TIME_CAP" for row in rows):
+        return "optimize proof generation before increasing time caps"
+    if any(row.get("xor_drat_status") == "SKIPPED_ROW_WIDTH_CAP" for row in rows):
+        return "run controlled row-width cap sensitivity"
+    return "no next step inferred"
+
+
 def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> str:
     lines = [
-        "# Witnora-Core v0.9.5 Tseitin XOR-DRAT Diagnostic",
+        "# Witnora-Core v0.9.6 Tseitin_15 XOR-DRAT Scaling Diagnostic",
         "",
         "This is a proof-engineering diagnostic, not a competitive SAT benchmark.",
         "Every verified row must have real drat-trim verification against original.dimacs.",
@@ -272,16 +342,25 @@ def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> 
             "",
             "## Per-Instance Attempts",
             "",
-            "| profile | c | instance | public_category | xor_drat_status | row_width | proof_clauses | proof_bytes | drat_trim_s | skip_reason |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| profile | c | instance | public_category | xor_drat_status | row_width | sparse_width | proof_clauses | proof_bytes | drat_trim_s | skip_reason |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for row in rows:
         lines.append(
             "| {cap_profile} | {c} | {instance_id} | {public_category} | {xor_drat_status} | "
-            "{row_width} | {proof_clause_count_actual} | {proof_file_size_bytes} | "
+            "{row_width} | {sparse_row_width_peak} | {proof_clause_count_actual} | {proof_file_size_bytes} | "
             "{drat_trim_runtime_seconds} | {skip_reason} |".format(**row)
         )
+    lines.extend(
+        [
+            "",
+            "## Elimination Order Comparison",
+            "",
+            "The certified exporter keeps the Gaussian pivot order unless a proof is externally verified. Sparse/min-fill order is reported as a diagnostic only.",
+            "",
+        ]
+    )
     lines.extend(
         [
             "",
@@ -366,11 +445,9 @@ def run_diagnostic(
     for name, payload in files.items():
         (out_root / name).write_text(stable_json(payload), encoding="utf-8", newline="\n")
     write_csv(out_root / "per_instance_summary.csv", rows)
-    (out_root / "TSEITIN_XOR_DRAT_DIAGNOSTIC_REPORT.md").write_text(
-        report_markdown(rows, run_summary),
-        encoding="utf-8",
-        newline="\n",
-    )
+    report_text = report_markdown(rows, run_summary)
+    (out_root / "TSEITIN_XOR_DRAT_DIAGNOSTIC_REPORT.md").write_text(report_text, encoding="utf-8", newline="\n")
+    (out_root / "TSEITIN15_XOR_DRAT_SCALING_REPORT.md").write_text(report_text, encoding="utf-8", newline="\n")
     return {"manifest": manifest, "summary": run_summary, "rows": rows}
 
 

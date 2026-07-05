@@ -156,3 +156,17 @@ The v0.9.5 proof bridge may turn a row such as `tseitin_10` from
 native-only if they exceed explicit row-width, proof-size, proof-byte, or time
 caps. Such a cap result is not a hardness claim and not a claim that no DRAT
 proof exists.
+
+## v0.9.6 Tseitin_15 Scaling Boundary
+
+v0.9.6 is a diagnostic scaling test for the v0.9.5 proof bridge. It does not
+change the exact XOR detection theorem and does not add parity or broad affine
+extraction. It measures whether the detected-CNF XOR contradiction in official
+CNFgen `tseitin_15` can be exported as a bounded DRAT/RUP proof against
+`original.dimacs`.
+
+The recorded v0.9.6 profiles keep `tseitin_15 c=2` native-only. Conservative
+caps stop on row width, while medium and high caps stop on proof-size before a
+complete proof is internally checked or externally verified. Therefore the only
+externally certified Tseitin scaling claim remains `tseitin_10`; `tseitin_15`
+is a documented proof-size blocker, not a hardness result.

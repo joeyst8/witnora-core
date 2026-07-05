@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.9.5"
+CHECKER = "independent_raw_checker_v0.9.6"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
 DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.3"
 DRAT_CHECKED_AGAINST = "original.dimacs"
