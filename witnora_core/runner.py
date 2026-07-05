@@ -634,6 +634,12 @@ def main(argv: list[str] | None = None) -> int:
         help="maximum seconds for XOR-to-DRAT proof construction",
     )
     parser.add_argument(
+        "--xor-elim-order",
+        choices=["gaussian", "sparse-min-fill"],
+        default="gaussian",
+        help="XOR elimination order used for XOR-to-DRAT export",
+    )
+    parser.add_argument(
         "--drat-trim",
         help="optional drat-trim executable path for external proof.drat verification",
     )
@@ -664,6 +670,7 @@ def main(argv: list[str] | None = None) -> int:
             xor_drat_max_proof_clauses=args.xor_drat_max_proof_clauses,
             xor_drat_max_proof_bytes=args.xor_drat_max_proof_bytes,
             xor_drat_timeout_seconds=args.xor_drat_timeout_seconds,
+            xor_elim_order=args.xor_elim_order,
         )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0

@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-CHECKER = "independent_raw_checker_v0.9.6"
+CHECKER = "independent_raw_checker_v0.9.7"
 TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
 DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.3"
 DRAT_CHECKED_AGAINST = "original.dimacs"
@@ -1366,6 +1366,60 @@ def _verify_xor_detected_equations_raw(
     return True, None
 
 
+def _replay_xor_elimination_trace_raw(xor_data: dict[str, Any]) -> tuple[bool, str | None, bool]:
+    status = xor_data.get("xor_drat_status", {})
+    trace = status.get("row_operation_trace", [])
+    source = status.get("elimination_order_source")
+    if not trace:
+        if source == "SPARSE_MIN_FILL":
+            return False, "sparse/min-fill elimination source missing row_operation_trace", False
+        return True, None, False
+    rows: dict[str, tuple[frozenset[int], int]] = {}
+    detected = [
+        equation
+        for equation in xor_data.get("xor_system", {}).get("equations", [])
+        if equation.get("source") == "detected_cnf_pattern"
+    ]
+    for idx, equation in enumerate(detected):
+        variables, rhs = _canonical_xor_equation_raw(equation)
+        rows[f"input_{idx:04d}"] = (frozenset(variables), rhs)
+    peak = max((len(value[0]) for value in rows.values()), default=0)
+    contradiction = False
+    for expected_step, operation in enumerate(trace):
+        if int(operation.get("step", expected_step)) != expected_step:
+            return False, "XOR row operation step mismatch", True
+        left_id = str(operation.get("left_row_id") or operation.get("pivot_row_id"))
+        right_id = str(operation.get("right_row_id") or operation.get("combined_row_ids", ["", ""])[-1])
+        if left_id not in rows or right_id not in rows:
+            return False, "XOR row operation parent missing", True
+        result_vars = rows[left_id][0] ^ rows[right_id][0]
+        result_rhs = rows[left_id][1] ^ rows[right_id][1]
+        recorded_vars = frozenset(int(var) for var in operation.get("result_row_variables", []))
+        recorded_rhs = int(operation.get("result_rhs", 0)) & 1
+        if (result_vars, result_rhs) != (recorded_vars, recorded_rhs):
+            return False, "XOR row operation result mismatch", True
+        if int(operation.get("result_row_width", len(recorded_vars))) != len(recorded_vars):
+            return False, "XOR row operation width mismatch", True
+        peak = max(peak, len(recorded_vars))
+        result_id = operation.get("result_row_id")
+        if result_id is None:
+            if recorded_vars or recorded_rhs:
+                return False, "non-tautological XOR row operation missing result id", True
+            continue
+        rows[str(result_id)] = (recorded_vars, recorded_rhs)
+        if not recorded_vars and recorded_rhs == 1:
+            contradiction = True
+    if not contradiction:
+        return False, "XOR row operation trace did not reach contradiction", True
+    recorded_peak = status.get("peak_row_width", status.get("row_width_peak"))
+    if recorded_peak is not None and peak > int(recorded_peak):
+        return False, "XOR row operation peak width exceeds recorded value", True
+    final_width = status.get("final_contradiction_row_width", status.get("row_width_final_contradiction"))
+    if final_width is not None and int(final_width) != 0:
+        return False, "XOR final contradiction row width mismatch", True
+    return True, None, True
+
+
 def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
     payload = {
         "original_formula_hash": result_data["original_formula_hash"],
@@ -1429,6 +1483,8 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         "two_sat_steps": False,
         "proof_trace": False,
         "sat_assignment": False,
+        "xor_elimination_trace_replayed": False,
+        "xor_minfill_trace_replayed": False,
     }
     if str(manifest.get("status", "")) in FORBIDDEN_STATUSES:
         return _fail("forbidden status present", "forbidden_status")
@@ -1566,6 +1622,14 @@ def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
         xor_ok, xor_error = _verify_xor_detected_equations_raw(result_data["xor_data"], original)
         if not xor_ok:
             return _fail(xor_error or "detected XOR certificate metadata mismatch", "xor_certificate")
+        trace_ok, trace_error, trace_present = _replay_xor_elimination_trace_raw(result_data["xor_data"])
+        if not trace_ok:
+            return _fail(trace_error or "XOR elimination trace replay failed", "xor_certificate")
+        checks["xor_elimination_trace_replayed"] = trace_present
+        checks["xor_minfill_trace_replayed"] = (
+            trace_present
+            and result_data["xor_data"].get("xor_drat_status", {}).get("elimination_order_source") == "SPARSE_MIN_FILL"
+        )
     elif result_data.get("status") == "UNSAT_XOR_NATIVE":
         return _fail("XOR-native UNSAT missing xor_data", "xor_certificate")
     recomputed_hash = compute_certificate_hash_raw(result_data)

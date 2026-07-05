@@ -170,3 +170,28 @@ caps stop on row width, while medium and high caps stop on proof-size before a
 complete proof is internally checked or externally verified. Therefore the only
 externally certified Tseitin scaling claim remains `tseitin_10`; `tseitin_15`
 is a documented proof-size blocker, not a hardness result.
+
+## v0.9.7 Deterministic XOR Elimination Trace Soundness
+
+v0.9.7 does not add new XOR detection, parity support, or broad affine
+extraction. It changes the proof-engineering path for detected-CNF XOR
+contradictions by making the sparse/min-fill XOR elimination order
+deterministic, certificate-recorded, and independently replayable.
+
+The native XOR trace records the elimination order source, tie-break rules,
+pivot variables, parent row identifiers, derived row variables, derived row RHS,
+and peak row width. The independent checker replays each row operation over
+GF(2) from the recorded source equations and accepts the native XOR
+contradiction only if the final row is `0 = 1`.
+
+This native replay establishes inconsistency of the recorded XOR system. It is
+not by itself a standard SAT proof for the original CNF. Original-CNF UNSAT is
+reported as `UNSAT_DRAT_EXPORTED_VERIFIED` only when the corresponding
+`proof.drat` is verified by real `drat-trim` against `original.dimacs`.
+
+For official CNFgen `tseitin_15 c=2`, v0.9.7 may support the specific claim that
+the sparse/min-fill proof path exported a DRAT/RUP proof verified against
+`original.dimacs`, if the artifact records `public_category:
+UNSAT_DRAT_EXPORTED_VERIFIED`. It does not support claims about parity, broad
+XOR mining, general Tseitin scalability, SAT-solver competitiveness, or
+hardness of no-collapse cases.

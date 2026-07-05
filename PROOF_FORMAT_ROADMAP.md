@@ -453,6 +453,26 @@ are stopped by proof-size caps before a checked `proof.drat` is available.
 These native-only rows are not counted as externally verified UNSAT. The
 recommended next step is proof-size reduction, not broader XOR mining.
 
+### v0.9.7 Certified Sparse/Min-Fill XOR Elimination Order
+
+v0.9.7 promotes the sparse/min-fill XOR elimination order from a diagnostic
+hint into a deterministic certificate trace. The trace records the order source,
+tie-break rules, elimination variables, row-operation parents, derived rows,
+peak row width, proof size, and proof-checking runtimes. The independent raw
+checker replays this native GF(2) row-operation trace and verifies that it
+reaches `0 = 1`.
+
+The clausal proof claim remains separate. A native XOR contradiction is not a
+DRAT proof. Witnora reports `UNSAT_DRAT_EXPORTED_VERIFIED` only when the
+row-trace-guided `proof.drat` is checked internally and real `drat-trim`
+accepts it against `original.dimacs`. Otherwise the result remains
+`UNSAT_XOR_NATIVE_ONLY`.
+
+This is still not full DRAT/RAT/LRAT/FRAT support, not parity support, and not
+CryptoMiniSat-style XOR extraction. It supports a narrower claim: selected
+official CNFgen Tseitin detected-CNF XOR contradictions can be certified when
+the artifact records an original-CNF DRAT proof accepted by real `drat-trim`.
+
 Likely RAT-compatible or clausal-proof-compatible areas:
 
 - `BCE`, through blocked/RAT-style deletion reasoning.

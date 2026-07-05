@@ -16,6 +16,7 @@ import zipfile
 
 from .cnfgen_matrix import cnfgen_version
 from .dimacs import parse_dimacs
+from .independent_check import verify_wcert_raw
 from .proof import export_certificate_bundle
 from .public_benchmarks import (
     UNSAT_DRAT_EXPORTED_VERIFIED,
@@ -23,9 +24,9 @@ from .public_benchmarks import (
     find_cnfgen_cli,
 )
 from .runner import solve_with_xor
-from .xor_drat import _detected_equations, _sparse_xor_elimination_order
+from .xor_drat import XOR_ELIM_GAUSSIAN, XOR_ELIM_SPARSE_MIN_FILL, _detected_equations, _sparse_xor_elimination_order
 
-DIAGNOSTIC_VERSION = "0.9.6"
+DIAGNOSTIC_VERSION = "0.9.7"
 DEFAULT_INSTANCES = ["tseitin_10", "tseitin_15", "tseitin_20", "tseitin_30"]
 DEFAULT_C_VALUES = [2, 3, 4]
 DEFAULT_CAP_PROFILES = {
@@ -117,6 +118,7 @@ def run_attempt(
     profile_name: str,
     profile: dict[str, Any],
     detect_xor_max_k: int,
+    xor_elim_order: str = XOR_ELIM_GAUSSIAN,
 ) -> dict[str, Any]:
     started = time.perf_counter()
     dimacs_path = out_root / "generated_dimacs" / f"{instance_id}.cnf"
@@ -126,7 +128,7 @@ def run_attempt(
     path = solve_with_xor(formula, c=c, detect_cnf_xor=True, detect_xor_max_k=detect_xor_max_k)
     detected = _detected_equations(path)
     sparse_order, sparse_order_stats = _sparse_xor_elimination_order(detected)
-    cert_dir = out_root / "certs" / profile_name / f"c{c}" / f"{instance_id}.wcert"
+    cert_dir = out_root / "certs" / profile_name / xor_elim_order / f"c{c}" / f"{instance_id}.wcert"
     export_certificate_bundle(
         formula,
         path,
@@ -139,6 +141,7 @@ def run_attempt(
         xor_drat_max_proof_clauses=int(profile["max_proof_clauses"]),
         xor_drat_max_proof_bytes=int(profile["max_proof_bytes"]),
         xor_drat_timeout_seconds=float(profile["timeout_seconds"]),
+        xor_elim_order=xor_elim_order,
     )
     result = load_json(cert_dir / "result.json")
     drat_status = load_json(cert_dir / "drat_status.json")
@@ -146,7 +149,7 @@ def run_attempt(
     proof = cert_dir / "proof.drat"
     log_dir = out_root / "drat_logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_path = log_dir / f"{profile_name}_c{c}_{instance_id}.log"
+    log_path = log_dir / f"{profile_name}_{xor_elim_order}_c{c}_{instance_id}.log"
     log_path.write_text(
         str(drat_status.get("external_checker_stdout_excerpt", ""))
         + "\n"
@@ -154,17 +157,25 @@ def run_attempt(
         encoding="utf-8",
         newline="\n",
     )
+    independent_dir = out_root / "independent_checks"
+    independent_dir.mkdir(parents=True, exist_ok=True)
+    independent_path = independent_dir / f"{profile_name}_{xor_elim_order}_c{c}_{instance_id}.json"
+    independent_result = verify_wcert_raw(cert_dir)
+    independent_path.write_text(stable_json(independent_result), encoding="utf-8", newline="\n")
     public_category = str(result.get("public_category", ""))
     return {
         "instance_id": instance_id,
         "family": "tseitin",
         "c": c,
         "cap_profile": profile_name,
+        "xor_elim_order": xor_elim_order,
         "generation_command": generation_command,
         "dimacs_path": str(dimacs_path),
         "certificate_path": str(cert_dir),
         "proof_drat_path": str(proof) if proof.exists() else "",
         "drat_trim_log_path": str(log_path),
+        "independent_checker_path": str(independent_path),
+        "independent_checker_verified": bool(independent_result.get("verified", False)),
         "status": result.get("logical_status", result.get("status", "")),
         "internal_status": result.get("status", ""),
         "discovery_route": result.get("discovery_route", ""),
@@ -178,6 +189,10 @@ def run_attempt(
         "row_width_final_contradiction": xor_drat_status.get("row_width_final_contradiction"),
         "xor_elimination_order": xor_drat_status.get("xor_elimination_order", []),
         "xor_elimination_order_strategy": xor_drat_status.get("xor_elimination_order_strategy"),
+        "elimination_order_source": xor_drat_status.get("elimination_order_source"),
+        "elimination_order_variables": xor_drat_status.get("elimination_order_variables", []),
+        "row_operation_trace_length": len(xor_drat_status.get("row_operation_trace", [])),
+        "peak_row_width": xor_drat_status.get("peak_row_width"),
         "sparse_order": sparse_order,
         "sparse_row_width_peak": sparse_order_stats.get("row_width_peak"),
         "sparse_row_width_initial": sparse_order_stats.get("row_width_initial"),
@@ -213,6 +228,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "family",
         "c",
         "cap_profile",
+        "xor_elim_order",
         "public_category",
         "xor_drat_status",
         "skip_reason",
@@ -221,6 +237,8 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "row_width_peak",
         "row_width_final_contradiction",
         "xor_elimination_order_strategy",
+        "elimination_order_source",
+        "row_operation_trace_length",
         "sparse_row_width_peak",
         "max_row_width_cap",
         "proof_clause_count_actual",
@@ -242,6 +260,8 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "certificate_path",
         "proof_drat_path",
         "drat_trim_log_path",
+        "independent_checker_path",
+        "independent_checker_verified",
         "elapsed_seconds",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -255,6 +275,18 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
 def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     verified = [row for row in rows if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED]
     native = [row for row in rows if row.get("public_category") == UNSAT_XOR_NATIVE_ONLY]
+    gaussian_t15 = [
+        row for row in rows
+        if row.get("instance_id") == "tseitin_15" and row.get("xor_elim_order") == XOR_ELIM_GAUSSIAN
+    ]
+    minfill_t15 = [
+        row for row in rows
+        if row.get("instance_id") == "tseitin_15" and row.get("xor_elim_order") == XOR_ELIM_SPARSE_MIN_FILL
+    ]
+    minfill_verified = [
+        row for row in minfill_t15
+        if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED
+    ]
     return {
         "total_profiles_attempted": len(rows),
         "total_tseitin_rows_attempted": len(rows),
@@ -268,8 +300,19 @@ def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "false_drat_claims": sum(1 for row in rows if row.get("false_drat_claim")),
         "best_verified_instance": verified[0]["instance_id"] if verified else "",
         "largest_verified_instance": verified[-1]["instance_id"] if verified else "",
+        "gaussian_peak_width_tseitin15": gaussian_t15[0].get("row_width_peak") if gaussian_t15 else None,
+        "minfill_peak_width_tseitin15": minfill_t15[0].get("row_width_peak") if minfill_t15 else None,
+        "gaussian_proof_clause_count_or_cap": gaussian_t15[0].get("proof_clause_count_actual") if gaussian_t15 else None,
+        "minfill_proof_clause_count": minfill_verified[0].get("proof_clause_count_actual") if minfill_verified else None,
+        "minfill_proof_bytes": minfill_verified[0].get("proof_file_size_bytes") if minfill_verified else None,
+        "minfill_drat_trim_runtime": minfill_verified[0].get("drat_trim_runtime_seconds") if minfill_verified else None,
+        "tseitin_15_public_category": (
+            minfill_verified[0].get("public_category")
+            if minfill_verified
+            else (minfill_t15[0].get("public_category") if minfill_t15 else "")
+        ),
         "tseitin_15_verified_profiles": [
-            row["cap_profile"]
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}"
             for row in rows
             if row.get("instance_id") == "tseitin_15" and row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED
         ],
@@ -282,29 +325,29 @@ def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
             next((row.get("public_category") for row in rows if row.get("instance_id") == "tseitin_15"), ""),
         ),
         "peak_row_width_by_profile": {
-            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("row_width_peak", row.get("row_width"))
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}:c{row['c']}:{row['instance_id']}": row.get("row_width_peak", row.get("row_width"))
             for row in rows
         },
         "proof_clause_count_by_profile": {
-            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("proof_clause_count_actual")
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}:c{row['c']}:{row['instance_id']}": row.get("proof_clause_count_actual")
             for row in rows
         },
         "proof_size_by_profile": {
-            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("proof_file_size_bytes")
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}:c{row['c']}:{row['instance_id']}": row.get("proof_file_size_bytes")
             for row in rows
         },
         "skip_reason_by_profile": {
-            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("skip_reason")
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}:c{row['c']}:{row['instance_id']}": row.get("skip_reason")
             for row in rows
         },
         "recommended_next_step": _recommended_next_step(rows),
         "proof_size_by_instance": {
-            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("proof_file_size_bytes")
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}:c{row['c']}:{row['instance_id']}": row.get("proof_file_size_bytes")
             for row in rows
             if row.get("proof_file_size_bytes")
         },
         "drat_trim_runtime_by_instance": {
-            f"{row['cap_profile']}:c{row['c']}:{row['instance_id']}": row.get("drat_trim_runtime_seconds")
+            f"{row['cap_profile']}:{row.get('xor_elim_order', '')}:c{row['c']}:{row['instance_id']}": row.get("drat_trim_runtime_seconds")
             for row in rows
             if row.get("drat_trim_runtime_seconds") is not None
         },
@@ -325,7 +368,7 @@ def _recommended_next_step(rows: list[dict[str, Any]]) -> str:
 
 def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> str:
     lines = [
-        "# Witnora-Core v0.9.6 Tseitin_15 XOR-DRAT Scaling Diagnostic",
+        "# Witnora-Core v0.9.7 Min-Fill XOR-DRAT Diagnostic",
         "",
         "This is a proof-engineering diagnostic, not a competitive SAT benchmark.",
         "Every verified row must have real drat-trim verification against original.dimacs.",
@@ -342,13 +385,13 @@ def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> 
             "",
             "## Per-Instance Attempts",
             "",
-            "| profile | c | instance | public_category | xor_drat_status | row_width | sparse_width | proof_clauses | proof_bytes | drat_trim_s | skip_reason |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| profile | order | c | instance | public_category | xor_drat_status | row_width | sparse_width | proof_clauses | proof_bytes | drat_trim_s | skip_reason |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
     )
     for row in rows:
         lines.append(
-            "| {cap_profile} | {c} | {instance_id} | {public_category} | {xor_drat_status} | "
+            "| {cap_profile} | {xor_elim_order} | {c} | {instance_id} | {public_category} | {xor_drat_status} | "
             "{row_width} | {sparse_row_width_peak} | {proof_clause_count_actual} | {proof_file_size_bytes} | "
             "{drat_trim_runtime_seconds} | {skip_reason} |".format(**row)
         )
@@ -357,7 +400,7 @@ def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> 
             "",
             "## Elimination Order Comparison",
             "",
-            "The certified exporter keeps the Gaussian pivot order unless a proof is externally verified. Sparse/min-fill order is reported as a diagnostic only.",
+            "Sparse/min-fill is deterministic, certificate-recorded, independently replayed, and counted only when proof.drat verifies with real drat-trim.",
             "",
         ]
     )
@@ -394,6 +437,7 @@ def run_diagnostic(
     c_values: list[int],
     detect_xor_max_k: int,
     profiles: list[str],
+    elim_orders: list[str],
 ) -> dict[str, Any]:
     cnfgen = find_cnfgen_cli(cnfgen_path)
     if cnfgen is None:
@@ -402,20 +446,22 @@ def run_diagnostic(
     rows: list[dict[str, Any]] = []
     for profile_name in profiles:
         profile = DEFAULT_CAP_PROFILES[profile_name]
-        for c in c_values:
-            for instance in instances:
-                rows.append(
-                    run_attempt(
-                        cnfgen=cnfgen,
-                        drat_trim_path=drat_trim_path,
-                        out_root=out_root,
-                        instance_id=instance,
-                        c=c,
-                        profile_name=profile_name,
-                        profile=profile,
-                        detect_xor_max_k=detect_xor_max_k,
+        for elim_order in elim_orders:
+            for c in c_values:
+                for instance in instances:
+                    rows.append(
+                        run_attempt(
+                            cnfgen=cnfgen,
+                            drat_trim_path=drat_trim_path,
+                            out_root=out_root,
+                            instance_id=instance,
+                            c=c,
+                            profile_name=profile_name,
+                            profile=profile,
+                            detect_xor_max_k=detect_xor_max_k,
+                            xor_elim_order=elim_order,
+                        )
                     )
-                )
     run_summary = summary(rows)
     git = git_metadata()
     manifest = {
@@ -429,6 +475,7 @@ def run_diagnostic(
         "instances": instances,
         "c_values": c_values,
         "detect_xor_max_k": detect_xor_max_k,
+        "elim_orders": elim_orders,
         "cap_profiles": {name: DEFAULT_CAP_PROFILES[name] for name in profiles},
     }
     files = {
@@ -461,8 +508,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--drat-trim", required=True)
     parser.add_argument("--cnfgen-path")
     parser.add_argument("--profiles", nargs="+", choices=sorted(DEFAULT_CAP_PROFILES), default=["conservative"])
-    parser.add_argument("--out-root", default="outputs/v0.9.5-tseitin-xor-drat-diagnostic")
-    parser.add_argument("--zip", default="witnora-core-v0.9.5-tseitin-xor-drat-diagnostic.zip")
+    parser.add_argument(
+        "--elim-orders",
+        nargs="+",
+        choices=[XOR_ELIM_GAUSSIAN, XOR_ELIM_SPARSE_MIN_FILL],
+        default=[XOR_ELIM_GAUSSIAN],
+    )
+    parser.add_argument("--out-root", default="outputs/v0.9.7-minfill-xor-drat")
+    parser.add_argument("--zip", default="witnora-core-v0.9.7-minfill-xor-drat.zip")
     args = parser.parse_args(argv)
     if not args.xor_drat:
         raise SystemExit("--xor-drat is required for this diagnostic")
@@ -477,6 +530,7 @@ def main(argv: list[str] | None = None) -> int:
         c_values=args.c_values,
         detect_xor_max_k=args.detect_xor_max_k,
         profiles=args.profiles,
+        elim_orders=args.elim_orders,
     )
     digest = make_zip(root, Path(args.zip))
     print(stable_json({"out_root": str(root), "zip": args.zip, "zip_sha256": digest, "summary": result["summary"]}))

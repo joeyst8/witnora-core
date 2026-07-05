@@ -14,7 +14,7 @@ from .dimacs import export_dimacs
 from .drat import DRATExport, PROOF_SCOPE_END_TO_END, PROOF_SCOPE_FINAL_STATE_ONLY_UNSUPPORTED
 from .drat_check import CHECKED_AGAINST, check_drat_text, is_rup
 from .drat_trim import run_drat_trim
-from .xor import XorEquation, XorSystem, solve_xor_system_gaussian
+from .xor import XorEquation, XorSystem, canonical_xor_cnf_clauses, solve_xor_system_gaussian
 
 XOR_DRAT_VERIFIED = "VERIFIED"
 XOR_DRAT_FAILED = "FAILED"
@@ -29,6 +29,20 @@ XOR_DRAT_DRAT_TRIM_FAILED = "DRAT_TRIM_FAILED"
 XOR_DRAT_DRAT_TRIM_NOT_AVAILABLE = "DRAT_TRIM_NOT_AVAILABLE"
 XOR_DRAT_UNSUPPORTED_XOR_STRUCTURE = "UNSUPPORTED_XOR_STRUCTURE"
 INTERNAL_RUP_CHECK_PROOF_CLAUSE_CAP = 20000
+XOR_ELIM_GAUSSIAN = "gaussian"
+XOR_ELIM_SPARSE_MIN_FILL = "sparse-min-fill"
+ELIM_SOURCE_GAUSSIAN = "GAUSSIAN_PIVOT"
+ELIM_SOURCE_SPARSE_MIN_FILL = "SPARSE_MIN_FILL"
+SPARSE_MIN_FILL_TIE_BREAK_RULES = [
+    "prefer an immediate contradiction row",
+    "minimize candidate peak row width",
+    "minimize generated row count",
+    "minimize total active row width",
+    "minimize rows containing pivot variable",
+    "pivot variable id ascending",
+    "pivot row width ascending",
+    "pivot row signature ascending",
+]
 
 
 @dataclass(frozen=True)
@@ -176,83 +190,153 @@ def _xor_row_key(row: tuple[frozenset[int], int]) -> tuple[tuple[int, ...], int]
     return (tuple(sorted(row[0])), row[1])
 
 
-def _sparse_xor_elimination_order(equations: Iterable[XorEquation]) -> tuple[list[int], dict[str, Any]]:
-    """Return a deterministic sparse variable order for the XOR contradiction core.
+def _row_id_sort_key(row_id: str, rows: dict[str, tuple[frozenset[int], int]]) -> tuple[int, tuple[int, ...], int, str]:
+    vars_, rhs = rows[row_id]
+    return (len(vars_), tuple(sorted(vars_)), rhs, row_id)
 
-    This is diagnostic/proof-order selection only.  The emitted proof remains
-    clause-level and must still pass the internal RUP checker and drat-trim.
+
+def _sparse_xor_elimination_schedule(equations: Iterable[XorEquation]) -> dict[str, Any]:
+    """Build a deterministic sparse/min-fill row-operation schedule.
+
+    The schedule is a native GF(2) certificate.  It does not certify the
+    clausal proof by itself; proof.drat is still accepted only after RUP and
+    drat-trim checks.
     """
 
-    rows = _xor_rows_from_equations(equations)
+    active: dict[str, tuple[frozenset[int], int]] = {
+        f"input_{idx:04d}": (frozenset(eq.variables), int(eq.rhs) & 1)
+        for idx, eq in enumerate(equations)
+        if eq.variables or eq.rhs
+    }
     order: list[int] = []
-    initial_width = max((len(vars_) for vars_, _rhs in rows), default=0)
+    operations: list[dict[str, Any]] = []
+    initial_width = max((len(vars_) for vars_, _rhs in active.values()), default=0)
     peak_width = initial_width
-    final_width = 0
-    contradiction_seen = any(not vars_ and rhs == 1 for vars_, rhs in rows)
+    final_width: int | None = 0 if any(not vars_ and rhs == 1 for vars_, rhs in active.values()) else None
+    contradiction_seen = final_width == 0
+    next_row_index = 0
 
-    while rows and not contradiction_seen:
-        variables = sorted({var for vars_, _rhs in rows for var in vars_})
+    while active and not contradiction_seen:
+        variables = sorted({var for vars_, _rhs in active.values() for var in vars_})
         if not variables:
             break
-        best: tuple[Any, int, int, list[tuple[frozenset[int], int]], int] | None = None
+        best: tuple[Any, int, str, dict[str, tuple[frozenset[int], int]], list[dict[str, Any]], int] | None = None
         for variable in variables:
-            containing = [row for row in rows if variable in row[0]]
-            if not containing:
+            containing_ids = [row_id for row_id, row in active.items() if variable in row[0]]
+            if not containing_ids:
                 continue
-            not_containing = [row for row in rows if variable not in row[0]]
-            pivot_options = sorted(containing, key=lambda row: (len(row[0]), _xor_row_key(row)))
-            for pivot_index, pivot in enumerate(pivot_options):
-                generated: list[tuple[frozenset[int], int]] = []
-                seen = { _xor_row_key(row) for row in not_containing }
-                local_peak = max((len(row[0]) for row in not_containing), default=0)
+            not_containing = {
+                row_id: row
+                for row_id, row in active.items()
+                if variable not in row[0]
+            }
+            pivot_options = sorted(containing_ids, key=lambda row_id: _row_id_sort_key(row_id, active))
+            for pivot_id in pivot_options:
+                pivot = active[pivot_id]
+                candidate_rows = dict(not_containing)
+                seen = {_xor_row_key(row) for row in candidate_rows.values()}
+                generated_ops: list[dict[str, Any]] = []
+                local_peak = max((len(row[0]) for row in candidate_rows.values()), default=0)
                 local_contradiction = False
-                for other in containing:
-                    if other == pivot:
-                        continue
+                local_next_index = next_row_index
+                other_ids = sorted(
+                    (row_id for row_id in containing_ids if row_id != pivot_id),
+                    key=lambda row_id: _row_id_sort_key(row_id, active),
+                )
+                for other_id in other_ids:
+                    other = active[other_id]
                     new_vars = pivot[0] ^ other[0]
                     new_rhs = pivot[1] ^ other[1]
                     local_peak = max(local_peak, len(new_vars))
+                    result_id: str | None = None
                     if not new_vars and new_rhs == 1:
                         local_contradiction = True
-                    if not new_vars and new_rhs == 0:
-                        continue
-                    new_row = (frozenset(new_vars), new_rhs)
-                    key = _xor_row_key(new_row)
-                    if key not in seen:
-                        seen.add(key)
-                        generated.append(new_row)
-                candidate_rows = not_containing + generated
+                        result_id = f"row_{local_next_index:04d}"
+                        local_next_index += 1
+                        candidate_rows[result_id] = (frozenset(), 1)
+                    elif new_vars or new_rhs:
+                        new_row = (frozenset(new_vars), new_rhs)
+                        key = _xor_row_key(new_row)
+                        if key not in seen:
+                            seen.add(key)
+                            result_id = f"row_{local_next_index:04d}"
+                            local_next_index += 1
+                            candidate_rows[result_id] = new_row
+                        else:
+                            result_id = next(
+                                row_id
+                                for row_id, row in sorted(candidate_rows.items())
+                                if _xor_row_key(row) == key
+                            )
+                    generated_ops.append(
+                        {
+                            "step": len(operations) + len(generated_ops),
+                            "pivot_variable": variable,
+                            "pivot_row_id": pivot_id,
+                            "combined_row_ids": [pivot_id, other_id],
+                            "left_row_id": pivot_id,
+                            "right_row_id": other_id,
+                            "result_row_id": result_id,
+                            "result_row_variables": sorted(new_vars),
+                            "result_rhs": int(new_rhs) & 1,
+                            "result_row_width": len(new_vars),
+                        }
+                    )
+                    if local_contradiction:
+                        break
                 score = (
                     0 if local_contradiction else 1,
                     local_peak,
-                    len(generated),
-                    sum(len(row[0]) for row in candidate_rows),
-                    len(containing),
+                    sum(1 for op in generated_ops if op.get("result_row_id")),
+                    sum(len(row[0]) for row in candidate_rows.values()),
+                    len(containing_ids),
                     variable,
-                    pivot_index,
+                    _row_id_sort_key(pivot_id, active),
                 )
                 if best is None or score < best[0]:
-                    best = (score, variable, pivot_index, candidate_rows, local_peak)
+                    best = (score, variable, pivot_id, candidate_rows, generated_ops, local_peak)
         if best is None:
             break
-        _score, variable, _pivot_index, rows, local_peak = best
+        _score, variable, _pivot_id, candidate_rows, generated_ops, local_peak = best
         order.append(variable)
+        operations.extend(generated_ops)
+        active = candidate_rows
         peak_width = max(peak_width, local_peak)
-        for vars_, rhs in rows:
+        next_row_index = max(
+            next_row_index,
+            1 + max(
+                (
+                    int(str(op["result_row_id"]).split("_", 1)[1])
+                    for op in operations
+                    if op.get("result_row_id")
+                ),
+                default=-1,
+            ),
+        )
+        for vars_, rhs in active.values():
             if not vars_ and rhs == 1:
                 contradiction_seen = True
                 final_width = 0
                 break
 
-    remaining = sorted({var for vars_, _rhs in rows for var in vars_ if var not in set(order)})
+    remaining = sorted({var for vars_, _rhs in active.values() for var in vars_ if var not in set(order)})
     order.extend(remaining)
-    return order, {
+    return {
         "strategy": "sparse_min_fill",
+        "elimination_order_source": ELIM_SOURCE_SPARSE_MIN_FILL,
+        "elimination_order_variables": order,
+        "elimination_tie_break_rules": SPARSE_MIN_FILL_TIE_BREAK_RULES,
+        "row_operation_trace": operations,
         "row_width_initial": initial_width,
         "row_width_peak": peak_width,
         "row_width_final_contradiction": final_width,
         "xor_elimination_order": order,
     }
+
+
+def _sparse_xor_elimination_order(equations: Iterable[XorEquation]) -> tuple[list[int], dict[str, Any]]:
+    schedule = _sparse_xor_elimination_schedule(equations)
+    return list(schedule["xor_elimination_order"]), schedule
 
 
 def _proof_order(solution: dict[str, Any], system: XorSystem) -> list[int]:
@@ -268,6 +352,10 @@ def _gaussian_order_stats(solution: dict[str, Any], system: XorSystem, detected:
     order = _proof_order(solution, system)
     return {
         "strategy": "gaussian_pivot_order",
+        "elimination_order_source": ELIM_SOURCE_GAUSSIAN,
+        "elimination_order_variables": order,
+        "elimination_tie_break_rules": [],
+        "row_operation_trace": [],
         "row_width_initial": max((len(eq.variables) for eq in detected), default=0),
         "row_width_peak": _max_trace_width(solution.get("elimination_trace", []), detected),
         "row_width_final_contradiction": 0 if solution.get("status") == "UNSAT" else None,
@@ -275,7 +363,15 @@ def _gaussian_order_stats(solution: dict[str, Any], system: XorSystem, detected:
     }
 
 
-def _choose_order(solution: dict[str, Any], system: XorSystem, detected: list[XorEquation]) -> dict[str, Any]:
+def _choose_order(
+    solution: dict[str, Any],
+    system: XorSystem,
+    detected: list[XorEquation],
+    *,
+    xor_elim_order: str,
+) -> dict[str, Any]:
+    if xor_elim_order == XOR_ELIM_SPARSE_MIN_FILL:
+        return _sparse_xor_elimination_schedule(detected)
     return _gaussian_order_stats(solution, system, detected)
 
 
@@ -299,6 +395,10 @@ def _diagnostics(
     internal_rup_runtime_seconds: float | None = None,
     xor_elimination_order: list[int] | None = None,
     xor_elimination_order_strategy: str | None = None,
+    elimination_order_source: str | None = None,
+    elimination_order_variables: list[int] | None = None,
+    elimination_tie_break_rules: list[str] | None = None,
+    row_operation_trace: list[dict[str, Any]] | None = None,
     row_width_initial: int | None = None,
     row_width_peak: int | None = None,
     row_width_final_contradiction: int | None = None,
@@ -311,6 +411,12 @@ def _diagnostics(
         "row_width_final_contradiction": row_width_final_contradiction,
         "xor_elimination_order": list(xor_elimination_order or []),
         "xor_elimination_order_strategy": xor_elimination_order_strategy,
+        "elimination_order_source": elimination_order_source,
+        "elimination_order_variables": list(elimination_order_variables or xor_elimination_order or []),
+        "elimination_tie_break_rules": list(elimination_tie_break_rules or []),
+        "row_operation_trace": list(row_operation_trace or []),
+        "peak_row_width": int(row_width_peak if row_width_peak is not None else row_width),
+        "final_contradiction_row_width": row_width_final_contradiction,
         "proof_clause_count_estimate": int(proof_clause_count_estimate),
         "proof_clause_count_actual": int(proof_clause_count_actual),
         "max_proof_clause_cap": int(max_proof_clauses),
@@ -426,6 +532,217 @@ def _variable_elimination_refutation(
     }
 
 
+def _xor_encoding_clauses(variables: Iterable[int], rhs: int) -> set[tuple[int, ...]]:
+    vars_tuple = tuple(sorted(int(var) for var in variables))
+    bit = int(rhs) & 1
+    if not vars_tuple:
+        return {()} if bit else set()
+    return canonical_xor_cnf_clauses(vars_tuple, bit)
+
+
+def _source_row_encodings(equations: list[XorEquation]) -> dict[str, set[tuple[int, ...]]]:
+    return {
+        f"input_{idx:04d}": {_canonical_clause(clause) for clause in equation.source_clauses}
+        for idx, equation in enumerate(equations)
+    }
+
+
+def _source_row_values(equations: list[XorEquation]) -> dict[str, tuple[frozenset[int], int]]:
+    return {
+        f"input_{idx:04d}": (frozenset(equation.variables), int(equation.rhs) & 1)
+        for idx, equation in enumerate(equations)
+    }
+
+
+def _emit_clause(
+    clause: tuple[int, ...],
+    *,
+    lines: list[str],
+    active: set[tuple[int, ...]],
+    emitted: int,
+    proof_bytes: int,
+    max_width: int,
+    max_proof_clauses: int,
+    max_proof_bytes: int,
+) -> tuple[int, int, int, str | None]:
+    max_width = max(max_width, len(clause))
+    if clause in active:
+        return emitted, proof_bytes, max_width, None
+    if emitted + 1 > max_proof_clauses:
+        return emitted, proof_bytes, max_width, XOR_DRAT_SKIPPED_PROOF_SIZE_CAP
+    next_size = proof_bytes + _line_size(clause)
+    if next_size > max_proof_bytes:
+        return emitted, proof_bytes, max_width, XOR_DRAT_SKIPPED_PROOF_BYTES_CAP
+    lines.append(_clause_line(clause))
+    active.add(clause)
+    return emitted + 1, next_size, max_width, None
+
+
+def _derive_row_encoding_from_parent_rows(
+    *,
+    left_encoding: set[tuple[int, ...]],
+    right_encoding: set[tuple[int, ...]],
+    left_value: tuple[frozenset[int], int],
+    right_value: tuple[frozenset[int], int],
+    expected_encoding: set[tuple[int, ...]],
+    lines: list[str],
+    active: set[tuple[int, ...]],
+    emitted: int,
+    proof_bytes: int,
+    max_width: int,
+    max_proof_clauses: int,
+    max_proof_bytes: int,
+    timeout_seconds: float | None,
+    started: float,
+) -> tuple[int, int, int, str | None]:
+    focus = set(left_encoding) | set(right_encoding)
+    shared = sorted(left_value[0] & right_value[0])
+    for variable in shared:
+        if timeout_seconds is not None and time.perf_counter() - started > timeout_seconds:
+            return emitted, proof_bytes, max_width, XOR_DRAT_SKIPPED_TIME_CAP
+        positive = sorted(clause for clause in focus if variable in clause)
+        negative = sorted(clause for clause in focus if -variable in clause)
+        generated: set[tuple[int, ...]] = set()
+        for left in positive:
+            for right in negative:
+                resolvent = _resolve_fast(left, right, variable)
+                if resolvent is None:
+                    continue
+                generated.add(resolvent)
+                emitted, proof_bytes, max_width, error = _emit_clause(
+                    resolvent,
+                    lines=lines,
+                    active=active,
+                    emitted=emitted,
+                    proof_bytes=proof_bytes,
+                    max_width=max_width,
+                    max_proof_clauses=max_proof_clauses,
+                    max_proof_bytes=max_proof_bytes,
+                )
+                if error is not None:
+                    return emitted, proof_bytes, max_width, error
+                if timeout_seconds is not None and time.perf_counter() - started > timeout_seconds:
+                    return emitted, proof_bytes, max_width, XOR_DRAT_SKIPPED_TIME_CAP
+        focus = {
+            clause
+            for clause in focus
+            if variable not in clause and -variable not in clause
+        } | generated
+    if not expected_encoding <= focus:
+        return emitted, proof_bytes, max_width, "ROW_OPERATION_ENCODING_DERIVATION_FAILED"
+    for clause in sorted(expected_encoding):
+        emitted, proof_bytes, max_width, error = _emit_clause(
+            clause,
+            lines=lines,
+            active=active,
+            emitted=emitted,
+            proof_bytes=proof_bytes,
+            max_width=max_width,
+            max_proof_clauses=max_proof_clauses,
+            max_proof_bytes=max_proof_bytes,
+        )
+        if error is not None:
+            return emitted, proof_bytes, max_width, error
+    return emitted, proof_bytes, max_width, None
+
+
+def _row_trace_refutation(
+    original_formula: CNFFormula,
+    detected: list[XorEquation],
+    row_operation_trace: list[dict[str, Any]],
+    *,
+    max_proof_clauses: int,
+    max_proof_bytes: int,
+    timeout_seconds: float | None,
+) -> tuple[str | None, str | None, dict[str, Any]]:
+    active = {clause.literals for clause in original_formula.clauses}
+    support_clauses = _source_clauses(detected)
+    if not support_clauses <= active:
+        return None, "DETECTED_XOR_SOURCE_CLAUSE_MISSING_FROM_ORIGINAL", {
+            "proof_clause_count_actual": 0,
+            "proof_clause_max_width": 0,
+            "proof_file_size_bytes": 0,
+        }
+    row_values = _source_row_values(detected)
+    row_encodings = _source_row_encodings(detected)
+    lines: list[str] = []
+    emitted = 0
+    proof_bytes = 0
+    max_width = 0
+    started = time.perf_counter()
+
+    for operation in row_operation_trace:
+        if timeout_seconds is not None and time.perf_counter() - started > timeout_seconds:
+            return None, XOR_DRAT_SKIPPED_TIME_CAP, {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+        left_id = str(operation.get("left_row_id") or operation.get("pivot_row_id"))
+        right_id = str(operation.get("right_row_id") or operation.get("combined_row_ids", ["", ""])[-1])
+        if left_id not in row_values or right_id not in row_values:
+            return None, "ROW_OPERATION_PARENT_MISSING", {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+        result_vars = frozenset(int(var) for var in operation.get("result_row_variables", []))
+        result_rhs = int(operation.get("result_rhs", 0)) & 1
+        expected_value = (row_values[left_id][0] ^ row_values[right_id][0], row_values[left_id][1] ^ row_values[right_id][1])
+        if expected_value != (result_vars, result_rhs):
+            return None, "ROW_OPERATION_VALUE_MISMATCH", {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+        result_id = operation.get("result_row_id")
+        if result_id is None and not result_vars and result_rhs == 0:
+            continue
+        expected_encoding = _xor_encoding_clauses(result_vars, result_rhs)
+        emitted, proof_bytes, max_width, error = _derive_row_encoding_from_parent_rows(
+            left_encoding=row_encodings[left_id],
+            right_encoding=row_encodings[right_id],
+            left_value=row_values[left_id],
+            right_value=row_values[right_id],
+            expected_encoding=expected_encoding,
+            lines=lines,
+            active=active,
+            emitted=emitted,
+            proof_bytes=proof_bytes,
+            max_width=max_width,
+            max_proof_clauses=max_proof_clauses,
+            max_proof_bytes=max_proof_bytes,
+            timeout_seconds=timeout_seconds,
+            started=started,
+        )
+        if error is not None:
+            return None, error, {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+        if result_id is None:
+            return None, "ROW_OPERATION_RESULT_ID_MISSING", {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+        result_id = str(result_id)
+        row_values[result_id] = (result_vars, result_rhs)
+        row_encodings[result_id] = expected_encoding
+        if not result_vars and result_rhs == 1:
+            return "\n".join(lines) + "\n", None, {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+    return None, "ROW_OPERATION_TRACE_DID_NOT_DERIVE_EMPTY", {
+        "proof_clause_count_actual": emitted,
+        "proof_clause_max_width": max_width,
+        "proof_file_size_bytes": proof_bytes,
+    }
+
+
 def _resolution_refutation(
     original_formula: CNFFormula,
     support_clauses: set[tuple[int, ...]],
@@ -481,6 +798,7 @@ def export_xor_drat_for_path(
     *,
     drat_trim_path: str | Path | None,
     original_dimacs_text: str | None = None,
+    xor_elim_order: str = XOR_ELIM_GAUSSIAN,
     max_row_width: int = 8,
     max_proof_clauses: int = 50000,
     max_proof_bytes: int = 5_000_000,
@@ -548,7 +866,14 @@ def export_xor_drat_for_path(
             xor_status,
         )
 
-    order_info = _choose_order(detected_solution, XorSystem(detected), detected)
+    if xor_elim_order not in {XOR_ELIM_GAUSSIAN, XOR_ELIM_SPARSE_MIN_FILL}:
+        xor_elim_order = XOR_ELIM_GAUSSIAN
+    order_info = _choose_order(
+        detected_solution,
+        XorSystem(detected),
+        detected,
+        xor_elim_order=xor_elim_order,
+    )
     base_diagnostics.update(
         {
             "row_width": int(order_info["row_width_peak"]),
@@ -557,6 +882,12 @@ def export_xor_drat_for_path(
             "row_width_final_contradiction": order_info["row_width_final_contradiction"],
             "xor_elimination_order": list(order_info["xor_elimination_order"]),
             "xor_elimination_order_strategy": order_info["strategy"],
+            "elimination_order_source": order_info.get("elimination_order_source"),
+            "elimination_order_variables": list(order_info.get("elimination_order_variables", order_info["xor_elimination_order"])),
+            "elimination_tie_break_rules": list(order_info.get("elimination_tie_break_rules", [])),
+            "row_operation_trace": list(order_info.get("row_operation_trace", [])),
+            "peak_row_width": int(order_info["row_width_peak"]),
+            "final_contradiction_row_width": order_info["row_width_final_contradiction"],
         }
     )
     if int(order_info["row_width_peak"]) > max_row_width:
@@ -571,14 +902,24 @@ def export_xor_drat_for_path(
         )
 
     proof_started = time.perf_counter()
-    proof_text, error, proof_stats = _variable_elimination_refutation(
-        original_formula,
-        _source_clauses(detected),
-        list(order_info["xor_elimination_order"]),
-        max_proof_clauses=max_proof_clauses,
-        max_proof_bytes=max_proof_bytes,
-        timeout_seconds=timeout_seconds,
-    )
+    if xor_elim_order == XOR_ELIM_SPARSE_MIN_FILL:
+        proof_text, error, proof_stats = _row_trace_refutation(
+            original_formula,
+            detected,
+            list(order_info.get("row_operation_trace", [])),
+            max_proof_clauses=max_proof_clauses,
+            max_proof_bytes=max_proof_bytes,
+            timeout_seconds=timeout_seconds,
+        )
+    else:
+        proof_text, error, proof_stats = _variable_elimination_refutation(
+            original_formula,
+            _source_clauses(detected),
+            list(order_info["xor_elimination_order"]),
+            max_proof_clauses=max_proof_clauses,
+            max_proof_bytes=max_proof_bytes,
+            timeout_seconds=timeout_seconds,
+        )
     proof_runtime = round(time.perf_counter() - proof_started, 6)
     proof_diagnostics = {**base_diagnostics, **proof_stats, "proof_generation_runtime_seconds": proof_runtime}
     if error is not None or proof_text is None:
