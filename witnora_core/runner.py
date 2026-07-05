@@ -622,6 +622,18 @@ def main(argv: list[str] | None = None) -> int:
         help="maximum generated clauses for XOR-to-DRAT export",
     )
     parser.add_argument(
+        "--xor-drat-max-proof-bytes",
+        type=int,
+        default=5_000_000,
+        help="maximum proof.drat size in bytes for XOR-to-DRAT export",
+    )
+    parser.add_argument(
+        "--xor-drat-timeout-seconds",
+        type=float,
+        default=120.0,
+        help="maximum seconds for XOR-to-DRAT proof construction",
+    )
+    parser.add_argument(
         "--drat-trim",
         help="optional drat-trim executable path for external proof.drat verification",
     )
@@ -650,6 +662,8 @@ def main(argv: list[str] | None = None) -> int:
             export_xor_drat=args.xor_drat,
             xor_drat_max_row_width=args.xor_drat_max_row_width,
             xor_drat_max_proof_clauses=args.xor_drat_max_proof_clauses,
+            xor_drat_max_proof_bytes=args.xor_drat_max_proof_bytes,
+            xor_drat_timeout_seconds=args.xor_drat_timeout_seconds,
         )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0

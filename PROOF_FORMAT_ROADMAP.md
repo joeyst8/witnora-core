@@ -419,6 +419,24 @@ bridge is over the configured diagnostic cap. These rows are not counted as
 externally verified UNSAT. `UNSAT_DRAT_EXPORTED_VERIFIED` is reported only when
 real `drat-trim` verifies `proof.drat` against `original.dimacs`.
 
+### v0.9.5 Tseitin XOR-DRAT Certification Diagnostic
+
+v0.9.5 targets the certification bottleneck exposed by v0.9.4. Official
+CNFgen Tseitin formulas already expose exact detected-CNF XOR equations, so
+v0.9.5 does not broaden detection. Instead, it replaces the unbounded generic
+resolution-closure proof attempt with a bounded variable-elimination proof over
+the detected XOR source clauses.
+
+For supported rows, the bridge emits RUP-checkable resolvents and then accepts
+a DRAT claim only if the generated `proof.drat` is checked internally and real
+`drat-trim` verifies it against `original.dimacs`. Metadata records row width,
+proof clause count, proof byte size, timeout caps, internal RUP status, and
+`drat-trim` status. If any cap is exceeded or verification fails, the result
+remains `UNSAT_XOR_NATIVE_ONLY`.
+
+This is still not full DRAT/RAT/LRAT/FRAT support and not broad XOR extraction.
+Parity remains deferred.
+
 Likely RAT-compatible or clausal-proof-compatible areas:
 
 - `BCE`, through blocked/RAT-style deletion reasoning.

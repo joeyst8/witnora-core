@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import time
 from typing import Any, Iterable
 
 from .certificate import CollapsePath, XOR_UNSAT_NATIVE
@@ -20,7 +21,14 @@ XOR_DRAT_FAILED = "FAILED"
 XOR_DRAT_NOT_RUN_NO_DRAT_TRIM = "NOT_RUN_NO_DRAT_TRIM"
 XOR_DRAT_SKIPPED_ROW_WIDTH_CAP = "SKIPPED_ROW_WIDTH_CAP"
 XOR_DRAT_SKIPPED_PROOF_SIZE_CAP = "SKIPPED_PROOF_SIZE_CAP"
+XOR_DRAT_SKIPPED_TIME_CAP = "SKIPPED_TIME_CAP"
+XOR_DRAT_SKIPPED_PROOF_BYTES_CAP = "SKIPPED_PROOF_BYTES_CAP"
 XOR_DRAT_UNSUPPORTED_SIDECAR_ORIGINAL_CNF = "UNSUPPORTED_SIDECAR_ORIGINAL_CNF"
+XOR_DRAT_INTERNAL_RUP_FAILED = "INTERNAL_RUP_FAILED"
+XOR_DRAT_DRAT_TRIM_FAILED = "DRAT_TRIM_FAILED"
+XOR_DRAT_DRAT_TRIM_NOT_AVAILABLE = "DRAT_TRIM_NOT_AVAILABLE"
+XOR_DRAT_UNSUPPORTED_XOR_STRUCTURE = "UNSUPPORTED_XOR_STRUCTURE"
+INTERNAL_RUP_CHECK_PROOF_CLAUSE_CAP = 20000
 
 
 @dataclass(frozen=True)
@@ -54,10 +62,12 @@ def _base_xor_status(
     source: str | None = None,
     reason: str | None = None,
     external_verified: bool = False,
+    diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "xor_drat_bridge": external_verified,
         "xor_drat_status": status,
+        "skip_reason": reason if status != XOR_DRAT_VERIFIED else None,
         "proof_base": proof_base,
         "proof_file": proof_file,
         "source": source,
@@ -66,6 +76,9 @@ def _base_xor_status(
         "xor_native_trace_retained": True,
         "reason": reason,
     }
+    if diagnostics:
+        payload.update(diagnostics)
+    return payload
 
 
 def _base_drat_status(
@@ -129,6 +142,158 @@ def _source_clauses(equations: Iterable[XorEquation]) -> set[tuple[int, ...]]:
     return clauses
 
 
+def _max_trace_width(trace: Iterable[dict[str, Any]], detected: Iterable[XorEquation]) -> int:
+    widest = max((len(eq.variables) for eq in detected), default=0)
+    for item in trace:
+        for key in ("variables", "before", "after"):
+            if key in item:
+                widest = max(widest, len(item[key]))
+    return widest
+
+
+def _proof_order(solution: dict[str, Any], system: XorSystem) -> list[int]:
+    pivots = [
+        int(item["pivot"])
+        for item in solution.get("elimination_trace", [])
+        if item.get("type") == "pivot" and "pivot" in item
+    ]
+    return pivots + [var for var in system.variables if var not in set(pivots)]
+
+
+def _diagnostics(
+    original_formula: CNFFormula,
+    detected: list[XorEquation],
+    *,
+    row_width: int = 0,
+    max_row_width_cap: int,
+    max_proof_clauses: int,
+    max_proof_bytes: int,
+    timeout_seconds: float | None,
+    proof_clause_count_estimate: int = 0,
+    proof_clause_count_actual: int = 0,
+    proof_clause_max_width: int = 0,
+    internal_rup_status: str = "NOT_RUN",
+    drat_trim_status: str = "NOT_RUN",
+    drat_trim_runtime_seconds: float | None = None,
+    proof_file_size_bytes: int = 0,
+) -> dict[str, Any]:
+    return {
+        "row_width": int(row_width),
+        "max_row_width_cap": int(max_row_width_cap),
+        "proof_clause_count_estimate": int(proof_clause_count_estimate),
+        "proof_clause_count_actual": int(proof_clause_count_actual),
+        "max_proof_clause_cap": int(max_proof_clauses),
+        "max_proof_bytes": int(max_proof_bytes),
+        "xor_drat_timeout_seconds": timeout_seconds,
+        "internal_rup_status": internal_rup_status,
+        "drat_trim_status": drat_trim_status,
+        "drat_trim_runtime_seconds": drat_trim_runtime_seconds,
+        "proof_file_size_bytes": int(proof_file_size_bytes),
+        "proof_clause_max_width": int(proof_clause_max_width),
+        "original_num_vars": original_formula.num_vars,
+        "original_num_clauses": original_formula.num_clauses,
+        "detected_xor_equations": len(detected),
+        "max_detected_xor_arity": max((len(eq.variables) for eq in detected), default=0),
+    }
+
+
+def _line_size(clause: tuple[int, ...]) -> int:
+    return len(_clause_line(clause)) + 1
+
+
+def _variable_elimination_refutation(
+    original_formula: CNFFormula,
+    support_clauses: set[tuple[int, ...]],
+    order: list[int],
+    *,
+    max_proof_clauses: int,
+    max_proof_bytes: int,
+    timeout_seconds: float | None,
+) -> tuple[str | None, str | None, dict[str, Any]]:
+    active = {clause.literals for clause in original_formula.clauses}
+    if not support_clauses <= active:
+        return None, "DETECTED_XOR_SOURCE_CLAUSE_MISSING_FROM_ORIGINAL", {
+            "proof_clause_count_actual": 0,
+            "proof_clause_max_width": 0,
+            "proof_file_size_bytes": 0,
+        }
+
+    focus = set(support_clauses)
+    lines: list[str] = []
+    emitted = 0
+    proof_bytes = 0
+    max_width = 0
+    started = time.perf_counter()
+
+    if () in focus:
+        return "0\n", None, {
+            "proof_clause_count_actual": 1,
+            "proof_clause_max_width": 0,
+            "proof_file_size_bytes": 2,
+        }
+
+    for variable in order:
+        if timeout_seconds is not None and time.perf_counter() - started > timeout_seconds:
+            return None, XOR_DRAT_SKIPPED_TIME_CAP, {
+                "proof_clause_count_actual": emitted,
+                "proof_clause_max_width": max_width,
+                "proof_file_size_bytes": proof_bytes,
+            }
+        positive = sorted(clause for clause in focus if variable in clause)
+        negative = sorted(clause for clause in focus if -variable in clause)
+        if not positive and not negative:
+            continue
+        for left in positive:
+            for right in negative:
+                raw = [lit for lit in left if lit != variable] + [lit for lit in right if lit != -variable]
+                if has_tautology(raw):
+                    continue
+                resolvent = Clause(raw).literals
+                max_width = max(max_width, len(resolvent))
+                if resolvent in focus:
+                    continue
+                if emitted + 1 > max_proof_clauses:
+                    return None, XOR_DRAT_SKIPPED_PROOF_SIZE_CAP, {
+                        "proof_clause_count_actual": emitted,
+                        "proof_clause_max_width": max_width,
+                        "proof_file_size_bytes": proof_bytes,
+                    }
+                next_size = proof_bytes + _line_size(resolvent)
+                if next_size > max_proof_bytes:
+                    return None, XOR_DRAT_SKIPPED_PROOF_BYTES_CAP, {
+                        "proof_clause_count_actual": emitted,
+                        "proof_clause_max_width": max_width,
+                        "proof_file_size_bytes": proof_bytes,
+                    }
+                line = _clause_line(resolvent)
+                lines.append(line)
+                emitted += 1
+                proof_bytes = next_size
+                focus.add(resolvent)
+                if resolvent == ():
+                    return "\n".join(lines) + "\n", None, {
+                        "proof_clause_count_actual": emitted,
+                        "proof_clause_max_width": max_width,
+                        "proof_file_size_bytes": proof_bytes,
+                    }
+                if timeout_seconds is not None and time.perf_counter() - started > timeout_seconds:
+                    return None, XOR_DRAT_SKIPPED_TIME_CAP, {
+                        "proof_clause_count_actual": emitted,
+                        "proof_clause_max_width": max_width,
+                        "proof_file_size_bytes": proof_bytes,
+                    }
+        for clause in positive:
+            focus.discard(clause)
+        for clause in negative:
+            focus.discard(clause)
+
+    return None, "VARIABLE_ELIMINATION_DID_NOT_DERIVE_EMPTY", {
+        "proof_clause_count_actual": emitted,
+        "proof_clause_max_width": max_width,
+        "proof_file_size_bytes": proof_bytes,
+    }
+
+
 def _resolution_refutation(
     original_formula: CNFFormula,
     support_clauses: set[tuple[int, ...]],
@@ -186,9 +351,19 @@ def export_xor_drat_for_path(
     original_dimacs_text: str | None = None,
     max_row_width: int = 8,
     max_proof_clauses: int = 50000,
+    max_proof_bytes: int = 5_000_000,
+    timeout_seconds: float | None = 120.0,
 ) -> XorDRATBridgeResult:
+    empty_diagnostics = _diagnostics(
+        original_formula,
+        [],
+        max_row_width_cap=max_row_width,
+        max_proof_clauses=max_proof_clauses,
+        max_proof_bytes=max_proof_bytes,
+        timeout_seconds=timeout_seconds,
+    )
     if path.status != XOR_UNSAT_NATIVE:
-        xor_status = _base_xor_status("NOT_APPLICABLE", reason="result is not XOR-native UNSAT")
+        xor_status = _base_xor_status("NOT_APPLICABLE", reason="result is not XOR-native UNSAT", diagnostics=empty_diagnostics)
         return XorDRATBridgeResult(
             DRATExport(None, _base_drat_status("UNSUPPORTED", xor_status=xor_status, unsupported_reason="result is not XOR-native UNSAT")),
             xor_status,
@@ -201,6 +376,7 @@ def export_xor_drat_for_path(
             proof_file=None,
             source=None,
             reason="real drat-trim path was not provided",
+            diagnostics={**empty_diagnostics, "drat_trim_status": XOR_DRAT_DRAT_TRIM_NOT_AVAILABLE},
         )
         return XorDRATBridgeResult(
             DRATExport(None, _base_drat_status("UNSUPPORTED", xor_status=xor_status, unsupported_reason=xor_status["reason"])),
@@ -208,21 +384,20 @@ def export_xor_drat_for_path(
         )
 
     detected = _detected_equations(path)
+    base_diagnostics = _diagnostics(
+        original_formula,
+        detected,
+        max_row_width_cap=max_row_width,
+        max_proof_clauses=max_proof_clauses,
+        max_proof_bytes=max_proof_bytes,
+        timeout_seconds=timeout_seconds,
+        proof_clause_count_estimate=sum(1 << max(0, len(eq.variables) - 1) for eq in detected),
+    )
     if not detected:
         xor_status = _base_xor_status(
             XOR_DRAT_UNSUPPORTED_SIDECAR_ORIGINAL_CNF,
             reason="XOR contradiction is not implied by detected CNF XOR clauses alone",
-        )
-        return XorDRATBridgeResult(
-            DRATExport(None, _base_drat_status("UNSUPPORTED", xor_status=xor_status, unsupported_reason=xor_status["reason"])),
-            xor_status,
-        )
-
-    widest = max((len(eq.variables) for eq in detected), default=0)
-    if widest > max_row_width:
-        xor_status = _base_xor_status(
-            XOR_DRAT_SKIPPED_ROW_WIDTH_CAP,
-            reason=f"detected XOR row width {widest} exceeds cap {max_row_width}",
+            diagnostics=base_diagnostics,
         )
         return XorDRATBridgeResult(
             DRATExport(None, _base_drat_status("UNSUPPORTED", xor_status=xor_status, unsupported_reason=xor_status["reason"])),
@@ -230,24 +405,46 @@ def export_xor_drat_for_path(
         )
 
     detected_solution = solve_xor_system_gaussian(XorSystem(detected))
-    if detected_solution.get("status") != "UNSAT":
+    widest = _max_trace_width(detected_solution.get("elimination_trace", []), detected)
+    base_diagnostics["row_width"] = widest
+    if widest > max_row_width:
         xor_status = _base_xor_status(
-            XOR_DRAT_UNSUPPORTED_SIDECAR_ORIGINAL_CNF,
-            reason="detected CNF XOR equations alone are satisfiable; sidecar or CNF-unit conflict may be needed",
+            XOR_DRAT_SKIPPED_ROW_WIDTH_CAP,
+            reason=f"detected XOR row width {widest} exceeds cap {max_row_width}",
+            diagnostics=base_diagnostics,
         )
         return XorDRATBridgeResult(
             DRATExport(None, _base_drat_status("UNSUPPORTED", xor_status=xor_status, unsupported_reason=xor_status["reason"])),
             xor_status,
         )
 
-    proof_text, error, emitted = _resolution_refutation(
+    if detected_solution.get("status") != "UNSAT":
+        xor_status = _base_xor_status(
+            XOR_DRAT_UNSUPPORTED_SIDECAR_ORIGINAL_CNF,
+            reason="detected CNF XOR equations alone are satisfiable; sidecar or CNF-unit conflict may be needed",
+            diagnostics=base_diagnostics,
+        )
+        return XorDRATBridgeResult(
+            DRATExport(None, _base_drat_status("UNSUPPORTED", xor_status=xor_status, unsupported_reason=xor_status["reason"])),
+            xor_status,
+        )
+
+    proof_text, error, proof_stats = _variable_elimination_refutation(
         original_formula,
         _source_clauses(detected),
+        _proof_order(detected_solution, XorSystem(detected)),
         max_proof_clauses=max_proof_clauses,
+        max_proof_bytes=max_proof_bytes,
+        timeout_seconds=timeout_seconds,
     )
+    proof_diagnostics = {**base_diagnostics, **proof_stats}
     if error is not None or proof_text is None:
-        status_name = XOR_DRAT_SKIPPED_PROOF_SIZE_CAP if error == XOR_DRAT_SKIPPED_PROOF_SIZE_CAP else XOR_DRAT_FAILED
-        xor_status = _base_xor_status(status_name, reason=error, source="detected_cnf_pattern")
+        status_name = error if error in {
+            XOR_DRAT_SKIPPED_PROOF_SIZE_CAP,
+            XOR_DRAT_SKIPPED_PROOF_BYTES_CAP,
+            XOR_DRAT_SKIPPED_TIME_CAP,
+        } else XOR_DRAT_FAILED
+        xor_status = _base_xor_status(status_name, reason=error, source="detected_cnf_pattern", diagnostics=proof_diagnostics)
         return XorDRATBridgeResult(
             DRATExport(None, _base_drat_status("FAILED" if status_name == XOR_DRAT_FAILED else "UNSUPPORTED", xor_status=xor_status, unsupported_reason=error)),
             xor_status,
@@ -256,9 +453,10 @@ def export_xor_drat_for_path(
     internal = check_drat_text(original_formula, proof_text, strict_deletions=False)
     if not internal.get("verified"):
         xor_status = _base_xor_status(
-            XOR_DRAT_FAILED,
+            XOR_DRAT_INTERNAL_RUP_FAILED,
             source="detected_cnf_pattern",
             reason=f"internal RUP-subset checker rejected proof: {internal.get('error')}",
+            diagnostics={**proof_diagnostics, "internal_rup_status": str(internal.get("error") or "FAILED")},
         )
         return XorDRATBridgeResult(
             DRATExport(None, _base_drat_status("FAILED", xor_status=xor_status, unsupported_reason=xor_status["reason"])),
@@ -272,13 +470,21 @@ def export_xor_drat_for_path(
         proof_path = root / "proof.drat"
         original_path.write_text(original_text if original_text.endswith("\n") else original_text + "\n", encoding="utf-8")
         proof_path.write_text(proof_text, encoding="utf-8")
+        trim_started = time.perf_counter()
         trim_result = run_drat_trim(original_path, proof_path, drat_trim_path)
+        trim_runtime = round(time.perf_counter() - trim_started, 6)
 
     if not trim_result.get("external_checker_verified", False):
         xor_status = _base_xor_status(
-            XOR_DRAT_FAILED,
+            XOR_DRAT_DRAT_TRIM_FAILED,
             source="detected_cnf_pattern",
             reason=f"drat-trim did not verify proof: {trim_result.get('error')}",
+            diagnostics={
+                **proof_diagnostics,
+                "internal_rup_status": "VERIFIED",
+                "drat_trim_status": "FAILED",
+                "drat_trim_runtime_seconds": trim_runtime,
+            },
         )
         drat_status = _base_drat_status("FAILED", xor_status=xor_status, unsupported_reason=xor_status["reason"])
         drat_status.update(
@@ -302,8 +508,14 @@ def export_xor_drat_for_path(
         proof_file="proof.drat",
         source="detected_cnf_pattern",
         external_verified=True,
+        diagnostics={
+            **proof_diagnostics,
+            "internal_rup_status": "VERIFIED",
+            "drat_trim_status": "VERIFIED",
+            "drat_trim_runtime_seconds": trim_runtime,
+        },
     )
-    xor_status["derived_clause_count"] = emitted
+    xor_status["derived_clause_count"] = proof_stats.get("proof_clause_count_actual", 0)
     drat_status = _base_drat_status(
         "EXPORTED",
         xor_status=xor_status,

@@ -32,9 +32,9 @@ from .verifier import verify_collapse_path
 from .xor import XorEquation, XorSystem, verify_xor_assignment
 from .xor_drat import export_xor_drat_for_path
 
-WITNORA_VERSION = "0.9.4"
+WITNORA_VERSION = "0.9.5"
 CERTIFICATE_FORMAT_VERSION = "wcert-1"
-VERIFIER_VERSION = "witnora-standalone-verifier-0.9.4"
+VERIFIER_VERSION = "witnora-standalone-verifier-0.9.5"
 
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
@@ -253,6 +253,8 @@ def export_certificate_bundle(
     export_xor_drat: bool = False,
     xor_drat_max_row_width: int = 8,
     xor_drat_max_proof_clauses: int = 50000,
+    xor_drat_max_proof_bytes: int = 5_000_000,
+    xor_drat_timeout_seconds: float | None = 120.0,
 ) -> Path:
     """Write a deterministic .wcert directory or .wcert.json certificate."""
 
@@ -267,6 +269,8 @@ def export_certificate_bundle(
             original_dimacs_text=original_text,
             max_row_width=xor_drat_max_row_width,
             max_proof_clauses=xor_drat_max_proof_clauses,
+            max_proof_bytes=xor_drat_max_proof_bytes,
+            timeout_seconds=xor_drat_timeout_seconds,
         )
         drat_export = xor_bridge.drat_export
         if path.xor_data is not None:
@@ -291,8 +295,8 @@ def export_certificate_bundle(
 
     output.mkdir(parents=True, exist_ok=True)
     for name, content in files.items():
-        (output / name).write_text(content, encoding="utf-8")
-    (output / "manifest.json").write_text(manifest_text, encoding="utf-8")
+        (output / name).write_text(content, encoding="utf-8", newline="\n")
+    (output / "manifest.json").write_text(manifest_text, encoding="utf-8", newline="\n")
     return output
 
 

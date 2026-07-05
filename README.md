@@ -1,6 +1,6 @@
-# Witnora-Core v0.9.4
+# Witnora-Core v0.9.5
 
-Witnora-Core v0.9.4 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata; v0.9.4 adds an official CNFgen XOR diagnostic artifact runner.
+Witnora-Core v0.9.5 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata; v0.9.4 adds an official CNFgen XOR diagnostic artifact runner; v0.9.5 adds a focused Tseitin XOR-DRAT certification diagnostic and optimized bounded proof export.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
@@ -123,6 +123,19 @@ If detected-CNF XOR UNSAT is externally verified by real `drat-trim` against
 "XOR_NATIVE_CONTRADICTION"` and `certification_level:
 "EXTERNAL_DRAT_VERIFIED"`. It is not reported as native-only.
 
+v0.9.5 improves the detected-CNF XOR proof bridge by deriving a bounded
+resolution proof through variable elimination over detected XOR source clauses,
+instead of attempting an unbounded generic resolution closure. The bridge
+records row-width, proof-size, proof-byte, timeout, internal RUP, and
+`drat-trim` status metadata in `xor_drat_status.json`.
+
+For official CNFgen `tseitin_10`, the v0.9.5 focused diagnostic can export
+`proof.drat` and verify it with real `drat-trim` against `original.dimacs`,
+classifying that row as `UNSAT_DRAT_EXPORTED_VERIFIED`. Larger Tseitin rows are
+attempted only under explicit caps and remain native-only or skipped if the
+proof exceeds the configured limits. Parity support and broader XOR extraction
+remain deferred.
+
 ## Official CNFgen XOR Diagnostic
 
 v0.9.4 adds a reproducible diagnostic runner for official CNFgen parity,
@@ -143,6 +156,23 @@ If a detected XOR contradiction is over the configured diagnostic proof cap, it
 is reported as `UNSAT_XOR_NATIVE_ONLY`; it is not counted as externally
 verified. No `UNSAT_DRAT_EXPORTED_VERIFIED` row is produced unless real
 `drat-trim` verifies `proof.drat` against `original.dimacs`.
+
+The focused v0.9.5 Tseitin proof diagnostic can be run with:
+
+```bash
+python -m witnora_core.xor_drat_diagnostic \
+  --family tseitin \
+  --instances tseitin_10 tseitin_15 tseitin_20 \
+  --c-values 2 3 4 \
+  --detect-xor-max-k 6 \
+  --xor-drat \
+  --drat-trim path/to/drat-trim \
+  --profiles conservative medium \
+  --out-root outputs/v0.9.5-tseitin-xor-drat-diagnostic
+```
+
+This command is a proof-engineering diagnostic. It does not add new XOR
+detection, does not target parity, and does not use any external SAT solver.
 
 ## COMPONENTS_SOLVED
 

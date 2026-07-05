@@ -142,3 +142,17 @@ to `UNSAT_XOR_NATIVE_ONLY` or to `UNSAT_DRAT_EXPORTED_VERIFIED`, but only the
 latter is externally DRAT verified against `original.dimacs`. A diagnostic
 proof-cap skip is not a hardness statement and not a DRAT failure theorem; it
 only means Witnora did not export a bounded proof under the configured cap.
+
+## v0.9.5 Tseitin Certification Claim Boundary
+
+v0.9.5 does not add a new XOR detection theorem. It takes exact detected-CNF
+XOR equations already present in official CNFgen Tseitin encodings and attempts
+to certify the resulting XOR contradiction through a bounded resolution proof.
+For a detected-CNF XOR row to count as externally certified, `proof.drat` must
+verify with real `drat-trim` against `original.dimacs`.
+
+The v0.9.5 proof bridge may turn a row such as `tseitin_10` from
+`UNSAT_XOR_NATIVE_ONLY` into `UNSAT_DRAT_EXPORTED_VERIFIED`. Larger rows remain
+native-only if they exceed explicit row-width, proof-size, proof-byte, or time
+caps. Such a cap result is not a hardness claim and not a claim that no DRAT
+proof exists.
