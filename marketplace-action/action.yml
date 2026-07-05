@@ -98,6 +98,11 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        if ! python -c "import witnora_core.ci" >/dev/null 2>&1; then
+          echo "WITNORA_CORE_NOT_INSTALLED: install Witnora-Core before running this action." >&2
+          echo "For example: python -m pip install git+https://github.com/joeyst8/witnora-core.git@v1.5.1-release-trust-polish" >&2
+          exit 1
+        fi
         DRAT_ARGS=()
         if [ "${{ inputs.rerun-drat-trim }}" = "true" ]; then
           DRAT_ARGS+=(--rerun-drat-trim)

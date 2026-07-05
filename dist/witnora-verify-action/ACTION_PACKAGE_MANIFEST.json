@@ -1,0 +1,63 @@
+{
+  "files": [
+    {
+      "bytes": 1792,
+      "path": ".github/workflows/self-test.yml",
+      "sha256": "99AB3EDC7C6F82EA4C8DD05E30916C5C5C93D7A639913083BF4E56B4FD6ABFE4"
+    },
+    {
+      "bytes": 4583,
+      "path": "action.yml",
+      "sha256": "4A45458DB5E2E309113D48A666E8E1DF4A9DFB4FC1355D5BA055B25F84B14962"
+    },
+    {
+      "bytes": 708,
+      "path": "CLAIM_BOUNDARY.md",
+      "sha256": "DE392793476AD6C36B2A8F9637D39D32E55D3E0166609D0BDBEBE8566B335670"
+    },
+    {
+      "bytes": 538,
+      "path": "examples/metadata.yml",
+      "sha256": "D7B3511B61675A5B735F877F1BD189C769F285AD1DACC6275346A8CFD6A69CFC"
+    },
+    {
+      "bytes": 703,
+      "path": "examples/partial-replay-drat.yml",
+      "sha256": "B13E359C8F3991ACF20ADEEF1120F5AC8C0546C6B34C41D96F4BA29D156B5561"
+    },
+    {
+      "bytes": 572,
+      "path": "examples/partial-replay.yml",
+      "sha256": "E516FB7A3F957AFC4F7B772BCB0679A0F2891F729CFF3ECD4392EA68EDAE62C3"
+    },
+    {
+      "bytes": 966,
+      "path": "examples/release-trust-card.yml",
+      "sha256": "CA4EFF54295A541E2211D3B4ADF065C09299B672D3B805FBE362D5A247F108D1"
+    },
+    {
+      "bytes": 1082,
+      "path": "LICENSE",
+      "sha256": "F8C00188267A12D7AECA08892CFB29908A0B960CA2838924A89E90E981954F5D"
+    },
+    {
+      "bytes": 580,
+      "path": "MARKETPLACE_RELEASE_CHECKLIST.md",
+      "sha256": "C9A0892AA44635B8BD2A89EFDED263F0797C365BE6ADC0324F07E6BE643B3063"
+    },
+    {
+      "bytes": 7248,
+      "path": "README.md",
+      "sha256": "E7530C9BFDB06E7051300BEBF4627F5FE3412A6C6D8E137680C6618A4601D131"
+    },
+    {
+      "bytes": 490,
+      "path": "RELEASE_NOTES.md",
+      "sha256": "E0FCA73C79BB9AC73E1A42859D5CEBCB0B3B2E6459968FF9C8D23331E4FE38C7"
+    }
+  ],
+  "install_usage": "uses: joeyst8/witnora-verify-action@v1",
+  "intended_repository": "joeyst8/witnora-verify-action",
+  "package": "witnora-verify-action",
+  "source": "marketplace-action"
+}
