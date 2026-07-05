@@ -14,6 +14,8 @@ parity support, broader XOR extraction, or new proof claims.
   `paper/references.bib`
 - Markdown paper source:
   `paper/witnora_tseitin_certified_collapse.md`
+- Compiled paper PDF release asset:
+  `paper/witnora_tseitin_certified_collapse.pdf`
 - Reproducibility package:
   `reproducibility/README.md`
   `reproducibility/ARTIFACT_MANIFEST.md`
@@ -23,11 +25,16 @@ parity support, broader XOR extraction, or new proof claims.
 
 ## Frozen Inputs
 
-- Source archive: `witnora-core-v0.9.9-paper-rev1.zip`
-- Source SHA256:
+- Public source archive: `witnora-core-v1.0-public-preprint.zip`
+- Public source archive SHA256:
+  `D79E4FCD48A18C395584EF04199D7156C63503B66F20385451E4B3F31176EFB2`
+- Public source tag: `v1.0-public-preprint`
+- Public source tag commit: `106904a91693ae672712c4818ef10790ff919e15`
+- Paper-revision source archive: `witnora-core-v0.9.9-paper-rev1.zip`
+- Paper-revision source SHA256:
   `9217E14D16DCF87A8A9F14BEC7DE24C52EB3F6C2C7CF4DDF88415D73D0F3B49D`
-- Source tag: `v0.9.9-paper-rev1`
-- Source commit: `6039db406451f60143586060b5773db6bfa6d216`
+- Paper-revision source tag: `v0.9.9-paper-rev1`
+- Paper-revision source commit: `6039db406451f60143586060b5773db6bfa6d216`
 - Diagnostic artifact:
   `witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip`
 - Diagnostic artifact SHA256:
@@ -66,17 +73,21 @@ passing.
 
 ## PDF Status
 
-The LaTeX source is included. A PDF should be generated with a local LaTeX
-installation, for example:
+The PDF was generated locally with Tectonic 0.16.9 after installing the
+official Windows MSVC binary in the workspace.
+
+- PDF: `paper/witnora_tseitin_certified_collapse.pdf`
+- PDF SHA256:
+  `A98910C817974D3D15F6847690CD197008362A06984FA38BE81194BE7D26DB9A`
+- Tectonic binary archive SHA256:
+  `131A24604785A9600989A3D91225F597DF52AC06F00AEFFE86FD529F99EE5CDD`
+
+Compile command used:
 
 ```powershell
-cd paper
-pdflatex witnora_tseitin_certified_collapse.tex
-bibtex witnora_tseitin_certified_collapse
-pdflatex witnora_tseitin_certified_collapse.tex
-pdflatex witnora_tseitin_certified_collapse.tex
+tools\tectonic\tectonic-0.16.9\tectonic.exe paper\witnora_tseitin_certified_collapse.tex --keep-logs --keep-intermediates -o paper
 ```
 
-In the Codex execution environment used for this package, `pdflatex`,
-`bibtex`, `latexmk`, `xelatex`, `lualatex`, `tectonic`, and `pandoc` were not
-available, so the PDF was not generated there.
+The LaTeX log has no overfull hbox warnings, undefined citations, or fatal
+errors after the final formatting pass. A Windows fontconfig notice was emitted
+by the PDF backend, but the PDF was produced and visually rendered for audit.

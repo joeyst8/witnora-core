@@ -8,10 +8,21 @@
   `paper/witnora_tseitin_certified_collapse.tex`
 - [x] Bibliography exists:
   `paper/references.bib`
-- [ ] PDF generated from LaTeX source.
+- [x] PDF generated from LaTeX source:
+  `paper/witnora_tseitin_certified_collapse.pdf`
+- [x] PDF rendered for visual audit with Poppler.
 
-PDF generation was not completed in this environment because no LaTeX compiler
-was available. Install a LaTeX distribution and run:
+PDF generation was completed locally with Tectonic 0.16.9:
+
+```powershell
+tools\tectonic\tectonic-0.16.9\tectonic.exe paper\witnora_tseitin_certified_collapse.tex --keep-logs --keep-intermediates -o paper
+```
+
+The generated PDF SHA256 is:
+
+`A98910C817974D3D15F6847690CD197008362A06984FA38BE81194BE7D26DB9A`
+
+Alternative full LaTeX command sequence for TeX Live/MiKTeX environments:
 
 ```powershell
 cd paper

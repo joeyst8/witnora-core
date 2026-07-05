@@ -8,6 +8,9 @@
 \usepackage{url}
 \usepackage{longtable}
 \usepackage{verbatim}
+\usepackage{seqsplit}
+
+\newcommand{\hash}[1]{\texttt{\seqsplit{#1}}}
 
 \title{Certified Collapse of Tseitin Formulas via XOR Detection and Sparse Elimination}
 \author{Witnora-Core Artifact}
@@ -166,8 +169,8 @@ modified formula.
 
 \paragraph{\texttt{drat-trim} verification.}
 The certification authority for externally checked UNSAT rows is real
-\texttt{drat-trim}. Witnora reports \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED}
-only when \texttt{drat-trim} accepts \texttt{proof.drat} against
+\texttt{drat-trim}. Witnora reports an externally verified UNSAT category only
+when \texttt{drat-trim} accepts \texttt{proof.drat} against
 \texttt{original.dimacs}.
 
 \section{Experimental Setup}
@@ -177,18 +180,18 @@ only when \texttt{drat-trim} accepts \texttt{proof.drat} against
   \item Witnora commit: \texttt{27e1876b5d815e3f3ba21392395b0e0e9dbcd025}
   \item CNF generator: official CNFgen \texttt{0.9.5}
   \item CNFgen path used:
-  \path{C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe}
+  {\footnotesize\path{C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe}}
   \item Proof checker:
-  \path{C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe}
+  {\footnotesize\path{C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe}}
   \item Proof checker SHA256:
-  \texttt{74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8}
+  \hash{74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8}
   \item The local \texttt{drat-trim} binary used for the recorded run prints a
   usage banner for \texttt{-h} but does not expose a version string through
   that command.
   \item Source archive SHA256:
-  \texttt{26557CD73DC45DF60EF5E056699AFC34E3402645DE60EFE050C5CE2ADADC267F}
+  \hash{26557CD73DC45DF60EF5E056699AFC34E3402645DE60EFE050C5CE2ADADC267F}
   \item Diagnostic artifact SHA256:
-  \texttt{4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C}
+  \hash{4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C}
   \item Clean extraction tests: 188 passing
 \end{itemize}
 
@@ -370,8 +373,17 @@ commands, expected category counts, proof locations, \texttt{drat-trim} logs,
 and independent checker output locations. The key diagnostic command is:
 
 \begin{verbatim}
-$env:WITNORA_DRAT_TRIM='C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe'
-python -m witnora_core.xor_drat_diagnostic --matrix-preset full-tseitin-v098 --detect-xor-max-k 6 --xor-drat --elim-orders sparse-min-fill --profiles default medium-v098 --drat-trim 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe' --cnfgen-path 'C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe' --out-root outputs\v0.9.8-full-tseitin-minfill-diagnostic --zip witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+$env:WITNORA_DRAT_TRIM='...\drat-trim.exe'
+python -m witnora_core.xor_drat_diagnostic `
+  --matrix-preset full-tseitin-v098 `
+  --detect-xor-max-k 6 `
+  --xor-drat `
+  --elim-orders sparse-min-fill `
+  --profiles default medium-v098 `
+  --drat-trim $env:WITNORA_DRAT_TRIM `
+  --cnfgen-path 'C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe' `
+  --out-root outputs\v0.9.8-full-tseitin-minfill-diagnostic `
+  --zip witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
 \end{verbatim}
 
 Expected best-matrix public category counts are:
@@ -400,12 +412,12 @@ cases by public result categories.
 Item & Value \\
 \midrule
 Source archive & \texttt{witnora-core-v0.9.9-paper-rev1.zip} \\
-Source archive SHA256 & \texttt{9217E14D16DCF87A8A9F14BEC7DE24C52EB3F6C2C7CF4DDF88415D73D0F3B49D} \\
+Source archive SHA256 & \hash{9217E14D16DCF87A8A9F14BEC7DE24C52EB3F6C2C7CF4DDF88415D73D0F3B49D} \\
 Frozen source tag & \texttt{v0.9.9-paper-rev1} \\
-Frozen source commit & \texttt{6039db406451f60143586060b5773db6bfa6d216} \\
+Frozen source commit & \hash{6039db406451f60143586060b5773db6bfa6d216} \\
 Diagnostic artifact & \texttt{witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip} \\
-Diagnostic artifact SHA256 & \texttt{4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C} \\
-drat-trim executable SHA256 & \texttt{74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8} \\
+Diagnostic artifact SHA256 & \hash{4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C} \\
+drat-trim executable SHA256 & \hash{74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8} \\
 Test command & \texttt{python -m unittest discover -s tests -v} \\
 Expected tests & 188 passing with real \texttt{drat-trim} enabled \\
 \bottomrule
