@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 
 from .verification_report import (
+    VERDICT_ARTIFACT_INTEGRITY_VERIFIED,
+    VERDICT_PARTIALLY_VERIFIED,
     render_trust_card_markdown,
     stable_json,
     trust_card_from_report,
@@ -64,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
             out_dir / "release_verification_report.md",
         )
         print(stable_json(report), end="")
-        return 0 if report.get("verdict") in {"VERIFIED", "PARTIALLY_VERIFIED"} else 1
+        return 0 if report.get("verdict") in {VERDICT_ARTIFACT_INTEGRITY_VERIFIED, VERDICT_PARTIALLY_VERIFIED} else 1
 
     if args.command == "trust-card":
         out_dir = Path(args.out_dir)

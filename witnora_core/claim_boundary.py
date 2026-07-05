@@ -82,6 +82,7 @@ def scan_text_for_claim_boundary(text: str) -> dict[str, object]:
     The scanner is intentionally conservative and explainable. It does not try
     to infer author intent deeply; it accepts occurrences only when nearby text
     explicitly frames them as negative, forbidden, or limitation context.
+    This is a heuristic text safety net, not a proof of absence of overclaims.
     """
 
     findings: list[ClaimBoundaryFinding] = []

@@ -1,5 +1,7 @@
 # Verifiable Intelligence Vision
 
+Disclaimer: This is a forward-looking vision document. It does not describe current production capabilities. Current Witnora-Core capabilities are limited to the scoped claims in the public release and verification reports.
+
 Witnora is moving from a single research artifact toward verifier-to-witness
 infrastructure.
 
@@ -19,8 +21,11 @@ to a human.
 ## What Witnora Verifies Today
 
 Witnora-Core currently verifies scoped SAT and UNSAT claims produced by its own
-collapse-path framework. It can check certificate bundles, proof artifacts,
-release hashes, claim boundaries, and reproducibility evidence.
+collapse-path framework. Its release verifier currently performs artifact
+integrity checks, required-file/hash checks, and claim-boundary text scanning
+for release packages. Scientific proof reruns, complete security audits, and
+general AI-agent verification are future directions unless explicitly reported
+by a deeper verification run.
 
 The v1.1 verification kernel does not add solving power. It adds a reusable
 audit layer that asks:

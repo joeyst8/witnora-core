@@ -1,5 +1,7 @@
 # Product Wedge: Witnora Verify
 
+Disclaimer: This is a forward-looking vision document. It does not describe current production capabilities. Current Witnora-Core capabilities are limited to the scoped claims in the public release and verification reports.
+
 Witnora Verify is a verification layer for AI-generated technical claims and
 proof artifacts.
 
@@ -31,7 +33,10 @@ Witnora Verify turns that into a structured report:
 ## What It Checks
 
 The first implementation checks Witnora SAT certificates, release packages,
-SHA256 evidence, claim boundaries, and trust-card summaries.
+SHA256 evidence, claim boundaries, and trust-card summaries. The v1.1.1 release
+verification path is an artifact-integrity and metadata check; it does not rerun
+the full scientific proof pipeline unless a future report explicitly says a
+deeper replay was performed.
 
 The same shape can later support other technical outputs:
 

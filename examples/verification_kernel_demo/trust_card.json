@@ -1,5 +1,5 @@
 {
-  "certification_level": "RELEASE_EVIDENCE_VERIFIED",
+  "certification_level": "RELEASE_ARTIFACT_INTEGRITY_VERIFIED",
   "claim": "Witnora-Core release evidence is available with source, diagnostic artifact, paper PDF, and SHA256 hashes.",
   "not_claimed": [
     "parity support",
@@ -9,11 +9,17 @@
   ],
   "project": "Witnora-Core",
   "reproducibility": "source archive and diagnostic artifact are available with SHA256 hashes",
-  "risk_flags": [],
-  "verified_by": [
-    "SHA256 archive checks",
-    "unit test suite",
-    "drat-trim"
+  "risk_flags": [
+    "METADATA_ONLY",
+    "DRAT_TRIM_NOT_RERUN",
+    "INDEPENDENT_CHECKER_NOT_RERUN",
+    "CLAIM_SCAN_HEURISTIC_ONLY"
   ],
-  "verdict": "VERIFIED_WITH_SCOPE_LIMITS"
+  "verification_depth": "metadata_hash_checks_only",
+  "verified_by": [
+    "source_archive_sha256",
+    "diagnostic_artifact_sha256",
+    "claim_boundary_scan"
+  ],
+  "verdict": "VERIFIED_ARTIFACT_INTEGRITY_WITH_SCOPE_LIMITS"
 }

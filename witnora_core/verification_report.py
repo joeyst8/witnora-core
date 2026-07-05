@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -16,6 +17,31 @@ VERDICT_VERIFIED = "VERIFIED"
 VERDICT_PARTIALLY_VERIFIED = "PARTIALLY_VERIFIED"
 VERDICT_NOT_VERIFIED = "NOT_VERIFIED"
 VERDICT_OVERCLAIM = "OVERCLAIM"
+VERDICT_ARTIFACT_INTEGRITY_VERIFIED = "ARTIFACT_INTEGRITY_VERIFIED"
+
+CERT_RELEASE_ARTIFACT_INTEGRITY_VERIFIED = "RELEASE_ARTIFACT_INTEGRITY_VERIFIED"
+DEPTH_METADATA_HASH_CHECKS_ONLY = "metadata_hash_checks_only"
+CLAIM_SCAN_DEPTH_HEURISTIC_TEXT_SCAN = "heuristic_text_scan"
+
+CLAIM_SCANNER_LIMITATION_TEXT = (
+    "The claim-boundary scanner is a heuristic text safety net, not a proof of "
+    "absence of overclaims. It can miss paraphrases, ambiguous wording, or "
+    "context-sensitive claims. A human audit is still required before public release."
+)
+
+ARTIFACT_INTEGRITY_SCOPE_TEXT = (
+    "The artifact hashes match the manifest, required files are present, and the "
+    "claim-boundary scanner found no affirmative forbidden claims. This is a "
+    "metadata and artifact-integrity check. It does not rerun the scientific "
+    "proofs, rerun drat-trim on all proofs, or rerun the benchmark diagnostic."
+)
+
+DEFAULT_METADATA_ONLY_RISK_FLAGS = [
+    "METADATA_ONLY",
+    "DRAT_TRIM_NOT_RERUN",
+    "INDEPENDENT_CHECKER_NOT_RERUN",
+    "CLAIM_SCAN_HEURISTIC_ONLY",
+]
 
 DEFAULT_ALLOWED_CLAIMS = [
     "Witnora reports only scoped certification levels supported by evidence.",
@@ -47,6 +73,11 @@ class VerificationReport:
     checker_results: list[dict[str, Any]] = field(default_factory=list)
     artifact_hashes: dict[str, str] = field(default_factory=dict)
     reproducibility_status: str = "NOT_ASSESSED"
+    verification_depth: str = DEPTH_METADATA_HASH_CHECKS_ONLY
+    evidence_checked: list[dict[str, Any]] = field(default_factory=list)
+    checks_performed: list[dict[str, Any]] = field(default_factory=list)
+    claim_scan_depth: str = CLAIM_SCAN_DEPTH_HEURISTIC_TEXT_SCAN
+    last_verification_timestamp: str = ""
     allowed_claims: list[str] = field(default_factory=lambda: list(DEFAULT_ALLOWED_CLAIMS))
     forbidden_claims: list[str] = field(default_factory=lambda: list(DEFAULT_FORBIDDEN_CLAIMS))
     risk_flags: list[str] = field(default_factory=list)
@@ -64,6 +95,11 @@ class VerificationReport:
             "checker_results": self.checker_results,
             "artifact_hashes": self.artifact_hashes,
             "reproducibility_status": self.reproducibility_status,
+            "verification_depth": self.verification_depth,
+            "evidence_checked": self.evidence_checked,
+            "checks_performed": self.checks_performed,
+            "claim_scan_depth": self.claim_scan_depth,
+            "last_verification_timestamp": self.last_verification_timestamp,
             "allowed_claims": self.allowed_claims,
             "forbidden_claims": self.forbidden_claims,
             "risk_flags": self.risk_flags,
@@ -83,6 +119,10 @@ def sha256_file(path: str | Path) -> str:
     return digest.hexdigest().upper()
 
 
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 def render_verification_report_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# Witnora Verification Report",
@@ -98,16 +138,49 @@ def render_verification_report_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- `{item}`")
     if not report.get("evidence_files"):
         lines.append("- none")
+    lines.extend(["", "## Verification Depth", "", f"`{report.get('verification_depth', '')}`"])
+    if report.get("verification_depth") == DEPTH_METADATA_HASH_CHECKS_ONLY:
+        lines.extend(["", ARTIFACT_INTEGRITY_SCOPE_TEXT])
     lines.extend(["", "## Checks Performed", ""])
+    checks_performed = report.get("checks_performed", [])
+    if checks_performed:
+        for check in checks_performed:
+            lines.append(
+                f"- `{check.get('name', '')}`: {str(check.get('status', '')).lower()} "
+                f"(depth: `{check.get('depth', '')}`)"
+            )
+    else:
+        lines.append("- none recorded")
+    lines.extend(["", "## Checker Results", ""])
     for result in report.get("checker_results", []):
         name = result.get("checker", result.get("check", "checker"))
         passed = result.get("passed", result.get("verified", False))
         lines.append(f"- `{name}`: {'pass' if passed else 'fail'}")
+    lines.extend(["", "## Evidence Checked", ""])
+    evidence_checked = report.get("evidence_checked", [])
+    if evidence_checked:
+        for item in evidence_checked:
+            lines.append(
+                f"- `{item.get('path', '')}` ({item.get('kind', '')}): {item.get('status', '')}; "
+                f"expected `{item.get('sha256_expected', '')}`, actual `{item.get('sha256_actual', '')}`"
+            )
+    else:
+        lines.append("- none recorded")
     lines.extend(["", "## External Verification", ""])
     for checker in report.get("external_checkers", []):
         lines.append(f"- `{checker}`")
     if not report.get("external_checkers"):
         lines.append("- none recorded")
+    lines.extend(
+        [
+            "",
+            "## Claim Boundary Scanner Limitation",
+            "",
+            CLAIM_SCANNER_LIMITATION_TEXT,
+            "",
+            f"claim_scan_depth: `{report.get('claim_scan_depth', '')}`",
+        ]
+    )
     lines.extend(["", "## Artifact Hashes", ""])
     for name, digest in sorted(report.get("artifact_hashes", {}).items()):
         lines.append(f"- `{name}`: `{digest}`")
@@ -123,6 +196,7 @@ def render_verification_report_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- {flag}")
     if not report.get("risk_flags"):
         lines.append("- none")
+    lines.extend(["", "## Last Verification Timestamp", "", str(report.get("last_verification_timestamp", ""))])
     lines.extend(["", "## Final Verdict", "", f"`{report.get('verdict', '')}`", ""])
     return "\n".join(lines)
 
@@ -150,6 +224,15 @@ def verification_report_for_certificate(path: str | Path) -> dict[str, Any]:
         checker_results=[{"checker": "witnora_certificate_bundle_verifier", **checker_result}],
         artifact_hashes={str(cert_path): sha256_file(cert_path)} if cert_path.is_file() else {},
         reproducibility_status="CERTIFICATE_REPLAYED" if verified else "CERTIFICATE_REPLAY_FAILED",
+        verification_depth="partial_replay",
+        checks_performed=[
+            {
+                "name": "certificate_bundle_replay",
+                "status": "PASS" if verified else "FAIL",
+                "depth": "partial_replay",
+            }
+        ],
+        last_verification_timestamp=utc_timestamp(),
         risk_flags=risk_flags,
         verdict=VERDICT_VERIFIED if verified else VERDICT_NOT_VERIFIED,
     )
@@ -172,6 +255,27 @@ def _manifest_lookup(path: Path, manifest_hashes: dict[str, str]) -> str | None:
     return None
 
 
+def _evidence_status(path: Path, kind: str, expected: str | None) -> dict[str, Any]:
+    exists = path.is_file()
+    actual = sha256_file(path) if exists else None
+    if not exists:
+        status = "MISSING"
+    elif expected is None:
+        status = "MATCH"
+        expected = actual
+    elif actual == expected:
+        status = "MATCH"
+    else:
+        status = "MISMATCH"
+    return {
+        "path": str(path),
+        "kind": kind,
+        "sha256_expected": expected,
+        "sha256_actual": actual,
+        "status": status,
+    }
+
+
 def verification_report_for_release(
     *,
     source_zip: str | Path,
@@ -182,66 +286,100 @@ def verification_report_for_release(
     diagnostic_path = Path(diagnostic_zip)
     manifest_path = Path(manifest)
     evidence = [str(source_path), str(diagnostic_path), str(manifest_path)]
-    artifact_hashes = {str(path): sha256_file(path) for path in [source_path, diagnostic_path, manifest_path]}
+    artifact_hashes = {str(path): sha256_file(path) for path in [source_path, diagnostic_path, manifest_path] if path.is_file()}
     manifest_text = manifest_path.read_text(encoding="utf-8")
     manifest_hashes = parse_manifest_hash_table(manifest_text)
 
     checker_results: list[dict[str, Any]] = []
-    risk_flags: list[str] = []
+    checks_performed: list[dict[str, Any]] = []
+    risk_flags: list[str] = list(DEFAULT_METADATA_ONLY_RISK_FLAGS)
+    evidence_checked: list[dict[str, Any]] = []
     for path in [source_path, diagnostic_path]:
-        actual = artifact_hashes[str(path)]
         expected = _manifest_lookup(path, manifest_hashes)
+        evidence_item = _evidence_status(
+            path,
+            "source_archive" if path == source_path else "diagnostic_artifact",
+            expected,
+        )
+        evidence_checked.append(evidence_item)
+        check_name = "source_archive_sha256" if path == source_path else "diagnostic_artifact_sha256"
         if expected is None:
-            risk_flags.append(f"manifest_missing_hash:{path.name}")
+            risk_flags.append("UNVERIFIED_CLAIM")
             checker_results.append({"checker": "sha256_manifest_match", "path": str(path), "passed": False, "error": "not listed in manifest"})
-        elif expected != actual:
-            risk_flags.append(f"hash_mismatch:{path.name}")
-            checker_results.append({"checker": "sha256_manifest_match", "path": str(path), "passed": False, "expected": expected, "actual": actual})
+            checks_performed.append({"name": check_name, "status": "FAIL", "depth": DEPTH_METADATA_HASH_CHECKS_ONLY})
+        elif evidence_item["status"] == "MISSING":
+            risk_flags.append("MISSING_FILE")
+            checker_results.append({"checker": "sha256_manifest_match", "path": str(path), "passed": False, "expected": expected, "error": "missing file"})
+            checks_performed.append({"name": check_name, "status": "FAIL", "depth": DEPTH_METADATA_HASH_CHECKS_ONLY})
+        elif evidence_item["status"] == "MISMATCH":
+            risk_flags.append("HASH_MISMATCH")
+            checker_results.append(
+                {
+                    "checker": "sha256_manifest_match",
+                    "path": str(path),
+                    "passed": False,
+                    "expected": expected,
+                    "actual": evidence_item["sha256_actual"],
+                }
+            )
+            checks_performed.append({"name": check_name, "status": "FAIL", "depth": DEPTH_METADATA_HASH_CHECKS_ONLY})
         else:
-            checker_results.append({"checker": "sha256_manifest_match", "path": str(path), "passed": True, "sha256": actual})
+            checker_results.append({"checker": "sha256_manifest_match", "path": str(path), "passed": True, "sha256": evidence_item["sha256_actual"]})
+            checks_performed.append({"name": check_name, "status": "PASS", "depth": DEPTH_METADATA_HASH_CHECKS_ONLY})
+
+    evidence_checked.append(_evidence_status(manifest_path, "manifest", None))
+    checks_performed.append({"name": "manifest_file_present", "status": "PASS", "depth": DEPTH_METADATA_HASH_CHECKS_ONLY})
 
     claim_scan = scan_text_for_claim_boundary(manifest_text)
     checker_results.append({"checker": "claim_boundary_scan", "passed": bool(claim_scan.get("passed")), "details": claim_scan})
+    checks_performed.append(
+        {
+            "name": "claim_boundary_scan",
+            "status": "PASS" if claim_scan.get("passed") else "FAIL",
+            "depth": CLAIM_SCAN_DEPTH_HEURISTIC_TEXT_SCAN,
+        }
+    )
     if not claim_scan.get("passed"):
-        risk_flags.append("forbidden_affirmative_claim")
-
-    external_checkers = []
-    if "drat-trim" in manifest_text or "drat_trim" in manifest_text:
-        external_checkers.append("drat-trim")
-    if "188 tests" in manifest_text:
-        external_checkers.append("unit test suite")
-    if "SHA256" in manifest_text:
-        external_checkers.append("SHA256 archive checks")
+        risk_flags.append("UNVERIFIED_CLAIM")
 
     all_hash_checks_passed = all(
         result.get("passed") is True
         for result in checker_results
         if result.get("checker") == "sha256_manifest_match"
     )
-    if risk_flags and not all_hash_checks_passed:
+    claim_scan_passed = bool(claim_scan.get("passed"))
+    if not all_hash_checks_passed:
         verdict = VERDICT_PARTIALLY_VERIFIED
         reproducibility = "ARTIFACTS_HASHED_WITH_MANIFEST_GAPS"
-    elif risk_flags:
+        certification_level = "RELEASE_ARTIFACT_INTEGRITY_PARTIAL"
+    elif not claim_scan_passed:
         verdict = VERDICT_OVERCLAIM
         reproducibility = "CLAIM_BOUNDARY_FAILED"
+        certification_level = "RELEASE_ARTIFACT_INTEGRITY_OVERCLAIM"
     else:
-        verdict = VERDICT_VERIFIED
+        verdict = VERDICT_ARTIFACT_INTEGRITY_VERIFIED
         reproducibility = "SOURCE_AND_DIAGNOSTIC_HASHES_VERIFIED"
+        certification_level = CERT_RELEASE_ARTIFACT_INTEGRITY_VERIFIED
 
     return VerificationReport(
         claim=(
             "Witnora-Core release package supports the scoped public preprint claim "
-            "with source, diagnostic artifact, manifest hashes, and recorded external checks."
+            "with source, diagnostic artifact, manifest hashes, and recorded external-check evidence."
         ),
         logical_status="RELEASE_ARTIFACT_AUDIT",
         discovery_route="RELEASE_MANIFEST_AND_HASH_CHECK",
-        certification_level="RELEASE_EVIDENCE_VERIFIED" if verdict == VERDICT_VERIFIED else "RELEASE_EVIDENCE_PARTIAL",
+        certification_level=certification_level,
         public_category="PUBLIC_RELEASE_VERIFICATION",
         evidence_files=evidence,
-        external_checkers=external_checkers,
+        external_checkers=[],
         checker_results=checker_results,
         artifact_hashes=artifact_hashes,
         reproducibility_status=reproducibility,
+        verification_depth=DEPTH_METADATA_HASH_CHECKS_ONLY,
+        evidence_checked=evidence_checked,
+        checks_performed=checks_performed,
+        claim_scan_depth=CLAIM_SCAN_DEPTH_HEURISTIC_TEXT_SCAN,
+        last_verification_timestamp=utc_timestamp(),
         risk_flags=risk_flags,
         verdict=verdict,
     ).to_dict()
@@ -249,7 +387,9 @@ def verification_report_for_release(
 
 def trust_card_from_report(report: dict[str, Any], *, project: str = "Witnora-Core") -> dict[str, Any]:
     verdict = str(report.get("verdict", "NOT_VERIFIED"))
-    if verdict == VERDICT_VERIFIED:
+    if verdict == VERDICT_ARTIFACT_INTEGRITY_VERIFIED:
+        trust_verdict = "VERIFIED_ARTIFACT_INTEGRITY_WITH_SCOPE_LIMITS"
+    elif verdict == VERDICT_VERIFIED:
         trust_verdict = "VERIFIED_WITH_SCOPE_LIMITS"
     elif verdict == VERDICT_PARTIALLY_VERIFIED:
         trust_verdict = "PARTIALLY_VERIFIED_WITH_RISK_FLAGS"
@@ -257,13 +397,15 @@ def trust_card_from_report(report: dict[str, Any], *, project: str = "Witnora-Co
         trust_verdict = "OVERCLAIM_DETECTED"
     else:
         trust_verdict = "NOT_VERIFIED"
+    verified_by = list(report.get("external_checkers", []))
+    verified_by.extend(check.get("name", "check") for check in report.get("checks_performed", []))
+    verified_by.extend(result.get("checker", "checker") for result in report.get("checker_results", []))
     return {
         "project": project,
         "claim": report.get("claim", ""),
-        "verified_by": report.get("external_checkers", []) + [
-            result.get("checker", "checker") for result in report.get("checker_results", [])
-        ],
+        "verified_by": verified_by,
         "certification_level": report.get("certification_level", ""),
+        "verification_depth": report.get("verification_depth", DEPTH_METADATA_HASH_CHECKS_ONLY),
         "not_claimed": report.get("forbidden_claims", []),
         "reproducibility": report.get("reproducibility_status", ""),
         "risk_flags": report.get("risk_flags", []),
@@ -277,6 +419,9 @@ def render_trust_card_markdown(card: dict[str, Any]) -> str:
         "",
         f"**Project:** {card.get('project', '')}",
         "",
+        "This trust card verifies artifact integrity and scope boundaries only. "
+        "It does not rerun the scientific proof pipeline.",
+        "",
         "## Claim",
         "",
         str(card.get("claim", "")),
@@ -287,8 +432,12 @@ def render_trust_card_markdown(card: dict[str, Any]) -> str:
     for item in card.get("verified_by", []):
         lines.append(f"- {item}")
     lines.extend(["", "## Certification Level", "", f"`{card.get('certification_level', '')}`"])
+    lines.extend(["", "## Verification Depth", "", f"`{card.get('verification_depth', '')}`"])
     lines.extend(["", "## Not Claimed", ""])
     for item in card.get("not_claimed", []):
+        lines.append(f"- {item}")
+    lines.extend(["", "## Risk Flags", ""])
+    for item in card.get("risk_flags", []):
         lines.append(f"- {item}")
     lines.extend(["", "## Reproducibility", "", str(card.get("reproducibility", ""))])
     lines.extend(["", "## Verdict", "", f"`{card.get('verdict', '')}`", ""])

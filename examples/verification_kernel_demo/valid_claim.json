@@ -6,5 +6,6 @@
     "paper/witnora_tseitin_certified_collapse.pdf",
     "RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md"
   ],
-  "scope": "release evidence audit only; no new benchmark claim"
+  "scope": "release artifact-integrity audit only; no new benchmark claim; no full proof rerun",
+  "verification_depth": "metadata_hash_checks_only"
 }

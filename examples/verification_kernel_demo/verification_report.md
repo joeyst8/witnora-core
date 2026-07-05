@@ -14,14 +14,27 @@ paper PDF, and SHA256 hashes.
 
 ## Checks Performed
 
-- `sha256_manifest_match`: pass
-- `claim_boundary_scan`: pass
+- `source_archive_sha256`: pass (depth: `metadata_hash_checks_only`)
+- `diagnostic_artifact_sha256`: pass (depth: `metadata_hash_checks_only`)
+- `claim_boundary_scan`: pass (depth: `heuristic_text_scan`)
+
+## Verification Depth
+
+`metadata_hash_checks_only`
+
+The artifact hashes match the manifest, required files are present, and the
+claim-boundary scanner found no affirmative forbidden claims. This is a metadata
+and artifact-integrity check. It does not rerun the scientific proofs, rerun
+drat-trim on all proofs, or rerun the benchmark diagnostic.
+
+## Evidence Checked
+
+- `witnora-core-v1.0-public-preprint-final.zip` (source_archive): MATCH
+- `witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip` (diagnostic_artifact): MATCH
 
 ## External Verification
 
-- `SHA256 archive checks`
-- `unit test suite`
-- `drat-trim`
+- none rerun by this metadata-only report
 
 ## Artifact Hashes
 
@@ -29,7 +42,15 @@ paper PDF, and SHA256 hashes.
 
 ## Certification Level
 
-`RELEASE_EVIDENCE_VERIFIED`
+`RELEASE_ARTIFACT_INTEGRITY_VERIFIED`
+
+## Claim Boundary Scanner Limitation
+
+The claim-boundary scanner is a heuristic text safety net, not a proof of
+absence of overclaims. It can miss paraphrases, ambiguous wording, or
+context-sensitive claims. A human audit is still required before public release.
+
+claim_scan_depth: `heuristic_text_scan`
 
 ## Allowed Claims
 
@@ -45,8 +66,11 @@ paper PDF, and SHA256 hashes.
 
 ## Risk Flags
 
-- none
+- METADATA_ONLY
+- DRAT_TRIM_NOT_RERUN
+- INDEPENDENT_CHECKER_NOT_RERUN
+- CLAIM_SCAN_HEURISTIC_ONLY
 
 ## Final Verdict
 
-`VERIFIED`
+`ARTIFACT_INTEGRITY_VERIFIED`

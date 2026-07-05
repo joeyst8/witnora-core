@@ -15,4 +15,7 @@ Files:
 - `trust_card.json`: concise trust card
 - `trust_card.md`: human-readable trust card
 
-The demo claim is about release-evidence verification, not new SAT solving.
+The demo claim is about release artifact-integrity verification, not new SAT
+solving and not a full rerun of the scientific proof pipeline. The example uses
+`verification_depth: metadata_hash_checks_only` and records the corresponding
+metadata-only risk flags.

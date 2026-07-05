@@ -67,13 +67,20 @@ class VerificationKernelTest(unittest.TestCase):
             "checker_results",
             "artifact_hashes",
             "reproducibility_status",
+            "verification_depth",
+            "evidence_checked",
+            "checks_performed",
+            "claim_scan_depth",
+            "last_verification_timestamp",
             "allowed_claims",
             "forbidden_claims",
             "risk_flags",
             "verdict",
         }
         self.assertTrue(required.issubset(report))
-        self.assertEqual(report["verdict"], "VERIFIED")
+        self.assertEqual(report["verdict"], "ARTIFACT_INTEGRITY_VERIFIED")
+        self.assertEqual(report["certification_level"], "RELEASE_ARTIFACT_INTEGRITY_VERIFIED")
+        self.assertEqual(report["verification_depth"], "metadata_hash_checks_only")
         print("VERIFICATION_REPORT_SCHEMA_PASS")
 
     def test_release_verification_report(self):
@@ -97,7 +104,7 @@ class VerificationKernelTest(unittest.TestCase):
             report = json.loads((out_dir / "release_verification_report.json").read_text(encoding="utf-8"))
             markdown_exists = (out_dir / "release_verification_report.md").exists()
         self.assertEqual(code, 0)
-        self.assertEqual(report["verdict"], "VERIFIED")
+        self.assertEqual(report["verdict"], "ARTIFACT_INTEGRITY_VERIFIED")
         self.assertTrue(markdown_exists)
         print("RELEASE_VERIFICATION_REPORT_PASS")
 
@@ -111,7 +118,8 @@ class VerificationKernelTest(unittest.TestCase):
             )
             card = trust_card_from_report(report)
         self.assertEqual(card["project"], "Witnora-Core")
-        self.assertEqual(card["verdict"], "VERIFIED_WITH_SCOPE_LIMITS")
+        self.assertEqual(card["verdict"], "VERIFIED_ARTIFACT_INTEGRITY_WITH_SCOPE_LIMITS")
+        self.assertEqual(card["verification_depth"], "metadata_hash_checks_only")
         self.assertIn("P vs NP progress", card["not_claimed"])
         print("TRUST_CARD_GENERATION_PASS")
 
@@ -128,15 +136,19 @@ class VerificationKernelTest(unittest.TestCase):
             "Claim Being Audited",
             "Evidence Provided",
             "Checks Performed",
+            "Evidence Checked",
+            "Verification Depth",
             "External Verification",
             "Artifact Hashes",
             "Certification Level",
             "Allowed Claims",
             "Forbidden Claims",
             "Risk Flags",
+            "Claim Boundary Scanner Limitation",
             "Final Verdict",
         ]:
             self.assertIn(heading, markdown)
+        self.assertIn("metadata and artifact-integrity check", markdown)
         print("HUMAN_AUDIT_REPORT_GENERATION_PASS")
 
     def test_no_solver_logic_change_marker(self):

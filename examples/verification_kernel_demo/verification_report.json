@@ -1,12 +1,13 @@
 {
   "allowed_claims": [
     "Release artifacts can be checked against recorded SHA256 hashes.",
-    "Trust is scoped to the evidence listed in the report."
+    "Trust is scoped to the evidence listed in the report.",
+    "This report verifies artifact integrity only unless a deeper replay is explicitly recorded."
   ],
   "artifact_hashes": {
     "paper/witnora_tseitin_certified_collapse.pdf": "A98910C817974D3D15F6847690CD197008362A06984FA38BE81194BE7D26DB9A"
   },
-  "certification_level": "RELEASE_EVIDENCE_VERIFIED",
+  "certification_level": "RELEASE_ARTIFACT_INTEGRITY_VERIFIED",
   "checker_results": [
     {
       "checker": "sha256_manifest_match",
@@ -17,28 +18,65 @@
       "passed": true
     }
   ],
+  "checks_performed": [
+    {
+      "depth": "metadata_hash_checks_only",
+      "name": "source_archive_sha256",
+      "status": "PASS"
+    },
+    {
+      "depth": "metadata_hash_checks_only",
+      "name": "diagnostic_artifact_sha256",
+      "status": "PASS"
+    },
+    {
+      "depth": "heuristic_text_scan",
+      "name": "claim_boundary_scan",
+      "status": "PASS"
+    }
+  ],
+  "claim_scan_depth": "heuristic_text_scan",
   "claim": "Witnora-Core release evidence is available with source, diagnostic artifact, paper PDF, and SHA256 hashes.",
   "discovery_route": "RELEASE_MANIFEST_AND_HASH_CHECK",
+  "evidence_checked": [
+    {
+      "kind": "source_archive",
+      "path": "witnora-core-v1.0-public-preprint-final.zip",
+      "sha256_actual": "D2ACACCD86A2F9356C47F628206F15391C3205FF30FFF5BD75D1CB56297F4F6F",
+      "sha256_expected": "D2ACACCD86A2F9356C47F628206F15391C3205FF30FFF5BD75D1CB56297F4F6F",
+      "status": "MATCH"
+    },
+    {
+      "kind": "diagnostic_artifact",
+      "path": "witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip",
+      "sha256_actual": "4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C",
+      "sha256_expected": "4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C",
+      "status": "MATCH"
+    }
+  ],
   "evidence_files": [
     "witnora-core-v1.0-public-preprint-final.zip",
     "witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip",
     "paper/witnora_tseitin_certified_collapse.pdf",
     "RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md"
   ],
-  "external_checkers": [
-    "SHA256 archive checks",
-    "unit test suite",
-    "drat-trim"
-  ],
+  "external_checkers": [],
   "forbidden_claims": [
     "parity support",
     "broad XOR extraction",
     "competitive SAT solving",
     "P vs NP progress"
   ],
+  "last_verification_timestamp": "2026-07-05T00:00:00Z",
   "logical_status": "RELEASE_ARTIFACT_AUDIT",
   "public_category": "PUBLIC_RELEASE_VERIFICATION",
   "reproducibility_status": "SOURCE_AND_DIAGNOSTIC_HASHES_VERIFIED",
-  "risk_flags": [],
-  "verdict": "VERIFIED"
+  "risk_flags": [
+    "METADATA_ONLY",
+    "DRAT_TRIM_NOT_RERUN",
+    "INDEPENDENT_CHECKER_NOT_RERUN",
+    "CLAIM_SCAN_HEURISTIC_ONLY"
+  ],
+  "verification_depth": "metadata_hash_checks_only",
+  "verdict": "ARTIFACT_INTEGRITY_VERIFIED"
 }
