@@ -112,6 +112,89 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Collect obstruction records across pigeonhole, parity, and graph-coloring families."],
         ),
+        TheoremCandidate(
+            id="TC-005",
+            name="Bounded Symmetry Strictness Candidate",
+            statement=(
+                "There exists a bounded profile B such that W_B(G1_XOR) is strictly contained in "
+                "W_B(G2_SYMMETRY_CERTIFIED), witnessed by a family where certified symmetry "
+                "reasoning produces a valid collapse path not available to G1_XOR."
+            ),
+            status="CONJECTURE",
+            supporting_witnesses=[],
+            required_proof_obligations=[
+                "Find a family where G1_XOR records bounded no-collapse.",
+                "Validate exact automorphism generators against the original CNF.",
+                "Discharge SBP preservation or witness reconstruction obligations.",
+                "Separate native symmetry certification from DRAT certification.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim W(G1) is strictly contained in W(G2) as an absolute theorem.",
+                "Does not claim symmetry collapses pigeonhole.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Scale certified graph-coloring witness reconstruction.", "Develop a preservation checker for pigeonhole SBPs."],
+        ),
+        TheoremCandidate(
+            id="TC-006",
+            name="Graph-Coloring Symmetry Collapse Candidate",
+            statement=(
+                "Small graph-coloring encodings with color-permutation automorphisms admit certified "
+                "symmetry evidence and direct witness reconstruction for selected SAT rows."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["cycle_4_3color", "cycle_6_3color"],
+            required_proof_obligations=[
+                "Validate color permutation automorphisms exactly.",
+                "Check reconstructed assignments against the original CNF.",
+                "Show that any SBP used is justified by orbit-representative preservation, not implication.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim graph coloring is solved generally.",
+                "Does not claim an UNSAT proof unless one is checked against the original CNF.",
+            ],
+            next_experiments=["Add more certified SAT graph-coloring examples.", "Investigate certificate-preserving quotient maps."],
+        ),
+        TheoremCandidate(
+            id="TC-007",
+            name="Pigeonhole Symmetry/Cardinality Collapse Candidate",
+            statement=(
+                "Pigeonhole likely requires combined symmetry/orbit and cardinality/PB reasoning to "
+                "produce a certified collapse path."
+            ),
+            status="CONJECTURE",
+            supporting_witnesses=[],
+            required_proof_obligations=[
+                "Validate row/hole automorphisms exactly.",
+                "Detect cardinality/PB structure exactly.",
+                "Define a sound preservation or proof-export route before claiming collapse.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim pigeonhole is collapsed.",
+                "Does not treat symmetry-breaking predicates as implied clauses.",
+            ],
+            next_experiments=["Build a certified cardinality operator.", "Design pigeonhole SBP preservation checks."],
+        ),
+        TheoremCandidate(
+            id="TC-008",
+            name="SBP Preservation Lemma",
+            statement=(
+                "If G is a verified automorphism group of F and SBP selects at least one representative "
+                "from every G-orbit of satisfying assignments, then F is satisfiable iff F with SBP is satisfiable."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["symmetric_exactly_one_4", "cycle_4_3color"],
+            required_proof_obligations=[
+                "Prove each generator preserves F.",
+                "Prove each satisfying-assignment orbit has an SBP-satisfying representative.",
+                "Verify any reconstructed witness against the original formula.",
+            ],
+            forbidden_interpretations=[
+                "Does not say SBP clauses are logical consequences of F.",
+                "Does not provide DRAT certification unless a proof against original CNF is checked.",
+            ],
+            next_experiments=["Mechanize the orbit-representative proof for larger SBP templates."],
+        ),
     ]
 
 

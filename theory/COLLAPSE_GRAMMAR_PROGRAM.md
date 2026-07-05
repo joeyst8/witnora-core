@@ -39,6 +39,12 @@ candidate orbits over variables, literals, and clauses. This is not full graph
 automorphism detection and does not by itself define a satisfiability-preserving
 quotient.
 
+v2.2 adds `G2_SYMMETRY_CERTIFIED` for small formulas with exact automorphism
+evidence. A native symmetry certificate can validate generators, recompute
+orbits, record symmetry-breaking predicates, and verify reconstructed SAT
+witnesses against the original CNF. It is not an external UNSAT proof unless a
+DRAT proof against the original CNF is checked.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -76,3 +82,6 @@ not a general SAT-solving result.
 5. Freeze claims only after tests, artifacts, and red-team review.
 6. Turn obstruction records into certified operators only when witness
    reconstruction or proof preservation is explicit.
+7. Treat symmetry-breaking predicates as preservation obligations, not as
+   clauses implied by the original formula unless an external proof checker
+   accepts them.

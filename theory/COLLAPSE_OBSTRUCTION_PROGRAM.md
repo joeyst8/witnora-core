@@ -43,6 +43,19 @@ candidates include:
 The ranking is heuristic. It does not prove a theorem and does not certify that
 the operator will collapse a family.
 
+## v2.2 Symmetry Obstruction Split
+
+v2.2 separates three cases that were previously bundled together:
+
+- exact automorphism evidence: generators validate against the original CNF;
+- native symmetry certification: a witness or preservation obligation is
+  independently checked;
+- diagnostic-only orbit signal: useful evidence, but not a collapse claim.
+
+For pigeonhole, v2.2 records exact row/hole orbit evidence and cardinality/PB
+signals, but keeps the result diagnostic-only until a preservation or proof
+route exists.
+
 ## Relationship to Verifier-to-Witness Research
 
 The long-term program is to discover operators that turn verifier obstructions

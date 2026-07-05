@@ -1,5 +1,20 @@
 # Witnora-Core v0.9.8
 
+## v2.2 Certified Symmetry/Orbit Collapse
+
+v2.2 adds the first certified symmetry/orbit operator layer. The new
+`G2_SYMMETRY_CERTIFIED` profile validates exact automorphism generators,
+recomputes variable/literal/clause orbits, records symmetry-breaking predicate
+obligations, and verifies reconstructed SAT witnesses against the original CNF
+for supported toy and graph-coloring rows.
+
+The soundness boundary is explicit: symmetry-breaking predicates are generally
+not implied by the original formula. Witnora treats them as preservation
+obligations over automorphism orbits. DRAT is claimed only when a proof against
+the original CNF is externally checked. Pigeonhole rows currently record exact
+orbit and cardinality/PB diagnostics only; no pigeonhole symmetry-collapse claim
+is made.
+
 ## v2.1 Collapse Theory Frontier
 
 v2.1 extends the Collapse Theory Lab with a bounded cost model, theorem-candidate

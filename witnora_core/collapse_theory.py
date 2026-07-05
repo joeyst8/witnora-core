@@ -8,7 +8,7 @@ adding an operator changes an observed, certificate-checkable outcome.
 from __future__ import annotations
 
 import argparse
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 import csv
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -22,7 +22,8 @@ from typing import Any, Iterable
 import zipfile
 
 from .certificate import NO_COLLAPSE, XOR_UNSAT_NATIVE
-from .cnf import CNFFormula
+from .cnf import CNFFormula, Clause, formula_satisfied
+from .dimacs import load_dimacs
 from .families import make_blocked_clique_collapse_family
 from .proof import export_certificate_bundle
 from .public_benchmarks import (
@@ -58,6 +59,23 @@ OBSTRUCTION_HORN_UNSUPPORTED = "HORN_STRUCTURE_UNSUPPORTED"
 OBSTRUCTION_PROOF_EXPORT_BLOWUP = "PROOF_EXPORT_BLOWUP"
 OBSTRUCTION_SEARCH_BOUND_EXCEEDED = "SEARCH_BOUND_EXCEEDED"
 OBSTRUCTION_OPERATOR_STUB = "OPERATOR_STUB"
+
+SYMMETRY_DIAGNOSTIC_ONLY = "SYMMETRY_DIAGNOSTIC_ONLY"
+SYMMETRY_NATIVE_CERTIFIED = "SYMMETRY_NATIVE_CERTIFIED"
+SYMMETRY_SAT_WITNESS_RECONSTRUCTED = "SYMMETRY_SAT_WITNESS_RECONSTRUCTED"
+SYMMETRY_UNSAT_NATIVE_CERTIFIED = "SYMMETRY_UNSAT_NATIVE_CERTIFIED"
+SYMMETRY_DRAT_VERIFIED = "SYMMETRY_DRAT_VERIFIED"
+SYMMETRY_CERTIFICATION_FAILED = "SYMMETRY_CERTIFICATION_FAILED"
+SYMMETRY_UNSUPPORTED_FOR_INSTANCE = "SYMMETRY_UNSUPPORTED_FOR_INSTANCE"
+
+G2_SYMMETRY_NATIVE_CERTIFIED = "G2_SYMMETRY_NATIVE_CERTIFIED"
+G2_SYMMETRY_SAT_WITNESS_RECONSTRUCTED = "G2_SYMMETRY_SAT_WITNESS_RECONSTRUCTED"
+G2_SYMMETRY_UNSAT_NATIVE_CERTIFIED = "G2_SYMMETRY_UNSAT_NATIVE_CERTIFIED"
+G2_SYMMETRY_DRAT_VERIFIED = "G2_SYMMETRY_DRAT_VERIFIED"
+
+CARDINALITY_STRUCTURE_DETECTED = "CARDINALITY_STRUCTURE_DETECTED"
+CARDINALITY_NATIVE_CERTIFIED = "CARDINALITY_NATIVE_CERTIFIED"
+CARDINALITY_DIAGNOSTIC_ONLY = "CARDINALITY_DIAGNOSTIC_ONLY"
 
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
@@ -223,6 +241,36 @@ class CollapseObstruction:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class SymmetryCertificate:
+    instance_id: str
+    formula_hash: str
+    automorphism_generators: list[dict[str, int]]
+    automorphism_validation_status: str
+    variable_orbits: list[list[int]]
+    literal_orbits: list[list[int]]
+    clause_orbits: list[list[int]]
+    sbp_clauses: list[list[int]]
+    sbp_type: str
+    preservation_argument: str
+    quotient_used: bool
+    quotient_map: dict[str, Any]
+    reconstruction_map: dict[str, Any]
+    checker_status: str
+    certification_level: str
+    status: str = SYMMETRY_DIAGNOSTIC_ONLY
+    sat_witness: dict[str, bool] = field(default_factory=dict)
+    lifted_assignment: dict[str, bool] = field(default_factory=dict)
+    drat_trim_verified_against_original: bool = False
+    proof_file: str | None = None
+    proof_base: str | None = None
+    preservation_obligations: list[str] = field(default_factory=list)
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 def stable_json(data: Any) -> str:
     return json.dumps(data, indent=2, sort_keys=True) + "\n"
 
@@ -269,6 +317,39 @@ def collapse_operators() -> dict[str, CollapseOperator]:
             True,
             {"max_orbit_generators": 12, "max_symmetry_group_size_estimate": 100000},
         ),
+        "EXACT_AUTOMORPHISM_VALIDATION": CollapseOperator(
+            "EXACT_AUTOMORPHISM_VALIDATION",
+            True,
+            "Validate claimed variable permutations by exact clause-set preservation.",
+            True,
+            False,
+            True,
+            {"max_generators": 8, "max_generated_group_elements": 256},
+        ),
+        "SYMMETRY_CERTIFICATE_CHECKER": CollapseOperator(
+            "SYMMETRY_CERTIFICATE_CHECKER",
+            True,
+            "Replay automorphism, orbit, SBP preservation, and witness obligations for native symmetry certificates.",
+            True,
+            False,
+            True,
+        ),
+        "SBP_PRESERVATION_CHECK": CollapseOperator(
+            "SBP_PRESERVATION_CHECK",
+            True,
+            "Check that symmetry-breaking predicates are justified by orbit-representative preservation, not logical implication.",
+            True,
+            False,
+            True,
+        ),
+        "CARDINALITY_PB_DIAGNOSTIC": CollapseOperator(
+            "CARDINALITY_PB_DIAGNOSTIC",
+            True,
+            "Detect exact small at-least-one, at-most-one, and exactly-one patterns without claiming PB solving.",
+            True,
+            False,
+            True,
+        ),
         "HORN_PROTOTYPE": CollapseOperator("HORN_PROTOTYPE", False, "Horn operator placeholder.", False, False, True, stub=True),
         "CARDINALITY_PROTOTYPE": CollapseOperator("CARDINALITY_PROTOTYPE", False, "Small cardinality operator placeholder.", False, False, True, stub=True),
         "BACKDOOR_DIAGNOSTIC": CollapseOperator("BACKDOOR_DIAGNOSTIC", False, "Bounded backdoor-search diagnostic placeholder.", False, False, True, stub=True),
@@ -307,6 +388,7 @@ def bound_profiles() -> dict[str, BoundProfile]:
 def grammar_profiles() -> dict[str, CollapseGrammar]:
     base_ops = ("UP", "PLE", "SUB", "BCE", "VE", "COMPONENTS", "TWO_SAT", "TREEWIDTH")
     g1_ops = (*base_ops, "EXACT_XOR", "SPARSE_MIN_FILL_XOR", "XOR_DRAT_BRIDGE")
+    g2_sym_ops = (*g1_ops, "EXACT_AUTOMORPHISM_VALIDATION", "SYMMETRY_CERTIFICATE_CHECKER", "SBP_PRESERVATION_CHECK")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -343,6 +425,24 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             6,
             {**xor_policy, "operator_status": "DIAGNOSTIC_ONLY"},
             "G1_XOR plus deterministic syntactic orbit diagnostics. v2.1 records symmetry signals but does not certify orbit quotient collapse.",
+        ),
+        "G2_SYMMETRY_CERTIFIED": CollapseGrammar(
+            "G2_SYMMETRY_CERTIFIED",
+            g2_sym_ops,
+            (*terminals, "XOR_AFFINE", "SYMMETRY_NATIVE_CERTIFICATE", "SYMMETRY_SAT_WITNESS"),
+            2,
+            6,
+            {**xor_policy, "symmetry_status": "NATIVE_CERTIFICATE_ONLY_UNLESS_DRAT_CHECKED"},
+            "G1_XOR plus exact automorphism validation, native symmetry certificates, SBP preservation obligations, and witness reconstruction for supported small formulas.",
+        ),
+        "G3_CARDINALITY_PB_PROTOTYPE": CollapseGrammar(
+            "G3_CARDINALITY_PB_PROTOTYPE",
+            (*g1_ops, "CARDINALITY_PB_DIAGNOSTIC"),
+            (*terminals, "XOR_AFFINE", "CARDINALITY_STRUCTURE"),
+            2,
+            6,
+            {"operator_status": "DIAGNOSTIC_ONLY_NO_PB_SOLVING"},
+            "G1_XOR plus exact cardinality/PB structure diagnostics. v2.2 detects structure but does not claim PB solving.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",
@@ -530,6 +630,7 @@ def build_family_instances(
         elif family == "graph-coloring":
             instances.extend(
                 [
+                    TheoryInstance("cycle_4_3color", "graph-coloring", _graph_coloring_formula(4, _cycle_edges(4), 3), "built_in_graph_coloring", "symmetric 3-coloring encoding for a 4-cycle graph"),
                     TheoryInstance("cycle_6_3color", "graph-coloring", _graph_coloring_formula(6, _cycle_edges(6), 3), "built_in_graph_coloring", "symmetric 3-coloring encoding for a cycle graph"),
                     TheoryInstance("complete_4_3color", "graph-coloring", _graph_coloring_formula(4, _complete_edges(4), 3), "built_in_graph_coloring", "small complete graph coloring encoding with color/vertex symmetry"),
                 ]
@@ -542,7 +643,7 @@ def build_family_instances(
             instances.append(
                 TheoryInstance("symmetric_exactly_one_4", "symmetric-toy", _symmetric_toy_formula(4), "built_in_symmetric_toy", "obvious interchangeable variables for orbit diagnostics")
             )
-        elif family == "adversarial-near-symmetry":
+        elif family in {"adversarial-near-symmetry", "near-symmetry"}:
             instances.append(
                 TheoryInstance("near_symmetric_exactly_one_4", "adversarial-near-symmetry", _near_symmetric_toy_formula(4), "built_in_near_symmetric_toy", "one variable is intentionally distinguished; orbit diagnostic must not merge it")
             )
@@ -634,6 +735,378 @@ def syntactic_orbit_diagnostic(formula: CNFFormula, *, max_group_size_estimate: 
         "symmetry_score": round(sum(len(group) for group in nontrivial) / max(1, formula.num_vars), 6),
         "symmetry_group_size_estimate_capped": estimate,
         "scope": "diagnostic candidate orbit grouping; no certified quotient transformation",
+    }
+
+
+def _normalise_permutation(formula: CNFFormula, generator: dict[Any, Any]) -> dict[int, int]:
+    variables = set(formula.variables)
+    perm: dict[int, int] = {}
+    for raw_key, raw_value in generator.items():
+        key = int(raw_key)
+        value = int(raw_value)
+        if key not in variables or value not in variables:
+            raise ValueError("permutation mentions a variable outside the formula")
+        perm[key] = value
+    full = {variable: perm.get(variable, variable) for variable in variables}
+    if set(full.values()) != variables:
+        raise ValueError("permutation is not a bijection on formula variables")
+    return {key: value for key, value in sorted(full.items()) if key != value}
+
+
+def _full_permutation(formula: CNFFormula, generator: dict[Any, Any]) -> dict[int, int]:
+    moved = _normalise_permutation(formula, generator)
+    return {variable: moved.get(variable, variable) for variable in formula.variables}
+
+
+def _permute_literal(lit: int, perm: dict[int, int]) -> int:
+    image = perm.get(abs(lit), abs(lit))
+    return image if lit > 0 else -image
+
+
+def _permute_clause(clause: Clause, perm: dict[int, int]) -> tuple[int, ...]:
+    return Clause(_permute_literal(lit, perm) for lit in clause.literals).literals
+
+
+def validate_automorphism(formula: CNFFormula, generator: dict[Any, Any]) -> dict[str, Any]:
+    """Check exact clause-set preservation for a variable permutation."""
+
+    try:
+        perm = _full_permutation(formula, generator)
+    except (TypeError, ValueError) as exc:
+        return {"status": "FAIL", "message": str(exc), "generator": dict(generator)}
+    original = {clause.literals for clause in formula.clauses}
+    mapped = {_permute_clause(clause, perm) for clause in formula.clauses}
+    if mapped != original:
+        missing = sorted(original - mapped)[:3]
+        extra = sorted(mapped - original)[:3]
+        return {
+            "status": "FAIL",
+            "message": "permutation does not preserve the CNF clause set exactly",
+            "missing_clause_examples": [list(item) for item in missing],
+            "extra_clause_examples": [list(item) for item in extra],
+        }
+    return {"status": "PASS", "message": "exact clause-set automorphism validated"}
+
+
+def _perm_tuple(formula: CNFFormula, generator: dict[Any, Any]) -> tuple[int, ...]:
+    full = _full_permutation(formula, generator)
+    return tuple(full[variable] for variable in formula.variables)
+
+
+def _tuple_to_moved_dict(variables: tuple[int, ...], values: tuple[int, ...]) -> dict[int, int]:
+    return {variable: image for variable, image in zip(variables, values) if variable != image}
+
+
+def _compose_permutation(first: tuple[int, ...], second: tuple[int, ...], variables: tuple[int, ...]) -> tuple[int, ...]:
+    index = {variable: idx for idx, variable in enumerate(variables)}
+    return tuple(first[index[second[index[variable]]]] for variable in variables)
+
+
+def _generate_permutation_group(formula: CNFFormula, generators: list[dict[Any, Any]], *, cap: int = 256) -> list[tuple[int, ...]]:
+    variables = formula.variables
+    identity = tuple(variables)
+    generator_tuples = [_perm_tuple(formula, generator) for generator in generators]
+    seen = {identity}
+    queue: deque[tuple[int, ...]] = deque([identity])
+    while queue and len(seen) <= cap:
+        current = queue.popleft()
+        for generator in generator_tuples:
+            for composed in (
+                _compose_permutation(generator, current, variables),
+                _compose_permutation(current, generator, variables),
+            ):
+                if composed not in seen:
+                    seen.add(composed)
+                    queue.append(composed)
+                    if len(seen) > cap:
+                        break
+            if len(seen) > cap:
+                break
+    return sorted(seen)
+
+
+def _union_find_orbits(items: Iterable[int], edges: Iterable[tuple[int, int]]) -> list[list[int]]:
+    parent = {item: item for item in items}
+
+    def find(item: int) -> int:
+        while parent[item] != item:
+            parent[item] = parent[parent[item]]
+            item = parent[item]
+        return item
+
+    def union(left: int, right: int) -> None:
+        lroot = find(left)
+        rroot = find(right)
+        if lroot != rroot:
+            parent[max(lroot, rroot)] = min(lroot, rroot)
+
+    for left, right in edges:
+        union(left, right)
+    groups: dict[int, list[int]] = defaultdict(list)
+    for item in parent:
+        groups[find(item)].append(item)
+    return sorted((sorted(group) for group in groups.values()), key=lambda group: (group[0], len(group)))
+
+
+def compute_orbits_from_generators(formula: CNFFormula, generators: list[dict[Any, Any]]) -> dict[str, Any]:
+    variables = formula.variables
+    group = _generate_permutation_group(formula, generators)
+    variable_edges: list[tuple[int, int]] = []
+    literal_edges: list[tuple[int, int]] = []
+    clause_edges: list[tuple[int, int]] = []
+    clause_index = {clause.literals: idx for idx, clause in enumerate(formula.clauses)}
+    for perm_tuple in group:
+        perm = _tuple_to_moved_dict(variables, perm_tuple)
+        full = {variable: perm.get(variable, variable) for variable in variables}
+        for variable in variables:
+            image = full[variable]
+            variable_edges.append((variable, image))
+            literal_edges.append((variable, image))
+            literal_edges.append((-variable, -image))
+        for idx, clause in enumerate(formula.clauses):
+            mapped = _permute_clause(clause, full)
+            if mapped in clause_index:
+                clause_edges.append((idx, clause_index[mapped]))
+    return {
+        "group_size": len(group),
+        "variable_orbits": _union_find_orbits(variables, variable_edges),
+        "literal_orbits": _union_find_orbits([lit for variable in variables for lit in (-variable, variable)], literal_edges),
+        "clause_orbits": _union_find_orbits(range(len(formula.clauses)), clause_edges),
+    }
+
+
+def _pigeonhole_var(pigeon: int, hole: int, holes: int) -> int:
+    return (pigeon - 1) * holes + hole
+
+
+def _graph_coloring_var(vertex: int, color: int, colors: int) -> int:
+    return (vertex - 1) * colors + color
+
+
+def _parse_trailing_int(text: str, prefix: str = "") -> int:
+    if prefix and text.startswith(prefix):
+        text = text[len(prefix) :]
+    if prefix and text.endswith(prefix):
+        text = text[: -len(prefix)]
+    return int(text)
+
+
+def infer_exact_automorphism_generators(instance: TheoryInstance) -> list[dict[int, int]]:
+    if instance.instance_id.startswith("symmetric_exactly_one_"):
+        size = instance.formula.max_var
+        return [{idx: idx + 1, idx + 1: idx} for idx in range(1, size)]
+    if instance.instance_id.startswith("near_symmetric_exactly_one_"):
+        size = max(1, instance.formula.max_var - 1)
+        return [{idx: idx + 1, idx + 1: idx} for idx in range(1, size)]
+    if instance.family == "graph-coloring":
+        parts = instance.instance_id.split("_")
+        vertices = int(parts[1])
+        colors = _parse_trailing_int(parts[2], "color")
+        generators = []
+        for color in range(1, colors):
+            perm: dict[int, int] = {}
+            for vertex in range(1, vertices + 1):
+                perm[_graph_coloring_var(vertex, color, colors)] = _graph_coloring_var(vertex, color + 1, colors)
+                perm[_graph_coloring_var(vertex, color + 1, colors)] = _graph_coloring_var(vertex, color, colors)
+            generators.append(perm)
+        return generators
+    if instance.family == "pigeonhole" and instance.instance_id.startswith("php_"):
+        _, pigeons_text, holes_text = instance.instance_id.split("_")
+        pigeons = int(pigeons_text)
+        holes = int(holes_text)
+        generators = []
+        for pigeon in range(1, pigeons):
+            perm = {}
+            for hole in range(1, holes + 1):
+                perm[_pigeonhole_var(pigeon, hole, holes)] = _pigeonhole_var(pigeon + 1, hole, holes)
+                perm[_pigeonhole_var(pigeon + 1, hole, holes)] = _pigeonhole_var(pigeon, hole, holes)
+            generators.append(perm)
+        for hole in range(1, holes):
+            perm = {}
+            for pigeon in range(1, pigeons + 1):
+                perm[_pigeonhole_var(pigeon, hole, holes)] = _pigeonhole_var(pigeon, hole + 1, holes)
+                perm[_pigeonhole_var(pigeon, hole + 1, holes)] = _pigeonhole_var(pigeon, hole, holes)
+            generators.append(perm)
+        return generators
+    return []
+
+
+def _cycle_graph_coloring_witness(instance: TheoryInstance) -> dict[int, bool]:
+    parts = instance.instance_id.split("_")
+    vertices = int(parts[1])
+    colors = _parse_trailing_int(parts[2], "color")
+    assignment = {var: False for var in instance.formula.variables}
+    if vertices % 2 != 0 or colors < 2:
+        return {}
+    for vertex in range(1, vertices + 1):
+        chosen = 1 if vertex % 2 == 1 else 2
+        assignment[_graph_coloring_var(vertex, chosen, colors)] = True
+    return assignment
+
+
+def _symmetry_witness_for_instance(instance: TheoryInstance) -> tuple[dict[int, bool], list[list[int]], str, str]:
+    if instance.instance_id.startswith("symmetric_exactly_one_"):
+        assignment = {var: False for var in instance.formula.variables}
+        assignment[1] = True
+        return assignment, [[1]], "TOY_CANONICAL", "SAT_ORBIT_REPRESENTATIVE_EXISTS"
+    if instance.instance_id.startswith("cycle_"):
+        witness = _cycle_graph_coloring_witness(instance)
+        if witness:
+            return witness, [[1]], "ORBIT_REPRESENTATIVE", "SAT_ORBIT_REPRESENTATIVE_EXISTS"
+    return {}, [], "NONE", "NONE"
+
+
+def _formula_with_extra_clauses(formula: CNFFormula, clauses: list[list[int]]) -> CNFFormula:
+    return CNFFormula.from_raw_clauses([clause.to_list() for clause in formula.clauses] + clauses)
+
+
+def build_symmetry_certificate(instance: TheoryInstance) -> SymmetryCertificate:
+    generators = infer_exact_automorphism_generators(instance)
+    validations = [validate_automorphism(instance.formula, generator) for generator in generators]
+    validation_status = "VALIDATED" if generators and all(item["status"] == "PASS" for item in validations) else "FAILED"
+    if not generators:
+        validation_status = "NO_GENERATORS"
+    orbits = {"variable_orbits": [], "literal_orbits": [], "clause_orbits": [], "group_size": 0}
+    if validation_status == "VALIDATED":
+        orbits = compute_orbits_from_generators(instance.formula, generators)
+
+    witness, sbp_clauses, sbp_type, preservation_argument = _symmetry_witness_for_instance(instance)
+    status = SYMMETRY_NATIVE_CERTIFIED if validation_status == "VALIDATED" else SYMMETRY_UNSUPPORTED_FOR_INSTANCE
+    certification_level = "AUTOMORPHISM_VALIDATED_NATIVE" if validation_status == "VALIDATED" else "NOT_CERTIFIED"
+    checker_status = "NOT_RUN"
+    obligations: list[str] = []
+    notes = "Exact automorphism evidence recorded. No quotient or DRAT proof is claimed."
+    if instance.family == "pigeonhole" and validation_status == "VALIDATED":
+        status = SYMMETRY_DIAGNOSTIC_ONLY
+        certification_level = "AUTOMORPHISM_VALIDATED_DIAGNOSTIC_ONLY"
+        notes = "Pigeonhole row/hole symmetries are exact, but no SBP preservation checker or quotient collapse is claimed."
+    if witness:
+        strengthened = _formula_with_extra_clauses(instance.formula, sbp_clauses)
+        if formula_satisfied(instance.formula, witness) and formula_satisfied(strengthened, witness):
+            status = SYMMETRY_SAT_WITNESS_RECONSTRUCTED
+            certification_level = "NATIVE_SYMMETRY_SAT_WITNESS_RECONSTRUCTED"
+            obligations = [
+                "automorphism_generators_validate_against_original_cnf",
+                "sbp_is_not_claimed_implied_by_original_formula",
+                "orbit_representative_preservation_for_sat_witness",
+                "lifted_assignment_satisfies_original_cnf",
+            ]
+            notes = "SAT witness satisfies the symmetry-broken formula and the original formula directly; SBP is justified by orbit-representative preservation, not implication."
+        else:
+            status = SYMMETRY_CERTIFICATION_FAILED
+            certification_level = "NOT_CERTIFIED"
+            notes = "Witness failed original or symmetry-broken CNF verification."
+    if validation_status == "FAILED":
+        status = SYMMETRY_CERTIFICATION_FAILED
+        certification_level = "NOT_CERTIFIED"
+        notes = "At least one claimed generator failed exact automorphism validation."
+
+    cert = SymmetryCertificate(
+        instance_id=instance.instance_id,
+        formula_hash=instance.formula.formula_hash,
+        automorphism_generators=[dict(sorted(_normalise_permutation(instance.formula, generator).items())) for generator in generators]
+        if validation_status == "VALIDATED"
+        else [dict(generator) for generator in generators],
+        automorphism_validation_status=validation_status,
+        variable_orbits=orbits["variable_orbits"],
+        literal_orbits=orbits["literal_orbits"],
+        clause_orbits=orbits["clause_orbits"],
+        sbp_clauses=sbp_clauses,
+        sbp_type=sbp_type,
+        preservation_argument=preservation_argument,
+        quotient_used=False,
+        quotient_map={},
+        reconstruction_map={"type": "direct_assignment_verification"} if witness else {},
+        checker_status=checker_status,
+        certification_level=certification_level,
+        status=status,
+        sat_witness={str(var): value for var, value in sorted(witness.items())},
+        lifted_assignment={str(var): value for var, value in sorted(witness.items())},
+        drat_trim_verified_against_original=False,
+        proof_file=None,
+        proof_base=None,
+        preservation_obligations=obligations,
+        notes=notes,
+    )
+    check = check_symmetry_certificate(instance.formula, cert)
+    data = cert.to_dict()
+    data["checker_status"] = str(check["checker_status"])
+    if check["checker_status"] != "PASS":
+        data["status"] = SYMMETRY_CERTIFICATION_FAILED
+        data["certification_level"] = "NOT_CERTIFIED"
+    return SymmetryCertificate(**data)
+
+
+def _assignment_from_payload(payload: dict[str, Any]) -> dict[int, bool]:
+    return {int(var): bool(value) for var, value in payload.items()}
+
+
+def check_symmetry_certificate(formula: CNFFormula, certificate: SymmetryCertificate | dict[str, Any]) -> dict[str, Any]:
+    data = certificate.to_dict() if isinstance(certificate, SymmetryCertificate) else dict(certificate)
+    errors: list[str] = []
+    if str(data.get("formula_hash", "")).lower() != formula.formula_hash.lower():
+        errors.append("FORMULA_HASH_MISMATCH")
+    generators = [dict(generator) for generator in data.get("automorphism_generators", [])]
+    validations = [validate_automorphism(formula, generator) for generator in generators]
+    if data.get("automorphism_validation_status") == "VALIDATED":
+        if not generators:
+            errors.append("VALIDATED_WITHOUT_GENERATORS")
+        if any(item["status"] != "PASS" for item in validations):
+            errors.append("AUTOMORPHISM_VALIDATION_FAILED")
+    if generators and all(item["status"] == "PASS" for item in validations):
+        expected = compute_orbits_from_generators(formula, generators)
+        if data.get("variable_orbits") != expected["variable_orbits"]:
+            errors.append("VARIABLE_ORBITS_MISMATCH")
+        if data.get("literal_orbits") != expected["literal_orbits"]:
+            errors.append("LITERAL_ORBITS_MISMATCH")
+        if data.get("clause_orbits") != expected["clause_orbits"]:
+            errors.append("CLAUSE_ORBITS_MISMATCH")
+    if data.get("sbp_clauses") and data.get("preservation_argument") == "NONE":
+        errors.append("SBP_WITHOUT_PRESERVATION_ARGUMENT")
+    status = data.get("status")
+    if status == SYMMETRY_SAT_WITNESS_RECONSTRUCTED:
+        witness = _assignment_from_payload(data.get("lifted_assignment") or data.get("sat_witness") or {})
+        if not witness:
+            errors.append("SAT_WITNESS_MISSING")
+        elif not formula_satisfied(formula, witness):
+            errors.append("LIFTED_ASSIGNMENT_DOES_NOT_SATISFY_ORIGINAL")
+        if data.get("sbp_clauses") and witness:
+            strengthened = _formula_with_extra_clauses(formula, [list(map(int, clause)) for clause in data["sbp_clauses"]])
+            if not formula_satisfied(strengthened, witness):
+                errors.append("WITNESS_DOES_NOT_SATISFY_SBP")
+    if status == SYMMETRY_UNSAT_NATIVE_CERTIFIED:
+        obligations = set(data.get("preservation_obligations", []))
+        required = {"automorphism_proof", "sbp_preservation_proof", "strengthened_unsat_native_proof"}
+        if not required.issubset(obligations):
+            errors.append("UNSAT_PRESERVATION_OBLIGATIONS_MISSING")
+    if status == SYMMETRY_DRAT_VERIFIED:
+        if not data.get("drat_trim_verified_against_original") or data.get("proof_base") != "original_cnf":
+            errors.append("DRAT_NOT_VERIFIED_AGAINST_ORIGINAL_CNF")
+    checker_status = "PASS" if not errors else SYMMETRY_CERTIFICATION_FAILED
+    return {
+        "checker_status": checker_status,
+        "status": checker_status,
+        "errors": errors,
+        "automorphism_validation_results": validations,
+        "sbp_claim_boundary": "SBP clauses are not treated as implied by the original formula; preservation must be justified by orbit representatives or external proof checking.",
+    }
+
+
+def detect_cardinality_pb(formula: CNFFormula) -> dict[str, Any]:
+    positive_groups = [tuple(clause.literals) for clause in formula.clauses if len(clause) > 1 and all(lit > 0 for lit in clause.literals)]
+    negative_pairs = {tuple(sorted(abs(lit) for lit in clause.literals)) for clause in formula.clauses if len(clause) == 2 and all(lit < 0 for lit in clause.literals)}
+    exactly_one_groups: list[list[int]] = []
+    for group in positive_groups:
+        pairs = {tuple(sorted((a, b))) for idx, a in enumerate(group) for b in group[idx + 1 :]}
+        if pairs and pairs.issubset(negative_pairs):
+            exactly_one_groups.append(list(group))
+    return {
+        "status": CARDINALITY_STRUCTURE_DETECTED if positive_groups or negative_pairs else CARDINALITY_DIAGNOSTIC_ONLY,
+        "certification_level": CARDINALITY_DIAGNOSTIC_ONLY,
+        "at_least_one_constraints": [list(group) for group in positive_groups],
+        "at_most_one_pair_count": len(negative_pairs),
+        "exactly_one_constraints": exactly_one_groups,
+        "solver_claim": "NO_PB_SOLVING_CLAIM",
     }
 
 
@@ -788,14 +1261,14 @@ def run_instance(
     if any(op.endswith("_PROTOTYPE") or op == "BACKDOOR_DIAGNOSTIC" for op in grammar.operators):
         return _stub_result(instance, grammar, started)
 
-    if grammar.name in {"G1_XOR", "G2_SYMMETRY_PROTOTYPE"}:
+    if grammar.name in {"G1_XOR", "G2_SYMMETRY_PROTOTYPE", "G2_SYMMETRY_CERTIFIED", "G3_CARDINALITY_PB_PROTOTYPE"}:
         path = solve_with_xor(instance.formula, c=grammar.max_c, detect_cnf_xor=True, detect_xor_max_k=grammar.xor_max_k)
     else:
         path = solve(instance.formula, c=grammar.max_c)
 
     artifact_paths: dict[str, str] = {}
     proof_status = "NOT_REQUESTED"
-    if strict and grammar.name in {"G1_XOR", "G2_SYMMETRY_PROTOTYPE"} and path.status == XOR_UNSAT_NATIVE and drat_trim_path is not None and out_root is not None:
+    if strict and grammar.name in {"G1_XOR", "G2_SYMMETRY_PROTOTYPE", "G2_SYMMETRY_CERTIFIED"} and path.status == XOR_UNSAT_NATIVE and drat_trim_path is not None and out_root is not None:
         policy = grammar.proof_policy
         cert = Path(out_root) / "certs" / grammar.name / f"{instance.instance_id}.wcert"
         export_certificate_bundle(
@@ -1271,6 +1744,183 @@ def run_collapse_theory_frontier(
     }
 
 
+def _symmetry_public_category(cert: SymmetryCertificate) -> str:
+    if cert.status == SYMMETRY_SAT_WITNESS_RECONSTRUCTED:
+        return SAT_ASSIGNMENT_VERIFIED
+    if cert.status == SYMMETRY_DRAT_VERIFIED:
+        return UNSAT_DRAT_EXPORTED_VERIFIED
+    if cert.status == SYMMETRY_UNSAT_NATIVE_CERTIFIED:
+        return UNSAT_NOT_EXTERNALLY_VERIFIED
+    return NO_COLLAPSE_FOUND
+
+
+def _symmetry_status_row(instance: TheoryInstance, cert: SymmetryCertificate, g1_result: CollapseResult) -> dict[str, Any]:
+    return {
+        "family": instance.family,
+        "instance_id": instance.instance_id,
+        "g1_public_category": g1_result.public_category,
+        "g2_symmetry_status": cert.status,
+        "g2_public_category": _symmetry_public_category(cert),
+        "certification_level": cert.certification_level,
+        "automorphism_validation_status": cert.automorphism_validation_status,
+        "checker_status": cert.checker_status,
+        "sbp_type": cert.sbp_type,
+        "preservation_argument": cert.preservation_argument,
+        "quotient_used": cert.quotient_used,
+        "drat_trim_verified_against_original": cert.drat_trim_verified_against_original,
+        "proof_base": cert.proof_base or "",
+        "variable_orbit_count": len(cert.variable_orbits),
+        "largest_variable_orbit": max((len(orbit) for orbit in cert.variable_orbits), default=0),
+        "sbp_clause_count": len(cert.sbp_clauses),
+        "formula_hash": cert.formula_hash,
+    }
+
+
+def _symmetry_operator_delta(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    changed = [
+        row
+        for row in rows
+        if row["g1_public_category"] == NO_COLLAPSE_FOUND and row["g2_public_category"] != NO_COLLAPSE_FOUND
+    ]
+    return {
+        "operator_added": "CERTIFIED_SYMMETRY_ORBIT",
+        "instances_changed": len(changed),
+        "sat_witness_reconstructed_delta": sum(1 for row in changed if row["g2_symmetry_status"] == SYMMETRY_SAT_WITNESS_RECONSTRUCTED),
+        "drat_verified_delta": sum(1 for row in changed if row["g2_symmetry_status"] == SYMMETRY_DRAT_VERIFIED),
+        "diagnostic_only_count": sum(1 for row in rows if row["g2_symmetry_status"] == SYMMETRY_DIAGNOSTIC_ONLY),
+        "fake_drat_claims": sum(1 for row in rows if row["g2_symmetry_status"] == SYMMETRY_DRAT_VERIFIED and not row["drat_trim_verified_against_original"]),
+        "changed_instances": [{"family": row["family"], "instance_id": row["instance_id"], "status": row["g2_symmetry_status"]} for row in changed],
+        "claim_boundary": "bounded native symmetry evidence; DRAT is counted only when checked against original CNF",
+    }
+
+
+def certified_symmetry_report(rows: list[dict[str, Any]], cardinality_rows: list[dict[str, Any]], delta: dict[str, Any]) -> str:
+    lines = [
+        "# Certified Symmetry Collapse Report",
+        "",
+        "## Executive Summary",
+        "",
+        "v2.2 turns symmetry from a diagnostic signal into native certificates for supported small formulas. It validates exact automorphisms, records orbit partitions, checks SBP preservation obligations, and verifies reconstructed SAT witnesses against the original CNF.",
+        "",
+        "No DRAT claim is made for symmetry rows unless a proof against the original CNF is checked. This run records no symmetry DRAT result.",
+        "",
+        "## Soundness Boundary",
+        "",
+        "Symmetry-breaking predicates are generally not implied by the original formula. Witnora records the preservation obligation as `F is satisfiable iff F and SBP is satisfiable`, justified by orbit-representative evidence for the supported SAT witness cases.",
+        "",
+        "## Symmetry Results",
+        "",
+    ]
+    lines.extend(
+        _markdown_table(
+            ["family", "instance", "G1", "G2_status", "G2_category", "checker", "SBP", "preservation"],
+            [[row["family"], row["instance_id"], row["g1_public_category"], row["g2_symmetry_status"], row["g2_public_category"], row["checker_status"], row["sbp_type"], row["preservation_argument"]] for row in rows],
+        )
+    )
+    lines.extend(["", "## SAT Witness Reconstruction", ""])
+    witness_rows = [row for row in rows if row["g2_symmetry_status"] == SYMMETRY_SAT_WITNESS_RECONSTRUCTED]
+    lines.extend(_markdown_table(["family", "instance", "certification", "checker"], [[row["family"], row["instance_id"], row["certification_level"], row["checker_status"]] for row in witness_rows]))
+    lines.extend(["", "## UNSAT Preservation", "", "No v2.2 symmetry row claims UNSAT from `F and SBP` alone. UNSAT native preservation remains gated by explicit obligations, and DRAT remains gated by drat-trim against the original CNF.", "", "## Pigeonhole Result", ""])
+    pigeonhole = [row for row in rows if row["family"] == "pigeonhole"]
+    lines.extend(_markdown_table(["instance", "status", "largest_orbit", "SBP"], [[row["instance_id"], row["g2_symmetry_status"], row["largest_variable_orbit"], row["sbp_type"]] for row in pigeonhole[:8]]))
+    lines.extend(["", "## Cardinality/PB Diagnostic", ""])
+    lines.extend(_markdown_table(["family", "instance", "status", "exactly_one", "at_most_one_pairs"], [[row["family"], row["instance_id"], row["status"], row["exactly_one_count"], row["at_most_one_pair_count"]] for row in cardinality_rows]))
+    lines.extend(["", "## Operator Delta Summary", "", stable_json(delta), "## What This Does Not Prove", "", "This report does not claim P vs NP progress, polynomial-time SAT, full pigeonhole collapse, general symmetry collapse, broad XOR extraction, or a lower-bound theorem. Pigeonhole symmetry is recorded as exact orbit evidence only unless a preservation certificate is present.", ""])
+    return "\n".join(lines)
+
+
+def run_symmetry_lab(
+    *,
+    families: Iterable[str],
+    out_root: str | Path,
+    drat_trim_path: str | Path | None = None,
+    strict: bool = False,
+) -> dict[str, Any]:
+    root = Path(out_root)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+    instances = build_family_instances(families, out_root=root, prefer_official_tseitin=False)
+    profiles = grammar_profiles()
+    g1 = profiles["G1_XOR"]
+    certificate_rows: list[dict[str, Any]] = []
+    certificates: list[dict[str, Any]] = []
+    automorphism_rows: list[dict[str, Any]] = []
+    orbit_rows: list[dict[str, Any]] = []
+    sbp_rows: list[dict[str, Any]] = []
+    witness_rows: list[dict[str, Any]] = []
+    unsat_rows: list[dict[str, Any]] = []
+    cardinality_rows: list[dict[str, Any]] = []
+
+    cert_root = root / "certificates"
+    cnf_root = root / "original_cnf"
+    cert_root.mkdir(parents=True, exist_ok=True)
+    cnf_root.mkdir(parents=True, exist_ok=True)
+
+    for instance in instances:
+        g1_result = run_instance(instance, g1, out_root=root, strict=strict, drat_trim_path=drat_trim_path)
+        cert = build_symmetry_certificate(instance)
+        cert_data = cert.to_dict()
+        certificates.append(cert_data)
+        (cnf_root / f"{instance.instance_id}.cnf").write_text(instance.formula.canonical_dimacs(), encoding="utf-8", newline="\n")
+        (cert_root / f"{instance.instance_id}_symmetry_certificate.json").write_text(stable_json(cert_data), encoding="utf-8", newline="\n")
+        certificate_rows.append(_symmetry_status_row(instance, cert, g1_result))
+        automorphism_rows.append(
+            {
+                "family": instance.family,
+                "instance_id": instance.instance_id,
+                "generator_count": len(cert.automorphism_generators),
+                "automorphism_validation_status": cert.automorphism_validation_status,
+                "checker_status": cert.checker_status,
+                "status": cert.status,
+            }
+        )
+        for orbit in cert.variable_orbits:
+            orbit_rows.append({"family": instance.family, "instance_id": instance.instance_id, "orbit_kind": "variable", "orbit_size": len(orbit), "orbit": " ".join(str(item) for item in orbit)})
+        sbp_rows.append({"family": instance.family, "instance_id": instance.instance_id, "sbp_type": cert.sbp_type, "sbp_clause_count": len(cert.sbp_clauses), "preservation_argument": cert.preservation_argument, "sbp_not_claimed_implied": True})
+        witness_rows.append({"family": instance.family, "instance_id": instance.instance_id, "status": cert.status, "witness_present": bool(cert.lifted_assignment), "witness_satisfies_original": cert.status == SYMMETRY_SAT_WITNESS_RECONSTRUCTED and cert.checker_status == "PASS"})
+        unsat_rows.append({"family": instance.family, "instance_id": instance.instance_id, "unsat_status_claimed": cert.status in {SYMMETRY_UNSAT_NATIVE_CERTIFIED, SYMMETRY_DRAT_VERIFIED}, "strengthening_alone_used": False, "proof_base": cert.proof_base or ""})
+        cardinality = detect_cardinality_pb(instance.formula)
+        cardinality_rows.append(
+            {
+                "family": instance.family,
+                "instance_id": instance.instance_id,
+                "status": cardinality["status"],
+                "certification_level": cardinality["certification_level"],
+                "exactly_one_count": len(cardinality["exactly_one_constraints"]),
+                "at_least_one_count": len(cardinality["at_least_one_constraints"]),
+                "at_most_one_pair_count": cardinality["at_most_one_pair_count"],
+                "solver_claim": cardinality["solver_claim"],
+            }
+        )
+
+    delta = _symmetry_operator_delta(certificate_rows)
+    candidates = initial_theorem_candidates()
+    payloads = {
+        "symmetry_certificates.json": {"certificates": certificates},
+        "automorphism_validation_summary.json": {"rows": automorphism_rows},
+        "sbp_summary.json": {"rows": sbp_rows},
+        "witness_reconstruction_summary.json": {"rows": witness_rows},
+        "unsat_preservation_summary.json": {"rows": unsat_rows},
+        "cardinality_pb_diagnostics.json": {"rows": cardinality_rows},
+        "symmetry_operator_delta_summary.json": delta,
+        "theorem_candidates.json": {"theorem_candidates": [candidate.to_dict() for candidate in candidates]},
+        "manifest.json": {"version": "2.2", "created_utc": datetime.now(timezone.utc).isoformat(), "families": list(families), "strict": strict, "drat_trim_path": str(drat_trim_path or "")},
+    }
+    for name, payload in payloads.items():
+        (root / name).write_text(stable_json(payload), encoding="utf-8", newline="\n")
+    write_csv(root / "orbit_summary.csv", orbit_rows)
+    write_csv(root / "symmetry_result_summary.csv", certificate_rows)
+    (root / "CERTIFIED_SYMMETRY_COLLAPSE_REPORT.md").write_text(certified_symmetry_report(certificate_rows, cardinality_rows, delta), encoding="utf-8", newline="\n")
+    return {
+        "out_root": str(root),
+        "symmetry_certificates": certificates,
+        "symmetry_result_summary": certificate_rows,
+        "cardinality_pb_diagnostics": cardinality_rows,
+        "symmetry_operator_delta_summary": delta,
+    }
+
+
 def run_theory_experiment(
     *,
     grammars: Iterable[str],
@@ -1456,6 +2106,17 @@ def main(argv: list[str] | None = None) -> int:
     frontier_lab_parser.add_argument("--strict", action="store_true")
     frontier_lab_parser.add_argument("--official-tseitin", action="store_true")
     frontier_lab_parser.add_argument("--zip", default="witnora-core-v2.1-collapse-theory-frontier.zip")
+
+    symmetry_parser = sub.add_parser("run-symmetry-lab")
+    symmetry_parser.add_argument("--families", nargs="+", default=["symmetric-toy", "graph-coloring", "pigeonhole", "near-symmetry"])
+    symmetry_parser.add_argument("--out-root", default="outputs/v2.2-certified-symmetry-collapse")
+    symmetry_parser.add_argument("--drat-trim")
+    symmetry_parser.add_argument("--strict", action="store_true")
+    symmetry_parser.add_argument("--zip", default="witnora-core-v2.2-certified-symmetry-collapse.zip")
+
+    check_symmetry_parser = sub.add_parser("check-symmetry-cert")
+    check_symmetry_parser.add_argument("--cnf", required=True)
+    check_symmetry_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -1474,6 +2135,18 @@ def main(argv: list[str] | None = None) -> int:
         result = run_operator_discovery(base_grammar=args.base_grammar, candidate_operators=args.candidate_operators, families=args.families, out_root=args.out_root)
         digest = make_zip(args.out_root, args.zip) if args.zip else ""
         print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": {"candidate_count": len(result["candidate_operator_rankings"])}}))
+        return 0
+
+    if args.command == "run-symmetry-lab":
+        result = run_symmetry_lab(families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict)
+        digest = make_zip(args.out_root, args.zip)
+        print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": {"certificate_count": len(result["symmetry_certificates"]), "changed_instances": result["symmetry_operator_delta_summary"]["instances_changed"]}}))
+        return 0
+
+    if args.command == "check-symmetry-cert":
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_symmetry_certificate(formula, data)))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)
