@@ -1,0 +1,17 @@
+{
+  "certification_level": "PARTIAL_REPLAY_INDEPENDENT_CHECKER_VERIFIED",
+  "not_claimed": [
+    "parity support",
+    "broad XOR extraction",
+    "CryptoMiniSat-style extraction",
+    "competitive SAT solving",
+    "industrial benchmark performance",
+    "full DRAT/RAT/LRAT/FRAT support",
+    "P vs NP progress",
+    "HARD or UNKNOWN status claims"
+  ],
+  "project": "Witnora-Core",
+  "replay_depth": "independent_checker_replay",
+  "verification_depth": "partial_replay",
+  "verdict": "PARTIAL_REPLAY_VERIFIED_WITH_SCOPE_LIMITS"
+}

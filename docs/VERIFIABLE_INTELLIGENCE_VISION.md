@@ -23,9 +23,24 @@ to a human.
 Witnora-Core currently verifies scoped SAT and UNSAT claims produced by its own
 collapse-path framework. Its release verifier currently performs artifact
 integrity checks, required-file/hash checks, and claim-boundary text scanning
-for release packages. Scientific proof reruns, complete security audits, and
-general AI-agent verification are future directions unless explicitly reported
-by a deeper verification run.
+for release packages. v1.2 adds partial replay for selected evidence already
+inside a diagnostic artifact: proof syntax checks, recorded drat-trim log
+checks, selected independent checker reruns, and optional selected drat-trim
+reruns when a checker path is provided. Scientific proof reruns for every proof,
+complete security audits, and general AI-agent verification are future
+directions unless explicitly reported by a deeper verification run.
+
+## Verification Depths
+
+Witnora uses explicit depth labels:
+
+1. `metadata_hash_checks_only`: checks release hashes, required files, manifest
+   consistency, and claim-boundary text scanning.
+2. `partial_replay`: verifies selected evidence already present in the artifact.
+   It does not rerun the solver, regenerate CNFgen instances, or rerun the full
+   benchmark diagnostic.
+3. `full_replay`: future work. In v1.2, a full replay request returns
+   `NOT_VERIFIED` with `FULL_REPLAY_NOT_IMPLEMENTED`.
 
 The v1.1 verification kernel does not add solving power. It adds a reusable
 audit layer that asks:

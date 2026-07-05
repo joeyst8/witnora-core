@@ -38,6 +38,19 @@ verification path is an artifact-integrity and metadata check; it does not rerun
 the full scientific proof pipeline unless a future report explicitly says a
 deeper replay was performed.
 
+v1.2 adds a partial replay mode for release artifacts. Partial replay verifies
+selected evidence already present in the artifact, including proof-file syntax,
+recorded drat-trim logs, selected independent checker replay, and optional
+selected drat-trim replay when a checker path is provided. It does not rerun the
+solver, regenerate public benchmark inputs, or rerun the full benchmark
+diagnostic.
+
+The current depth ladder is:
+
+- `metadata_hash_checks_only`: artifact integrity and claim-boundary scanning
+- `partial_replay`: selected proof evidence replay/checks from the artifact
+- `full_replay`: future work, explicitly unsupported in v1.2
+
 The same shape can later support other technical outputs:
 
 - generated code with tests and static-analysis evidence

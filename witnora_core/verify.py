@@ -9,6 +9,7 @@ from pathlib import Path
 from .verification_report import (
     VERDICT_ARTIFACT_INTEGRITY_VERIFIED,
     VERDICT_PARTIALLY_VERIFIED,
+    VERDICT_PARTIAL_REPLAY_VERIFIED,
     render_trust_card_markdown,
     stable_json,
     trust_card_from_report,
@@ -37,6 +38,11 @@ def main(argv: list[str] | None = None) -> int:
     release_parser.add_argument("--diagnostic-zip", required=True)
     release_parser.add_argument("--manifest", required=True)
     release_parser.add_argument("--out-dir", default=".", help="directory for release_verification_report.json/md")
+    release_parser.add_argument("--depth", choices=["metadata", "partial", "full"], default="metadata")
+    release_parser.add_argument("--select", default="largest", help="partial replay selection: largest, first, all, or instance:<id>:c:<n>")
+    release_parser.add_argument("--rerun-drat-trim", action="store_true", help="rerun drat-trim on selected proof evidence")
+    release_parser.add_argument("--drat-trim", default=None, help="path to drat-trim for optional replay")
+    release_parser.add_argument("--max-replay-proofs", type=int, default=3)
 
     card_parser = subparsers.add_parser("trust-card", help="create a trust card from a verification report")
     card_parser.add_argument("--report", required=True)
@@ -59,6 +65,11 @@ def main(argv: list[str] | None = None) -> int:
             source_zip=args.source_zip,
             diagnostic_zip=args.diagnostic_zip,
             manifest=args.manifest,
+            depth=args.depth,
+            selection_policy=args.select,
+            rerun_drat_trim=args.rerun_drat_trim,
+            drat_trim_path=args.drat_trim,
+            max_replay_proofs=args.max_replay_proofs,
         )
         write_report_files(
             report,
@@ -66,7 +77,11 @@ def main(argv: list[str] | None = None) -> int:
             out_dir / "release_verification_report.md",
         )
         print(stable_json(report), end="")
-        return 0 if report.get("verdict") in {VERDICT_ARTIFACT_INTEGRITY_VERIFIED, VERDICT_PARTIALLY_VERIFIED} else 1
+        return 0 if report.get("verdict") in {
+            VERDICT_ARTIFACT_INTEGRITY_VERIFIED,
+            VERDICT_PARTIAL_REPLAY_VERIFIED,
+            VERDICT_PARTIALLY_VERIFIED,
+        } else 1
 
     if args.command == "trust-card":
         out_dir = Path(args.out_dir)

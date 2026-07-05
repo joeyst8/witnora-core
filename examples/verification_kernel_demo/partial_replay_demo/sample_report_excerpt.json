@@ -1,0 +1,21 @@
+{
+  "certification_level": "PARTIAL_REPLAY_INDEPENDENT_CHECKER_VERIFIED",
+  "replay_depth": "independent_checker_replay",
+  "risk_flags": [
+    "DRAT_TRIM_NOT_RERUN",
+    "CLAIM_SCAN_HEURISTIC_ONLY",
+    "PROOF_SYNTAX_CHECKED",
+    "PROOF_LOGS_CHECKED",
+    "INDEPENDENT_CHECKER_RERUN"
+  ],
+  "selected_evidence": [
+    {
+      "c": 2,
+      "cap_profile": "medium-v098",
+      "instance_id": "tseitin_20",
+      "public_category": "UNSAT_DRAT_EXPORTED_VERIFIED"
+    }
+  ],
+  "verification_depth": "partial_replay",
+  "verdict": "PARTIAL_REPLAY_VERIFIED_WITH_SCOPE_LIMITS"
+}

@@ -11,6 +11,7 @@ import re
 from typing import Any
 
 from .claim_boundary import scan_text_for_claim_boundary
+from .partial_replay import partial_replay_diagnostic_artifact
 from .proof import verify_certificate_bundle
 
 VERDICT_VERIFIED = "VERIFIED"
@@ -18,9 +19,15 @@ VERDICT_PARTIALLY_VERIFIED = "PARTIALLY_VERIFIED"
 VERDICT_NOT_VERIFIED = "NOT_VERIFIED"
 VERDICT_OVERCLAIM = "OVERCLAIM"
 VERDICT_ARTIFACT_INTEGRITY_VERIFIED = "ARTIFACT_INTEGRITY_VERIFIED"
+VERDICT_PARTIAL_REPLAY_VERIFIED = "PARTIAL_REPLAY_VERIFIED_WITH_SCOPE_LIMITS"
 
 CERT_RELEASE_ARTIFACT_INTEGRITY_VERIFIED = "RELEASE_ARTIFACT_INTEGRITY_VERIFIED"
+CERT_PARTIAL_REPLAY_ARTIFACT_AND_LOGS_VERIFIED = "PARTIAL_REPLAY_ARTIFACT_AND_LOGS_VERIFIED"
+CERT_PARTIAL_REPLAY_INDEPENDENT_CHECKER_VERIFIED = "PARTIAL_REPLAY_INDEPENDENT_CHECKER_VERIFIED"
+CERT_PARTIAL_REPLAY_DRAT_TRIM_VERIFIED = "PARTIAL_REPLAY_DRAT_TRIM_VERIFIED"
 DEPTH_METADATA_HASH_CHECKS_ONLY = "metadata_hash_checks_only"
+DEPTH_PARTIAL_REPLAY = "partial_replay"
+DEPTH_FULL_REPLAY = "full"
 CLAIM_SCAN_DEPTH_HEURISTIC_TEXT_SCAN = "heuristic_text_scan"
 
 CLAIM_SCANNER_LIMITATION_TEXT = (
@@ -34,6 +41,12 @@ ARTIFACT_INTEGRITY_SCOPE_TEXT = (
     "claim-boundary scanner found no affirmative forbidden claims. This is a "
     "metadata and artifact-integrity check. It does not rerun the scientific "
     "proofs, rerun drat-trim on all proofs, or rerun the benchmark diagnostic."
+)
+
+PARTIAL_REPLAY_SCOPE_TEXT = (
+    "This report reflects partial replay of selected evidence already present "
+    "in the artifact. It does not rerun the full solver, regenerate CNFgen "
+    "instances, or rerun the full benchmark diagnostic."
 )
 
 DEFAULT_METADATA_ONLY_RISK_FLAGS = [
@@ -78,6 +91,13 @@ class VerificationReport:
     checks_performed: list[dict[str, Any]] = field(default_factory=list)
     claim_scan_depth: str = CLAIM_SCAN_DEPTH_HEURISTIC_TEXT_SCAN
     last_verification_timestamp: str = ""
+    replay_depth: str | None = None
+    selection_policy: str | None = None
+    selected_evidence: list[dict[str, Any]] = field(default_factory=list)
+    proof_syntax_checks: list[dict[str, Any]] = field(default_factory=list)
+    drat_trim_log_checks: list[dict[str, Any]] = field(default_factory=list)
+    independent_checker_replay: list[dict[str, Any]] = field(default_factory=list)
+    drat_trim_replay: list[dict[str, Any]] = field(default_factory=list)
     allowed_claims: list[str] = field(default_factory=lambda: list(DEFAULT_ALLOWED_CLAIMS))
     forbidden_claims: list[str] = field(default_factory=lambda: list(DEFAULT_FORBIDDEN_CLAIMS))
     risk_flags: list[str] = field(default_factory=list)
@@ -100,6 +120,13 @@ class VerificationReport:
             "checks_performed": self.checks_performed,
             "claim_scan_depth": self.claim_scan_depth,
             "last_verification_timestamp": self.last_verification_timestamp,
+            "replay_depth": self.replay_depth,
+            "selection_policy": self.selection_policy,
+            "selected_evidence": self.selected_evidence,
+            "proof_syntax_checks": self.proof_syntax_checks,
+            "drat_trim_log_checks": self.drat_trim_log_checks,
+            "independent_checker_replay": self.independent_checker_replay,
+            "drat_trim_replay": self.drat_trim_replay,
             "allowed_claims": self.allowed_claims,
             "forbidden_claims": self.forbidden_claims,
             "risk_flags": self.risk_flags,
@@ -141,6 +168,20 @@ def render_verification_report_markdown(report: dict[str, Any]) -> str:
     lines.extend(["", "## Verification Depth", "", f"`{report.get('verification_depth', '')}`"])
     if report.get("verification_depth") == DEPTH_METADATA_HASH_CHECKS_ONLY:
         lines.extend(["", ARTIFACT_INTEGRITY_SCOPE_TEXT])
+    if report.get("verification_depth") == DEPTH_PARTIAL_REPLAY:
+        lines.extend(["", PARTIAL_REPLAY_SCOPE_TEXT])
+        lines.extend(["", "## Replay Depth", "", f"`{report.get('replay_depth', '')}`"])
+        lines.extend(["", "## Selection Policy", "", f"`{report.get('selection_policy', '')}`"])
+        lines.extend(["", "## Selected Evidence", ""])
+        selected_evidence = report.get("selected_evidence", [])
+        if selected_evidence:
+            for item in selected_evidence:
+                lines.append(
+                    f"- `{item.get('instance_id', '')}` c={item.get('c', '')} "
+                    f"({item.get('cap_profile', '')}): `{item.get('public_category', '')}`"
+                )
+        else:
+            lines.append("- none")
     lines.extend(["", "## Checks Performed", ""])
     checks_performed = report.get("checks_performed", [])
     if checks_performed:
@@ -171,6 +212,22 @@ def render_verification_report_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- `{checker}`")
     if not report.get("external_checkers"):
         lines.append("- none recorded")
+    if report.get("proof_syntax_checks"):
+        lines.extend(["", "## Proof Syntax Checks", ""])
+        for check in report.get("proof_syntax_checks", []):
+            lines.append(f"- `{check.get('instance_id', '')}`: {check.get('status', '')} - {check.get('message', '')}")
+    if report.get("drat_trim_log_checks"):
+        lines.extend(["", "## drat-trim Log Checks", ""])
+        for check in report.get("drat_trim_log_checks", []):
+            lines.append(f"- `{check.get('instance_id', '')}`: {check.get('status', '')} - {check.get('message', '')}")
+    if report.get("independent_checker_replay"):
+        lines.extend(["", "## Independent Checker Replay", ""])
+        for check in report.get("independent_checker_replay", []):
+            lines.append(f"- `{check.get('instance_id', '')}`: {check.get('status', '')} - {check.get('message', '')}")
+    if report.get("drat_trim_replay"):
+        lines.extend(["", "## drat-trim Replay", ""])
+        for check in report.get("drat_trim_replay", []):
+            lines.append(f"- `{check.get('instance_id', '')}`: {check.get('status', '')} - {check.get('message', '')}")
     lines.extend(
         [
             "",
@@ -281,7 +338,36 @@ def verification_report_for_release(
     source_zip: str | Path,
     diagnostic_zip: str | Path,
     manifest: str | Path,
+    depth: str = "metadata",
+    selection_policy: str = "largest",
+    rerun_drat_trim: bool = False,
+    drat_trim_path: str | Path | None = None,
+    max_replay_proofs: int = 3,
 ) -> dict[str, Any]:
+    requested_depth = depth.strip().lower()
+    if requested_depth == "full":
+        return VerificationReport(
+            claim="Full release replay was requested, but full replay is not implemented in v1.2.",
+            logical_status="RELEASE_FULL_REPLAY_REQUEST",
+            discovery_route="FULL_REPLAY_UNSUPPORTED",
+            certification_level="NOT_VERIFIED",
+            public_category="PUBLIC_RELEASE_VERIFICATION",
+            evidence_files=[str(source_zip), str(diagnostic_zip), str(manifest)],
+            reproducibility_status="FULL_REPLAY_NOT_IMPLEMENTED",
+            verification_depth=DEPTH_FULL_REPLAY,
+            checks_performed=[
+                {
+                    "name": "full_replay",
+                    "status": "FAIL",
+                    "depth": DEPTH_FULL_REPLAY,
+                    "message": "full replay is reserved for future work",
+                }
+            ],
+            last_verification_timestamp=utc_timestamp(),
+            risk_flags=["FULL_REPLAY_NOT_IMPLEMENTED"],
+            verdict=VERDICT_NOT_VERIFIED,
+        ).to_dict()
+
     source_path = Path(source_zip)
     diagnostic_path = Path(diagnostic_zip)
     manifest_path = Path(manifest)
@@ -361,7 +447,7 @@ def verification_report_for_release(
         reproducibility = "SOURCE_AND_DIAGNOSTIC_HASHES_VERIFIED"
         certification_level = CERT_RELEASE_ARTIFACT_INTEGRITY_VERIFIED
 
-    return VerificationReport(
+    report = VerificationReport(
         claim=(
             "Witnora-Core release package supports the scoped public preprint claim "
             "with source, diagnostic artifact, manifest hashes, and recorded external-check evidence."
@@ -383,12 +469,103 @@ def verification_report_for_release(
         risk_flags=risk_flags,
         verdict=verdict,
     ).to_dict()
+    if requested_depth in {"metadata", "metadata_hash_checks_only"}:
+        return report
+    if requested_depth != "partial":
+        report["verdict"] = VERDICT_NOT_VERIFIED
+        report["verification_depth"] = requested_depth
+        report["risk_flags"] = list(report.get("risk_flags", [])) + ["UNSUPPORTED_VERIFICATION_DEPTH"]
+        return report
+    return _with_partial_replay(
+        report,
+        diagnostic_path=diagnostic_path,
+        selection_policy=selection_policy,
+        rerun_drat_trim=rerun_drat_trim,
+        drat_trim_path=drat_trim_path,
+        max_replay_proofs=max_replay_proofs,
+    )
+
+
+def _without_flags(flags: list[str], *remove: str) -> list[str]:
+    remove_set = set(remove)
+    return [flag for flag in flags if flag not in remove_set]
+
+
+def _with_flag(flags: list[str], flag: str) -> list[str]:
+    return flags if flag in flags else flags + [flag]
+
+
+def _with_partial_replay(
+    report: dict[str, Any],
+    *,
+    diagnostic_path: Path,
+    selection_policy: str,
+    rerun_drat_trim: bool,
+    drat_trim_path: str | Path | None,
+    max_replay_proofs: int,
+) -> dict[str, Any]:
+    replay = partial_replay_diagnostic_artifact(
+        diagnostic_path,
+        selection_policy=selection_policy,
+        rerun_drat_trim=rerun_drat_trim,
+        drat_trim_path=drat_trim_path,
+        max_replay_proofs=max_replay_proofs,
+    )
+    report["verification_depth"] = DEPTH_PARTIAL_REPLAY
+    report["selection_policy"] = selection_policy
+    report["selected_evidence"] = replay.get("selected_evidence", [])
+    report["proof_syntax_checks"] = replay.get("proof_syntax_checks", [])
+    report["drat_trim_log_checks"] = replay.get("drat_trim_log_checks", [])
+    report["independent_checker_replay"] = replay.get("independent_checker_replay", [])
+    report["drat_trim_replay"] = replay.get("drat_trim_replay", [])
+    report["checks_performed"] = list(report.get("checks_performed", [])) + list(replay.get("structure_checks", []))
+    report["checks_performed"].extend(report["proof_syntax_checks"])
+    report["checks_performed"].extend(report["drat_trim_log_checks"])
+    report["checks_performed"].extend(report["independent_checker_replay"])
+    report["checks_performed"].extend(report["drat_trim_replay"])
+
+    flags = _without_flags(list(report.get("risk_flags", [])), "METADATA_ONLY")
+    flags = _with_flag(flags, "PROOF_SYNTAX_CHECKED")
+    flags = _with_flag(flags, "PROOF_LOGS_CHECKED")
+    if replay.get("independent_checker_passed"):
+        flags = _without_flags(flags, "INDEPENDENT_CHECKER_NOT_RERUN")
+        flags = _with_flag(flags, "INDEPENDENT_CHECKER_RERUN")
+    if replay.get("drat_trim_replay_passed"):
+        flags = _without_flags(flags, "DRAT_TRIM_NOT_RERUN")
+        flags = _with_flag(flags, "DRAT_TRIM_RERUN")
+    elif rerun_drat_trim:
+        flags = _with_flag(flags, "DRAT_TRIM_REPLAY_FAILED_OR_SKIPPED")
+
+    syntax_and_logs_passed = bool(replay.get("passed"))
+    independent_passed = bool(replay.get("independent_checker_passed"))
+    drat_replay_passed = bool(replay.get("drat_trim_replay_passed"))
+    if syntax_and_logs_passed and drat_replay_passed:
+        report["verdict"] = VERDICT_PARTIAL_REPLAY_VERIFIED
+        report["certification_level"] = CERT_PARTIAL_REPLAY_DRAT_TRIM_VERIFIED
+        report["replay_depth"] = "independent_checker_and_drat_trim_replay"
+    elif syntax_and_logs_passed and independent_passed:
+        report["verdict"] = VERDICT_PARTIAL_REPLAY_VERIFIED
+        report["certification_level"] = CERT_PARTIAL_REPLAY_INDEPENDENT_CHECKER_VERIFIED
+        report["replay_depth"] = "independent_checker_replay"
+    elif syntax_and_logs_passed:
+        report["verdict"] = VERDICT_PARTIAL_REPLAY_VERIFIED
+        report["certification_level"] = CERT_PARTIAL_REPLAY_ARTIFACT_AND_LOGS_VERIFIED
+        report["replay_depth"] = "proof_syntax_and_logs"
+    else:
+        report["verdict"] = VERDICT_PARTIALLY_VERIFIED
+        report["certification_level"] = "PARTIAL_REPLAY_FAILED_OR_INCOMPLETE"
+        report["replay_depth"] = "partial_replay_failed"
+        flags = _with_flag(flags, "PARTIAL_REPLAY_FAILED")
+    report["risk_flags"] = flags
+    return report
 
 
 def trust_card_from_report(report: dict[str, Any], *, project: str = "Witnora-Core") -> dict[str, Any]:
     verdict = str(report.get("verdict", "NOT_VERIFIED"))
     if verdict == VERDICT_ARTIFACT_INTEGRITY_VERIFIED:
         trust_verdict = "VERIFIED_ARTIFACT_INTEGRITY_WITH_SCOPE_LIMITS"
+    elif verdict == VERDICT_PARTIAL_REPLAY_VERIFIED:
+        trust_verdict = VERDICT_PARTIAL_REPLAY_VERIFIED
     elif verdict == VERDICT_VERIFIED:
         trust_verdict = "VERIFIED_WITH_SCOPE_LIMITS"
     elif verdict == VERDICT_PARTIALLY_VERIFIED:
@@ -406,6 +583,7 @@ def trust_card_from_report(report: dict[str, Any], *, project: str = "Witnora-Co
         "verified_by": verified_by,
         "certification_level": report.get("certification_level", ""),
         "verification_depth": report.get("verification_depth", DEPTH_METADATA_HASH_CHECKS_ONLY),
+        "replay_depth": report.get("replay_depth"),
         "not_claimed": report.get("forbidden_claims", []),
         "reproducibility": report.get("reproducibility_status", ""),
         "risk_flags": report.get("risk_flags", []),
@@ -414,13 +592,22 @@ def trust_card_from_report(report: dict[str, Any], *, project: str = "Witnora-Co
 
 
 def render_trust_card_markdown(card: dict[str, Any]) -> str:
+    if card.get("verification_depth") == DEPTH_PARTIAL_REPLAY:
+        scope_text = (
+            "This trust card reflects partial replay of selected evidence. "
+            "It does not rerun the full solver or regenerate the benchmark diagnostic."
+        )
+    else:
+        scope_text = (
+            "This trust card verifies artifact integrity and scope boundaries only. "
+            "It does not rerun the scientific proof pipeline."
+        )
     lines = [
         "# Witnora Trust Card",
         "",
         f"**Project:** {card.get('project', '')}",
         "",
-        "This trust card verifies artifact integrity and scope boundaries only. "
-        "It does not rerun the scientific proof pipeline.",
+        scope_text,
         "",
         "## Claim",
         "",
@@ -433,6 +620,15 @@ def render_trust_card_markdown(card: dict[str, Any]) -> str:
         lines.append(f"- {item}")
     lines.extend(["", "## Certification Level", "", f"`{card.get('certification_level', '')}`"])
     lines.extend(["", "## Verification Depth", "", f"`{card.get('verification_depth', '')}`"])
+    if card.get("verification_depth") == DEPTH_PARTIAL_REPLAY:
+        lines.extend(
+            [
+                "",
+                "## Replay Depth",
+                "",
+                f"`{card.get('replay_depth', '')}`",
+            ]
+        )
     lines.extend(["", "## Not Claimed", ""])
     for item in card.get("not_claimed", []):
         lines.append(f"- {item}")
