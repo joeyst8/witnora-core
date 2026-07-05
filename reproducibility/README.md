@@ -22,8 +22,20 @@ This package documents the artifacts for the paper draft:
   `C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe`
 - drat-trim path used:
   `C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe`
+- drat-trim executable SHA256:
+  `74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8`
 
 `drat-trim` is used only as an external proof checker, not as a SAT solver.
+The local binary used for the recorded run prints a command-line usage banner
+but does not expose a version string through `drat-trim -h`; the path and file
+hash above identify the checked executable in this environment.
+
+Availability check:
+
+```powershell
+& 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe' -h
+Get-FileHash -Algorithm SHA256 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe'
+```
 
 ## Run Tests
 

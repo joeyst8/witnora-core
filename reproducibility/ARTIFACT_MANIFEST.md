@@ -25,6 +25,38 @@ Paths used in the recorded run:
   `C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe`
 - drat-trim:
   `C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe`
+- drat-trim executable SHA256:
+  `74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8`
+
+The recorded local `drat-trim` binary responds to `drat-trim -h` with the usage
+banner but does not print a version string. Reproduction should therefore record
+the binary path and SHA256 hash, or replace it with a clearly identified
+`drat-trim` build and rerun the diagnostic.
+
+Availability and identity check:
+
+```powershell
+& 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe' -h
+Get-FileHash -Algorithm SHA256 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe'
+```
+
+Environment variable used for tests and diagnostics:
+
+```powershell
+$env:WITNORA_DRAT_TRIM='C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe'
+```
+
+Test command:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+Diagnostic rerun command:
+
+```powershell
+python -m witnora_core.xor_drat_diagnostic --matrix-preset full-tseitin-v098 --detect-xor-max-k 6 --xor-drat --elim-orders sparse-min-fill --profiles default medium-v098 --drat-trim 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe' --cnfgen-path 'C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe' --out-root outputs\v0.9.8-full-tseitin-minfill-diagnostic --zip witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+```
 
 ## Expected Test Count
 
