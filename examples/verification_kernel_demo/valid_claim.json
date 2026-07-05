@@ -1,0 +1,10 @@
+{
+  "claim": "Witnora-Core release evidence is available with source, diagnostic artifact, paper PDF, and SHA256 hashes.",
+  "evidence_files": [
+    "witnora-core-v1.0-public-preprint-final.zip",
+    "witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip",
+    "paper/witnora_tseitin_certified_collapse.pdf",
+    "RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md"
+  ],
+  "scope": "release evidence audit only; no new benchmark claim"
+}

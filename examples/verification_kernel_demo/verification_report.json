@@ -1,0 +1,44 @@
+{
+  "allowed_claims": [
+    "Release artifacts can be checked against recorded SHA256 hashes.",
+    "Trust is scoped to the evidence listed in the report."
+  ],
+  "artifact_hashes": {
+    "paper/witnora_tseitin_certified_collapse.pdf": "A98910C817974D3D15F6847690CD197008362A06984FA38BE81194BE7D26DB9A"
+  },
+  "certification_level": "RELEASE_EVIDENCE_VERIFIED",
+  "checker_results": [
+    {
+      "checker": "sha256_manifest_match",
+      "passed": true
+    },
+    {
+      "checker": "claim_boundary_scan",
+      "passed": true
+    }
+  ],
+  "claim": "Witnora-Core release evidence is available with source, diagnostic artifact, paper PDF, and SHA256 hashes.",
+  "discovery_route": "RELEASE_MANIFEST_AND_HASH_CHECK",
+  "evidence_files": [
+    "witnora-core-v1.0-public-preprint-final.zip",
+    "witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip",
+    "paper/witnora_tseitin_certified_collapse.pdf",
+    "RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md"
+  ],
+  "external_checkers": [
+    "SHA256 archive checks",
+    "unit test suite",
+    "drat-trim"
+  ],
+  "forbidden_claims": [
+    "parity support",
+    "broad XOR extraction",
+    "competitive SAT solving",
+    "P vs NP progress"
+  ],
+  "logical_status": "RELEASE_ARTIFACT_AUDIT",
+  "public_category": "PUBLIC_RELEASE_VERIFICATION",
+  "reproducibility_status": "SOURCE_AND_DIAGNOSTIC_HASHES_VERIFIED",
+  "risk_flags": [],
+  "verdict": "VERIFIED"
+}

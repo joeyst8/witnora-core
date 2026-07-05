@@ -1,0 +1,19 @@
+{
+  "certification_level": "RELEASE_EVIDENCE_VERIFIED",
+  "claim": "Witnora-Core release evidence is available with source, diagnostic artifact, paper PDF, and SHA256 hashes.",
+  "not_claimed": [
+    "parity support",
+    "broad XOR extraction",
+    "competitive SAT solving",
+    "P vs NP progress"
+  ],
+  "project": "Witnora-Core",
+  "reproducibility": "source archive and diagnostic artifact are available with SHA256 hashes",
+  "risk_flags": [],
+  "verified_by": [
+    "SHA256 archive checks",
+    "unit test suite",
+    "drat-trim"
+  ],
+  "verdict": "VERIFIED_WITH_SCOPE_LIMITS"
+}
