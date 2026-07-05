@@ -49,6 +49,11 @@ PARTIAL_REPLAY_SCOPE_TEXT = (
     "instances, or rerun the full benchmark diagnostic."
 )
 
+PROOF_SELECTION_LIMITED_TEXT = (
+    "Only selected proof evidence was replayed. This trust card does not represent "
+    "full replay of every proof in the artifact."
+)
+
 DEFAULT_METADATA_ONLY_RISK_FLAGS = [
     "METADATA_ONLY",
     "DRAT_TRIM_NOT_RERUN",
@@ -514,6 +519,10 @@ def _with_partial_replay(
     report["verification_depth"] = DEPTH_PARTIAL_REPLAY
     report["selection_policy"] = selection_policy
     report["selected_evidence"] = replay.get("selected_evidence", [])
+    candidate_count = int(replay.get("candidate_count") or 0)
+    selected_count = len(report["selected_evidence"])
+    report["candidate_evidence_count"] = candidate_count
+    report["selected_evidence_count"] = selected_count
     report["proof_syntax_checks"] = replay.get("proof_syntax_checks", [])
     report["drat_trim_log_checks"] = replay.get("drat_trim_log_checks", [])
     report["independent_checker_replay"] = replay.get("independent_checker_replay", [])
@@ -527,6 +536,8 @@ def _with_partial_replay(
     flags = _without_flags(list(report.get("risk_flags", [])), "METADATA_ONLY")
     flags = _with_flag(flags, "PROOF_SYNTAX_CHECKED")
     flags = _with_flag(flags, "PROOF_LOGS_CHECKED")
+    if candidate_count and selected_count < candidate_count:
+        flags = _with_flag(flags, "PROOF_SELECTION_LIMITED")
     if replay.get("independent_checker_passed"):
         flags = _without_flags(flags, "INDEPENDENT_CHECKER_NOT_RERUN")
         flags = _with_flag(flags, "INDEPENDENT_CHECKER_RERUN")
@@ -616,6 +627,8 @@ def render_trust_card_markdown(card: dict[str, Any]) -> str:
         "## Verified By",
         "",
     ]
+    if "PROOF_SELECTION_LIMITED" in card.get("risk_flags", []):
+        lines[6:6] = [PROOF_SELECTION_LIMITED_TEXT, ""]
     for item in card.get("verified_by", []):
         lines.append(f"- {item}")
     lines.extend(["", "## Certification Level", "", f"`{card.get('certification_level', '')}`"])

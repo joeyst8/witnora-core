@@ -1,0 +1,30 @@
+name: Witnora Verify Example
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-release-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Witnora Verify
+        uses: ./.github/actions/witnora-verify
+        with:
+          source-zip: witnora-core-v1.0-public-preprint-final.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: largest
+          rerun-drat-trim: "false"
+          max-replay-proofs: "1"
+          fail-on: hash_mismatch,overclaim,missing_file,partial_or_not_verified
+          out-dir: witnora-verify-out
+
+      - name: Upload verification reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: witnora-verify-report
+          path: witnora-verify-out/

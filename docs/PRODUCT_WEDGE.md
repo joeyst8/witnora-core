@@ -45,6 +45,13 @@ selected drat-trim replay when a checker path is provided. It does not rerun the
 solver, regenerate public benchmark inputs, or rerun the full benchmark
 diagnostic.
 
+v1.3 adds GitHub Action / CI integration for the verification kernel. The action
+generates release verification reports and trust cards, can fail a workflow on
+selected conditions such as hash mismatch or overclaim detection, and records
+`PROOF_SELECTION_LIMITED` when only a selected subset of proof evidence is
+replayed. This is CI packaging for the existing verifier, not a new SAT
+capability and not a new benchmark result.
+
 The current depth ladder is:
 
 - `metadata_hash_checks_only`: artifact integrity and claim-boundary scanning

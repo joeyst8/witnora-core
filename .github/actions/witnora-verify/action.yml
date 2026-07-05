@@ -1,0 +1,83 @@
+name: Witnora Verify
+description: Verify release artifacts, claim boundaries, and selected proof evidence using Witnora-Core.
+
+inputs:
+  source-zip:
+    required: true
+    description: Source archive path.
+  diagnostic-zip:
+    required: true
+    description: Diagnostic artifact path.
+  manifest:
+    required: true
+    description: Release asset manifest path.
+  depth:
+    required: false
+    default: metadata
+    description: Verification depth. Supported values are metadata and partial.
+  select:
+    required: false
+    default: largest
+    description: Partial replay selection policy.
+  rerun-drat-trim:
+    required: false
+    default: "false"
+    description: Whether to rerun drat-trim on selected proof evidence.
+  drat-trim:
+    required: false
+    default: ""
+    description: Path to drat-trim for optional replay.
+  max-replay-proofs:
+    required: false
+    default: "1"
+    description: Maximum selected proofs to replay with drat-trim.
+  fail-on:
+    required: false
+    default: hash_mismatch,overclaim,missing_file
+    description: Comma-separated conditions that fail the action.
+  out-dir:
+    required: false
+    default: witnora-verify-out
+    description: Directory for verification reports and trust card.
+
+outputs:
+  verdict:
+    description: Verification verdict.
+    value: ${{ steps.verify.outputs.verdict }}
+  certification_level:
+    description: Verification certification level.
+    value: ${{ steps.verify.outputs.certification_level }}
+  verification_depth:
+    description: Verification depth used by the report.
+    value: ${{ steps.verify.outputs.verification_depth }}
+  trust_card_path:
+    description: Generated Markdown trust card path.
+    value: ${{ steps.verify.outputs.trust_card_path }}
+  report_path:
+    description: Generated JSON verification report path.
+    value: ${{ steps.verify.outputs.report_path }}
+
+runs:
+  using: composite
+  steps:
+    - id: verify
+      shell: bash
+      run: |
+        set -euo pipefail
+        DRAT_ARGS=()
+        if [ "${{ inputs.rerun-drat-trim }}" = "true" ]; then
+          DRAT_ARGS+=(--rerun-drat-trim)
+        fi
+        if [ -n "${{ inputs.drat-trim }}" ]; then
+          DRAT_ARGS+=(--drat-trim "${{ inputs.drat-trim }}")
+        fi
+        python -m witnora_core.ci \
+          --source-zip "${{ inputs.source-zip }}" \
+          --diagnostic-zip "${{ inputs.diagnostic-zip }}" \
+          --manifest "${{ inputs.manifest }}" \
+          --depth "${{ inputs.depth }}" \
+          --select "${{ inputs.select }}" \
+          --max-replay-proofs "${{ inputs.max-replay-proofs }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          --out-dir "${{ inputs.out-dir }}" \
+          "${DRAT_ARGS[@]}"

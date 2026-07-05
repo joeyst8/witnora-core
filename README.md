@@ -4,6 +4,21 @@ Witnora-Core v0.9.8 is a certified collapse-path prototype for CNF SAT formulas.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
+## Witnora Verify CI Integration
+
+v1.3 adds a GitHub Action / CI wrapper around the verification kernel. It can
+verify release artifact hashes, run claim-boundary scans, partially replay
+selected proof evidence from a diagnostic artifact, generate a trust card, and
+fail CI on selected conditions such as hash mismatch, missing evidence, or
+overclaim detection.
+
+This is not a new solver release. It does not add SAT solving capability,
+benchmark solving logic, proof-export logic, XOR-solving logic, parity support,
+or new benchmark claims.
+
+See [docs/GITHUB_ACTION_INTEGRATION.md](docs/GITHUB_ACTION_INTEGRATION.md) for
+inputs, outputs, fail-on behavior, and a copyable workflow example.
+
 ## Implemented Theorem Scope
 
 For a fixed `c` with v0 support for `0 <= c <= 4`, Witnora implements the accepted 2-SAT collapse theorem route:

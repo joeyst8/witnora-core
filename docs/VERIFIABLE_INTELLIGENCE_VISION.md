@@ -30,6 +30,11 @@ reruns when a checker path is provided. Scientific proof reruns for every proof,
 complete security audits, and general AI-agent verification are future
 directions unless explicitly reported by a deeper verification run.
 
+v1.3 packages those verifier capabilities as a GitHub Action / CI integration.
+It can generate verification reports and trust cards during release workflows and
+fail CI on selected evidence problems. It does not add solver logic, proof-export
+logic, XOR-solving logic, or new benchmark claims.
+
 ## Verification Depths
 
 Witnora uses explicit depth labels:
@@ -38,7 +43,8 @@ Witnora uses explicit depth labels:
    consistency, and claim-boundary text scanning.
 2. `partial_replay`: verifies selected evidence already present in the artifact.
    It does not rerun the solver, regenerate CNFgen instances, or rerun the full
-   benchmark diagnostic.
+   benchmark diagnostic. When only selected proof evidence is replayed, Witnora
+   records `PROOF_SELECTION_LIMITED`.
 3. `full_replay`: future work. In v1.2, a full replay request returns
    `NOT_VERIFIED` with `FULL_REPLAY_NOT_IMPLEMENTED`.
 
