@@ -56,6 +56,11 @@ For pigeonhole, v2.2 records exact row/hole orbit evidence and cardinality/PB
 signals, but keeps the result diagnostic-only until a preservation or proof
 route exists.
 
+v2.3 adds that route for recognized standard pigeonhole CNFs: exact
+assignment-grid ALO/AMO detection plus a native counting contradiction. This
+removes the `CARDINALITY_STRUCTURE_UNSUPPORTED` obstruction for those standard
+rows, while leaving nonstandard encodings and DRAT export as future work.
+
 ## Relationship to Verifier-to-Witness Research
 
 The long-term program is to discover operators that turn verifier obstructions

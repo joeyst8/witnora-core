@@ -1,5 +1,21 @@
 # Witnora-Core v0.9.8
 
+## v2.3 Certified Symmetry + Cardinality/PB Pigeonhole Collapse
+
+v2.3 adds `G3_SYMMETRY_CARDINALITY_CERTIFIED`, a native cardinality/counting
+layer for recognized standard pigeonhole CNFs. PHP variables are assignment
+variables `x[pigeon,hole]`, meaning pigeon `i` is assigned to hole `j`; Witnora
+does not use separate pigeon and hole variable sets.
+
+The v2.3 checker verifies every at-least-one pigeon clause and every pairwise
+at-most-one hole clause directly against the original CNF. If `n > m`, it emits
+`UNSAT_PIGEONHOLE_NATIVE_CERTIFIED` with certification level
+`PIGEONHOLE_NATIVE_COUNTING_CERTIFIED`.
+
+This is a native certificate, not DRAT and not a complete PB solver. Symmetry
+helps identify/compress the assignment-grid structure; the contradiction is
+certified by the pigeonhole counting certificate.
+
 ## v2.2 Certified Symmetry/Orbit Collapse
 
 v2.2 adds the first certified symmetry/orbit operator layer. The new

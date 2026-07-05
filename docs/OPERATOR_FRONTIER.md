@@ -15,6 +15,10 @@ is necessary. It does not rerun an external SAT solver.
   certified quotient transformation.
 - v2.2 adds exact automorphism certificates for supported small symmetry rows.
   That still does not imply a general quotient rule or pigeonhole collapse.
+- v2.3 adds a native cardinality/counting route for recognized standard
+  pigeonhole encodings. It changes the pigeonhole battlefield from pure
+  obstruction evidence into native certificate evidence for those exact
+  encodings.
 - High Horn-clause ratios suggest a Horn terminal class may be useful.
 - Clause groups above the exact-XOR `max_k` cap can suggest future larger
   exact-XOR experiments, but an over-cap group is not itself a detection claim.
@@ -52,3 +56,10 @@ The next frontier split is now explicit:
 - pigeonhole rows carry exact orbit and cardinality/PB diagnostics only;
 - a future operator must combine symmetry preservation with cardinality/PB
   reasoning before any pigeonhole collapse claim is allowed.
+
+## v2.3 Frontier Update
+
+`G3_SYMMETRY_CARDINALITY_CERTIFIED` implements that next step for standard
+`php_n_m`: exact ALO/AMO detection over assignment variables plus a native
+counting certificate. The frontier remains open for nonstandard encodings,
+larger certificate compression, and DRAT export.

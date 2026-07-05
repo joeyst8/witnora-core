@@ -37,6 +37,9 @@ discover a collapse path to a witness or proof?
 - `G3_CARDINALITY_PROTOTYPE`: honest stub.
 - `G3_CARDINALITY_PB_PROTOTYPE`: exact cardinality/PB structure diagnostics
   only; no PB solving claim.
+- `G3_SYMMETRY_CARDINALITY_CERTIFIED`: `G2_SYMMETRY_CERTIFIED` plus exact
+  assignment-grid cardinality/PB recognition and native pigeonhole counting
+  certificates for standard `php_n_m` encodings.
 - `G4_BACKDOOR_DIAGNOSTIC`: honest stub.
 - `G2_SYMMETRY_PROTOTYPE`: `G1_XOR` plus deterministic syntactic orbit
   diagnostics. This is not full automorphism detection and does not certify
@@ -66,6 +69,18 @@ a preservation argument such as orbit-representative existence and with direct
 witness verification for SAT rows. For UNSAT, `F and SBP` being UNSAT is not
 enough to conclude `F` is UNSAT unless the preservation obligations are
 present, and DRAT remains a separate original-CNF proof requirement.
+
+## v2.3 Pigeonhole Native Counting
+
+v2.3 recognizes standard pigeonhole CNFs using assignment variables
+`x[pigeon,hole]`. It checks that each pigeon has an original-CNF ALO clause over
+all holes and that each hole has all original-CNF pairwise AMO clauses over all
+pigeon pairs. When `n > m`, the native certificate records the counting
+contradiction: `n` pigeons require at least `n` occupied assignments while `m`
+holes accept at most `m` pigeons.
+
+This is native semantic certification. It is not DRAT, not PB solving, and not
+a proof-complexity lower bound.
 
 ## Claim Boundary
 

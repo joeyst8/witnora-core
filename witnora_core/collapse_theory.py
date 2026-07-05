@@ -40,7 +40,7 @@ from .runner import solve, solve_with_xor
 from .theorem_candidates import initial_theorem_candidates, theorem_candidates_markdown
 from .xor import canonical_xor_cnf_clauses, detect_cnf_xor_patterns
 
-THEORY_VERSION = "2.1"
+THEORY_VERSION = "2.3"
 OPERATOR_STUB_NOT_EXECUTED = "OPERATOR_STUB_NOT_EXECUTED"
 
 WITHIN_BOUNDS = "WITHIN_BOUNDS"
@@ -76,12 +76,21 @@ G2_SYMMETRY_DRAT_VERIFIED = "G2_SYMMETRY_DRAT_VERIFIED"
 CARDINALITY_STRUCTURE_DETECTED = "CARDINALITY_STRUCTURE_DETECTED"
 CARDINALITY_NATIVE_CERTIFIED = "CARDINALITY_NATIVE_CERTIFIED"
 CARDINALITY_DIAGNOSTIC_ONLY = "CARDINALITY_DIAGNOSTIC_ONLY"
+PIGEONHOLE_STRUCTURE_RECOGNIZED = "PIGEONHOLE_STRUCTURE_RECOGNIZED"
+PIGEONHOLE_NATIVE_COUNTING_UNSAT = "PIGEONHOLE_NATIVE_COUNTING_UNSAT"
+PIGEONHOLE_CERTIFICATE_VERIFIED = "PIGEONHOLE_CERTIFICATE_VERIFIED"
+PIGEONHOLE_CERTIFICATE_FAILED = "PIGEONHOLE_CERTIFICATE_FAILED"
+PIGEONHOLE_DRAT_NOT_CLAIMED = "PIGEONHOLE_DRAT_NOT_CLAIMED"
+G3_CARDINALITY_CERTIFIED = "G3_CARDINALITY_CERTIFIED"
+G3_SYMMETRY_CARDINALITY_NATIVE_CERTIFIED = "G3_SYMMETRY_CARDINALITY_NATIVE_CERTIFIED"
+UNSAT_PIGEONHOLE_NATIVE_CERTIFIED = "UNSAT_PIGEONHOLE_NATIVE_CERTIFIED"
 
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
     UNSAT_DRAT_EXPORTED_VERIFIED,
     UNSAT_XOR_NATIVE_ONLY,
     UNSAT_NOT_EXTERNALLY_VERIFIED,
+    UNSAT_PIGEONHOLE_NATIVE_CERTIFIED,
     NO_COLLAPSE_FOUND,
     OPERATOR_STUB_NOT_EXECUTED,
     TIMEOUT,
@@ -271,6 +280,51 @@ class SymmetryCertificate:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class PigeonholeStructure:
+    n_pigeons: int
+    m_holes: int
+    assignment_variables: list[dict[str, int]]
+    alo_by_pigeon: dict[str, dict[str, Any]]
+    amo_by_hole: dict[str, list[dict[str, Any]]]
+    missing_alo: list[dict[str, Any]]
+    missing_amo_pairs: list[dict[str, int]]
+    exact_structure: bool
+    n_greater_than_m: bool
+    recognized_from_original_cnf: bool
+    cnf_hash: str
+    status: str
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class PigeonholeCountingCertificate:
+    type: str
+    instance_id: str
+    formula_hash: str
+    n_pigeons: int
+    m_holes: int
+    assignment_variable_grid: list[dict[str, int]]
+    alo_clause_ids_by_pigeon: dict[str, dict[str, Any]]
+    amo_clause_ids_by_hole: dict[str, list[dict[str, Any]]]
+    counting_argument: dict[str, Any]
+    symmetry_orbit_summary: dict[str, Any]
+    cardinality_detection_trace: dict[str, Any]
+    checker_status: str
+    certification_level: str
+    public_category: str
+    status: str
+    drat_claim: str = PIGEONHOLE_DRAT_NOT_CLAIMED
+    proof_base: str = "native_counting_certificate"
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 def stable_json(data: Any) -> str:
     return json.dumps(data, indent=2, sort_keys=True) + "\n"
 
@@ -350,6 +404,14 @@ def collapse_operators() -> dict[str, CollapseOperator]:
             False,
             True,
         ),
+        "PIGEONHOLE_COUNTING_CERTIFICATE": CollapseOperator(
+            "PIGEONHOLE_COUNTING_CERTIFICATE",
+            True,
+            "Recognize standard assignment-variable PHP CNFs and emit a native counting contradiction certificate.",
+            True,
+            False,
+            True,
+        ),
         "HORN_PROTOTYPE": CollapseOperator("HORN_PROTOTYPE", False, "Horn operator placeholder.", False, False, True, stub=True),
         "CARDINALITY_PROTOTYPE": CollapseOperator("CARDINALITY_PROTOTYPE", False, "Small cardinality operator placeholder.", False, False, True, stub=True),
         "BACKDOOR_DIAGNOSTIC": CollapseOperator("BACKDOOR_DIAGNOSTIC", False, "Bounded backdoor-search diagnostic placeholder.", False, False, True, stub=True),
@@ -389,6 +451,7 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     base_ops = ("UP", "PLE", "SUB", "BCE", "VE", "COMPONENTS", "TWO_SAT", "TREEWIDTH")
     g1_ops = (*base_ops, "EXACT_XOR", "SPARSE_MIN_FILL_XOR", "XOR_DRAT_BRIDGE")
     g2_sym_ops = (*g1_ops, "EXACT_AUTOMORPHISM_VALIDATION", "SYMMETRY_CERTIFICATE_CHECKER", "SBP_PRESERVATION_CHECK")
+    g3_card_ops = (*g2_sym_ops, "CARDINALITY_PB_DIAGNOSTIC", "PIGEONHOLE_COUNTING_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -443,6 +506,15 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             6,
             {"operator_status": "DIAGNOSTIC_ONLY_NO_PB_SOLVING"},
             "G1_XOR plus exact cardinality/PB structure diagnostics. v2.2 detects structure but does not claim PB solving.",
+        ),
+        "G3_SYMMETRY_CARDINALITY_CERTIFIED": CollapseGrammar(
+            "G3_SYMMETRY_CARDINALITY_CERTIFIED",
+            g3_card_ops,
+            (*terminals, "XOR_AFFINE", "SYMMETRY_NATIVE_CERTIFICATE", "PIGEONHOLE_NATIVE_COUNTING"),
+            2,
+            6,
+            {"proof_policy": "native_pigeonhole_counting_certificate_no_drat_claim"},
+            "G2_SYMMETRY_CERTIFIED plus exact assignment-grid cardinality/PB recognition and native pigeonhole counting certificates for standard php_n_m encodings.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",
@@ -1110,6 +1182,229 @@ def detect_cardinality_pb(formula: CNFFormula) -> dict[str, Any]:
     }
 
 
+def _parse_php_instance_id(instance_id: str) -> tuple[int, int] | None:
+    if not instance_id.startswith("php_"):
+        return None
+    parts = instance_id.split("_")
+    if len(parts) != 3:
+        return None
+    try:
+        return int(parts[1]), int(parts[2])
+    except ValueError:
+        return None
+
+
+def _infer_php_dimensions_from_formula(formula: CNFFormula) -> tuple[int, int] | None:
+    positive = [clause.literals for clause in formula.clauses if len(clause) > 1 and all(lit > 0 for lit in clause.literals)]
+    if not positive:
+        return None
+    widths = {len(clause) for clause in positive}
+    if len(widths) != 1:
+        return None
+    n_pigeons = len(positive)
+    m_holes = widths.pop()
+    if n_pigeons <= 0 or m_holes <= 0:
+        return None
+    expected = set(range(1, n_pigeons * m_holes + 1))
+    positive_vars = {lit for clause in positive for lit in clause}
+    if positive_vars != expected:
+        return None
+    return n_pigeons, m_holes
+
+
+def _clause_id_map(formula: CNFFormula) -> dict[tuple[int, ...], int]:
+    return {clause.literals: idx for idx, clause in enumerate(formula.clauses)}
+
+
+def _php_alo_clause(pigeon: int, holes: int) -> tuple[int, ...]:
+    return Clause(_pigeonhole_var(pigeon, hole, holes) for hole in range(1, holes + 1)).literals
+
+
+def _php_amo_clause(first_pigeon: int, second_pigeon: int, hole: int, holes: int) -> tuple[int, ...]:
+    return Clause([-_pigeonhole_var(first_pigeon, hole, holes), -_pigeonhole_var(second_pigeon, hole, holes)]).literals
+
+
+def recognize_pigeonhole_structure(
+    formula: CNFFormula,
+    *,
+    instance_id: str = "",
+    n_pigeons: int | None = None,
+    m_holes: int | None = None,
+) -> PigeonholeStructure:
+    parsed = _parse_php_instance_id(instance_id) if instance_id else None
+    if parsed is not None:
+        n_pigeons, m_holes = parsed
+    elif n_pigeons is None or m_holes is None:
+        inferred = _infer_php_dimensions_from_formula(formula)
+        if inferred is not None:
+            n_pigeons, m_holes = inferred
+    if n_pigeons is None or m_holes is None or n_pigeons <= 0 or m_holes <= 0:
+        return PigeonholeStructure(
+            0,
+            0,
+            [],
+            {},
+            {},
+            [{"reason": "PHP_DIMENSIONS_NOT_AVAILABLE"}],
+            [],
+            False,
+            False,
+            False,
+            formula.formula_hash,
+            CARDINALITY_DIAGNOSTIC_ONLY,
+            "No php_n_m instance id or exact positive-clause grid inference was available.",
+        )
+
+    assignment_variables = [
+        {"pigeon": pigeon, "hole": hole, "variable": _pigeonhole_var(pigeon, hole, m_holes)}
+        for pigeon in range(1, n_pigeons + 1)
+        for hole in range(1, m_holes + 1)
+    ]
+    clause_ids = _clause_id_map(formula)
+    missing_alo: list[dict[str, Any]] = []
+    alo_by_pigeon: dict[str, dict[str, Any]] = {}
+    for pigeon in range(1, n_pigeons + 1):
+        expected = _php_alo_clause(pigeon, m_holes)
+        clause_id = clause_ids.get(expected)
+        if clause_id is None:
+            missing_alo.append({"pigeon": pigeon, "expected_clause": list(expected)})
+        else:
+            alo_by_pigeon[str(pigeon)] = {"clause_id": clause_id, "literals": list(expected)}
+
+    missing_amo_pairs: list[dict[str, int]] = []
+    amo_by_hole: dict[str, list[dict[str, Any]]] = {}
+    for hole in range(1, m_holes + 1):
+        rows: list[dict[str, Any]] = []
+        for first in range(1, n_pigeons + 1):
+            for second in range(first + 1, n_pigeons + 1):
+                expected = _php_amo_clause(first, second, hole, m_holes)
+                clause_id = clause_ids.get(expected)
+                if clause_id is None:
+                    missing_amo_pairs.append({"hole": hole, "pigeon_a": first, "pigeon_b": second})
+                else:
+                    rows.append({"pigeon_a": first, "pigeon_b": second, "clause_id": clause_id, "literals": list(expected)})
+        amo_by_hole[str(hole)] = rows
+
+    exact = not missing_alo and not missing_amo_pairs
+    return PigeonholeStructure(
+        n_pigeons=n_pigeons,
+        m_holes=m_holes,
+        assignment_variables=assignment_variables,
+        alo_by_pigeon=alo_by_pigeon,
+        amo_by_hole=amo_by_hole,
+        missing_alo=missing_alo,
+        missing_amo_pairs=missing_amo_pairs,
+        exact_structure=exact,
+        n_greater_than_m=n_pigeons > m_holes,
+        recognized_from_original_cnf=exact,
+        cnf_hash=formula.formula_hash,
+        status=PIGEONHOLE_STRUCTURE_RECOGNIZED if exact else CARDINALITY_DIAGNOSTIC_ONLY,
+        notes="Assignment variables are x[pigeon,hole]. ALO/AMO clauses are checked against the original CNF exactly.",
+    )
+
+
+def build_pigeonhole_counting_certificate(instance: TheoryInstance) -> PigeonholeCountingCertificate:
+    structure = recognize_pigeonhole_structure(instance.formula, instance_id=instance.instance_id)
+    symmetry = build_symmetry_certificate(instance)
+    cardinality = detect_cardinality_pb(instance.formula)
+    status = PIGEONHOLE_CERTIFICATE_FAILED
+    public_category = NO_COLLAPSE_FOUND
+    certification_level = "NOT_CERTIFIED"
+    checker_status = "NOT_RUN"
+    notes = "Pigeonhole structure is incomplete or n <= m; no native UNSAT claim is made."
+    if structure.exact_structure and structure.n_greater_than_m:
+        status = PIGEONHOLE_NATIVE_COUNTING_UNSAT
+        public_category = UNSAT_PIGEONHOLE_NATIVE_CERTIFIED
+        certification_level = "PIGEONHOLE_NATIVE_COUNTING_CERTIFIED"
+        notes = "Native pigeonhole counting contradiction: n pigeons require n assignments, m holes accept at most m pigeons, and n > m."
+    cert = PigeonholeCountingCertificate(
+        type="PIGEONHOLE_COUNTING_CONTRADICTION",
+        instance_id=instance.instance_id,
+        formula_hash=instance.formula.formula_hash,
+        n_pigeons=structure.n_pigeons,
+        m_holes=structure.m_holes,
+        assignment_variable_grid=structure.assignment_variables,
+        alo_clause_ids_by_pigeon=structure.alo_by_pigeon,
+        amo_clause_ids_by_hole=structure.amo_by_hole,
+        counting_argument={
+            "each_pigeon_requires_at_least_one_hole": bool(structure.alo_by_pigeon) and not structure.missing_alo,
+            "each_hole_accepts_at_most_one_pigeon": bool(structure.amo_by_hole) and not structure.missing_amo_pairs,
+            "required_assignments": structure.n_pigeons,
+            "available_holes": structure.m_holes,
+            "contradiction": structure.n_greater_than_m,
+        },
+        symmetry_orbit_summary={
+            "symmetry_status": symmetry.status,
+            "automorphism_validation_status": symmetry.automorphism_validation_status,
+            "variable_orbits": symmetry.variable_orbits,
+            "role": "Symmetry helps identify/compress structure; counting certifies UNSAT.",
+        },
+        cardinality_detection_trace={
+            "pigeonhole_structure": structure.to_dict(),
+            "cardinality_pb": cardinality,
+            "pb_solver_claim": "NO_PB_SOLVING_CLAIM",
+        },
+        checker_status=checker_status,
+        certification_level=certification_level,
+        public_category=public_category,
+        status=status,
+        drat_claim=PIGEONHOLE_DRAT_NOT_CLAIMED,
+        proof_base="native_counting_certificate",
+        notes=notes,
+    )
+    check = check_pigeonhole_certificate(instance.formula, cert)
+    data = cert.to_dict()
+    data["checker_status"] = check["status"]
+    if check["status"] != PIGEONHOLE_CERTIFICATE_VERIFIED:
+        data["status"] = PIGEONHOLE_CERTIFICATE_FAILED
+        data["public_category"] = NO_COLLAPSE_FOUND
+        data["certification_level"] = "NOT_CERTIFIED"
+    return PigeonholeCountingCertificate(**data)
+
+
+def check_pigeonhole_certificate(formula: CNFFormula, certificate: PigeonholeCountingCertificate | dict[str, Any]) -> dict[str, Any]:
+    data = certificate.to_dict() if isinstance(certificate, PigeonholeCountingCertificate) else dict(certificate)
+    errors: list[str] = []
+    if str(data.get("formula_hash", "")).lower() != formula.formula_hash.lower():
+        errors.append("FORMULA_HASH_MISMATCH")
+    try:
+        n_pigeons = int(data.get("n_pigeons", 0))
+        m_holes = int(data.get("m_holes", 0))
+    except (TypeError, ValueError):
+        n_pigeons = 0
+        m_holes = 0
+        errors.append("INVALID_DIMENSIONS")
+    expected_grid = [
+        {"pigeon": pigeon, "hole": hole, "variable": _pigeonhole_var(pigeon, hole, m_holes)}
+        for pigeon in range(1, n_pigeons + 1)
+        for hole in range(1, m_holes + 1)
+    ] if n_pigeons > 0 and m_holes > 0 else []
+    if data.get("assignment_variable_grid") != expected_grid:
+        errors.append("ASSIGNMENT_VARIABLE_GRID_MISMATCH")
+    structure = recognize_pigeonhole_structure(formula, n_pigeons=n_pigeons, m_holes=m_holes)
+    if not structure.exact_structure:
+        errors.append("PIGEONHOLE_STRUCTURE_INCOMPLETE")
+    if data.get("alo_clause_ids_by_pigeon") != structure.alo_by_pigeon:
+        errors.append("ALO_CLAUSE_IDS_MISMATCH")
+    if data.get("amo_clause_ids_by_hole") != structure.amo_by_hole:
+        errors.append("AMO_CLAUSE_IDS_MISMATCH")
+    if not structure.n_greater_than_m:
+        errors.append("N_NOT_GREATER_THAN_M")
+    argument = data.get("counting_argument", {})
+    if argument.get("required_assignments") != n_pigeons or argument.get("available_holes") != m_holes or argument.get("contradiction") is not True:
+        errors.append("COUNTING_ARGUMENT_MISMATCH")
+    if data.get("drat_claim") != PIGEONHOLE_DRAT_NOT_CLAIMED:
+        errors.append("FAKE_DRAT_CLAIM")
+    status = PIGEONHOLE_CERTIFICATE_VERIFIED if not errors else PIGEONHOLE_CERTIFICATE_FAILED
+    return {
+        "status": status,
+        "checker_status": status,
+        "errors": errors,
+        "public_category": UNSAT_PIGEONHOLE_NATIVE_CERTIFIED if status == PIGEONHOLE_CERTIFICATE_VERIFIED else NO_COLLAPSE_FOUND,
+        "claim_boundary": "native counting certificate only; no PB solver or DRAT proof is claimed",
+    }
+
+
 def _cardinality_signal(formula: CNFFormula) -> dict[str, Any]:
     positive_wide = sum(1 for clause in formula.clauses if len(clause) > 1 and all(lit > 0 for lit in clause.literals))
     negative_binary = sum(1 for clause in formula.clauses if len(clause) == 2 and all(lit < 0 for lit in clause.literals))
@@ -1261,7 +1556,7 @@ def run_instance(
     if any(op.endswith("_PROTOTYPE") or op == "BACKDOOR_DIAGNOSTIC" for op in grammar.operators):
         return _stub_result(instance, grammar, started)
 
-    if grammar.name in {"G1_XOR", "G2_SYMMETRY_PROTOTYPE", "G2_SYMMETRY_CERTIFIED", "G3_CARDINALITY_PB_PROTOTYPE"}:
+    if grammar.name in {"G1_XOR", "G2_SYMMETRY_PROTOTYPE", "G2_SYMMETRY_CERTIFIED", "G3_CARDINALITY_PB_PROTOTYPE", "G3_SYMMETRY_CARDINALITY_CERTIFIED"}:
         path = solve_with_xor(instance.formula, c=grammar.max_c, detect_cnf_xor=True, detect_xor_max_k=grammar.xor_max_k)
     else:
         path = solve(instance.formula, c=grammar.max_c)
@@ -1921,6 +2216,170 @@ def run_symmetry_lab(
     }
 
 
+def _pigeonhole_instance_from_id(instance_id: str) -> TheoryInstance:
+    parsed = _parse_php_instance_id(instance_id)
+    if parsed is None:
+        raise ValueError(f"unsupported pigeonhole instance id: {instance_id}")
+    n_pigeons, m_holes = parsed
+    return TheoryInstance(
+        instance_id,
+        "pigeonhole",
+        _pigeonhole_formula(n_pigeons, m_holes),
+        "built_in_pigeonhole",
+        "standard assignment-variable pigeonhole CNF x[pigeon,hole]",
+    )
+
+
+def _pigeonhole_lab_report(rows: list[dict[str, Any]], delta: dict[str, Any]) -> str:
+    lines = [
+        "# Pigeonhole Cardinality Collapse Report",
+        "",
+        "## Executive Summary",
+        "",
+        "v2.3 adds a native pigeonhole/cardinality certificate for standard php_n_m CNF encodings. Variables are assignment variables `x[pigeon,hole]`. The checker verifies ALO and AMO clauses directly against the original CNF, then checks the counting contradiction `n > m`.",
+        "",
+        "This is a native semantic certificate, not a DRAT proof and not a complete PB solver.",
+        "",
+        "## PHP Assignment-Variable Schema",
+        "",
+        "For `php_n_m`, variable `x[i,j]` means pigeon `i` is assigned to hole `j`. Witnora does not use separate pigeon variables and hole variables.",
+        "",
+        "## Results",
+        "",
+    ]
+    lines.extend(
+        _markdown_table(
+            ["instance", "G1", "G2", "G3", "certification", "checker", "changed"],
+            [[row["instance_id"], row["g1_public_category"], row["g2_status"], row["g3_public_category"], row["certification_level"], row["checker_status"], row["g3_changed_result"]] for row in rows],
+        )
+    )
+    lines.extend(
+        [
+            "",
+            "## Symmetry + Cardinality Integration",
+            "",
+            "Symmetry helps identify and compress the pigeonhole grid through assignment-variable orbits. The UNSAT certificate is the native pigeonhole counting certificate, not symmetry alone.",
+            "",
+            "## Operator Delta",
+            "",
+            stable_json(delta),
+            "## Claim Boundary",
+            "",
+            "This report does not claim P vs NP progress, polynomial-time SAT, a complete PB solver, DRAT verification for pigeonhole, symmetry-alone pigeonhole collapse, or a G3 strictness theorem. It records bounded native certificate evidence for recognized standard php_n_m encodings.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def run_pigeonhole_lab(
+    *,
+    instances: Iterable[str],
+    out_root: str | Path,
+    strict: bool = False,
+) -> dict[str, Any]:
+    root = Path(out_root)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+    cert_root = root / "certificates"
+    cnf_root = root / "original_cnf"
+    cert_root.mkdir(parents=True, exist_ok=True)
+    cnf_root.mkdir(parents=True, exist_ok=True)
+    profiles = grammar_profiles()
+    g1 = profiles["G1_XOR"]
+    selected = [_pigeonhole_instance_from_id(instance_id) for instance_id in instances]
+    certificate_rows: list[dict[str, Any]] = []
+    certificates: list[dict[str, Any]] = []
+    structure_rows: list[dict[str, Any]] = []
+    detection_traces: list[dict[str, Any]] = []
+    integration_rows: list[dict[str, Any]] = []
+
+    for instance in selected:
+        g1_result = run_instance(instance, g1, out_root=root, strict=strict)
+        symmetry = build_symmetry_certificate(instance)
+        certificate = build_pigeonhole_counting_certificate(instance)
+        structure = recognize_pigeonhole_structure(instance.formula, instance_id=instance.instance_id)
+        check = check_pigeonhole_certificate(instance.formula, certificate)
+        cert_path = cert_root / f"{instance.instance_id}_pigeonhole_certificate.json"
+        cnf_path = cnf_root / f"{instance.instance_id}.cnf"
+        cert_path.write_text(stable_json(certificate.to_dict()), encoding="utf-8", newline="\n")
+        cnf_path.write_text(instance.formula.canonical_dimacs(), encoding="utf-8", newline="\n")
+        g3_changed = g1_result.public_category != certificate.public_category
+        certificate_rows.append(
+            {
+                "instance_id": instance.instance_id,
+                "g1_public_category": g1_result.public_category,
+                "g2_status": symmetry.status,
+                "g2_public_category": NO_COLLAPSE_FOUND if symmetry.status == SYMMETRY_DIAGNOSTIC_ONLY else _symmetry_public_category(symmetry),
+                "g3_status": certificate.status,
+                "g3_public_category": certificate.public_category,
+                "certification_level": certificate.certification_level,
+                "checker_status": check["status"],
+                "certificate_path": str(cert_path),
+                "cnf_path": str(cnf_path),
+                "g3_changed_result": g3_changed,
+                "drat_claim": certificate.drat_claim,
+            }
+        )
+        certificates.append(certificate.to_dict())
+        structure_rows.append(
+            {
+                "instance_id": instance.instance_id,
+                "n_pigeons": structure.n_pigeons,
+                "m_holes": structure.m_holes,
+                "assignment_variable_count": len(structure.assignment_variables),
+                "alo_complete": not structure.missing_alo,
+                "amo_complete": not structure.missing_amo_pairs,
+                "exact_structure": structure.exact_structure,
+                "n_greater_than_m": structure.n_greater_than_m,
+                "status": structure.status,
+            }
+        )
+        detection_traces.append({"instance_id": instance.instance_id, "structure": structure.to_dict(), "cardinality_pb": detect_cardinality_pb(instance.formula)})
+        integration_rows.append(
+            {
+                "instance_id": instance.instance_id,
+                "symmetry_status": symmetry.status,
+                "largest_assignment_variable_orbit": max((len(orbit) for orbit in symmetry.variable_orbits), default=0),
+                "cardinality_status": CARDINALITY_NATIVE_CERTIFIED if certificate.checker_status == PIGEONHOLE_CERTIFICATE_VERIFIED else CARDINALITY_DIAGNOSTIC_ONLY,
+                "integration_claim": "Symmetry helps identify/compress structure; native counting certifies UNSAT.",
+            }
+        )
+
+    verified = [row for row in certificate_rows if row["checker_status"] == PIGEONHOLE_CERTIFICATE_VERIFIED]
+    delta = {
+        "operator_added": "CARDINALITY_PB_PIGEONHOLE_COUNTING",
+        "instances_total": len(certificate_rows),
+        "g3_native_certified": len(verified),
+        "g3_changed_results": sum(1 for row in certificate_rows if row["g3_changed_result"]),
+        "fake_drat_claims": sum(1 for row in certificate_rows if row["drat_claim"] != PIGEONHOLE_DRAT_NOT_CLAIMED),
+        "strictness_status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+        "claim_boundary": "G3 bounded operator-delta evidence; no lower-bound theorem is claimed.",
+    }
+    candidates = initial_theorem_candidates()
+    payloads = {
+        "pigeonhole_certificates.json": {"certificates": certificates},
+        "cardinality_detection_trace.json": {"traces": detection_traces},
+        "pigeonhole_native_unsat_summary.json": {"rows": certificate_rows},
+        "symmetry_cardinality_integration.json": {"rows": integration_rows},
+        "g3_operator_delta_summary.json": delta,
+        "theorem_candidates.json": {"theorem_candidates": [candidate.to_dict() for candidate in candidates]},
+        "manifest.json": {"version": "2.3", "created_utc": datetime.now(timezone.utc).isoformat(), "instances": list(instances), "strict": strict},
+    }
+    for name, payload in payloads.items():
+        (root / name).write_text(stable_json(payload), encoding="utf-8", newline="\n")
+    write_csv(root / "pigeonhole_structure_summary.csv", structure_rows)
+    (root / "PIGEONHOLE_CARDINALITY_COLLAPSE_REPORT.md").write_text(_pigeonhole_lab_report(certificate_rows, delta), encoding="utf-8", newline="\n")
+    return {
+        "out_root": str(root),
+        "pigeonhole_certificates": certificates,
+        "pigeonhole_native_unsat_summary": certificate_rows,
+        "g3_operator_delta_summary": delta,
+        "symmetry_cardinality_integration": integration_rows,
+    }
+
+
 def run_theory_experiment(
     *,
     grammars: Iterable[str],
@@ -2117,6 +2576,16 @@ def main(argv: list[str] | None = None) -> int:
     check_symmetry_parser = sub.add_parser("check-symmetry-cert")
     check_symmetry_parser.add_argument("--cnf", required=True)
     check_symmetry_parser.add_argument("--certificate", required=True)
+
+    pigeonhole_parser = sub.add_parser("run-pigeonhole-lab")
+    pigeonhole_parser.add_argument("--instances", nargs="+", default=["php_3_2", "php_4_3", "php_5_4", "php_6_5"])
+    pigeonhole_parser.add_argument("--out-root", default="outputs/v2.3-pigeonhole-cardinality-collapse")
+    pigeonhole_parser.add_argument("--strict", action="store_true")
+    pigeonhole_parser.add_argument("--zip", default="witnora-core-v2.3-pigeonhole-cardinality-collapse.zip")
+
+    check_pigeonhole_parser = sub.add_parser("check-pigeonhole-cert")
+    check_pigeonhole_parser.add_argument("--cnf", required=True)
+    check_pigeonhole_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2147,6 +2616,18 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_symmetry_certificate(formula, data)))
+        return 0
+
+    if args.command == "run-pigeonhole-lab":
+        result = run_pigeonhole_lab(instances=args.instances, out_root=args.out_root, strict=args.strict)
+        digest = make_zip(args.out_root, args.zip)
+        print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": {"certificate_count": len(result["pigeonhole_certificates"]), "native_certified": result["g3_operator_delta_summary"]["g3_native_certified"]}}))
+        return 0
+
+    if args.command == "check-pigeonhole-cert":
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_pigeonhole_certificate(formula, data)))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)

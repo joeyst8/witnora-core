@@ -45,6 +45,11 @@ orbits, record symmetry-breaking predicates, and verify reconstructed SAT
 witnesses against the original CNF. It is not an external UNSAT proof unless a
 DRAT proof against the original CNF is checked.
 
+v2.3 adds `G3_SYMMETRY_CARDINALITY_CERTIFIED`, which recognizes standard
+pigeonhole assignment variables `x[pigeon,hole]`, checks ALO/AMO clauses
+against the original CNF, and emits a native counting certificate for `n > m`.
+This is native certification, not DRAT and not a complete PB solver.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -85,3 +90,5 @@ not a general SAT-solving result.
 7. Treat symmetry-breaking predicates as preservation obligations, not as
    clauses implied by the original formula unless an external proof checker
    accepts them.
+8. For cardinality/counting operators, verify the exact original-CNF structure
+   before emitting native semantic certificates.

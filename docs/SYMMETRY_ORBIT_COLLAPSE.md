@@ -77,6 +77,9 @@ preservation proof, or a DRAT proof must verify against the original formula.
 ## Pigeonhole Status
 
 Pigeonhole rows expose exact row/hole automorphisms and cardinality/PB signals.
-v2.2 records those signals as battlefield evidence. It does not claim that
-symmetry has collapsed pigeonhole, because no certified quotient or SBP
-preservation route is implemented for that family yet.
+v2.2 records those signals as battlefield evidence. v2.3 adds a separate native
+cardinality/counting certificate for recognized standard `php_n_m` encodings.
+
+Symmetry helps organize the assignment-variable grid and orbit summaries. It
+does not by itself prove the contradiction. The UNSAT claim comes from the
+native pigeonhole counting certificate.

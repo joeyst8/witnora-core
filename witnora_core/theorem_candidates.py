@@ -170,7 +170,8 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
                 "Define a sound preservation or proof-export route before claiming collapse.",
             ],
             forbidden_interpretations=[
-                "Does not claim pigeonhole is collapsed.",
+                "Does not claim symmetry alone collapses pigeonhole.",
+                "Does not claim general pigeonhole encodings beyond recognized standard php_n_m forms.",
                 "Does not treat symmetry-breaking predicates as implied clauses.",
             ],
             next_experiments=["Build a certified cardinality operator.", "Design pigeonhole SBP preservation checks."],
@@ -194,6 +195,70 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
                 "Does not provide DRAT certification unless a proof against original CNF is checked.",
             ],
             next_experiments=["Mechanize the orbit-representative proof for larger SBP templates."],
+        ),
+        TheoremCandidate(
+            id="TC-009",
+            name="Pigeonhole Native Certification Theorem",
+            statement=(
+                "For standard php_n_m encodings with n > m, the G3 cardinality detector can emit "
+                "a polynomial-size native pigeonhole counting certificate checkable directly against "
+                "the original CNF assignment variables x[pigeon,hole]."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["php_3_2", "php_4_3", "php_5_4", "php_6_5"],
+            required_proof_obligations=[
+                "Verify each ALO clause over x[pigeon,hole] variables exists in the original CNF.",
+                "Verify each required AMO pair clause exists in the original CNF.",
+                "Check n > m and the counting contradiction.",
+                "Keep the certificate native unless a DRAT proof against the original CNF is checked.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a complete PB solver.",
+                "Does not claim general pigeonhole encodings beyond recognized standard php_n_m forms.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Add DRAT export for native PHP certificates.", "Broaden recognition only with exact schema checks."],
+        ),
+        TheoremCandidate(
+            id="TC-010",
+            name="G3 Cardinality Strictness Candidate",
+            statement=(
+                "There exists a bounded profile B where selected php_n_m instances are in "
+                "W_B(G3_SYMMETRY_CARDINALITY_CERTIFIED) but are not found by G1_XOR or "
+                "G2_SYMMETRY_CERTIFIED under the same bounded experiment."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["php_4_3", "php_5_4"],
+            required_proof_obligations=[
+                "Record G1 and G2 outcomes under the same bound profile.",
+                "Replay native G3 PHP certificates.",
+                "Provide a lower-bound proof before promoting this to theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim G3 strictness as a theorem.",
+                "Does not prove lower bounds against all algorithms.",
+            ],
+            next_experiments=["Formalize the bounded non-collapse side for G1/G2.", "Scale standard php_n_m native certificates."],
+        ),
+        TheoremCandidate(
+            id="TC-011",
+            name="Symmetry + Cardinality Pigeonhole Collapse Candidate",
+            statement=(
+                "Symmetry helps identify and canonicalize pigeonhole assignment-grid structure, while "
+                "cardinality/counting produces the native UNSAT certificate."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["php_3_2", "php_4_3", "php_5_4", "php_6_5"],
+            required_proof_obligations=[
+                "Keep symmetry evidence separate from the counting contradiction.",
+                "Verify assignment-grid ALO/AMO clauses against the original CNF.",
+                "Do not claim symmetry alone solves pigeonhole.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim symmetry alone solves pigeonhole.",
+                "Does not claim a DRAT proof.",
+            ],
+            next_experiments=["Use symmetry to compress larger PHP certificates without changing the native counting proof."],
         ),
     ]
 
