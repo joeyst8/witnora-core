@@ -195,3 +195,22 @@ the sparse/min-fill proof path exported a DRAT/RUP proof verified against
 UNSAT_DRAT_EXPORTED_VERIFIED`. It does not support claims about parity, broad
 XOR mining, general Tseitin scalability, SAT-solver competitiveness, or
 hardness of no-collapse cases.
+
+## v0.9.8 Tseitin Scaling Boundary Diagnostic
+
+v0.9.8 does not add a new theorem, extraction rule, or proof calculus. It
+applies the v0.9.7 deterministic sparse/min-fill trace to a fixed official
+CNFgen Tseitin diagnostic matrix and records exactly which rows are externally
+verified against `original.dimacs`.
+
+The diagnostic supports only row-level claims. A row with
+`public_category: UNSAT_DRAT_EXPORTED_VERIFIED` is externally certified only
+because real `drat-trim` accepted the exported `proof.drat` against the original
+CNF. A row with `UNSAT_XOR_NATIVE_ONLY`, `NO_COLLAPSE_FOUND`, `TIMEOUT`, or
+`ERROR` is not counted as externally verified. Skip reasons are operational cap
+or proof-generation outcomes, not hardness theorems.
+
+The v0.9.8 artifact can support a statement of the current certified Tseitin
+scaling boundary and no more. It does not support claims about parity, broad
+XOR extraction, CryptoMiniSat-style extraction, SAT-solver competitiveness,
+full DRAT/RAT/LRAT/FRAT support, or `P = NP`.

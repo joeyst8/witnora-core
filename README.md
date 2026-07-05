@@ -1,6 +1,6 @@
-# Witnora-Core v0.9.7
+# Witnora-Core v0.9.8
 
-Witnora-Core v0.9.7 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata; v0.9.4 adds an official CNFgen XOR diagnostic artifact runner; v0.9.5 externally certifies official CNFgen `tseitin_10`; v0.9.6 diagnoses the `tseitin_15` proof blowup; v0.9.7 makes the sparse/min-fill XOR elimination trace deterministic, certificate-recorded, independently replayable, and usable for DRAT export.
+Witnora-Core v0.9.8 is a certified collapse-path prototype for CNF SAT formulas. It is not a general SAT solver and makes no `P = NP` claim. Its primary artifact is a deterministic, replay-verifiable collapse path: a sequence of satisfiability-preserving transformations, tractable solves, SAT witness reconstruction, and final verification against the original CNF. v0.9.3 adds a bounded XOR-to-DRAT bridge for detected-CNF XOR contradictions verified by real `drat-trim`; v0.9.3.1 clarifies public UNSAT status/category metadata; v0.9.4 adds an official CNFgen XOR diagnostic artifact runner; v0.9.5 externally certifies official CNFgen `tseitin_10`; v0.9.6 diagnoses the `tseitin_15` proof blowup; v0.9.7 makes the sparse/min-fill XOR elimination trace deterministic, certificate-recorded, independently replayable, and usable for DRAT export; v0.9.8 runs a full official Tseitin min-fill diagnostic to measure the current scaling boundary.
 
 No external SAT solver, GNN, MCTS, LRAT/FRAT emitter, full XOR extractor, or brute-force solver for arbitrary formulas is included.
 
@@ -147,6 +147,14 @@ uses the recorded row-operation trace for XOR-to-DRAT export. When real
 This is still a proof-engineering scaling result, not parity support, broad
 XOR extraction, a CryptoMiniSat-style claim, or a competitive SAT claim.
 
+v0.9.8 does not add solver logic. It packages a full official CNFgen Tseitin
+diagnostic over selected `tseitin_10`, `tseitin_15`, and `tseitin_20` rows using
+the v0.9.7 sparse/min-fill proof path. The artifact records detected XOR
+equations, peak row width, proof clauses, proof bytes, real `drat-trim`
+runtime, public category, and explicit skip reasons. `NO_COLLAPSE_FOUND` and
+native-only rows remain visible; only rows verified by real `drat-trim` against
+`original.dimacs` are reported as `UNSAT_DRAT_EXPORTED_VERIFIED`.
+
 ## Official CNFgen XOR Diagnostic
 
 v0.9.4 adds a reproducible diagnostic runner for official CNFgen parity,
@@ -189,6 +197,26 @@ detection, does not target parity, and does not use any external SAT solver.
 The native XOR row-operation trace is replayable by the independent checker;
 the original-CNF UNSAT claim is accepted only when real `drat-trim` verifies
 `proof.drat`.
+
+The v0.9.8 full Tseitin min-fill diagnostic can be run with:
+
+```bash
+python -m witnora_core.xor_drat_diagnostic \
+  --matrix-preset full-tseitin-v098 \
+  --detect-xor-max-k 6 \
+  --xor-drat \
+  --elim-orders sparse-min-fill \
+  --profiles default \
+  --drat-trim path/to/drat-trim \
+  --out-root outputs/v0.9.8-full-tseitin-minfill-diagnostic \
+  --zip witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+```
+
+The output includes `per_instance_results.csv`, `public_category_summary.json`,
+`proof_size_summary.csv`, `drat_verification_summary.json`,
+`cap_profile_summary.json`, `failures_or_skips.json`, certificate bundles,
+`proof.drat` files for verified rows, drat-trim logs, independent-checker
+outputs, and `FULL_TSEITIN_MINFILL_DIAGNOSTIC_REPORT.md`.
 
 ## COMPONENTS_SOLVED
 

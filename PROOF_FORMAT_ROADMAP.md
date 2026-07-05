@@ -473,6 +473,22 @@ CryptoMiniSat-style XOR extraction. It supports a narrower claim: selected
 official CNFgen Tseitin detected-CNF XOR contradictions can be certified when
 the artifact records an original-CNF DRAT proof accepted by real `drat-trim`.
 
+### v0.9.8 Full Tseitin Min-Fill Certification Diagnostic
+
+v0.9.8 is a diagnostic artifact release, not a new proof system. It reuses the
+v0.9.7 deterministic sparse/min-fill XOR elimination trace and measures the
+current scaling boundary on official CNFgen Tseitin formulas. The report records
+per-row public category, detected XOR equation count, maximum detected arity,
+peak row width, proof clause count, proof byte size, real `drat-trim` runtime,
+and exact skip reasons.
+
+The certification rule does not change: `UNSAT_DRAT_EXPORTED_VERIFIED` is used
+only when `proof.drat` verifies with real `drat-trim` against
+`original.dimacs`. Rows that are native XOR contradictions but lack a checked
+original-CNF proof remain `UNSAT_XOR_NATIVE_ONLY`. The artifact is meant to
+establish the scaling boundary, not to claim parity support, broad XOR
+extraction, full DRAT/RAT/LRAT/FRAT support, or SAT-solver competitiveness.
+
 Likely RAT-compatible or clausal-proof-compatible areas:
 
 - `BCE`, through blocked/RAT-style deletion reasoning.

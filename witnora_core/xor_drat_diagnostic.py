@@ -26,9 +26,18 @@ from .public_benchmarks import (
 from .runner import solve_with_xor
 from .xor_drat import XOR_ELIM_GAUSSIAN, XOR_ELIM_SPARSE_MIN_FILL, _detected_equations, _sparse_xor_elimination_order
 
-DIAGNOSTIC_VERSION = "0.9.7"
+DIAGNOSTIC_VERSION = "0.9.8"
 DEFAULT_INSTANCES = ["tseitin_10", "tseitin_15", "tseitin_20", "tseitin_30"]
 DEFAULT_C_VALUES = [2, 3, 4]
+FULL_TSEITIN_MATRIX = [
+    ("tseitin_10", 2),
+    ("tseitin_10", 3),
+    ("tseitin_10", 4),
+    ("tseitin_15", 2),
+    ("tseitin_15", 3),
+    ("tseitin_15", 4),
+    ("tseitin_20", 2),
+]
 DEFAULT_CAP_PROFILES = {
     "conservative": {
         "max_row_width": 8,
@@ -55,6 +64,32 @@ DEFAULT_CAP_PROFILES = {
         "timeout_seconds": 900.0,
     },
 }
+FULL_TSEITIN_CAP_PROFILES = {
+    "default": {
+        "max_row_width": 8,
+        "max_proof_clauses": 100000,
+        "max_proof_bytes": 10_000_000,
+        "timeout_seconds": 300.0,
+    },
+    "medium-v098": {
+        "max_row_width": 10,
+        "max_proof_clauses": 250000,
+        "max_proof_bytes": 25_000_000,
+        "timeout_seconds": 600.0,
+    },
+    "high-v098": {
+        "max_row_width": 12,
+        "max_proof_clauses": 500000,
+        "max_proof_bytes": 50_000_000,
+        "timeout_seconds": 900.0,
+    },
+}
+
+
+def all_cap_profiles() -> dict[str, dict[str, Any]]:
+    profiles = dict(DEFAULT_CAP_PROFILES)
+    profiles.update(FULL_TSEITIN_CAP_PROFILES)
+    return profiles
 
 
 def stable_json(data: Any) -> str:
@@ -272,6 +307,179 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
             writer.writerow(row)
 
 
+def write_table_csv(path: Path, rows: list[dict[str, Any]], columns: list[str] | None = None) -> None:
+    if columns is None:
+        keys: list[str] = []
+        for row in rows:
+            for key in row:
+                if key not in keys:
+                    keys.append(key)
+        columns = keys
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
+def public_category_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    categories = [
+        "SAT_ASSIGNMENT_VERIFIED",
+        UNSAT_DRAT_EXPORTED_VERIFIED,
+        UNSAT_XOR_NATIVE_ONLY,
+        "UNSAT_NOT_EXTERNALLY_VERIFIED",
+        "NO_COLLAPSE_FOUND",
+        "TIMEOUT",
+        "ERROR",
+    ]
+    counts = {category: 0 for category in categories}
+    for row in rows:
+        category = str(row.get("public_category", ""))
+        counts.setdefault(category, 0)
+        counts[category] += 1
+    return counts
+
+
+def verified_c_values(rows: list[dict[str, Any]], instance_id: str) -> list[int]:
+    values = {
+        int(row["c"])
+        for row in rows
+        if row.get("instance_id") == instance_id and row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED
+    }
+    return sorted(values)
+
+
+def best_matrix_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, int], list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault((str(row.get("instance_id", "")), int(row.get("c", 0))), []).append(row)
+
+    def rank(row: dict[str, Any]) -> tuple[int, int, int]:
+        if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED:
+            category_rank = 0
+        elif row.get("public_category") == UNSAT_XOR_NATIVE_ONLY:
+            category_rank = 1
+        else:
+            category_rank = 2
+        proof_clauses = int(row.get("proof_clause_count_actual") or 0)
+        cap_width = int(row.get("max_row_width_cap") or 10**9)
+        return (category_rank, proof_clauses if proof_clauses else 10**9, cap_width)
+
+    best = [sorted(group, key=rank)[0] for group in grouped.values()]
+    return sorted(best, key=lambda row: (str(row.get("instance_id")), int(row.get("c", 0))))
+
+
+def family_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.get("family", "")), []).append(row)
+    result = []
+    for family, group in sorted(grouped.items()):
+        counts = public_category_counts(group)
+        result.append(
+            {
+                "family": family,
+                "total_rows": len(group),
+                "UNSAT_DRAT_EXPORTED_VERIFIED": counts.get(UNSAT_DRAT_EXPORTED_VERIFIED, 0),
+                "UNSAT_XOR_NATIVE_ONLY": counts.get(UNSAT_XOR_NATIVE_ONLY, 0),
+                "NO_COLLAPSE_FOUND": counts.get("NO_COLLAPSE_FOUND", 0),
+                "TIMEOUT": counts.get("TIMEOUT", 0),
+                "ERROR": counts.get("ERROR", 0),
+                "false_drat_claims": sum(1 for row in group if row.get("false_drat_claim")),
+            }
+        )
+    return result
+
+
+def proof_size_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "instance_id": row.get("instance_id"),
+            "c": row.get("c"),
+            "cap_profile": row.get("cap_profile"),
+            "xor_elim_order": row.get("xor_elim_order"),
+            "public_category": row.get("public_category"),
+            "peak_row_width": row.get("peak_row_width", row.get("row_width_peak")),
+            "proof_clause_count_actual": row.get("proof_clause_count_actual"),
+            "proof_file_size_bytes": row.get("proof_file_size_bytes"),
+            "proof_generation_runtime_seconds": row.get("proof_generation_runtime_seconds"),
+            "drat_trim_runtime_seconds": row.get("drat_trim_runtime_seconds"),
+            "skip_reason": row.get("skip_reason"),
+        }
+        for row in rows
+    ]
+
+
+def failures_or_skips(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    failed = []
+    for row in rows:
+        if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED and not row.get("skip_reason"):
+            continue
+        failed.append(
+            {
+                "instance_id": row.get("instance_id"),
+                "c": row.get("c"),
+                "cap_profile": row.get("cap_profile"),
+                "xor_elim_order": row.get("xor_elim_order"),
+                "public_category": row.get("public_category"),
+                "xor_drat_status": row.get("xor_drat_status"),
+                "skip_reason": row.get("skip_reason"),
+                "notes": "native-only or skipped proof export; not counted as externally verified",
+            }
+        )
+    return failed
+
+
+def cap_profile_summary_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row.get("cap_profile", "")), []).append(row)
+    result = []
+    for profile, group in sorted(grouped.items()):
+        counts = public_category_counts(group)
+        result.append(
+            {
+                "cap_profile": profile,
+                "total_rows": len(group),
+                "UNSAT_DRAT_EXPORTED_VERIFIED": counts.get(UNSAT_DRAT_EXPORTED_VERIFIED, 0),
+                "UNSAT_XOR_NATIVE_ONLY": counts.get(UNSAT_XOR_NATIVE_ONLY, 0),
+                "max_peak_row_width": max((row.get("peak_row_width") or row.get("row_width_peak") or 0) for row in group),
+                "max_proof_clauses": max((row.get("proof_clause_count_actual") or 0) for row in group),
+                "false_drat_claims": sum(1 for row in group if row.get("false_drat_claim")),
+            }
+        )
+    return result
+
+
+def drat_verification_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    verified = [
+        row for row in rows
+        if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED and row.get("external_checker_verified")
+    ]
+    return {
+        "total_rows": len(rows),
+        "unique_matrix_rows": len(best_matrix_rows(rows)),
+        "externally_verified_rows": len(verified),
+        "best_matrix_externally_verified_rows": sum(
+            1 for row in best_matrix_rows(rows) if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED
+        ),
+        "verified_instances": [
+            {
+                "instance_id": row.get("instance_id"),
+                "c": row.get("c"),
+                "cap_profile": row.get("cap_profile"),
+                "proof_base": "original_cnf",
+                "proof_drat_path": row.get("proof_drat_path"),
+                "drat_trim_runtime_seconds": row.get("drat_trim_runtime_seconds"),
+            }
+            for row in verified
+        ],
+        "native_only_rows": sum(1 for row in rows if row.get("public_category") == UNSAT_XOR_NATIVE_ONLY),
+        "false_drat_claims": sum(1 for row in rows if row.get("false_drat_claim")),
+    }
+
+
 def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     verified = [row for row in rows if row.get("public_category") == UNSAT_DRAT_EXPORTED_VERIFIED]
     native = [row for row in rows if row.get("public_category") == UNSAT_XOR_NATIVE_ONLY]
@@ -367,13 +575,16 @@ def _recommended_next_step(rows: list[dict[str, Any]]) -> str:
 
 
 def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> str:
+    counts = public_category_counts(rows)
+    best_counts = public_category_counts(best_matrix_rows(rows))
     lines = [
-        "# Witnora-Core v0.9.7 Min-Fill XOR-DRAT Diagnostic",
+        "# Witnora-Core v0.9.8 Full Tseitin Min-Fill Diagnostic",
         "",
         "This is a proof-engineering diagnostic, not a competitive SAT benchmark.",
         "Every verified row must have real drat-trim verification against original.dimacs.",
+        "The v0.8.4 baseline for official Tseitin was NO_COLLAPSE_FOUND for all reported c=2,3,4 rows.",
         "",
-        "## Summary",
+        "## Executive Summary",
         "",
     ]
     for key, value in run_summary.items():
@@ -383,7 +594,43 @@ def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> 
     lines.extend(
         [
             "",
-            "## Per-Instance Attempts",
+            "## Public Category Counts",
+            "",
+            "Attempt counts include cap-profile sensitivity rows. Best-matrix counts count each instance/c pair once.",
+            "",
+            "### Best Matrix Rows",
+            "",
+            "| public_category | count |",
+            "| --- | --- |",
+        ]
+    )
+    for category, count in best_counts.items():
+        lines.append(f"| {category} | {count} |")
+    lines.extend(
+        [
+            "",
+            "### All Attempts",
+            "",
+            "| public_category | count |",
+            "| --- | --- |",
+        ]
+    )
+    for category, count in counts.items():
+        lines.append(f"| {category} | {count} |")
+    lines.extend(
+        [
+            "",
+            "## v0.8.4 vs v0.9.8",
+            "",
+            "| family | baseline | v0.9.8 externally verified | v0.9.8 native-only |",
+            "| --- | --- | --- | --- |",
+            f"| tseitin | v0.8.4 rows were NO_COLLAPSE_FOUND | {best_counts.get(UNSAT_DRAT_EXPORTED_VERIFIED, 0)} | {best_counts.get(UNSAT_XOR_NATIVE_ONLY, 0)} |",
+        ]
+    )
+    lines.extend(
+        [
+            "",
+            "## Instance Result Table",
             "",
             "| profile | order | c | instance | public_category | xor_drat_status | row_width | sparse_width | proof_clauses | proof_bytes | drat_trim_s | skip_reason |",
             "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -398,8 +645,27 @@ def report_markdown(rows: list[dict[str, Any]], run_summary: dict[str, Any]) -> 
     lines.extend(
         [
             "",
-            "## Elimination Order Comparison",
+            "## Scaling Table",
             "",
+            "| instance | verified c values | best category | proof bytes range | drat-trim runtime range |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
+    for instance in sorted({str(row.get("instance_id")) for row in rows}):
+        group = [row for row in rows if row.get("instance_id") == instance]
+        verified_values = verified_c_values(rows, instance)
+        bytes_values = [int(row.get("proof_file_size_bytes") or 0) for row in group if row.get("proof_file_size_bytes")]
+        runtimes = [float(row.get("drat_trim_runtime_seconds") or 0.0) for row in group if row.get("drat_trim_runtime_seconds") is not None]
+        best = UNSAT_DRAT_EXPORTED_VERIFIED if verified_values else (group[0].get("public_category") if group else "")
+        byte_range = f"{min(bytes_values)}-{max(bytes_values)}" if bytes_values else ""
+        runtime_range = f"{min(runtimes):.6f}-{max(runtimes):.6f}" if runtimes else ""
+        lines.append(f"| {instance} | {verified_values} | {best} | {byte_range} | {runtime_range} |")
+    lines.extend(
+        [
+            "",
+            "## Gaussian vs Min-Fill Recap",
+            "",
+            "v0.9.6 recorded gaussian tseitin_15 peak width 14. v0.9.7 recorded sparse/min-fill tseitin_15 peak width 8 and externally verified c=2.",
             "Sparse/min-fill is deterministic, certificate-recorded, independently replayed, and counted only when proof.drat verifies with real drat-trim.",
             "",
         ]
@@ -438,31 +704,40 @@ def run_diagnostic(
     detect_xor_max_k: int,
     profiles: list[str],
     elim_orders: list[str],
+    matrix_pairs: list[tuple[str, int]] | None = None,
 ) -> dict[str, Any]:
     cnfgen = find_cnfgen_cli(cnfgen_path)
     if cnfgen is None:
         raise RuntimeError("official CNFgen CLI not found")
     out_root.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
+    cap_profiles = all_cap_profiles()
+    pairs = matrix_pairs or [(instance, c) for c in c_values for instance in instances]
     for profile_name in profiles:
-        profile = DEFAULT_CAP_PROFILES[profile_name]
+        profile = cap_profiles[profile_name]
         for elim_order in elim_orders:
-            for c in c_values:
-                for instance in instances:
-                    rows.append(
-                        run_attempt(
-                            cnfgen=cnfgen,
-                            drat_trim_path=drat_trim_path,
-                            out_root=out_root,
-                            instance_id=instance,
-                            c=c,
-                            profile_name=profile_name,
-                            profile=profile,
-                            detect_xor_max_k=detect_xor_max_k,
-                            xor_elim_order=elim_order,
-                        )
+            for instance, c in pairs:
+                rows.append(
+                    run_attempt(
+                        cnfgen=cnfgen,
+                        drat_trim_path=drat_trim_path,
+                        out_root=out_root,
+                        instance_id=instance,
+                        c=c,
+                        profile_name=profile_name,
+                        profile=profile,
+                        detect_xor_max_k=detect_xor_max_k,
+                        xor_elim_order=elim_order,
                     )
+                )
     run_summary = summary(rows)
+    category_summary = public_category_counts(rows)
+    best_category_summary = public_category_counts(best_matrix_rows(rows))
+    family_rows = family_summary_rows(rows)
+    proof_rows = proof_size_rows(rows)
+    drat_summary = drat_verification_summary(rows)
+    cap_rows = cap_profile_summary_rows(rows)
+    skip_rows = failures_or_skips(rows)
     git = git_metadata()
     manifest = {
         "diagnostic_version": DIAGNOSTIC_VERSION,
@@ -474,27 +749,42 @@ def run_diagnostic(
         "drat_trim_path": drat_trim_path,
         "instances": instances,
         "c_values": c_values,
+        "matrix_pairs": [{"instance_id": instance, "c": c} for instance, c in pairs],
         "detect_xor_max_k": detect_xor_max_k,
         "elim_orders": elim_orders,
-        "cap_profiles": {name: DEFAULT_CAP_PROFILES[name] for name in profiles},
+        "cap_profiles": {name: cap_profiles[name] for name in profiles},
     }
     files = {
         "manifest.json": manifest,
         "summary.json": run_summary,
         "per_instance_summary.json": {"rows": rows},
+        "per_instance_results.json": {"rows": rows},
+        "public_category_summary.json": category_summary,
+        "best_matrix_public_category_summary.json": best_category_summary,
+        "drat_verification_summary.json": drat_summary,
+        "cap_profile_summary.json": {"rows": cap_rows},
+        "failures_or_skips.json": {"rows": skip_rows},
         "environment.json": {
             "python": sys.version.replace("\n", " "),
+            "platform": sys.platform,
             "cnfgen_path": cnfgen,
             "cnfgen_version": cnfgen_version(cnfgen),
             "drat_trim_path": drat_trim_path,
+            "witnora_commit": git.get("commit", ""),
+            "witnora_tag": git.get("tag", "") or "uncommitted",
         },
     }
     for name, payload in files.items():
         (out_root / name).write_text(stable_json(payload), encoding="utf-8", newline="\n")
     write_csv(out_root / "per_instance_summary.csv", rows)
+    write_csv(out_root / "per_instance_results.csv", rows)
+    write_table_csv(out_root / "per_family_summary.csv", family_rows)
+    write_table_csv(out_root / "proof_size_summary.csv", proof_rows)
+    write_table_csv(out_root / "cap_profile_summary.csv", cap_rows)
     report_text = report_markdown(rows, run_summary)
     (out_root / "TSEITIN_XOR_DRAT_DIAGNOSTIC_REPORT.md").write_text(report_text, encoding="utf-8", newline="\n")
     (out_root / "TSEITIN15_XOR_DRAT_SCALING_REPORT.md").write_text(report_text, encoding="utf-8", newline="\n")
+    (out_root / "FULL_TSEITIN_MINFILL_DIAGNOSTIC_REPORT.md").write_text(report_text, encoding="utf-8", newline="\n")
     return {"manifest": manifest, "summary": run_summary, "rows": rows}
 
 
@@ -503,25 +793,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--family", default="tseitin", choices=["tseitin"])
     parser.add_argument("--instances", nargs="+", default=DEFAULT_INSTANCES)
     parser.add_argument("--c-values", nargs="+", type=int, default=DEFAULT_C_VALUES)
+    parser.add_argument("--matrix-preset", choices=["cartesian", "full-tseitin-v098"], default="cartesian")
     parser.add_argument("--detect-xor-max-k", type=int, default=6)
     parser.add_argument("--xor-drat", action="store_true")
     parser.add_argument("--drat-trim", required=True)
     parser.add_argument("--cnfgen-path")
-    parser.add_argument("--profiles", nargs="+", choices=sorted(DEFAULT_CAP_PROFILES), default=["conservative"])
+    parser.add_argument("--profiles", nargs="+", choices=sorted(all_cap_profiles()), default=["conservative"])
     parser.add_argument(
         "--elim-orders",
         nargs="+",
         choices=[XOR_ELIM_GAUSSIAN, XOR_ELIM_SPARSE_MIN_FILL],
         default=[XOR_ELIM_GAUSSIAN],
     )
-    parser.add_argument("--out-root", default="outputs/v0.9.7-minfill-xor-drat")
-    parser.add_argument("--zip", default="witnora-core-v0.9.7-minfill-xor-drat.zip")
+    parser.add_argument("--out-root", default="outputs/v0.9.8-full-tseitin-minfill-diagnostic")
+    parser.add_argument("--zip", default="witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip")
     args = parser.parse_args(argv)
     if not args.xor_drat:
         raise SystemExit("--xor-drat is required for this diagnostic")
     root = Path(args.out_root)
     if root.exists():
         shutil.rmtree(root)
+    matrix_pairs = FULL_TSEITIN_MATRIX if args.matrix_preset == "full-tseitin-v098" else None
     result = run_diagnostic(
         root,
         cnfgen_path=args.cnfgen_path,
@@ -531,6 +823,7 @@ def main(argv: list[str] | None = None) -> int:
         detect_xor_max_k=args.detect_xor_max_k,
         profiles=args.profiles,
         elim_orders=args.elim_orders,
+        matrix_pairs=matrix_pairs,
     )
     digest = make_zip(root, Path(args.zip))
     print(stable_json({"out_root": str(root), "zip": args.zip, "zip_sha256": digest, "summary": result["summary"]}))
