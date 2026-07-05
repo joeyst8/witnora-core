@@ -69,6 +69,19 @@ class DockerActionRunnerTest(unittest.TestCase):
         self.assertIn("ARTIFACT_INTEGRITY_VERIFIED", workflow)
         print("DOCKER_SELF_TEST_WORKFLOW_BUILD_RUN_PASS")
 
+    def test_docker_github_runtime_workflow_present(self):
+        workflow_path = Path(".github/workflows/docker-action-runtime-validation.yml")
+        self.assertTrue(workflow_path.is_file())
+        workflow = workflow_path.read_text(encoding="utf-8")
+        self.assertIn("runs-on: ubuntu-latest", workflow)
+        self.assertIn("docker --version", workflow)
+        self.assertIn("docker build", workflow)
+        self.assertIn('WITNORA_CORE_REF="${{ github.sha }}"', workflow)
+        self.assertIn("dist/witnora-verify-action-docker", workflow)
+        self.assertIn("docker run --rm", workflow)
+        self.assertIn("ARTIFACT_INTEGRITY_VERIFIED", workflow)
+        print("DOCKER_GITHUB_RUNTIME_WORKFLOW_PRESENT_PASS")
+
     def test_docker_smoke_script_present(self):
         script = Path("scripts/docker_action_smoke_test.py")
         self.assertTrue(script.is_file())
