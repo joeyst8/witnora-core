@@ -74,6 +74,19 @@ Neither package reruns the solver, regenerates CNFgen instances, regenerates
 DRAT proofs, reruns the full benchmark diagnostic, or proves claims outside the
 selected evidence.
 
+The Docker action should not be treated as externally validated until its Docker
+build/run self-test passes in GitHub Actions or another Docker-capable
+environment. Static package tests confirm metadata, scope text, and entrypoint
+wiring, but they do not prove that the image builds on a real Docker runner.
+
+Docker tradeoff summary:
+
+- Composite action: lighter, faster startup, easier to inspect, but requires
+  Python and Witnora-Core setup in the caller's runner.
+- Docker action: self-contained and more reproducible, but has slower startup,
+  requires a Docker-capable runner, and must pass Docker build/run CI before
+  external use.
+
 ## Inputs
 
 Required:

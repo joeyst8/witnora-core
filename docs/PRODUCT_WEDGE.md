@@ -70,7 +70,9 @@ self-contained in the sense that the image installs Python dependencies and
 Witnora-Core from a tagged source ref, so external workflows do not need to
 prepare Witnora-Core manually. This improves packaging reproducibility, but it
 does not add solver capability, benchmark coverage, proof-export capability, or
-new scientific claims.
+new scientific claims. The Docker action should not be treated as externally
+validated until its Docker build/run self-test passes in GitHub Actions or
+another Docker-capable environment.
 
 The current depth ladder is:
 

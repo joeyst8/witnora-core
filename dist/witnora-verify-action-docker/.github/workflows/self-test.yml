@@ -21,9 +21,69 @@ jobs:
           grep -q "using: docker" action.yml
           grep -q "does not rerun the solver" README.md
 
-  docker-build:
+  docker-build-run-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker action image
-        run: docker build --build-arg WITNORA_CORE_REF=v1.6-marketplace-action-repo-package -t witnora-verify-action:test .
+        run: docker build -t witnora-verify-action:test .
+      - name: Create metadata smoke fixtures
+        run: |
+          mkdir -p test-artifacts
+          python - <<'PY'
+          import hashlib
+          import zipfile
+          from pathlib import Path
+
+          root = Path("test-artifacts")
+          source = root / "source.zip"
+          diagnostic = root / "diagnostic.zip"
+          with zipfile.ZipFile(source, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+              archive.writestr("README.md", "source fixture\n")
+          with zipfile.ZipFile(diagnostic, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+              archive.writestr("manifest.json", "{\"suite\":\"docker-smoke\"}\n")
+
+          def sha256(path):
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest().upper()
+
+          manifest = root / "MANIFEST.md"
+          manifest.write_text(
+              "\n".join(
+                  [
+                      "# Docker Smoke Manifest",
+                      "",
+                      "| asset | SHA256 | status |",
+                      "| --- | --- | --- |",
+                      f"| `source.zip` | `{sha256(source)}` | source archive |",
+                      f"| `diagnostic.zip` | `{sha256(diagnostic)}` | diagnostic artifact |",
+                      "",
+                      "This fixture does not claim parity support, broad XOR extraction, or P vs NP progress.",
+                      "",
+                  ]
+              ),
+              encoding="utf-8",
+          )
+          PY
+      - name: Run Docker action metadata smoke
+        run: |
+          docker run --rm \
+            -v "$PWD/test-artifacts:/work/test-artifacts" \
+            -e INPUT_SOURCE_ZIP=/work/test-artifacts/source.zip \
+            -e INPUT_DIAGNOSTIC_ZIP=/work/test-artifacts/diagnostic.zip \
+            -e INPUT_MANIFEST=/work/test-artifacts/MANIFEST.md \
+            -e INPUT_DEPTH=metadata \
+            -e INPUT_OUT_DIR=/work/test-artifacts/out \
+            witnora-verify-action:test
+          test -f test-artifacts/out/release_verification_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("test-artifacts/out/release_verification_report.json").read_text(encoding="utf-8"))
+          assert report["verdict"] == "ARTIFACT_INTEGRITY_VERIFIED", report
+          print("docker metadata smoke verdict:", report["verdict"])
+          PY

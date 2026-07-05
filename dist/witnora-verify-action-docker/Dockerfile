@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-ARG WITNORA_CORE_REF=v1.6-marketplace-action-repo-package
+ARG WITNORA_CORE_REF=v1.7-docker-action-runner
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1

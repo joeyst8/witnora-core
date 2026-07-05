@@ -33,12 +33,19 @@ diagnostic, and does not replace human review.
 The Dockerfile installs Witnora-Core from:
 
 ```text
-git+https://github.com/joeyst8/witnora-core.git@v1.6-marketplace-action-repo-package
+git+https://github.com/joeyst8/witnora-core.git@v1.7-docker-action-runner
 ```
 
 This package does not claim a PyPI package exists. Override the build arg
 `WITNORA_CORE_REF` only when deliberately testing another frozen Witnora-Core
-tag.
+tag:
+
+```bash
+docker build --build-arg WITNORA_CORE_REF=<tag> -t witnora-verify-action .
+```
+
+The default ref is `v1.7-docker-action-runner`. That tag must be available from
+the repository used by the Docker build before external Docker publication.
 
 ## Inputs
 
@@ -99,10 +106,16 @@ replay, and optional selected drat-trim replay.
 
 ## Composite vs Docker
 
-- Composite action: lighter, faster to inspect, but requires the caller to
-  install Python and Witnora-Core.
-- Docker action: heavier and slower to build, but packages Python and
-  Witnora-Core into the action image for a more reproducible runner.
+- Composite action: lighter, faster to inspect, but requires Python and
+  Witnora-Core setup in the caller's runner.
+- Docker action: self-contained and more reproducible at runtime, but heavier,
+  slower to start, and requires a Docker-capable runner.
+
+Composite action requires Python and Witnora-Core setup in the caller's runner.
+
+The Docker action should not be treated as externally validated until the Docker
+build/run self-test passes in GitHub Actions or another Docker-capable
+environment.
 
 ## Claim Boundary
 
