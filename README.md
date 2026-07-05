@@ -1,11 +1,26 @@
 # Witnora-Core v0.9.8
 
+## v2.1 Collapse Theory Frontier
+
+v2.1 extends the Collapse Theory Lab with a bounded cost model, theorem-candidate
+registry, obstruction records, syntactic orbit diagnostics, and an
+operator-discovery engine. The new `G2_SYMMETRY_PROTOTYPE` profile records
+candidate symmetry/orbit structure in pigeonhole, graph-coloring, clique, and
+adversarial near-symmetry families. It is diagnostic-only unless an existing
+certified route already proves the row.
+
+The v2.1 claim remains bounded: Witnora can compare collapse grammars under an
+explicit bound profile `B`, record evidence for `W_B(G)` differences, and rank
+candidate next operators. It does not claim P vs NP progress, general SAT
+capability, broad XOR extraction, full automorphism detection, or certified
+symmetry collapse of pigeonhole.
+
 ## v2.0 Collapse Theory Lab
 
 v2.0 adds Collapse Theory Lab, a research framework for comparing bounded
 collapse grammars and identifying certificate-backed strictness witnesses. It
 does not claim P vs NP progress, SAT solver competitiveness, broad XOR
-extraction, or general lower bounds. The allowed v2.0 claim is bounded:
+extraction, or lower-bound theorems. The allowed v2.0 claim is bounded:
 Witnora formalizes collapse grammar comparisons and demonstrates examples where
 adding exact XOR reasoning changes selected formula families from no-collapse to
 certified collapse under configured resource bounds.

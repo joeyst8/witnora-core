@@ -14,12 +14,16 @@ discover a collapse path to a witness or proof?
 
 - Collapse Grammar G: a finite set of deterministic transformations and
   terminal classes.
-- Collapse Class W(G): formulas that collapse under G within configured
-  resource bounds.
+- Bound Profile B: explicit caps on width, XOR arity, runtime, proof size,
+  search nodes, operator depth, and symmetry diagnostics.
+- Bounded Collapse Class W_B(G): formulas that collapse under grammar G within
+  bound profile B and emit a valid certificate/proof when required.
 - Strictness Witness: bounded evidence that one grammar fails under the
   configured bound while an extended grammar succeeds with certificate-backed
   evidence.
 - Operator Delta: the changed public outcomes between G and G plus an operator.
+- Collapse Cost: recorded path length, operator counts, peak formula sizes,
+  proof size, runtime, certificate size, and bound status.
 
 ## Current Profiles
 
@@ -29,6 +33,21 @@ discover a collapse path to a witness or proof?
 - `G2_HORN_PROTOTYPE`: honest stub.
 - `G3_CARDINALITY_PROTOTYPE`: honest stub.
 - `G4_BACKDOOR_DIAGNOSTIC`: honest stub.
+- `G2_SYMMETRY_PROTOTYPE`: `G1_XOR` plus deterministic syntactic orbit
+  diagnostics. This is not full automorphism detection and does not certify
+  orbit quotient collapse.
+
+## v2.1 Frontier Layer
+
+v2.1 turns no-collapse rows into structured obstruction records. It asks:
+
+- Which bound was exceeded or which operator was not applicable?
+- Which structural signal appears in the failed row?
+- Which next operator would make the obstruction certifiable if implemented?
+
+Current obstruction records are bounded diagnostics, not lower-bound theorems.
+Current non-collapse is bounded non-collapse under configured grammar/resource
+bounds, not a proof that no method can solve the instance.
 
 ## Claim Boundary
 
@@ -46,4 +65,5 @@ Forbidden claims:
 - no competitive SAT solver claim
 - no lower bound against all algorithms
 - no complete collapse grammar claim
-
+- no certified symmetry-collapse claim for pigeonhole unless a future release
+  implements and verifies such a transformation
