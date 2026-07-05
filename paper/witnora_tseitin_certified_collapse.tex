@@ -1,0 +1,417 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=0.9in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{longtable}
+\usepackage{verbatim}
+
+\title{Certified Collapse of Tseitin Formulas via XOR Detection and Sparse Elimination}
+\author{Witnora-Core Artifact}
+\date{v1.0-public-preprint package}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present Witnora-Core, a certified collapse-path engine that transforms CNF
+formulas through deterministic, replayable steps into tractable classes when
+possible, reconstructs witnesses, and exports externally verifiable DRAT proofs
+for supported UNSAT cases. We demonstrate the system on official CNFgen Tseitin
+formulas. Witnora detects hidden XOR structure, applies a deterministic
+sparse/min-fill elimination order to control proof size, and generates DRAT
+proofs verified by \texttt{drat-trim}. In the recorded v0.9.8 diagnostic,
+Witnora externally verifies seven official CNFgen Tseitin rows, including
+\texttt{tseitin\_20 c=2}, where the pre-XOR v0.8.4 baseline reported no
+collapse on the corresponding Tseitin diagnostic. The method is deterministic
+and reproducible from the released source and artifact package. We explicitly
+limit the claim to exact-pattern XOR extraction on the recorded Tseitin matrix
+and do not claim parity support, industrial benchmark performance, or
+competitive SAT solving.
+\end{abstract}
+
+\section{Introduction}
+
+Witnora-Core studies a narrow systems question: can a deterministic,
+replayable collapse engine turn selected CNF formulas into certified SAT or
+UNSAT results without using an external SAT solver for solving? Earlier
+Witnora releases established a collapse-path framework, certificate bundles,
+an independent raw checker, public result categories, benchmark artifacts, and
+DRAT export for supported UNSAT paths.
+
+The v0.8.4 official CNFgen diagnostic showed a clear gap: the Tseitin rows in
+the recorded matrix remained \texttt{NO\_COLLAPSE\_FOUND}. The v0.9 series
+added exact CNF XOR extraction and a bounded XOR-to-DRAT proof bridge. The
+final v0.9.8 diagnostic records the before/after result: the selected official
+Tseitin rows move from no-collapse to externally checked DRAT proofs under the
+recorded configuration.
+
+This note is a short systems report. It makes row-level claims about a
+reproducible artifact, not broad claims about SAT solving.
+
+\section{Background}
+
+\paragraph{CNF SAT.}
+A CNF formula is a conjunction of clauses, where each clause is a disjunction
+of literals. A SAT certificate is an assignment satisfying the original
+formula. An UNSAT certificate requires evidence that no assignment satisfies
+the original formula. Modern SAT solvers are commonly based on CDCL and related
+proof-logging infrastructure \cite{marques1999grasp,bayardo1997lookback,moskewicz2001chaff,een2003minisat,biere2009handbook}.
+
+\paragraph{Collapse paths.}
+Witnora-Core represents computation as a collapse path: a deterministic
+sequence of simplification, decomposition, restricted solving, reconstruction,
+and verification steps. A collapse path is accepted only when it can be
+replayed and checked against the original input.
+
+\paragraph{Tseitin formulas.}
+Tseitin formulas encode parity constraints over graph-like structure into CNF
+\cite{tseitin1968}. They are useful here because their algebraic structure is
+explicit enough for an exact XOR detector to identify, while still being
+invisible to the earlier treewidth-focused route under the recorded diagnostic.
+The formulas in this artifact were generated with CNFgen 0.9.5
+\cite{cnfgen}.
+
+\paragraph{XOR and affine structure.}
+An XOR equation over GF(2) has the form
+\[
+  x_1 \oplus x_2 \oplus \cdots \oplus x_k = b .
+\]
+Witnora-Core v0.9.8 detects only exact full-CNF encodings of such equations up
+to the configured arity cap. It does not perform heuristic XOR mining. XOR
+reasoning and Gaussian elimination are established techniques in SAT systems,
+including cryptographic SAT work \cite{soos2009cryptographic}.
+
+\paragraph{DRAT proof checking.}
+DRAT proof checking validates clausal proof artifacts
+\cite{wetzler2014drattrim,heule2016drat}. Witnora-Core treats native XOR
+inconsistency as an internal trace and counts original-CNF UNSAT as externally
+certified only when \texttt{proof.drat} is accepted by real \texttt{drat-trim}
+against \texttt{original.dimacs}.
+
+\section{Witnora-Core Architecture}
+
+\paragraph{Deterministic collapse grammar.}
+The core collapse grammar includes unit propagation, pure literal elimination,
+subsumption, blocked clause elimination, component decomposition, bounded
+treewidth solving, 2-SAT solving, and exact XOR reasoning for explicitly
+supported inputs. Bounded-width and decomposition-based SAT approaches provide
+context for this structural route \cite{gottlob2002hypertree,samer2010boundedtreewidth}.
+
+\paragraph{Certificate bundles.}
+Witnora certificate bundles store \texttt{original.dimacs}, normalized
+formulas, collapse paths, reconstruction traces, result metadata, proof traces,
+DRAT status, and hashes. Timing is not part of the certificate hash.
+
+\paragraph{Independent checker.}
+The independent raw checker parses raw DIMACS, recomputes supported
+transformations from raw clauses, checks SAT assignments against the original
+formula, replays native XOR traces, and verifies that public categories match
+the proof metadata. It does not replace \texttt{drat-trim} for DRAT proof
+validation.
+
+\paragraph{Public result categories.}
+Public reports separate logical result, discovery route, and certification
+level. The categories used in this note are:
+\begin{itemize}
+  \item \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED}: \texttt{proof.drat} was
+  verified by real \texttt{drat-trim} against \texttt{original.dimacs}.
+  \item \texttt{UNSAT\_XOR\_NATIVE\_ONLY}: a native XOR contradiction exists,
+  but no external original-CNF DRAT proof is claimed.
+  \item \texttt{NO\_COLLAPSE\_FOUND}: Witnora did not find a collapse under
+  the recorded grammar and parameters.
+\end{itemize}
+
+\section{XOR Collapse Layer}
+
+\paragraph{Exact CNF XOR extraction.}
+For variables \(V = \{x_1,\ldots,x_k\}\) and right-hand side \(b\), the full
+CNF encoding of an XOR equation contains one clause for each assignment to
+\(V\) whose parity is not \(b\). Witnora detects such encodings only when the
+exact source clauses are present. Source clauses are retained in the CNF.
+
+\paragraph{Sidecar distinction.}
+Sidecar XOR equations define a combined problem: CNF plus XOR sidecar. They
+are not claimed to be implied by the original CNF. This note concerns
+detected-CNF XOR equations whose source clauses are already in
+\texttt{original.dimacs}.
+
+\paragraph{Gaussian elimination.}
+Gaussian elimination over GF(2) finds native XOR contradictions when the
+detected equations are inconsistent. Free variables are handled
+deterministically in SAT cases.
+
+\paragraph{Deterministic sparse/min-fill elimination.}
+The sparse/min-fill order is a deterministic heuristic used to reduce peak row
+width during XOR elimination. The order and row-operation trace are recorded in
+the certificate and independently replayed. It is not claimed to be optimal.
+
+\section{Certification Model}
+
+\paragraph{SAT assignment verification.}
+SAT results are certified by reconstructing an assignment and checking it
+against the original CNF and any active XOR equations.
+
+\paragraph{Native XOR trace replay.}
+A native XOR trace records GF(2) row operations. The independent checker
+accepts the native contradiction only when replay reaches \(0 = 1\).
+
+\paragraph{DRAT export.}
+For detected-CNF XOR contradictions, Witnora emits a clausal proof guided by
+the recorded XOR trace. The proof base is the original CNF, not a sidecar or
+modified formula.
+
+\paragraph{\texttt{drat-trim} verification.}
+The certification authority for externally checked UNSAT rows is real
+\texttt{drat-trim}. Witnora reports \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED}
+only when \texttt{drat-trim} accepts \texttt{proof.drat} against
+\texttt{original.dimacs}.
+
+\section{Experimental Setup}
+
+\begin{itemize}
+  \item Witnora tag: \texttt{v0.9.8}
+  \item Witnora commit: \texttt{27e1876b5d815e3f3ba21392395b0e0e9dbcd025}
+  \item CNF generator: official CNFgen \texttt{0.9.5}
+  \item CNFgen path used:
+  \path{C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe}
+  \item Proof checker:
+  \path{C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe}
+  \item Proof checker SHA256:
+  \texttt{74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8}
+  \item The local \texttt{drat-trim} binary used for the recorded run prints a
+  usage banner for \texttt{-h} but does not expose a version string through
+  that command.
+  \item Source archive SHA256:
+  \texttt{26557CD73DC45DF60EF5E056699AFC34E3402645DE60EFE050C5CE2ADADC267F}
+  \item Diagnostic artifact SHA256:
+  \texttt{4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C}
+  \item Clean extraction tests: 188 passing
+\end{itemize}
+
+The v0.8.4 baseline reported the official Tseitin diagnostic rows as
+\texttt{NO\_COLLAPSE\_FOUND}. The v0.9.8 matrix uses
+\texttt{--detect-xor}, \texttt{--detect-xor-max-k 6},
+\texttt{--xor-elim-order sparse-min-fill}, \texttt{--xor-drat}, and real
+\texttt{drat-trim}.
+
+\section{Results}
+
+\begin{table*}[t]
+\centering
+\small
+\caption{v0.8.4 vs. v0.9.8 Tseitin results.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrrl}
+\toprule
+Instance and c & v0.8.4 category & v0.9.8 category & XOR eqs. & max arity & peak width & clauses & bytes & trim sec. & profile \\
+\midrule
+\texttt{tseitin\_10 c=2} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 10 & 4 & 6 & 575 & 12381 & 0.073599 & default \\
+\texttt{tseitin\_10 c=3} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 10 & 4 & 6 & 575 & 12381 & 0.072742 & default \\
+\texttt{tseitin\_10 c=4} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 10 & 4 & 6 & 575 & 12381 & 0.072092 & default \\
+\texttt{tseitin\_15 c=2} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 15 & 4 & 8 & 3999 & 124485 & 0.090604 & default \\
+\texttt{tseitin\_15 c=3} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 15 & 4 & 8 & 3999 & 124485 & 0.092360 & default \\
+\texttt{tseitin\_15 c=4} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 15 & 4 & 8 & 3999 & 124485 & 0.093661 & default \\
+\texttt{tseitin\_20 c=2} & \texttt{NO\_COLLAPSE\_FOUND} & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 20 & 4 & 10 & 7775 & 277861 & 0.121430 & medium-v098 \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Gaussian vs. deterministic sparse/min-fill on \texttt{tseitin\_15}.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+Order & peak width & public category & proof clauses & proof bytes \\
+\midrule
+Gaussian & 14 & \texttt{UNSAT\_XOR\_NATIVE\_ONLY} & 0 & 0 \\
+Sparse/min-fill & 8 & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 3999 & 124485 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\caption{Row-width cap sensitivity for \texttt{tseitin\_20 c=2}.}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+Profile & cap & peak width & category & proof clauses & bytes \\
+\midrule
+default & 8 & 10 & cap skipped & 0 & 0 \\
+medium-v098 & 10 & 10 & \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED} & 7775 & 277861 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Parameter sensitivity and the row-width cap.}
+The row-width cap limits the maximum permitted XOR row width during proof
+export. It is a safety guard against proof explosion, not a theorem claim.
+\texttt{tseitin\_10} and \texttt{tseitin\_15} verified under cap 8. The
+\texttt{tseitin\_20 c=2} row exceeded cap 8 with peak row width 10, so the
+default profile was reported as a native-only cap skip. Under the documented
+medium profile with cap 10, the same algorithm exported a DRAT proof verified
+by \texttt{drat-trim}. The proof remained small in this diagnostic: 7775 proof
+clauses, 277861 bytes, and approximately 0.121 seconds of \texttt{drat-trim}
+runtime.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Proof size and runtime summary from the final v0.9.8 matrix.}
+\begin{tabular}{lrrrr}
+\toprule
+Instance & peak width & proof clauses & proof bytes & trim sec. \\
+\midrule
+\texttt{tseitin\_10 c=2} & 6 & 575 & 12381 & 0.073599 \\
+\texttt{tseitin\_10 c=3} & 6 & 575 & 12381 & 0.072742 \\
+\texttt{tseitin\_10 c=4} & 6 & 575 & 12381 & 0.072092 \\
+\texttt{tseitin\_15 c=2} & 8 & 3999 & 124485 & 0.090604 \\
+\texttt{tseitin\_15 c=3} & 8 & 3999 & 124485 & 0.092360 \\
+\texttt{tseitin\_15 c=4} & 8 & 3999 & 124485 & 0.093661 \\
+\texttt{tseitin\_20 c=2} & 10 & 7775 & 277861 & 0.121430 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For context, the earlier focused \texttt{tseitin\_10 c=2} XOR-DRAT diagnostic
+reported peak row width 8, 10143 proof clauses, 388389 proof bytes, and
+approximately 0.140 seconds of \texttt{drat-trim} runtime. The paper claim uses
+the final v0.9.8 matrix artifact values shown above.
+
+\section{Theorem and Proof Notes}
+
+\paragraph{Exact XOR pattern soundness.}
+If a set of CNF clauses exactly equals the forbidden-assignment CNF encoding of
+an XOR equation \(E\), then every assignment satisfying those clauses satisfies
+\(E\). Adding \(E\) as an implied constraint while retaining the source clauses
+is sound for SAT witnesses and native XOR reasoning.
+
+\paragraph{XOR elimination trace soundness.}
+A recorded GF(2) row-operation trace is sound if every row is obtained by
+XOR-combining previous or source rows and the final row is \(0 = 1\). This
+establishes native XOR inconsistency of the detected equation system.
+
+\paragraph{DRAT certification boundary.}
+Native XOR inconsistency is not, by itself, an external proof of original CNF
+UNSAT. Witnora counts UNSAT as externally certified only when
+\texttt{proof.drat} is verified by real \texttt{drat-trim} against
+\texttt{original.dimacs}.
+
+\paragraph{Sparse/min-fill determinism.}
+Sparse/min-fill is a deterministic heuristic order recorded in the certificate
+and independently replayed. It is not claimed to be optimal.
+
+\section{Limitations and Scope}
+
+\begin{itemize}
+  \item Exact XOR patterns only.
+  \item Detection cap \(k \leq 6\) in this diagnostic.
+  \item Recorded Tseitin diagnostic rows only.
+  \item No parity result is claimed.
+  \item No industrial benchmark result is claimed.
+  \item No SAT solver competitiveness result is claimed.
+  \item No full DRAT/RAT/LRAT/FRAT support is claimed.
+  \item No general SAT solving claim is made.
+  \item The row-width cap is a configurable proof-export safety parameter, not
+  a theorem boundary.
+  \item Sparse/min-fill is deterministic and useful in this diagnostic, but it
+  is not claimed to be optimal.
+\end{itemize}
+
+\section{Related Work and Positioning}
+
+Witnora-Core is positioned among CDCL SAT solving and proof logging, SAT
+preprocessing, certified solving, XOR-aware reasoning, bounded-width and
+decomposition-based SAT approaches, and crafted benchmark generation.
+
+CDCL SAT solvers combine conflict-driven search with preprocessing and can emit
+proof logs for UNSAT instances
+\cite{marques1999grasp,bayardo1997lookback,moskewicz2001chaff,een2003minisat,biere2009handbook}.
+Witnora is not presented as a competitive SAT solver. It is a certified
+collapse-path prototype that emphasizes deterministic structural routes,
+replayable certificates, and external proof verification for supported cases.
+
+SAT preprocessing and structural simplification reduce formulas through
+transformations such as subsumption, blocked clause elimination, variable
+elimination, and decomposition. Witnora records these transformations as
+collapse paths and assigns explicit public categories to the result.
+
+XOR reasoning and Gaussian elimination have a long history in SAT systems,
+especially for formulas with algebraic structure \cite{soos2009cryptographic}.
+Witnora does not claim novelty for XOR reasoning itself and does not implement
+broad or heuristic XOR mining. The v0.9.8 route is narrower: it accepts exact
+full-CNF XOR encodings and retains the source clauses.
+
+DRAT proof checking and related proof formats provide external UNSAT
+certification \cite{wetzler2014drattrim,heule2016drat}. Witnora uses real
+\texttt{drat-trim} as the authority for rows counted as externally verified.
+Native XOR traces are replayed independently, but they are not treated as
+replacements for externally checked clausal proofs.
+
+Bounded-width and decomposition-based methods motivate Witnora's collapse
+framework \cite{gottlob2002hypertree,samer2010boundedtreewidth}, while CNFgen
+provides crafted benchmark families such as Tseitin formulas for controlled
+diagnostics \cite{cnfgen}. The reported result is therefore best read as a
+reproducible systems artifact: exact-pattern XOR detection plus deterministic
+sparse/min-fill trace recording plus externally checked DRAT proof export for
+the recorded official CNFgen Tseitin rows.
+
+\section{Reproducibility}
+
+The reproducibility package records the source archive, diagnostic artifact,
+commands, expected category counts, proof locations, \texttt{drat-trim} logs,
+and independent checker output locations. The key diagnostic command is:
+
+\begin{verbatim}
+$env:WITNORA_DRAT_TRIM='C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe'
+python -m witnora_core.xor_drat_diagnostic --matrix-preset full-tseitin-v098 --detect-xor-max-k 6 --xor-drat --elim-orders sparse-min-fill --profiles default medium-v098 --drat-trim 'C:\Users\maham\AppData\Local\Temp\witnora-drat-trim-real\drat-trim\drat-trim.exe' --cnfgen-path 'C:\Users\maham\AppData\Local\hermes\hermes-agent\venv\Scripts\cnfgen.exe' --out-root outputs\v0.9.8-full-tseitin-minfill-diagnostic --zip witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+\end{verbatim}
+
+Expected best-matrix public category counts are:
+\begin{itemize}
+  \item \texttt{UNSAT\_DRAT\_EXPORTED\_VERIFIED}: 7
+  \item \texttt{UNSAT\_XOR\_NATIVE\_ONLY}: 0
+  \item \texttt{NO\_COLLAPSE\_FOUND}: 0
+  \item \texttt{TIMEOUT}: 0
+  \item \texttt{ERROR}: 0
+\end{itemize}
+
+\section{Conclusion}
+
+The v0.9.8 artifact establishes a bounded certified systems result: selected
+official CNFgen Tseitin diagnostic rows that were previously no-collapse are
+externally DRAT-verified after exact CNF XOR extraction and deterministic
+sparse/min-fill proof export. The result is intentionally narrow, but it is
+reproducible, externally checked, and separated from native-only or skipped
+cases by public result categories.
+
+\appendix
+\section{Artifact Appendix}
+
+\begin{longtable}{p{0.28\textwidth}p{0.62\textwidth}}
+\toprule
+Item & Value \\
+\midrule
+Source archive & \texttt{witnora-core-v0.9.9-paper-rev1.zip} \\
+Source archive SHA256 & \texttt{9217E14D16DCF87A8A9F14BEC7DE24C52EB3F6C2C7CF4DDF88415D73D0F3B49D} \\
+Frozen source tag & \texttt{v0.9.9-paper-rev1} \\
+Frozen source commit & \texttt{6039db406451f60143586060b5773db6bfa6d216} \\
+Diagnostic artifact & \texttt{witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip} \\
+Diagnostic artifact SHA256 & \texttt{4702299E28CDB4E3B16B0CD1CBFE9BA96018E625C0E8864A1C0476C2AEC3FA2C} \\
+drat-trim executable SHA256 & \texttt{74D6D8FA2330C8D633B4E380CFFAD22517546C94963D4D2C381FEDF16641E1A8} \\
+Test command & \texttt{python -m unittest discover -s tests -v} \\
+Expected tests & 188 passing with real \texttt{drat-trim} enabled \\
+\bottomrule
+\end{longtable}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
