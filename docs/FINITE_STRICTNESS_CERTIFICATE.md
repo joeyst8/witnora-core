@@ -53,3 +53,6 @@ proof.
 `FINITE_STRICTNESS_CERTIFIED` remains reserved for finite certificates like
 v2.10 where the lower grammar rejection is backed by a certified obstruction,
 such as width lower bound greater than the configured cap.
+
+v2.12's external reproducibility package preserves this distinction in the
+evidence summary and claim-boundary table.

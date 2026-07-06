@@ -1,5 +1,22 @@
 # Witnora-Core v0.9.8
 
+## v2.12 External Paper/Reproducibility Package
+
+v2.12 adds `witnora_core.reproducibility_package`, plus reproduction and
+validation scripts, to package the collapse hierarchy work for external review.
+
+This release does not add a new operator. It packages existing evidence:
+v2.10's `FINITE_STRICTNESS_CERTIFIED` finite restricted G0-width certificate,
+v2.11's `FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED` G1-to-G2 replay delta, the
+G0-G6 research hierarchy, claim boundaries, release hashes, and a polished
+external paper draft.
+
+The package presents Witnora as a certificate-backed collapse hierarchy and
+operator-discovery program for studying verifier-to-witness collapse. It does
+not prove P vs NP, does not claim a polynomial-time SAT algorithm, does not
+claim hierarchy completeness, and does not convert empirical edge deltas into
+strictness theorems.
+
 ## v2.11 Finite Empirical Edge Delta Certificate
 
 v2.11 adds `witnora_core.finite_edge_certificate`, a reusable certificate

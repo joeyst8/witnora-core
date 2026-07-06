@@ -1,5 +1,16 @@
 # Collapse Hierarchy Theoremization
 
+## v2.12 External Reproducibility Package
+
+v2.12 packages the hierarchy work for external review. It adds a polished
+external paper draft, reproducibility manifest, release SHA manifest, evidence
+summary, claim-boundary table, reproduction steps, validation script, and
+review packet.
+
+v2.12 does not add a new operator. It does not prove P vs NP, does not claim a
+polynomial-time SAT algorithm, does not claim hierarchy completeness, and does
+not convert empirical edge deltas into strictness theorems.
+
 ## v2.9 Restricted Proof Kernel
 
 v2.9 starts the first formal strictness proof attempt. It targets only

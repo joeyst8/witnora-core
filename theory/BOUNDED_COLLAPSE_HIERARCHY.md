@@ -34,4 +34,8 @@ v2.11 introduces a finite empirical edge-delta certificate for
 `FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`. This is distinct from v2.10's
 `FINITE_STRICTNESS_CERTIFIED`, which relies on certified width obstruction.
 
+v2.12 packages these distinctions for external review. It does not add a new
+operator, prove hierarchy completeness, or convert empirical edge deltas into
+strictness theorems.
+
 This work does not prove P vs NP.

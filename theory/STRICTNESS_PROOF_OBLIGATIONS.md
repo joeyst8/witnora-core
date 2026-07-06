@@ -33,3 +33,12 @@ Proof obligations tracked by v2.8 include:
 
 No candidate is marked proven unless an explicit proof artifact exists and the
 tests verify the proof file. v2.8 marks no strictness candidate as proven.
+
+## v2.12 External Package Boundary
+
+v2.12 packages proof obligations for external review. It preserves the v2.10
+finite strictness certificate as finite and restricted, and preserves the v2.11
+G1-to-G2 certificate as finite empirical edge-delta evidence.
+
+The package does not claim a scalable family theorem, full hierarchy
+strictness, hierarchy completeness, or P vs NP progress.

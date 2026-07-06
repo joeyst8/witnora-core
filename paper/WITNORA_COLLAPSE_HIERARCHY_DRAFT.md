@@ -62,6 +62,14 @@ This does not prove G1_XOR is strictly weaker than G2_SYMMETRY_CERTIFIED as a th
 This does not prove a family theorem.
 This does not prove P vs NP.
 
+## External Paper/Reproducibility Package
+
+v2.12 packages the hierarchy work for external review. It adds a polished external draft, evidence summary, claim-boundary table, release SHA manifest, reproduction steps, validation scripts, and an external review packet.
+
+v2.12 does not add a new operator.
+v2.12 does not claim external acceptance or peer review.
+v2.12 does not convert empirical edge deltas into strictness theorems.
+
 ## Proof obligations
 
 The proof-obligation matrix records non-collapse obligations, checker soundness obligations, scaling obligations, and optional DRAT bridge work.

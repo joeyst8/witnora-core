@@ -48,3 +48,7 @@ This does not prove P vs NP.
 
 Native symmetry certificates are not DRAT unless a DRAT proof is separately
 exported and checked against the original CNF.
+
+v2.12's external reproducibility package summarizes this certificate as
+`FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`. It does not relabel the edge delta as a
+strictness theorem or family theorem.
