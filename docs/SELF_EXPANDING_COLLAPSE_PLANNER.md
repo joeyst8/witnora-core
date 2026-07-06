@@ -1,5 +1,15 @@
 # Self-Expanding Collapse Planner
 
+## v2.21 Soundness Sketch
+
+v2.21 records G12 plan-only verification as a soundness theorem candidate with
+a formal proof sketch and proof obligations. A verified plan is structurally
+valid, operator-compatible, claim-boundary safe, and execution-required; it is
+not SAT/UNSAT evidence and not a proof.
+
+This is not a proven theorem, not planner completeness, not DRAT, and not
+P-vs-NP progress.
+
 v2.19 introduces `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`.
 
 ## v2.20 Planner-Guided Execution

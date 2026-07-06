@@ -1,5 +1,17 @@
 # Operator Frontier
 
+## v2.21 Soundness Backbone Frontier Update
+
+v2.21 pauses operator expansion and theoremizes the G9-G13 backbone. It adds
+proof sketches, theorem candidates, proof obligations, claim-boundary audits,
+and reviewer objections for composition, projection, motif generalization,
+planning, and planner-guided execution.
+
+This is not a new solver/operator. No theorem is marked proven. Finite evidence
+does not imply an infinite-family theorem, native certificates are not DRAT,
+and the closed-loop evidence is not P-vs-NP progress. The next mathematical
+frontier is an infinite-family theorem.
+
 ## v2.20 Planner-Guided Execution Frontier Update
 
 `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE` is the first layer that pairs a

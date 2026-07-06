@@ -1,5 +1,16 @@
 # Collapse Grammar Program
 
+## v2.21 G9-G13 Soundness Backbone
+
+v2.21 pauses grammar expansion and theoremizes the G9-G13 backbone as proof
+sketches and proof obligations. The scope is:
+
+`G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE -> G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE -> G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE -> G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE -> G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE`.
+
+No theorem is marked proven. Finite evidence does not imply a family theorem.
+Native certificates are not external proofs. Closed-loop finite evidence is
+not P-vs-NP progress. The next mathematical gate is an infinite-family theorem.
+
 ## v2.8 Hierarchy Theoremization
 
 v2.8 formalizes the complete G0-G6 hierarchy as a bounded research program:

@@ -1296,6 +1296,155 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use mismatch records to improve G12 without treating planner improvement as proof."],
         ),
+        TheoremCandidate(
+            id="TC-057",
+            name="G9 Composition Soundness Candidate",
+            statement=(
+                "If every step in a composed orchestration certificate is verified by its corresponding "
+                "operator checker, every formula handoff hash matches, diagnostic-only steps are excluded "
+                "from result certification, and the final SAT witness or UNSAT preservation chain verifies "
+                "against the original formula, then the composed result is sound for that finite instance."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["affine_separator", "composed_sat_lift", "composed_unsat_cover"],
+            required_proof_obligations=[
+                "Formalize soundness assumptions for every step checker.",
+                "Formalize exact formula-state serialization and hash handoff equality.",
+                "Prove diagnostic-only steps cannot contribute to SAT/UNSAT certification.",
+                "Mechanize SAT witness lift and UNSAT preservation composition.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a theorem is proven.",
+                "Does not claim composition completeness.",
+                "Does not claim DRAT.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Move the G9 proof sketch into an external formalization audit."],
+        ),
+        TheoremCandidate(
+            id="TC-058",
+            name="G10 Circuit Projection Soundness Candidate",
+            statement=(
+                "If each projected auxiliary variable has an exact verified definitional gate encoding, "
+                "projection steps are equisatisfiability-preserving, unsafe auxiliary uses are rejected, "
+                "and the lifted assignment satisfies the original CNF directly, then SAT witness lift is "
+                "sound; UNSAT preservation is sound only for supported exact definitional families whose "
+                "projection chain verifies."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["half_adder_sat", "projected_affine_core", "projected_capacity_core"],
+            required_proof_obligations=[
+                "Formalize exact AND/OR/NOT definitional encodings.",
+                "Formalize safe-use constraints for projected auxiliary variables.",
+                "Mechanize equisatisfiability preservation for supported UNSAT projection rows.",
+                "Keep arbitrary circuit-SAT solving outside the claim boundary.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim broad circuit-SAT solving.",
+                "Does not claim arbitrary auxiliary projection.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Audit projection preservation in a proof assistant or external checker."],
+        ),
+        TheoremCandidate(
+            id="TC-059",
+            name="G11 Proof Motif Generalization Soundness Candidate",
+            statement=(
+                "If every generalized proof motif reuse is checked through concrete proof expansion or a "
+                "verified parametric instantiation, all substitutions are valid, and the final contradiction "
+                "verifies from original clauses, then the generalized macro-proof certificate is sound for "
+                "that finite instance."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["ladder_near_4", "ladder_near_8", "proof_motif_near_miss"],
+            required_proof_obligations=[
+                "Formalize the generalized template language.",
+                "Formalize substitution safety and parameter constraints.",
+                "Mechanize every concrete reuse expansion or parametric instantiation.",
+                "Keep near-motif similarity separate from proof.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim arbitrary proof-pattern learning.",
+                "Does not claim proof-motif completeness.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Externalize generalized macro-proof checking to a proof-format bridge."],
+        ),
+        TheoremCandidate(
+            id="TC-060",
+            name="G12 Plan-Only Soundness Candidate",
+            statement=(
+                "If a collapse plan certificate verifies, then the plan is structurally valid, "
+                "operator-compatible, claim-boundary safe, and execution-required; it does not certify SAT, "
+                "UNSAT, DRAT, theorem status, or completeness."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["composed_obstruction_plan", "circuit_projection_plan", "no_confident_fingerprint_plan"],
+            required_proof_obligations=[
+                "Formalize plan-only semantics.",
+                "Prove verified plans cannot imply SAT or UNSAT.",
+                "Keep missing-operator hypotheses separate from executed certificates.",
+                "Reject unknown operators and missing handoff obligations.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim execution happened.",
+                "Does not claim SAT or UNSAT.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Connect plans to separately verified executions without relaxing plan-only semantics."],
+        ),
+        TheoremCandidate(
+            id="TC-061",
+            name="G13 Planner-Guided Execution Soundness Candidate",
+            statement=(
+                "If a verified G12 plan is paired with a separately verified G13 execution certificate, "
+                "every actual operator certificate verifies, every formula handoff verifies, planned-vs-actual "
+                "comparison is recomputed, and the final SAT witness or UNSAT preservation trace verifies, "
+                "then the finite execution result is sound for that instance."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["projected_affine_plan_execution", "proof_motif_plan_execution"],
+            required_proof_obligations=[
+                "Formalize separation between plan and execution certificates.",
+                "Formalize planned-vs-actual comparison.",
+                "Mechanize every allowed actual step checker.",
+                "Reject mismatch as planner success and reject copied-plan execution records.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim all plans succeed.",
+                "Does not claim planner completeness.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Broaden finite plan-execution fixtures after checker assumptions are formalized."],
+        ),
+        TheoremCandidate(
+            id="TC-062",
+            name="Closed-Loop Finite Soundness Candidate",
+            statement=(
+                "For finite controlled instances where obstruction fingerprinting, planning, execution, "
+                "certificate verification, and result verification all pass, Witnora demonstrates a sound "
+                "finite closed-loop collapse experiment."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["G7 obstruction records", "G12 plans", "G13 executions"],
+            required_proof_obligations=[
+                "Formalize obstruction-record semantics.",
+                "Formalize plan-to-execution linkage.",
+                "Prove the finite-vs-family claim boundary.",
+                "Keep native certificates separate from external proof formats.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a family theorem.",
+                "Does not claim hierarchy completeness.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Attack the first infinite-family theorem gate after external review of the finite backbone."],
+        ),
     ]
 
 

@@ -1,5 +1,16 @@
 # Composed Operator Orchestration
 
+## v2.21 Soundness Sketch
+
+v2.21 records G9 composition as a soundness theorem candidate with a formal
+proof sketch and proof obligations. The sketch is conditional on every step
+checker being sound, every formula handoff hash matching, diagnostic-only
+steps being excluded from result certification, and the final SAT witness or
+UNSAT preservation chain verifying against the original formula.
+
+This is theoremization, not a proven theorem, not DRAT, not composition
+completeness, and not P-vs-NP progress.
+
 ## v2.20 Planner-Guided Execution Interaction
 
 G13 may use a G9 composed orchestration certificate as one actual execution

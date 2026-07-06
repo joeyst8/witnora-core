@@ -1,5 +1,15 @@
 # Proof Motif Generalization
 
+## v2.21 Soundness Sketch
+
+v2.21 records G11 proof motif generalization as a soundness theorem candidate
+with a formal proof sketch and proof obligations. The sketch is scoped to
+generalized reuse sites whose concrete proof expansions or verified parametric
+instantiations check against original clauses.
+
+Near motif similarity is still not proof. This is not a proven theorem, not
+proof-motif completeness, not DRAT, and not P-vs-NP progress.
+
 ## v2.20 Planner-Guided Execution Use
 
 G13 can use G11 as an actual execution step only when the generalized motif

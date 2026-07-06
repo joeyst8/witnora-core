@@ -1,5 +1,16 @@
 # Collapse Theory Lab
 
+## v2.21 G9-G13 Soundness Backbone Theoremization
+
+v2.21 is a theory pass over the certified engineering from v2.16 through v2.20.
+It records theorem candidates, formal proof sketches, proof obligations, claim
+boundaries, and reviewer objections for G9-G13.
+
+The package does not add a new operator and does not prove completeness,
+theorem status, DRAT status, or P-vs-NP progress. It keeps finite execution
+evidence separate from infinite-family claims and identifies the next
+mathematical gate as an infinite-family theorem.
+
 ## v2.19 Self-Expanding Collapse Planner
 
 v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`.

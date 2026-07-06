@@ -1,5 +1,16 @@
 # Circuit Projection Lift
 
+## v2.21 Soundness Sketch
+
+v2.21 records G10 circuit projection as a soundness theorem candidate with a
+formal proof sketch and proof obligations. The sketch is scoped to exact
+definitional encodings, rejected unsafe auxiliary uses, original-CNF SAT
+witness verification, and explicit equisatisfiability preservation for UNSAT
+claims.
+
+This is not a proven theorem, not arbitrary projection, not a complete
+circuit-SAT method, not DRAT, and not P-vs-NP progress.
+
 ## v2.20 Planner-Guided Execution Use
 
 G13 can use G10 circuit projection as an actual execution step only when the

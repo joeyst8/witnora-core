@@ -1,5 +1,16 @@
 # Planner-Guided Execution
 
+## v2.21 Soundness Sketch
+
+v2.21 records G13 planner-guided execution as a soundness theorem candidate
+with a formal proof sketch and proof obligations. The sketch requires a
+verified G12 plan, a separate verified execution certificate, checked actual
+operator certificates, formula handoffs, recomputed planned-vs-actual
+comparison, and final SAT/UNSAT result obligations.
+
+This is not a proven theorem. Matching finite executions do not prove all
+plans succeed, hierarchy completeness, DRAT status, or P-vs-NP progress.
+
 v2.20 introduces `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE`.
 
 ## Purpose

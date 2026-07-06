@@ -1,5 +1,20 @@
 # Witnora-Core v0.9.8
 
+## v2.21 G9-G13 Soundness Backbone Theoremization
+
+v2.21 adds `witnora_core.soundness_theoremization`, a theoremization package
+for the G9-G13 backbone. It is not a new solver/operator release.
+
+The release states G9 composition, G10 circuit projection, G11 proof motif
+generalization, G12 plan-only, G13 planner-guided execution, and closed-loop
+finite soundness as theorem candidates with formal proof sketches and proof
+obligations. No theorem is marked proven. Finite evidence does not imply an
+infinite-family theorem. Native certificates are not external DRAT/LRAT/FRAT
+proofs unless exported and checked. Closed-loop finite evidence does not imply
+P-vs-NP progress.
+
+The next mathematical gate is an infinite-family theorem.
+
 ## v2.20 Planner-Guided Execution Prototype
 
 v2.20 adds `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE`, a finite execution layer
