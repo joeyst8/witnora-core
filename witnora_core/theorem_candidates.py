@@ -260,6 +260,73 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use symmetry to compress larger PHP certificates without changing the native counting proof."],
         ),
+        TheoremCandidate(
+            id="TC-012",
+            name="Hall/Capacity Native Certification Candidate",
+            statement=(
+                "For exact assignment CNFs with ALO demand constraints and exact capacity constraints, "
+                "if a provided subset S satisfies |S| > capacity(N(S)), then a native capacity-deficit "
+                "certificate proves UNSAT and is checkable directly against the original CNF."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["hall_local_4_3", "hall_local_5_4", "capacity_deficit_5_over_4"],
+            required_proof_obligations=[
+                "Verify every item in S has a source ALO clause over its allowed neighborhood.",
+                "Verify every resource in N(S) has exact source capacity clauses.",
+                "Verify |S| > capacity(N(S)).",
+                "Keep the result native unless an external proof against the original CNF is checked.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a full matching solver.",
+                "Does not claim a full allocation solver.",
+                "Does not claim DRAT verification.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Broaden exact capacity encodings only when checkable.", "Explore DRAT bridges for native Hall certificates."],
+        ),
+        TheoremCandidate(
+            id="TC-013",
+            name="G4 Orbit-Capacity Strictness Candidate",
+            statement=(
+                "There exists a bounded profile B where local Hall-deficit formulas are native-certified "
+                "by G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE but are not counted as G3 standard pigeonhole "
+                "recognition results."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["hall_local_4_3", "hall_local_5_4"],
+            required_proof_obligations=[
+                "Separate local Hall-deficit rows from complete matching duplicates of G3 pigeonhole.",
+                "Replay G4 native certificates with the independent checker.",
+                "Provide formal bounded non-collapse evidence before promoting to theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim G4 strictness as a theorem.",
+                "Does not prove a lower bound against G3.",
+                "Does not claim all matching or allocation formulas are solved.",
+            ],
+            next_experiments=["Find a family-level bounded proof obligation for G3 non-recognition.", "Scale local Hall-deficit fixtures."],
+        ),
+        TheoremCandidate(
+            id="TC-014",
+            name="Operator Genesis Success Candidate",
+            statement=(
+                "The v2.4-generated ORBIT_COUNTING_COLLAPSE candidate was promoted to a v2.5 "
+                "implemented prototype with a native checker and bounded local Hall-deficit delta evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["hall_local_4_3", "hall_local_5_4"],
+            required_proof_obligations=[
+                "Record the generated candidate origin.",
+                "Replay the native orbit-capacity checker.",
+                "Keep generated-operator success separate from theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not mean the generated operator is a theorem.",
+                "Does not imply automatic operator generation has solved SAT.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use the promotion pipeline to select a second generated operator prototype."],
+        ),
     ]
 
 

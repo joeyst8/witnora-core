@@ -97,6 +97,19 @@ This layer is a theorem-discovery and operator-planning tool. It is not a solver
 extension and does not claim that generated operators are implemented,
 certified, or theorem-proven.
 
+## v2.5 Orbit Capacity Counting
+
+v2.5 implements the first generated-operator prototype:
+`G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`. It targets local Hall/capacity deficits
+in exact assignment/resource CNFs. The native certificate records a demand
+subset `S`, its allowed neighborhood `N(S)`, exact source clauses, resource
+capacities, and the inequality `|S| > capacity(N(S))`.
+
+Orbit summaries may compress the display, but the checker trusts the result
+only after expanding the evidence back to concrete items, resources, and source
+clauses. Complete matching rows that duplicate standard pigeonhole are recorded
+as duplicate controls, not as novel G4 evidence.
+
 ## Claim Boundary
 
 Allowed claim:

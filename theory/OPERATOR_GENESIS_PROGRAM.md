@@ -42,3 +42,20 @@ targeted tests, artifact generation, and claim-boundary review are complete.
 A true breakthrough requires more than a high ranking. It requires a generated
 operator to become an implemented, independently checkable collapse path on a
 target family without fake solver, DRAT, theorem, or complexity claims.
+
+## v2.5 Prototype Promotion
+
+The first promotion is `ORBIT_COUNTING_COLLAPSE` to
+`G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`.
+
+The promoted operator is intentionally bounded. It handles exact generated
+assignment/resource CNFs with native Hall/capacity-deficit certificates. It does
+not become a theorem, a DRAT route, or a full matching/allocation solver.
+
+The promotion criteria were:
+
+- exact trigger family for local capacity deficits;
+- native certificate schema;
+- independent checker that expands orbit evidence;
+- balanced controls that do not emit contradictions;
+- duplicate complete-matching controls that are not counted as novel G4 deltas.

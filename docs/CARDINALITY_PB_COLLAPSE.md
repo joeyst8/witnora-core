@@ -40,3 +40,13 @@ The public category is `UNSAT_PIGEONHOLE_NATIVE_CERTIFIED`.
 This is native semantic certification. It is not DRAT, not RAT, not a PB solver,
 and not a proof-complexity lower bound. A DRAT claim would require an externally
 checked proof against the original CNF.
+
+## Relationship to v2.5 G4
+
+v2.5 generalizes the counting-certificate pattern from complete pigeonhole grids
+to local Hall/capacity deficits over assignment variables `x[item,resource]`.
+The G4 prototype does not count complete matching examples as a novel delta
+when they duplicate the G3 pigeonhole structure.
+
+G4 certificates remain native certificates. They are not DRAT proofs and they
+are not a complete PB or matching solver.

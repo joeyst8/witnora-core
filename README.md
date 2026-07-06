@@ -1,5 +1,28 @@
 # Witnora-Core v0.9.8
 
+## v2.5 Orbit Capacity Counting Prototype
+
+v2.5 promotes the v2.4-generated `ORBIT_COUNTING_COLLAPSE` candidate into
+`G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`.
+
+This is not another standard pigeonhole recognizer. G3 already handles complete
+`x[pigeon,hole]` pigeonhole grids. G4 targets local Hall/capacity deficits in
+assignment formulas with variables `x[item,resource]`: if a demand subset `S`
+can only use a neighborhood `N(S)` whose total capacity is smaller than
+`|S|`, Witnora emits a native Hall/capacity-deficit certificate.
+
+The checker verifies every demand ALO clause, every capacity constraint, the
+expanded neighborhood, and the arithmetic inequality directly against the
+original CNF. Orbit compression is used only as a discovery/display aid and is
+trusted only when expanded evidence verifies. Complete matching rows that
+duplicate the G3 pigeonhole pattern are marked as duplicate controls, not novel
+G4 deltas.
+
+The allowed v2.5 claim is bounded: Witnora prototyped a generated
+Hall/capacity-deficit operator with native certificates for exact generated
+assignment CNFs. It does not claim DRAT verification, a complete matching or
+allocation solver, a G4 strictness theorem, or P vs NP progress.
+
 ## v2.4 Operator Genesis Engine
 
 v2.4 adds `witnora_core.operator_genesis`, a research engine that extracts

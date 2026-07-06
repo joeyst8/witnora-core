@@ -72,6 +72,17 @@ The generated candidates are not implemented. The promotion queue only says
 which schemas are eligible for prototype planning, and only when safety risks,
 test families, and certificate sketches are explicit.
 
+## v2.5 Hall/Capacity Promotion
+
+v2.5 promotes the `ORBIT_COUNTING_COLLAPSE` schema into an implemented
+prototype with a native checker. The obstruction it neutralizes is a local
+capacity deficit: a demand subset can only use a resource neighborhood whose
+total capacity is too small.
+
+The checker rejects missing ALO clauses, missing capacity clauses, balanced
+controls, and orbit-compressed certificates that are not expanded. This keeps
+the operator from becoming a broad matching/allocation solver claim.
+
 ## Relationship to Verifier-to-Witness Research
 
 The long-term program is to discover operators that turn verifier obstructions

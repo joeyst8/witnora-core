@@ -50,3 +50,21 @@ paths, preservation obligations, and proof-export requirements.
 
 The ranking is a research-planning heuristic, not a theorem and not a solver
 result.
+
+## v2.5 Promotion: Orbit Capacity Counting
+
+v2.5 promotes the generated `ORBIT_COUNTING_COLLAPSE` candidate into the
+prototype grammar `G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`.
+
+The promoted prototype is deliberately narrower than a general matching or
+allocation solver. It detects exact assignment/resource formulas with variables
+`x[item,resource]`, verifies demand clauses and capacity clauses against the
+original CNF, and emits a native certificate only when a concrete subset `S`
+has `|S| > capacity(N(S))`.
+
+Standard complete matching examples that reduce to the G3 pigeonhole pattern
+are recorded as duplicate controls. They are not counted as a new G4 delta.
+
+Generated-operator promotion still follows the same rule: a prototype is not a
+theorem, not DRAT, and not trusted beyond the certificates its checker expands
+and verifies.

@@ -55,6 +55,14 @@ generates candidate operator schemas with trigger signatures, preservation
 obligations, certificate sketches, promotion criteria, and theorem-candidate
 queue entries. Generated schemas are not implemented operators.
 
+v2.5 adds `G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`, the first implemented
+prototype promoted from a generated operator candidate. It checks local
+Hall/capacity deficits over exact assignment/resource CNFs and emits native
+certificates when the provided subset and capacity evidence verify against the
+original formula. This is not a complete matching or allocation solver, and
+complete matching rows that duplicate G3 pigeonhole are not counted as novel G4
+deltas.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -99,3 +107,5 @@ not a general SAT-solving result.
    before emitting native semantic certificates.
 9. Treat generated operator schemas as research objects until implemented,
    independently checked, tested, red-teamed, and frozen.
+10. For generated operator prototypes, distinguish duplicate controls from true
+    operator deltas and keep native certificates separate from DRAT claims.

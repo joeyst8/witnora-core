@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 import hashlib
+from itertools import combinations
 import json
 from pathlib import Path
 import shutil
@@ -19,8 +20,9 @@ from typing import Any, Iterable
 import zipfile
 
 from .cnf import CNFFormula, Clause
+from .dimacs import load_dimacs
 
-GENESIS_VERSION = "2.4"
+GENESIS_VERSION = "2.5"
 
 SYMMETRY_HEAVY = "SYMMETRY_HEAVY"
 COUNTING_DEFICIT = "COUNTING_DEFICIT"
@@ -76,6 +78,20 @@ NATIVE_CERT_ONLY = "NATIVE_CERT_ONLY"
 SPECULATIVE = "SPECULATIVE"
 CONJECTURE = "CONJECTURE"
 EMPIRICAL_EVIDENCE = "EMPIRICAL_EVIDENCE"
+
+ORBIT_CAPACITY_STRUCTURE_DETECTED = "ORBIT_CAPACITY_STRUCTURE_DETECTED"
+ORBIT_CAPACITY_NATIVE_CERTIFIED = "ORBIT_CAPACITY_NATIVE_CERTIFIED"
+ORBIT_CAPACITY_DIAGNOSTIC_ONLY = "ORBIT_CAPACITY_DIAGNOSTIC_ONLY"
+ORBIT_CAPACITY_CERTIFICATE_VERIFIED = "ORBIT_CAPACITY_CERTIFICATE_VERIFIED"
+ORBIT_CAPACITY_CERTIFICATE_FAILED = "ORBIT_CAPACITY_CERTIFICATE_FAILED"
+HALL_DEFICIT_NATIVE_UNSAT = "HALL_DEFICIT_NATIVE_UNSAT"
+G4_ORBIT_CAPACITY_NATIVE_CERTIFIED = "G4_ORBIT_CAPACITY_NATIVE_CERTIFIED"
+ORBIT_COMPRESSION_EXPANDED_AND_VERIFIED = "ORBIT_COMPRESSION_EXPANDED_AND_VERIFIED"
+ORBIT_COMPRESSION_DIAGNOSTIC_ONLY = "ORBIT_COMPRESSION_DIAGNOSTIC_ONLY"
+ORBIT_COUNTING_DRAT_NOT_CLAIMED = "ORBIT_COUNTING_DRAT_NOT_CLAIMED"
+UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED = "UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED"
+DUPLICATE_OF_G3_PIGEONHOLE_PATTERN = "DUPLICATE_OF_G3_PIGEONHOLE_PATTERN"
+G4_NO_NEW_DELTA = "G4_NO_NEW_DELTA"
 
 
 @dataclass(frozen=True)
@@ -1092,6 +1108,744 @@ def run_operator_genesis(
     }
 
 
+@dataclass(frozen=True)
+class OrbitCapacityInstance:
+    instance_id: str
+    items: tuple[str, ...]
+    resources: tuple[str, ...]
+    allowed_resources: dict[str, tuple[str, ...]]
+    resource_capacities: dict[str, int]
+    assignment_variables: dict[tuple[str, str], int]
+    formula: CNFFormula
+    family: str = "orbit-capacity"
+    duplicate_of_g3: bool = False
+    sat_control: bool = False
+    incomplete_structure: bool = False
+    description: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "instance_id": self.instance_id,
+            "family": self.family,
+            "items": list(self.items),
+            "resources": list(self.resources),
+            "allowed_resources": {item: list(resources) for item, resources in self.allowed_resources.items()},
+            "resource_capacities": dict(self.resource_capacities),
+            "assignment_variables": [
+                {"item": item, "resource": resource, "variable": variable}
+                for (item, resource), variable in sorted(self.assignment_variables.items())
+            ],
+            "formula_hash": self.formula.formula_hash,
+            "duplicate_of_g3": self.duplicate_of_g3,
+            "sat_control": self.sat_control,
+            "incomplete_structure": self.incomplete_structure,
+            "description": self.description,
+        }
+
+
+@dataclass(frozen=True)
+class OrbitCapacityCertificate:
+    type: str
+    instance_id: str
+    formula_hash: str
+    assignment_variables: list[dict[str, Any]]
+    demand_subset: list[str]
+    neighborhood_resources: list[str]
+    resource_capacities: dict[str, int]
+    alo_clause_ids_by_item: dict[str, int]
+    amo_clause_ids_by_resource: dict[str, list[int]]
+    capacity_constraint_ids_by_resource: dict[str, list[int]]
+    demand_count: int
+    capacity_count: int
+    contradiction: bool
+    hall_deficit: bool
+    orbit_summary: dict[str, Any]
+    orbit_compression_used: bool
+    orbit_expanded_and_verified: bool
+    checker_status: str
+    status: str
+    public_category: str
+    certification_level: str
+    drat_claim: str
+    claim_boundary: str
+    g3_duplicate_control: bool
+    g4_delta_status: str
+    notes: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _normal_clause_key(literals: Iterable[int]) -> tuple[int, ...]:
+    return Clause(literals).literals
+
+
+def _clause_id_map(formula: CNFFormula) -> dict[tuple[int, ...], int]:
+    return {clause.literals: idx for idx, clause in enumerate(formula.clauses, start=1)}
+
+
+def _assignment_var(item_index: int, resource_index: int, resource_count: int) -> int:
+    return (item_index - 1) * resource_count + resource_index
+
+
+def _build_assignment_formula(
+    *,
+    items: Iterable[str],
+    resources: Iterable[str],
+    allowed_resources: dict[str, Iterable[str]],
+    resource_capacities: dict[str, int],
+    omit_alo_items: Iterable[str] = (),
+    omit_capacity_clauses: Iterable[tuple[str, tuple[str, ...]]] = (),
+) -> tuple[CNFFormula, dict[tuple[str, str], int]]:
+    item_list = tuple(items)
+    resource_list = tuple(resources)
+    resource_index = {resource: idx + 1 for idx, resource in enumerate(resource_list)}
+    assignment_variables: dict[tuple[str, str], int] = {}
+    for item_idx, item in enumerate(item_list, start=1):
+        for resource in allowed_resources[item]:
+            assignment_variables[(item, resource)] = _assignment_var(item_idx, resource_index[resource], len(resource_list))
+
+    clauses: list[list[int]] = []
+    omitted_alo = set(omit_alo_items)
+    omitted_capacity = {(resource, tuple(sorted(items_))) for resource, items_ in omit_capacity_clauses}
+    for item in item_list:
+        if item in omitted_alo:
+            continue
+        clauses.append([assignment_variables[(item, resource)] for resource in allowed_resources[item]])
+
+    for resource in resource_list:
+        users = [item for item in item_list if resource in allowed_resources[item]]
+        cap = int(resource_capacities.get(resource, 1))
+        if cap < 1:
+            raise ValueError(f"resource capacity must be positive: {resource}")
+        for limited_group in combinations(users, cap + 1):
+            key = (resource, tuple(sorted(limited_group)))
+            if key in omitted_capacity:
+                continue
+            clauses.append([-assignment_variables[(item, resource)] for item in limited_group])
+    return CNFFormula.from_raw_clauses(clauses), assignment_variables
+
+
+def make_orbit_capacity_instance(instance_id: str) -> OrbitCapacityInstance:
+    specs: dict[str, dict[str, Any]] = {
+        "complete_match_3_2": {
+            "items": ("i1", "i2", "i3"),
+            "resources": ("r1", "r2"),
+            "allowed": {"i1": ("r1", "r2"), "i2": ("r1", "r2"), "i3": ("r1", "r2")},
+            "capacities": {"r1": 1, "r2": 1},
+            "duplicate": True,
+            "description": "Complete assignment deficit equivalent to the standard G3 pigeonhole pattern.",
+        },
+        "complete_match_4_3": {
+            "items": ("i1", "i2", "i3", "i4"),
+            "resources": ("r1", "r2", "r3"),
+            "allowed": {f"i{i}": ("r1", "r2", "r3") for i in range(1, 5)},
+            "capacities": {"r1": 1, "r2": 1, "r3": 1},
+            "duplicate": True,
+            "description": "Complete assignment deficit equivalent to the standard G3 pigeonhole pattern.",
+        },
+        "hall_local_3_2": {
+            "items": ("a", "b", "c"),
+            "resources": ("r1", "r2", "r3"),
+            "allowed": {"a": ("r1", "r2"), "b": ("r1", "r2"), "c": ("r1", "r2")},
+            "capacities": {"r1": 1, "r2": 1, "r3": 1},
+            "description": "Local Hall deficit: three items are confined to two unit-capacity resources.",
+        },
+        "hall_local_4_3": {
+            "items": ("a", "b", "c", "d"),
+            "resources": ("r1", "r2", "r3"),
+            "allowed": {"a": ("r1", "r2"), "b": ("r1", "r2"), "c": ("r1", "r2"), "d": ("r3",)},
+            "capacities": {"r1": 1, "r2": 1, "r3": 1},
+            "description": "Balanced globally but unsat by local Hall deficit on {a,b,c}.",
+        },
+        "hall_local_5_4": {
+            "items": ("a", "b", "c", "d", "e"),
+            "resources": ("r1", "r2", "r3", "r4"),
+            "allowed": {"a": ("r1", "r2"), "b": ("r1", "r2"), "c": ("r1", "r2"), "d": ("r3",), "e": ("r4",)},
+            "capacities": {"r1": 1, "r2": 1, "r3": 1, "r4": 1},
+            "description": "Five-item local Hall deficit with a balanced-looking global resource count.",
+        },
+        "allocation_capacity_5_4_local_deficit": {
+            "items": ("a", "b", "c", "d", "e"),
+            "resources": ("r1", "r2", "r3"),
+            "allowed": {"a": ("r1", "r2"), "b": ("r1", "r2"), "c": ("r1", "r2"), "d": ("r1", "r2"), "e": ("r1", "r2")},
+            "capacities": {"r1": 2, "r2": 2, "r3": 3},
+            "description": "Five demands are trapped in two resources of total capacity four.",
+        },
+        "scheduling_slot_capacity_local_deficit": {
+            "items": ("t1", "t2", "t3", "t4", "t5", "t6"),
+            "resources": ("slot1", "slot2", "slot3"),
+            "allowed": {
+                "t1": ("slot1", "slot2"),
+                "t2": ("slot1", "slot2"),
+                "t3": ("slot1", "slot2"),
+                "t4": ("slot1", "slot2"),
+                "t5": ("slot1", "slot2"),
+                "t6": ("slot3",),
+            },
+            "capacities": {"slot1": 2, "slot2": 2, "slot3": 2},
+            "description": "Scheduling-style local capacity deficit.",
+        },
+        "capacity_deficit_5_over_4": {
+            "items": ("t1", "t2", "t3", "t4", "t5"),
+            "resources": ("s1", "s2"),
+            "allowed": {f"t{i}": ("s1", "s2") for i in range(1, 6)},
+            "capacities": {"s1": 2, "s2": 2},
+            "description": "Capacity greater than one with five tasks over total capacity four.",
+        },
+        "capacity_deficit_7_over_6": {
+            "items": ("t1", "t2", "t3", "t4", "t5", "t6", "t7"),
+            "resources": ("s1", "s2", "s3"),
+            "allowed": {
+                "t1": ("s1", "s2"),
+                "t2": ("s1", "s2"),
+                "t3": ("s1", "s2"),
+                "t4": ("s1", "s2"),
+                "t5": ("s1", "s2"),
+                "t6": ("s3",),
+                "t7": ("s3",),
+            },
+            "capacities": {"s1": 2, "s2": 2, "s3": 2},
+            "description": "Capacity greater than one with a five-task local deficit inside a seven-task instance.",
+        },
+        "hall_balanced_3_3_sat_control": {
+            "items": ("a", "b", "c"),
+            "resources": ("r1", "r2", "r3"),
+            "allowed": {"a": ("r1",), "b": ("r2",), "c": ("r3",)},
+            "capacities": {"r1": 1, "r2": 1, "r3": 1},
+            "sat_control": True,
+            "description": "Balanced satisfiable control with no Hall deficit.",
+        },
+        "capacity_balanced_4_4_no_contradiction": {
+            "items": ("t1", "t2", "t3", "t4"),
+            "resources": ("s1", "s2"),
+            "allowed": {f"t{i}": ("s1", "s2") for i in range(1, 5)},
+            "capacities": {"s1": 2, "s2": 2},
+            "sat_control": True,
+            "description": "Capacity control with demand equal to available capacity.",
+        },
+        "incomplete_capacity_structure_reject": {
+            "items": ("a", "b", "c"),
+            "resources": ("r1", "r2"),
+            "allowed": {"a": ("r1", "r2"), "b": ("r1", "r2"), "c": ("r1", "r2")},
+            "capacities": {"r1": 1, "r2": 1},
+            "omit_capacity": [("r1", ("a", "b"))],
+            "incomplete": True,
+            "description": "Deficit-shaped instance with a missing AMO clause; checker must reject.",
+        },
+    }
+    if instance_id not in specs:
+        raise ValueError(f"unsupported orbit-capacity instance id: {instance_id}")
+    spec = specs[instance_id]
+    formula, assignment_variables = _build_assignment_formula(
+        items=spec["items"],
+        resources=spec["resources"],
+        allowed_resources=spec["allowed"],
+        resource_capacities=spec["capacities"],
+        omit_alo_items=spec.get("omit_alo", ()),
+        omit_capacity_clauses=spec.get("omit_capacity", ()),
+    )
+    return OrbitCapacityInstance(
+        instance_id=instance_id,
+        items=tuple(spec["items"]),
+        resources=tuple(spec["resources"]),
+        allowed_resources={item: tuple(resources) for item, resources in spec["allowed"].items()},
+        resource_capacities={resource: int(capacity) for resource, capacity in spec["capacities"].items()},
+        assignment_variables=assignment_variables,
+        formula=formula,
+        duplicate_of_g3=bool(spec.get("duplicate", False)),
+        sat_control=bool(spec.get("sat_control", False)),
+        incomplete_structure=bool(spec.get("incomplete", False)),
+        description=str(spec.get("description", "")),
+    )
+
+
+def _all_orbit_capacity_instance_ids() -> list[str]:
+    return [
+        "hall_local_3_2",
+        "hall_local_4_3",
+        "hall_local_5_4",
+        "allocation_capacity_5_4_local_deficit",
+        "scheduling_slot_capacity_local_deficit",
+        "capacity_deficit_5_over_4",
+        "capacity_deficit_7_over_6",
+        "complete_match_3_2",
+        "complete_match_4_3",
+        "hall_balanced_3_3_sat_control",
+        "capacity_balanced_4_4_no_contradiction",
+        "incomplete_capacity_structure_reject",
+    ]
+
+
+def find_hall_deficit(instance: OrbitCapacityInstance, *, max_subset_size: int = 6) -> dict[str, Any]:
+    for size in range(1, min(max_subset_size, len(instance.items)) + 1):
+        for subset in combinations(instance.items, size):
+            neighborhood = sorted({resource for item in subset for resource in instance.allowed_resources[item]})
+            demand = len(subset)
+            capacity = sum(instance.resource_capacities[resource] for resource in neighborhood)
+            if demand > capacity:
+                return {
+                    "status": HALL_DEFICIT_NATIVE_UNSAT,
+                    "demand_subset": list(subset),
+                    "neighborhood_resources": neighborhood,
+                    "demand_count": demand,
+                    "capacity_count": capacity,
+                    "search_nodes_expanded": sum(1 for prior_size in range(1, size) for _ in combinations(instance.items, prior_size))
+                    + 1,
+                    "max_subset_size": max_subset_size,
+                }
+    return {
+        "status": ORBIT_CAPACITY_DIAGNOSTIC_ONLY,
+        "demand_subset": [],
+        "neighborhood_resources": [],
+        "demand_count": 0,
+        "capacity_count": 0,
+        "search_nodes_expanded": sum(1 for size in range(1, min(max_subset_size, len(instance.items)) + 1) for _ in combinations(instance.items, size)),
+        "max_subset_size": max_subset_size,
+    }
+
+
+def _orbit_capacity_orbit_summary(instance: OrbitCapacityInstance, demand_subset: Iterable[str]) -> dict[str, Any]:
+    item_groups: dict[tuple[tuple[str, ...], int], list[str]] = defaultdict(list)
+    for item in instance.items:
+        resources = tuple(instance.allowed_resources[item])
+        cap_sum = sum(instance.resource_capacities[resource] for resource in resources)
+        item_groups[(resources, cap_sum)].append(item)
+    resource_groups: dict[tuple[int, tuple[str, ...]], list[str]] = defaultdict(list)
+    for resource in instance.resources:
+        users = tuple(item for item in instance.items if resource in instance.allowed_resources[item])
+        resource_groups[(instance.resource_capacities[resource], users)].append(resource)
+    demand_set = set(demand_subset)
+    return {
+        "item_orbits_by_neighborhood": [group for group in sorted(item_groups.values(), key=lambda group: (-len(group), group[0]))],
+        "resource_orbits_by_capacity_and_users": [group for group in sorted(resource_groups.values(), key=lambda group: (-len(group), group[0]))],
+        "demand_subset_orbit_coverage": sorted(demand_set),
+        "heuristic_orbit_summary_only": True,
+    }
+
+
+def _ids_for_orbit_capacity_constraints(
+    formula: CNFFormula,
+    instance: OrbitCapacityInstance,
+    *,
+    demand_subset: Iterable[str],
+) -> tuple[dict[str, int], dict[str, list[int]], dict[str, list[int]]]:
+    clause_ids = _clause_id_map(formula)
+    alo_ids: dict[str, int] = {}
+    for item in demand_subset:
+        clause = _normal_clause_key(instance.assignment_variables[(item, resource)] for resource in instance.allowed_resources[item])
+        if clause in clause_ids:
+            alo_ids[item] = clause_ids[clause]
+
+    amo_ids: dict[str, list[int]] = {}
+    cap_ids: dict[str, list[int]] = {}
+    for resource in instance.resources:
+        users = [item for item in instance.items if resource in instance.allowed_resources[item]]
+        cap = instance.resource_capacities[resource]
+        ids: list[int] = []
+        for limited_group in combinations(users, cap + 1):
+            clause = _normal_clause_key(-instance.assignment_variables[(item, resource)] for item in limited_group)
+            if clause in clause_ids:
+                ids.append(clause_ids[clause])
+        if ids:
+            cap_ids[resource] = sorted(ids)
+        if cap == 1 and ids:
+            amo_ids[resource] = sorted(ids)
+    return alo_ids, amo_ids, cap_ids
+
+
+def build_orbit_capacity_certificate(
+    instance: OrbitCapacityInstance,
+    *,
+    max_subset_size: int = 6,
+    use_orbit_compression: bool = True,
+) -> OrbitCapacityCertificate:
+    deficit = find_hall_deficit(instance, max_subset_size=max_subset_size)
+    demand_subset = list(deficit["demand_subset"])
+    neighborhood = list(deficit["neighborhood_resources"])
+    alo_ids, amo_ids, cap_ids = _ids_for_orbit_capacity_constraints(instance.formula, instance, demand_subset=demand_subset)
+    assignment_records = [
+        {"item": item, "resource": resource, "variable": variable}
+        for (item, resource), variable in sorted(instance.assignment_variables.items())
+    ]
+    orbit_summary = _orbit_capacity_orbit_summary(instance, demand_subset)
+    compression_used = use_orbit_compression and any(len(group) > 1 for group in orbit_summary["item_orbits_by_neighborhood"])
+    status = ORBIT_CAPACITY_CERTIFICATE_FAILED
+    checker_status = ORBIT_CAPACITY_CERTIFICATE_FAILED
+    public_category = "NO_COLLAPSE_FOUND"
+    certification_level = "NOT_CERTIFIED"
+    notes = "No Hall/capacity deficit certificate was emitted."
+    if demand_subset and deficit["demand_count"] > deficit["capacity_count"]:
+        status = HALL_DEFICIT_NATIVE_UNSAT
+        checker_status = "NOT_RUN"
+        public_category = UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED
+        certification_level = ORBIT_CAPACITY_NATIVE_CERTIFIED
+        notes = "Native Hall/capacity-deficit contradiction candidate; checker must expand all evidence against the original CNF."
+
+    cert = OrbitCapacityCertificate(
+        type="ORBIT_CAPACITY_DEFICIT_CONTRADICTION",
+        instance_id=instance.instance_id,
+        formula_hash=instance.formula.formula_hash,
+        assignment_variables=assignment_records,
+        demand_subset=demand_subset,
+        neighborhood_resources=neighborhood,
+        resource_capacities={resource: int(instance.resource_capacities[resource]) for resource in sorted(instance.resource_capacities)},
+        alo_clause_ids_by_item=alo_ids,
+        amo_clause_ids_by_resource=amo_ids,
+        capacity_constraint_ids_by_resource=cap_ids,
+        demand_count=int(deficit["demand_count"]),
+        capacity_count=int(deficit["capacity_count"]),
+        contradiction=bool(deficit["demand_count"] > deficit["capacity_count"]),
+        hall_deficit=bool(demand_subset and deficit["demand_count"] > deficit["capacity_count"]),
+        orbit_summary=orbit_summary,
+        orbit_compression_used=compression_used,
+        orbit_expanded_and_verified=compression_used,
+        checker_status=checker_status,
+        status=status,
+        public_category=public_category,
+        certification_level=certification_level,
+        drat_claim=ORBIT_COUNTING_DRAT_NOT_CLAIMED,
+        claim_boundary="native capacity-deficit certificate only; no DRAT proof claimed",
+        g3_duplicate_control=instance.duplicate_of_g3,
+        g4_delta_status=DUPLICATE_OF_G3_PIGEONHOLE_PATTERN if instance.duplicate_of_g3 else "PENDING_CHECK",
+        notes=notes,
+    )
+    check = check_orbit_capacity_certificate(instance.formula, cert)
+    data = cert.to_dict()
+    data["checker_status"] = check["status"]
+    data["orbit_expanded_and_verified"] = check["status"] == ORBIT_CAPACITY_CERTIFICATE_VERIFIED
+    if check["status"] == ORBIT_CAPACITY_CERTIFICATE_VERIFIED:
+        data["status"] = HALL_DEFICIT_NATIVE_UNSAT
+        data["public_category"] = UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED
+        data["certification_level"] = ORBIT_CAPACITY_NATIVE_CERTIFIED
+        data["g4_delta_status"] = DUPLICATE_OF_G3_PIGEONHOLE_PATTERN if instance.duplicate_of_g3 else G4_ORBIT_CAPACITY_NATIVE_CERTIFIED
+        data["notes"] = (
+            "Orbit compression helps discover and compress the deficit; the UNSAT certificate is verified by expanding "
+            "the orbit/capacity evidence against the original CNF."
+        )
+    else:
+        data["status"] = ORBIT_CAPACITY_CERTIFICATE_FAILED if demand_subset else ORBIT_CAPACITY_DIAGNOSTIC_ONLY
+        data["public_category"] = "NO_COLLAPSE_FOUND"
+        data["certification_level"] = "NOT_CERTIFIED"
+        data["g4_delta_status"] = G4_NO_NEW_DELTA
+        data["notes"] = "No native G4 collapse is claimed because the Hall/capacity certificate obligations did not verify."
+    return OrbitCapacityCertificate(**data)
+
+
+def _certificate_assignment_maps(data: dict[str, Any]) -> tuple[dict[tuple[str, str], int], dict[str, tuple[str, ...]], tuple[str, ...], tuple[str, ...]]:
+    assignment: dict[tuple[str, str], int] = {}
+    items: set[str] = set()
+    resources: set[str] = set()
+    for record in data.get("assignment_variables", []):
+        item = str(record["item"])
+        resource = str(record["resource"])
+        variable = int(record["variable"])
+        key = (item, resource)
+        if key in assignment:
+            raise ValueError(f"duplicate assignment variable for {key}")
+        assignment[key] = variable
+        items.add(item)
+        resources.add(resource)
+    allowed: dict[str, list[str]] = defaultdict(list)
+    for item, resource in sorted(assignment):
+        allowed[item].append(resource)
+    return assignment, {item: tuple(resources_) for item, resources_ in allowed.items()}, tuple(sorted(items)), tuple(sorted(resources))
+
+
+def check_orbit_capacity_certificate(formula: CNFFormula, certificate: OrbitCapacityCertificate | dict[str, Any]) -> dict[str, Any]:
+    data = certificate.to_dict() if isinstance(certificate, OrbitCapacityCertificate) else dict(certificate)
+    errors: list[str] = []
+    if str(data.get("formula_hash", "")).lower() != formula.formula_hash.lower():
+        errors.append("FORMULA_HASH_MISMATCH")
+    if data.get("drat_claim") != ORBIT_COUNTING_DRAT_NOT_CLAIMED:
+        errors.append("FAKE_DRAT_CLAIM")
+    try:
+        assignment, allowed, items, resources = _certificate_assignment_maps(data)
+    except (KeyError, TypeError, ValueError) as exc:
+        assignment, allowed, items, resources = {}, {}, (), ()
+        errors.append(f"ASSIGNMENT_VARIABLE_MAPPING_INVALID:{exc}")
+
+    clause_ids = _clause_id_map(formula)
+    clause_by_id = {idx: clause for clause, idx in clause_ids.items()}
+    seen_vars = list(assignment.values())
+    if len(seen_vars) != len(set(seen_vars)):
+        errors.append("ASSIGNMENT_VARIABLE_IDS_NOT_UNIQUE")
+    if any(variable not in formula.variables for variable in seen_vars):
+        errors.append("ASSIGNMENT_VARIABLE_NOT_IN_FORMULA")
+
+    demand_subset = [str(item) for item in data.get("demand_subset", [])]
+    resource_capacities = {str(resource): int(capacity) for resource, capacity in data.get("resource_capacities", {}).items()}
+    if any(item not in allowed for item in demand_subset):
+        errors.append("DEMAND_SUBSET_ITEM_NOT_IN_ASSIGNMENT_GRID")
+    for resource, capacity in resource_capacities.items():
+        if capacity < 1:
+            errors.append(f"INVALID_CAPACITY:{resource}")
+    neighborhood = sorted({resource for item in demand_subset for resource in allowed.get(item, ())})
+    if neighborhood != sorted(map(str, data.get("neighborhood_resources", []))):
+        errors.append("NEIGHBORHOOD_RESOURCES_MISMATCH")
+
+    alo_ids_by_item = {str(item): int(clause_id) for item, clause_id in data.get("alo_clause_ids_by_item", {}).items()}
+    for item in demand_subset:
+        expected = _normal_clause_key(assignment[(item, resource)] for resource in allowed.get(item, ()))
+        if expected not in clause_ids:
+            errors.append(f"ALO_CLAUSE_MISSING:{item}")
+        elif alo_ids_by_item.get(item) != clause_ids[expected] or clause_by_id.get(alo_ids_by_item.get(item)) != expected:
+            errors.append(f"ALO_CLAUSE_ID_MISMATCH:{item}")
+
+    capacity_ids_by_resource = {
+        str(resource): [int(clause_id) for clause_id in ids]
+        for resource, ids in data.get("capacity_constraint_ids_by_resource", {}).items()
+    }
+    for resource in neighborhood:
+        if resource not in resource_capacities:
+            errors.append(f"CAPACITY_MISSING:{resource}")
+            continue
+        users = [item for item in items if (item, resource) in assignment]
+        cap = resource_capacities[resource]
+        expected_ids: list[int] = []
+        for limited_group in combinations(users, cap + 1):
+            expected = _normal_clause_key(-assignment[(item, resource)] for item in limited_group)
+            if expected not in clause_ids:
+                errors.append(f"CAPACITY_CLAUSE_MISSING:{resource}:{','.join(limited_group)}")
+            else:
+                expected_ids.append(clause_ids[expected])
+        if sorted(capacity_ids_by_resource.get(resource, [])) != sorted(expected_ids):
+            errors.append(f"CAPACITY_CLAUSE_IDS_MISMATCH:{resource}")
+
+    demand_count = len(demand_subset)
+    capacity_count = sum(resource_capacities.get(resource, 0) for resource in neighborhood)
+    if int(data.get("demand_count", -1)) != demand_count:
+        errors.append("DEMAND_COUNT_MISMATCH")
+    if int(data.get("capacity_count", -1)) != capacity_count:
+        errors.append("CAPACITY_COUNT_MISMATCH")
+    if not (demand_count > capacity_count):
+        errors.append("NO_HALL_CAPACITY_DEFICIT")
+    if data.get("contradiction") is not True or data.get("hall_deficit") is not True:
+        errors.append("CONTRADICTION_FLAG_MISSING")
+    if data.get("orbit_compression_used") and data.get("orbit_expanded_and_verified") is not True:
+        errors.append("ORBIT_COMPRESSION_NOT_EXPANDED")
+    if "DRAT" in str(data.get("public_category", "")):
+        errors.append("PUBLIC_CATEGORY_FAKE_DRAT")
+
+    status = ORBIT_CAPACITY_CERTIFICATE_VERIFIED if not errors else ORBIT_CAPACITY_CERTIFICATE_FAILED
+    return {
+        "status": status,
+        "checker_status": status,
+        "errors": errors,
+        "demand_count": demand_count,
+        "capacity_count": capacity_count,
+        "neighborhood_resources": neighborhood,
+        "claim_boundary": "Native Hall/capacity-deficit certificate only; no DRAT proof and no full matching/allocation solver claim.",
+    }
+
+
+def orbit_capacity_report(rows: list[dict[str, Any]], delta: dict[str, Any]) -> str:
+    lines = [
+        "# Orbit Capacity Collapse Report",
+        "",
+        "## Executive Summary",
+        "",
+        "v2.5 promotes the v2.4-generated ORBIT_COUNTING_COLLAPSE candidate into G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE. It certifies local Hall/capacity deficits for exact generated assignment CNFs. It does not claim a full matching solver, allocation solver, DRAT proof, strictness theorem, or P vs NP progress.",
+        "",
+        "## Core Distinction From G3",
+        "",
+        "G3 recognizes standard pigeonhole-style global deficits. G4 searches for a local subset S whose allowed resource neighborhood N(S) has total capacity smaller than |S|. Complete matching examples that duplicate the G3 pigeonhole pattern are marked as duplicate controls, not novel G4 deltas.",
+        "",
+        "## Target Instances",
+        "",
+        "| instance | G3 baseline | G4 status | public category | demand | capacity | delta |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            f"| `{row['instance_id']}` | `{row['g3_result']}` | `{row['g4_status']}` | `{row['public_category']}` | {row['demand_count']} | {row['capacity_count']} | `{row['g4_delta_status']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Orbit Compression",
+            "",
+            "Orbit compression is used only as a discovery/display aid. A trusted native UNSAT row requires the checker to expand the demand subset, neighborhood, ALO clauses, and capacity clauses against the original CNF.",
+            "",
+            "## Operator Delta Summary",
+            "",
+            stable_json(delta),
+            "## Theorem Candidate Boundary",
+            "",
+            "G4 bounded delta evidence is empirical evidence, not a theorem. The Hall/capacity certificate has a formal proof-sketch shape for the provided subset S, but no lower-bound theorem against G3 is claimed.",
+            "",
+            "## Forbidden Claims",
+            "",
+            "- no P vs NP progress claim",
+            "- no polynomial-time SAT claim",
+            "- no full matching/allocation solver claim",
+            "- no DRAT verification claim",
+            "- no G4 strictness theorem claim",
+            "- no HARD or UNKNOWN statuses",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def run_orbit_capacity_lab(
+    *,
+    instances: Iterable[str],
+    out_root: str | Path,
+    strict: bool = False,
+    zip_path: str | Path | None = None,
+    max_subset_size: int = 6,
+) -> dict[str, Any]:
+    root = Path(out_root)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+    cert_root = root / "certificates"
+    cnf_root = root / "original_cnf"
+    cert_root.mkdir(parents=True, exist_ok=True)
+    cnf_root.mkdir(parents=True, exist_ok=True)
+
+    selected_ids = list(instances)
+    rows: list[dict[str, Any]] = []
+    certificates: list[dict[str, Any]] = []
+    traces: list[dict[str, Any]] = []
+    checker_rows: list[dict[str, Any]] = []
+    for instance_id in selected_ids:
+        instance = make_orbit_capacity_instance(instance_id)
+        deficit = find_hall_deficit(instance, max_subset_size=max_subset_size)
+        certificate = build_orbit_capacity_certificate(instance, max_subset_size=max_subset_size)
+        check = check_orbit_capacity_certificate(instance.formula, certificate)
+        cert_path = cert_root / f"{instance_id}_orbit_capacity_certificate.json"
+        cnf_path = cnf_root / f"{instance_id}.cnf"
+        cert_path.write_text(stable_json(certificate.to_dict()), encoding="utf-8", newline="\n")
+        cnf_path.write_text(instance.formula.canonical_dimacs(), encoding="utf-8", newline="\n")
+        g3_result = DUPLICATE_OF_G3_PIGEONHOLE_PATTERN if instance.duplicate_of_g3 else "CARDINALITY_DIAGNOSTIC_ONLY"
+        if instance.sat_control:
+            g3_result = "NO_COLLAPSE_FOUND"
+        novel_delta = (
+            check["status"] == ORBIT_CAPACITY_CERTIFICATE_VERIFIED
+            and not instance.duplicate_of_g3
+            and not instance.sat_control
+            and not instance.incomplete_structure
+        )
+        row = {
+            "instance_id": instance_id,
+            "family": instance.family,
+            "g3_result": g3_result,
+            "g4_grammar": "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE",
+            "g4_status": certificate.status,
+            "public_category": certificate.public_category,
+            "certification_level": certificate.certification_level,
+            "checker_status": check["status"],
+            "demand_subset": certificate.demand_subset,
+            "neighborhood_resources": certificate.neighborhood_resources,
+            "demand_count": certificate.demand_count,
+            "capacity_count": certificate.capacity_count,
+            "g3_duplicate_control": instance.duplicate_of_g3,
+            "sat_control": instance.sat_control,
+            "incomplete_structure": instance.incomplete_structure,
+            "g4_delta_status": certificate.g4_delta_status,
+            "novel_g4_delta": novel_delta,
+            "drat_claim": certificate.drat_claim,
+            "certificate_path": str(cert_path),
+            "cnf_path": str(cnf_path),
+            "orbit_expanded_and_verified": certificate.orbit_expanded_and_verified,
+        }
+        rows.append(row)
+        certificates.append(certificate.to_dict())
+        traces.append({"instance_id": instance_id, "deficit_trace": deficit, "instance": instance.to_dict()})
+        checker_rows.append({"instance_id": instance_id, **check})
+
+    local_certified = [row for row in rows if row["novel_g4_delta"]]
+    duplicate_controls = [row for row in rows if row["g3_duplicate_control"]]
+    balanced_controls = [row for row in rows if row["sat_control"]]
+    delta = {
+        "operator_added": "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE",
+        "promoted_candidate": "ORBIT_COUNTING_COLLAPSE",
+        "instances_total": len(rows),
+        "native_certified": sum(1 for row in rows if row["checker_status"] == ORBIT_CAPACITY_CERTIFICATE_VERIFIED),
+        "novel_local_hall_deltas": len(local_certified),
+        "duplicate_g3_controls": len(duplicate_controls),
+        "balanced_controls_without_contradiction": sum(1 for row in balanced_controls if row["public_category"] == "NO_COLLAPSE_FOUND"),
+        "fake_drat_claims": sum(1 for row in rows if row["drat_claim"] != ORBIT_COUNTING_DRAT_NOT_CLAIMED),
+        "strictness_status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+        "claim_boundary": "G4 native Hall/capacity-deficit evidence only; no full matching/allocation solver claim and no DRAT claim.",
+    }
+    theorem_queue = [
+        {
+            "id": "TC-012",
+            "name": "Hall/Capacity Native Certification Candidate",
+            "status": "FORMAL_PROOF_SKETCH",
+            "statement": "For exact assignment CNFs with ALO demand constraints and exact capacity constraints, a provided subset S with |S| > capacity(N(S)) yields a native UNSAT certificate checkable against the original CNF.",
+            "forbidden_interpretations": ["not a full matching solver", "not a DRAT proof", "not P vs NP progress"],
+        },
+        {
+            "id": "TC-013",
+            "name": "G4 Orbit-Capacity Strictness Candidate",
+            "status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            "statement": "Local Hall-deficit formulas are certified by G4 while G3's standard pigeonhole/cardinality recognizer does not count them as its standard complete-grid pattern.",
+            "forbidden_interpretations": ["not a strictness theorem", "no lower bound against G3 is proved"],
+        },
+        {
+            "id": "TC-014",
+            "name": "Operator Genesis Success Candidate",
+            "status": "EMPIRICAL_EVIDENCE",
+            "statement": "The v2.4-generated ORBIT_COUNTING_COLLAPSE candidate was promoted to a v2.5 prototype with native certificate checks and bounded operator-delta evidence.",
+            "forbidden_interpretations": ["generated operator is not a theorem", "not a broad solver claim"],
+        },
+    ]
+
+    payloads = {
+        "orbit_capacity_certificates.json": {"certificates": certificates},
+        "hall_deficit_detection_trace.json": {"traces": traces},
+        "orbit_capacity_checker_summary.json": {"checks": checker_rows},
+        "g4_operator_delta_summary.json": delta,
+        "theorem_candidates.json": {"theorem_candidates": theorem_queue},
+        "manifest.json": {
+            "version": "2.5",
+            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "instances": selected_ids,
+            "strict": strict,
+            "claim_boundary": "native Hall/capacity-deficit certificates only; no DRAT or P vs NP claim",
+        },
+    }
+    for name, payload in payloads.items():
+        _write_json(root / name, payload)
+    _write_orbit_capacity_csv(root / "orbit_capacity_structure_summary.csv", rows)
+    (root / "ORBIT_CAPACITY_COLLAPSE_REPORT.md").write_text(orbit_capacity_report(rows, delta), encoding="utf-8", newline="\n")
+    digest = make_zip(root, zip_path) if zip_path else ""
+    return {
+        "out_root": str(root),
+        "zip": str(zip_path) if zip_path else "",
+        "zip_sha256": digest,
+        "orbit_capacity_certificates": certificates,
+        "orbit_capacity_rows": rows,
+        "hall_deficit_detection_trace": traces,
+        "orbit_capacity_checker_summary": checker_rows,
+        "g4_operator_delta_summary": delta,
+        "theorem_candidates": theorem_queue,
+    }
+
+
+def _write_orbit_capacity_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    headers = [
+        "instance_id",
+        "g3_result",
+        "g4_status",
+        "public_category",
+        "checker_status",
+        "demand_count",
+        "capacity_count",
+        "g3_duplicate_control",
+        "g4_delta_status",
+        "novel_g4_delta",
+    ]
+    lines = [",".join(headers)]
+    for row in rows:
+        lines.append(",".join(str(row.get(header, "")).replace(",", ";") for header in headers))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Witnora Operator Genesis Engine")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1104,6 +1858,27 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--out-root", default="outputs/v2.4-operator-genesis")
     run_parser.add_argument("--strict", action="store_true")
     run_parser.add_argument("--zip", default="witnora-core-v2.4-operator-genesis.zip")
+    orbit_parser = sub.add_parser("run-orbit-capacity-lab")
+    orbit_parser.add_argument(
+        "--instances",
+        nargs="+",
+        default=[
+            "hall_local_3_2",
+            "hall_local_4_3",
+            "hall_local_5_4",
+            "complete_match_3_2",
+            "complete_match_4_3",
+            "hall_balanced_3_3_sat_control",
+            "capacity_balanced_4_4_no_contradiction",
+        ],
+    )
+    orbit_parser.add_argument("--out-root", default="outputs/v2.5-orbit-capacity-counting")
+    orbit_parser.add_argument("--strict", action="store_true")
+    orbit_parser.add_argument("--max-subset-size", type=int, default=6)
+    orbit_parser.add_argument("--zip", default="witnora-core-v2.5-orbit-capacity-counting.zip")
+    check_orbit_parser = sub.add_parser("check-orbit-capacity-cert")
+    check_orbit_parser.add_argument("--cnf", required=True)
+    check_orbit_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
     if args.command == "run":
         result = run_operator_genesis(families=args.families, out_root=args.out_root, strict=args.strict, zip_path=args.zip)
@@ -1120,6 +1895,30 @@ def main(argv: list[str] | None = None) -> int:
                 }
             )
         )
+        return 0
+    if args.command == "run-orbit-capacity-lab":
+        result = run_orbit_capacity_lab(
+            instances=args.instances,
+            out_root=args.out_root,
+            strict=args.strict,
+            zip_path=args.zip,
+            max_subset_size=args.max_subset_size,
+        )
+        print(
+            stable_json(
+                {
+                    "out_root": args.out_root,
+                    "zip": args.zip,
+                    "zip_sha256": result["zip_sha256"],
+                    "summary": result["g4_operator_delta_summary"],
+                }
+            )
+        )
+        return 0
+    if args.command == "check-orbit-capacity-cert":
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_orbit_capacity_certificate(formula, data)))
         return 0
     return 1
 

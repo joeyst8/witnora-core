@@ -75,3 +75,14 @@ This is still a planning layer. A generated schema is not an implemented
 operator, not a proof, and not a benchmark result. The next operator becomes
 trusted only after implementation, independent checking, targeted tests,
 red-team review, and a frozen artifact.
+
+## v2.5 First Generated Operator Prototype
+
+v2.5 promotes `ORBIT_COUNTING_COLLAPSE` into
+`G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`. The frontier claim is narrow: local
+Hall/capacity deficits over exact assignment/resource CNFs can emit native
+certificates when the checker expands the evidence against the original CNF.
+
+This is not counted as a novel G4 delta for complete matching rows that are just
+the G3 pigeonhole pattern in another notation. It is not a full matching solver
+or a DRAT proof route.

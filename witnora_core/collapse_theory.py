@@ -84,6 +84,7 @@ PIGEONHOLE_DRAT_NOT_CLAIMED = "PIGEONHOLE_DRAT_NOT_CLAIMED"
 G3_CARDINALITY_CERTIFIED = "G3_CARDINALITY_CERTIFIED"
 G3_SYMMETRY_CARDINALITY_NATIVE_CERTIFIED = "G3_SYMMETRY_CARDINALITY_NATIVE_CERTIFIED"
 UNSAT_PIGEONHOLE_NATIVE_CERTIFIED = "UNSAT_PIGEONHOLE_NATIVE_CERTIFIED"
+UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED = "UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED"
 
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
@@ -91,6 +92,7 @@ PUBLIC_CATEGORIES = [
     UNSAT_XOR_NATIVE_ONLY,
     UNSAT_NOT_EXTERNALLY_VERIFIED,
     UNSAT_PIGEONHOLE_NATIVE_CERTIFIED,
+    UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED,
     NO_COLLAPSE_FOUND,
     OPERATOR_STUB_NOT_EXECUTED,
     TIMEOUT,
@@ -452,6 +454,7 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     g1_ops = (*base_ops, "EXACT_XOR", "SPARSE_MIN_FILL_XOR", "XOR_DRAT_BRIDGE")
     g2_sym_ops = (*g1_ops, "EXACT_AUTOMORPHISM_VALIDATION", "SYMMETRY_CERTIFICATE_CHECKER", "SBP_PRESERVATION_CHECK")
     g3_card_ops = (*g2_sym_ops, "CARDINALITY_PB_DIAGNOSTIC", "PIGEONHOLE_COUNTING_CERTIFICATE")
+    g4_orbit_capacity_ops = (*g3_card_ops, "ORBIT_CAPACITY_COUNTING_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -515,6 +518,15 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             6,
             {"proof_policy": "native_pigeonhole_counting_certificate_no_drat_claim"},
             "G2_SYMMETRY_CERTIFIED plus exact assignment-grid cardinality/PB recognition and native pigeonhole counting certificates for standard php_n_m encodings.",
+        ),
+        "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE": CollapseGrammar(
+            "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE",
+            g4_orbit_capacity_ops,
+            (*terminals, "XOR_AFFINE", "SYMMETRY_NATIVE_CERTIFICATE", "PIGEONHOLE_NATIVE_COUNTING", "ORBIT_CAPACITY_NATIVE_COUNTING"),
+            2,
+            6,
+            {"proof_policy": "native_hall_capacity_certificate_no_drat_claim"},
+            "G3_SYMMETRY_CARDINALITY_CERTIFIED plus a generated native Hall/capacity-deficit prototype for exact assignment/resource CNFs.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",
@@ -1553,6 +1565,8 @@ def run_instance(
     drat_trim_path: str | Path | None = None,
 ) -> CollapseResult:
     started = time.perf_counter()
+    if grammar.name == "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE":
+        return _stub_result(instance, grammar, started)
     if any(op.endswith("_PROTOTYPE") or op == "BACKDOOR_DIAGNOSTIC" for op in grammar.operators):
         return _stub_result(instance, grammar, started)
 
@@ -2592,6 +2606,28 @@ def main(argv: list[str] | None = None) -> int:
     genesis_parser.add_argument("--out-root", default="outputs/v2.4-operator-genesis")
     genesis_parser.add_argument("--strict", action="store_true")
     genesis_parser.add_argument("--zip", default="witnora-core-v2.4-operator-genesis.zip")
+
+    orbit_capacity_parser = sub.add_parser("run-orbit-capacity-lab")
+    orbit_capacity_parser.add_argument(
+        "--instances",
+        nargs="+",
+        default=[
+            "hall_local_3_2",
+            "hall_local_4_3",
+            "hall_local_5_4",
+            "complete_match_3_2",
+            "complete_match_4_3",
+            "hall_balanced_3_3_sat_control",
+            "capacity_balanced_4_4_no_contradiction",
+        ],
+    )
+    orbit_capacity_parser.add_argument("--out-root", default="outputs/v2.5-orbit-capacity-counting")
+    orbit_capacity_parser.add_argument("--strict", action="store_true")
+    orbit_capacity_parser.add_argument("--zip", default="witnora-core-v2.5-orbit-capacity-counting.zip")
+
+    check_orbit_capacity_parser = sub.add_parser("check-orbit-capacity-cert")
+    check_orbit_capacity_parser.add_argument("--cnf", required=True)
+    check_orbit_capacity_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2642,6 +2678,22 @@ def main(argv: list[str] | None = None) -> int:
         result = run_operator_genesis(families=args.families, out_root=args.out_root, strict=args.strict)
         digest = make_zip(args.out_root, args.zip)
         print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": {"fingerprint_count": len(result["obstruction_fingerprints"]), "candidate_count": len(result["generated_operator_candidates"])}}))
+        return 0
+
+    if args.command == "run-orbit-capacity-lab":
+        from .operator_genesis import run_orbit_capacity_lab
+
+        result = run_orbit_capacity_lab(instances=args.instances, out_root=args.out_root, strict=args.strict)
+        digest = make_zip(args.out_root, args.zip)
+        print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": result["g4_operator_delta_summary"]}))
+        return 0
+
+    if args.command == "check-orbit-capacity-cert":
+        from .operator_genesis import check_orbit_capacity_certificate
+
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_orbit_capacity_certificate(formula, data)))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)
