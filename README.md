@@ -1,5 +1,21 @@
 # Witnora-Core v0.9.8
 
+## v2.14 Obstruction Dual Certificate Prototype
+
+v2.14 adds `witnora_core.obstruction_dual` and the diagnostic grammar layer
+`G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE`.
+
+When a controlled row does not receive a certified collapse from G0-G6, G7
+records the bounded attempt trace, extracts obstruction fingerprints, verifies
+the source evidence, and emits a missing-operator recommendation plus an
+obstruction-to-operator queue.
+
+This is failure-as-evidence, not a solver result. v2.14 does not claim
+satisfiability, unsatisfiability, hardness, lower bounds, hierarchy
+completeness, or P vs NP progress. The G0-G6 trace is bounded diagnostic
+evidence and is not a proof that the formula cannot collapse under some other
+route or future operator.
+
 ## v2.13 Paper Hardening / Reviewer Defense
 
 v2.13 hardens the external paper and reproducibility package for skeptical

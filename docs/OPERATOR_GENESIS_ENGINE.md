@@ -1,5 +1,18 @@
 # Operator Genesis Engine
 
+## v2.14 Obstruction Dual Hand-Off
+
+v2.14 adds `G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE`, which turns selected
+G0-G6 non-certification rows into checkable obstruction-dual certificates.
+
+The output is not a generated operator implementation. It is a verified failure
+evidence object with obstruction fingerprints, missing-operator hypotheses,
+checker requirements, proof obligations, and an obstruction-to-operator queue.
+
+The G7 certificate does not claim satisfiability, unsatisfiability, hardness,
+lower bounds, hierarchy completeness, or P vs NP progress. A recommendation is
+only a blueprint for the next operator, not evidence that the operator works.
+
 ## v2.8 Theoremization Hand-Off
 
 v2.8 does not generate or promote a new operator. It turns the generated and

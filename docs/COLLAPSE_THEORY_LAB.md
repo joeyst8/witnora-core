@@ -1,5 +1,17 @@
 # Collapse Theory Lab
 
+## v2.14 Obstruction Dual Layer
+
+v2.14 adds a diagnostic G7 layer for rows where the current G0-G6 ladder does
+not emit a certified collapse. Instead of stopping at no-collapse, Witnora
+builds an obstruction-dual certificate: grammar attempt trace, feature
+evidence, obstruction fingerprint, proof obligations, and a recommended missing
+operator family.
+
+The certificate is bounded research evidence. It is not a satisfiability or
+unsatisfiability result, not a hardness claim, not a lower-bound proof, and not
+P vs NP progress.
+
 ## v2.8 Hierarchy Theoremization
 
 v2.8 formalizes the current G0-G6 ladder as a bounded theoremization program.

@@ -1,5 +1,16 @@
 # Operator Frontier
 
+## v2.14 Obstruction Dual Frontier Update
+
+The frontier now has a failure-certificate layer. When G0-G6 do not produce a
+certified collapse for selected controlled rows, `G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE`
+records a bounded attempt trace, source feature evidence, obstruction
+fingerprints, and a missing-operator recommendation.
+
+This is not a SAT/UNSAT result and not a lower-bound claim. It is a checkable
+planning artifact: the failure is made structured enough to guide the next
+operator, while the claim boundary stays explicit.
+
 ## v2.8 Theoremization Update
 
 The frontier now feeds a theoremization layer. v2.8 does not add a new

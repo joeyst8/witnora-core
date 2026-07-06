@@ -801,6 +801,38 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Search for a real G1 obstruction certificate for color-symmetry families."],
         ),
+        TheoremCandidate(
+            id="TC-036",
+            name="Obstruction Dual Certificate Candidate",
+            statement=(
+                "When G0-G6 do not produce a certified collapse under a bounded diagnostic profile, "
+                "G7 can emit a checkable obstruction-dual certificate that records failure evidence, "
+                "obstruction fingerprints, proof obligations, and a missing-operator recommendation."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=[
+                "near_affine_not_exact_xor",
+                "near_cardinality_incomplete_amo",
+                "graph_separator_bridge_toy",
+                "proof_motif_near_miss",
+            ],
+            required_proof_obligations=[
+                "Verify the G0-G6 non-certification trace without calling it a lower bound.",
+                "Verify obstruction fingerprints against source formula features.",
+                "Require a checker design before any recommended operator is promoted.",
+                "Keep obstruction-dual evidence separate from SAT/UNSAT result reporting.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim SAT or UNSAT.",
+                "Does not claim hardness or lower bounds.",
+                "Does not claim P vs NP progress.",
+                "Does not claim the obstruction vocabulary is complete.",
+            ],
+            next_experiments=[
+                "Use G7 queues to choose the next operator prototype.",
+                "Audit whether repeated obstruction fingerprints stabilize across broader benchmarks.",
+            ],
+        ),
     ]
 
 

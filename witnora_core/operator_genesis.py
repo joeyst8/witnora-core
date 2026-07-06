@@ -3197,6 +3197,27 @@ def main(argv: list[str] | None = None) -> int:
     check_motif_parser = sub.add_parser("check-proof-motif-cert")
     check_motif_parser.add_argument("--cnf", required=True)
     check_motif_parser.add_argument("--certificate", required=True)
+    obstruction_parser = sub.add_parser("run-obstruction-dual-lab")
+    obstruction_parser.add_argument(
+        "--families",
+        nargs="+",
+        default=[
+            "no-confident-fingerprint",
+            "random-structured",
+            "near-affine",
+            "near-cardinality",
+            "graph-separator",
+            "circuit-sat-toy",
+            "proof-motif-near-miss",
+            "mixed",
+        ],
+    )
+    obstruction_parser.add_argument("--out-root", default="outputs/v2.14-obstruction-dual-certificate")
+    obstruction_parser.add_argument("--strict", action="store_true")
+    obstruction_parser.add_argument("--zip", default="witnora-core-v2.14-obstruction-dual-certificate.zip")
+    check_obstruction_parser = sub.add_parser("check-obstruction-dual-cert")
+    check_obstruction_parser.add_argument("--cnf", required=True)
+    check_obstruction_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
     if args.command == "run":
         result = run_operator_genesis(families=args.families, out_root=args.out_root, strict=args.strict, zip_path=args.zip)
@@ -3284,6 +3305,28 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_proof_motif_certificate(formula, data)))
+        return 0
+    if args.command == "run-obstruction-dual-lab":
+        from .obstruction_dual import run_obstruction_dual_lab
+
+        result = run_obstruction_dual_lab(families=args.families, out_root=args.out_root, strict=args.strict, zip_path=args.zip)
+        print(
+            stable_json(
+                {
+                    "out_root": args.out_root,
+                    "zip": args.zip,
+                    "zip_sha256": result["zip_sha256"],
+                    "summary": result["g7_obstruction_dual_summary"],
+                }
+            )
+        )
+        return 0
+    if args.command == "check-obstruction-dual-cert":
+        from .obstruction_dual import check_obstruction_dual_certificate
+
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_obstruction_dual_certificate(formula, data)))
         return 0
     return 1
 
