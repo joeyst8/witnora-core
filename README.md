@@ -1,5 +1,21 @@
 # Witnora-Core v0.9.8
 
+## v2.13 Paper Hardening / Reviewer Defense
+
+v2.13 hardens the external paper and reproducibility package for skeptical
+review. It adds related-work positioning, a contribution table, a reviewer
+objection table, limitations/non-claims, a claim-boundary appendix, a reviewer
+guide, and a v2.13 package validator.
+
+This release does not add a new operator. It does not change solver logic,
+proof-export logic, XOR-solving logic, or evidence grades. v2.10 remains
+`FINITE_STRICTNESS_CERTIFIED`, while v2.11 remains
+`FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`.
+
+v2.13 prepares the artifact for external review. It does not claim external
+acceptance, peer-review acceptance, hierarchy completeness, polynomial-time
+SAT, or P vs NP progress.
+
 ## v2.12 External Paper/Reproducibility Package
 
 v2.12 adds `witnora_core.reproducibility_package`, plus reproduction and

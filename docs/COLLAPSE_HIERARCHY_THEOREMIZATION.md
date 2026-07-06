@@ -1,5 +1,16 @@
 # Collapse Hierarchy Theoremization
 
+## v2.13 Reviewer-Defense Layer
+
+v2.13 does not add a new operator or promote any hierarchy edge. It hardens the
+external paper with related work, contribution and objection tables,
+limitations, a claim-boundary appendix, and reviewer inspection guidance.
+
+Evidence grades remain unchanged: v2.10 is the finite restricted strictness
+certificate, v2.11 is the finite empirical edge-delta certificate, and the
+remaining hierarchy edges stay empirical or proof-obligation scoped unless a
+separate certificate discharges stronger obligations.
+
 ## v2.12 External Reproducibility Package
 
 v2.12 packages the hierarchy work for external review. It adds a polished

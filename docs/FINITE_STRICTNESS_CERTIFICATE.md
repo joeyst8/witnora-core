@@ -1,5 +1,12 @@
 # Finite Strictness Certificate
 
+## v2.13 Reviewer-Defense Note
+
+v2.13 preserves the v2.10 evidence grade. `FINITE_STRICTNESS_CERTIFIED` remains
+reserved for finite restricted certificates where the lower side has certified
+obstruction evidence. v2.13 does not convert this finite certificate into a
+family theorem and does not claim full `G0_BASE` strictness.
+
 v2.10 defines a reusable finite strictness certificate for the restricted edge
 `G0_WIDTH_C` versus `G1_XOR_FOR_STRICTNESS`.
 

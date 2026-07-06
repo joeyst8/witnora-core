@@ -1,5 +1,12 @@
 # Finite Edge Delta Certificate
 
+## v2.13 Reviewer-Defense Note
+
+v2.13 preserves the v2.11 evidence grade. `FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`
+remains a finite replayed delta, not a strictness theorem or lower-bound proof.
+The reviewer-defense package makes that distinction visible in the contribution
+table, objection table, limitations section, and claim-boundary appendix.
+
 v2.11 introduces `FINITE_EDGE_DELTA_CERTIFICATE` for hierarchy edges where the
 lower grammar has replay evidence but no certified lower-bound obstruction.
 

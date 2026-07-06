@@ -1,5 +1,17 @@
 # External Reproducibility Package
 
+## v2.13 Paper Hardening
+
+v2.13 builds on this package with reviewer-defense materials: related-work
+positioning, a contribution table, a reviewer objection table, limitations and
+non-claims, a claim-boundary appendix, a reviewer guide, and a v2.13 validation
+script.
+
+v2.13 does not add a new operator, does not change evidence grades, does not
+change solver logic, does not change proof-export logic, and does not change
+XOR-solving logic. It prepares for external review but does not claim external
+acceptance or peer review.
+
 v2.12 packages Witnora's collapse hierarchy work for external review.
 
 It does not add a new operator. It does not change solver logic, proof-export
