@@ -307,3 +307,16 @@ Forbidden claims:
 - no complete collapse grammar claim
 - no certified symmetry-collapse claim for pigeonhole unless a future release
   implements and verifies such a transformation
+
+## v2.24 External Review Package
+
+v2.24 turns the v2.14-v2.23 line into an external-review package. It packages
+obstruction certificates, promoted operators, composed execution, theoremization
+records, and TC-063 hardening into a reviewer-facing bundle.
+
+The package is framework/theorem-candidate review, not a P-vs-NP claim. TC-063
+is restricted to `SAF(c,r)` and remains
+`RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`. Native certificates are
+Witnora-native and not DRAT/LRAT/FRAT unless exported and externally checked.
+Finite evidence supports implementation behavior but does not substitute for a
+family proof.

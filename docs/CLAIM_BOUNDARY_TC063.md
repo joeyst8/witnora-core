@@ -22,3 +22,9 @@ Reason:
 
 TC-063 still has proof obligations and checker-soundness dependencies. v2.23
 hardens the theorem shape and review surface without overstating the result.
+
+v2.24 preserves this boundary in the external review package. It does not claim
+P vs NP progress, all-SAT coverage, hierarchy completeness, an unqualified
+theorem-proven status, or DRAT/LRAT/FRAT proof status. It asks reviewers to
+attack the restricted `SAF(c,r)` theorem, its G5 dependency, and its native
+certificate assumptions directly.

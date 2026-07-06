@@ -233,3 +233,10 @@ not a general SAT-solving result.
     verify end to end.
 14. For circuit projection, eliminate only exact definitional auxiliary
     variables and require SAT or UNSAT lift evidence against the original CNF.
+15. For external review packaging, present v2.14-v2.23 as a certified
+    collapse-research framework with TC-063 restricted to `SAF(c,r)` and proof
+    obligations intact.
+16. Do not convert native certificates into DRAT/LRAT/FRAT claims without
+    external export and checking.
+17. Treat finite tests as implementation evidence, not as a substitute for
+    family proof.

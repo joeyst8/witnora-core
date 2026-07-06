@@ -21,3 +21,14 @@ externally checked.
 Nonclaims: no P vs NP progress, no all-SAT claim, no hierarchy completeness,
 no polynomial-time SAT for arbitrary formulas, and no unqualified theorem-proven
 claim.
+
+## v2.24 Review Placement
+
+v2.24 packages TC-063 for external review through `TC063_THEOREM_APPENDIX.md`,
+the obligation manifest, the claim-boundary table, and the reviewer guide. The
+status remains `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`.
+
+External reviewers should focus on G5 affine soundness, separator
+decomposition, complete UNSAT separator cover, the native-certificate boundary,
+and the finite-vs-family boundary. Native certificates remain native-only, and
+finite scaling evidence remains implementation support rather than proof.

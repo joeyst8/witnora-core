@@ -1334,3 +1334,23 @@ python -m witnora_core.runner examples/treewidth_demo.dimacs --c 1
 python -m witnora_core.runner examples/multi_component_demo.dimacs --c 2
 python -m witnora_core.runner examples/unsat_demo.dimacs --c 2
 ```
+
+## v2.24 External Review Package
+
+v2.24 packages the v2.14-v2.23 research line for external review. It frames
+Witnora as a certified collapse-research framework with an obstruction-to-
+operator loop, planner-guided finite execution evidence, a G9-G13 soundness
+backbone, and TC-063 as a restricted theorem over `SAF(c,r)` with proof
+obligations.
+
+This package is not a P-vs-NP claim, not all-SAT coverage, not hierarchy
+completeness, and not a polynomial-time SAT claim. TC-063 remains
+`RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`; native certificates are not
+DRAT/LRAT/FRAT unless explicitly exported and externally checked. Finite tests
+are implementation evidence, not a substitute for the family proof.
+
+Regenerate the package with:
+
+```bash
+python -m witnora_core.external_review_package_v224 run --out-root outputs/v2.24-external-review-package-v2.23 --strict
+```

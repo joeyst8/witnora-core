@@ -1,52 +1,41 @@
-# Reviewer Guide
+# Reviewer Guide v2.24
 
-## What to read first
+## What to Inspect First
 
-Read the external paper draft, then the contribution table, evidence summary, claim-boundary appendix, and reviewer objection table.
+Read the external review draft, TC-063 appendix, G9-G13 appendix, claim-boundary table, and evidence manifest.
 
-## What to reproduce first
+## How to Reproduce Tests
 
-Run the full unit suite, validate the v2.12 package, then validate the v2.13 hardening package.
+Set `WITNORA_DRAT_TRIM` to a real `drat-trim.exe`, then run `python -m unittest discover -s tests -v`.
 
-## How to run validation
+## Where TC-063 Lives
 
-`python scripts/validate_v2_13_paper_package.py --package-root outputs/v2.13-paper-hardening-reviewer-defense`
+Inspect `TC063_THEOREM_APPENDIX.md`, `tc063_obligation_manifest.json`, and `theory/TC063_BOUNDED_SEPARATOR_AFFINE_HARDENED_THEOREM.md`.
 
-## How to inspect v2.10 finite strictness certificate
+## Where Proof Obligations Live
 
-Inspect the G0_WIDTH_C -> G1_XOR evidence row. Confirm `FINITE_STRICTNESS_CERTIFIED` appears only where certified lower obstruction evidence exists.
+Read `tc063_obligation_manifest.json`, `G9_G13_SOUNDNESS_APPENDIX.md`, and the theory lemma files.
 
-## How to inspect v2.11 finite empirical edge delta
+## What Claims Are Not Made
 
-Inspect the G1_XOR -> G2_SYMMETRY_CERTIFIED row. Confirm lower replay is bounded non-acceptance, not a lower-bound proof.
+No P vs NP proof, no P vs NP progress, no all-SAT coverage, no hierarchy completeness, no polynomial-time arbitrary SAT claim, no fake DRAT claim, and no unqualified theorem-proven claim.
 
-## How to inspect evidence grades
+## How to Verify Archives and SHAs
 
-Check `EVIDENCE_SUMMARY.md` and verify v2.10 remains `FINITE_STRICTNESS_CERTIFIED` while v2.11 remains `FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`.
+Compare release entries in `artifact_sha_manifest.json` and `evidence_manifest.json` against local source and artifact zips.
 
-## How to inspect claim boundaries
+## How to Inspect Native Certificates
 
-Read `CLAIM_BOUNDARY_APPENDIX.md` and compare allowed wording, forbidden wording, reason, and validation guard.
+Inspect native checker modules and their tests. Native means Witnora-checkable, not external DRAT/LRAT/FRAT.
 
-## What Witnora claims
+## How to Attack the Framework
 
-Witnora claims a certificate-backed collapse hierarchy and operator-discovery program with finite certificates, empirical edge deltas, native certificates, and explicit proof obligations.
+Attack G5 affine soundness, separator decomposition, UNSAT cover, native certificate boundary, finite-vs-family boundary, and claim-boundary wording.
 
-## What Witnora does not claim
+## How to Audit Claim Boundaries
 
-It does not claim P vs NP progress, polynomial-time SAT, hierarchy completeness, peer-review acceptance, or family theorems from finite certificates.
+Read `CLAIM_BOUNDARY_TABLE.md` and `claim_boundary_manifest.json`, then compare against the paper draft and appendices.
 
-## Known weaknesses
+## Known Limitations
 
-Current witnesses are often controlled. Native checkers are not proof-assistant verified. Several hierarchy edges remain empirical rather than theorem-proven. The current chain may later need a lattice formalization.
-
-## Suggested reviewer questions
-
-- Are W_B(G) definitions useful?
-- Is finite strictness certification meaningful?
-- Is the empirical edge-delta label honest?
-- Are native certificates adequate for this research program?
-- Which proof obligation should be attacked next?
-- Which operator is most novel?
-- Should the hierarchy be a lattice instead of a chain?
-- Is the paper framing acceptable as a workshop/system/research-program paper?
+Native checkers are not proof-assistant verified. TC-063 has proof obligations. Finite tests support implementation only. The hierarchy may need a lattice formalization.

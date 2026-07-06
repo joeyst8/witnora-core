@@ -338,7 +338,6 @@ def build_paper_hardening_package(
     root = Path(out_root)
     root.mkdir(parents=True, exist_ok=True)
     _write_text(Path("paper") / "WITNORA_COLLAPSE_HIERARCHY_EXTERNAL_DRAFT.md", external_paper_text())
-    _write_text(Path("docs") / "REVIEWER_GUIDE.md", reviewer_guide_text())
     _write_text(root / "REVIEWER_GUIDE.md", reviewer_guide_text())
     _write_text(root / "EXTERNAL_REVIEW_PACKET.md", external_review_packet_text())
     _write_text(root / "PAPER_HARDENING_SUMMARY.md", paper_hardening_summary_text())

@@ -56,3 +56,14 @@ Status: `FORMAL_PROOF_SKETCH`
 For finite controlled instances where obstruction fingerprinting, planning, execution, certificate verification, and result verification all pass, Witnora demonstrates a sound finite closed-loop collapse experiment.
 
 Status: `EMPIRICAL_EVIDENCE`
+
+## v2.24 Review Packaging
+
+v2.24 includes this G9-G13 soundness backbone as an appendix in the external
+review package. The appendix keeps the same boundary: formal proof sketches and
+proof obligations, not unqualified proven theorems.
+
+The package also points reviewers to TC-063, which is restricted to `SAF(c,r)`
+and depends on fixed `c`, supported affine extraction, and G5 affine checker
+soundness. It does not claim P vs NP progress, hierarchy completeness, all-SAT
+coverage, or external DRAT/LRAT/FRAT proof status.

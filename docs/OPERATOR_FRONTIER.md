@@ -235,3 +235,15 @@ check every instantiation, and account for compressed macro-proof size.
 Tseitin/XOR-like rows are treated as duplicate controls when prior XOR
 grammars may already handle them. G6 evidence is counted only when the native
 proof-motif checker verifies template and reuse obligations.
+
+## v2.24 External Review Frontier
+
+v2.24 pauses operator expansion and packages v2.14-v2.23 for external review.
+The review package presents the G0-G14 hierarchy, the obstruction-to-operator
+loop, planner-guided finite execution, G9-G13 soundness sketches, and TC-063 as
+a restricted `SAF(c,r)` theorem with proof obligations.
+
+Reviewers should attack the G5 affine dependency, separator decomposition,
+UNSAT cover, native-certificate boundary, finite-vs-family boundary, and claim
+wording. The package is not a P-vs-NP proof, not all-SAT coverage, not
+hierarchy completeness, and not an external DRAT/LRAT/FRAT proof package.
