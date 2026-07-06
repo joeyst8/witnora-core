@@ -1374,3 +1374,24 @@ Regenerate the package with:
 ```bash
 python -m witnora_core.public_preprint_prep_v225 run --out-root outputs/v2.25-public-preprint-preparation --strict
 ```
+
+## v2.26 Submit / Release Checklist Finalization
+
+v2.26 finalizes the public release/submission packet by completing the
+bibliography and related-work citation pass. The final paper keeps the title
+`Witnora: A Certified Collapse Hierarchy for Verifier-to-Witness SAT
+Reasoning`, adds `paper/references.bib`, updates release notes, and creates
+arXiv, workshop, and GitHub release checklists.
+
+This is a release/readiness layer, not a new operator and not a theorem-status
+upgrade. TC-063 remains `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`; native
+certificates remain native-only unless exported and externally checked; finite
+evidence remains implementation support rather than proof. The package is
+arXiv-ready after user approval, while workshop submission still requires
+venue-specific formatting.
+
+Regenerate the package with:
+
+```bash
+python -m witnora_core.submit_release_finalize_v226 run --out-root outputs/v2.26-submit-release-checklist-finalization --strict
+```

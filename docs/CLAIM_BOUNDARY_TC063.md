@@ -32,3 +32,9 @@ certificate assumptions directly.
 v2.25 keeps the same TC-063 boundary in the public preprint: TC-063 is a
 restricted theorem with proof obligations over `SAF(c,r)`, not a fully proven
 unqualified theorem, not all-SAT coverage, and not P-vs-NP progress.
+
+v2.26 keeps the boundary unchanged while finalizing the public submission
+packet. Bibliography hardening and release checklists do not upgrade TC-063:
+the status remains `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`, polynomiality
+remains only for fixed `c`, and native certificates remain native-only unless
+externally exported and checked.

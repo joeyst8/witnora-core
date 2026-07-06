@@ -520,9 +520,6 @@ def run_public_preprint_package(
 
     paper = public_preprint_text()
     paper_path = Path("paper/WITNORA_COLLAPSE_HIERARCHY_EXTERNAL_REVIEW_DRAFT.md")
-    _write_text(paper_path, paper)
-    _write_text(Path("RELEASE_NOTES_V2_25.md"), release_notes_text())
-    _write_text(Path("docs/REVIEWER_GUIDE.md"), reviewer_guide_v225_text())
 
     markdown = {
         "PUBLIC_PREPRINT_DRAFT.md": paper,

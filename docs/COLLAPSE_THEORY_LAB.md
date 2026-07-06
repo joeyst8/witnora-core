@@ -331,3 +331,13 @@ checklist.
 The lab claim boundary is unchanged: no P-vs-NP progress, no polynomial-time
 SAT claim, no all-SAT coverage, no hierarchy completeness, no unqualified
 theorem-proven status, and no external DRAT/LRAT/FRAT proof claim.
+
+## v2.26 Submit / Release Finalization
+
+v2.26 finalizes the lab's public packet. The bibliography is completed, the
+related-work positioning is citation-backed, and release/submission checklists
+are generated for arXiv, workshops, and GitHub.
+
+The lab remains a certified collapse-research framework. v2.26 adds no solver
+operator, does not upgrade TC-063, and keeps the native-vs-external proof
+boundary explicit.

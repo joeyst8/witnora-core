@@ -73,3 +73,10 @@ coverage, or external DRAT/LRAT/FRAT proof status.
 v2.25 carries this backbone into the public preprint as soundness sketches and
 proof obligations. It does not convert G9-G13 into unqualified proven theorems
 and does not claim planner/execution completeness.
+
+## v2.26 Final Submission Boundary
+
+v2.26 finalizes the bibliography and release packet around this backbone. It
+does not add a G9-G13 theorem, does not claim completeness, and does not claim
+external proof status for native certificates. The backbone remains proof
+sketches plus proof obligations for reviewers to attack.

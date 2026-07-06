@@ -2,15 +2,15 @@
 
 ## Abstract
 
-Witnora is a certified collapse-path framework for CNF SAT reasoning. It defines a hierarchy of operators G0-G14 whose outputs are mediated by native certificates and checkers. The framework includes obstruction-dual records, graph separator lift, composed orchestration, circuit projection, proof motif generalization, a self-expanding planner, and planner-guided execution. TC-063 is a restricted theorem with proof obligations over SAF(c,r). TC-063 is not an all-SAT theorem. Witnora does not claim a proof of P vs NP or a polynomial-time algorithm for SAT. TC-063 is stated as a restricted theorem with proof obligations over SAF(c,r), not as an all-SAT or hierarchy-completeness result. Native Witnora certificates are not DRAT/LRAT/FRAT proofs unless explicitly exported and externally checked. The package includes reproducibility artifacts, evidence manifests, and claim-boundary audits.
+Witnora is a certified collapse-path framework for CNF SAT reasoning. It defines a hierarchy of operators G0-G14 whose outputs are mediated by native certificates and checkers. The framework includes obstruction-dual records, graph separator lift, composed orchestration, circuit projection, proof motif generalization, a self-expanding planner, and planner-guided execution. TC-063 is a restricted theorem with proof obligations over SAF(c,r). TC-063 is not an all-SAT theorem. Witnora does not claim a proof of P vs NP or a polynomial-time algorithm for SAT. TC-063 is stated as a restricted theorem with proof obligations over SAF(c,r), not as an all-SAT or hierarchy-completeness result. Native Witnora certificates are not DRAT/LRAT/FRAT proofs unless explicitly exported and externally checked. The package includes reproducibility artifacts, evidence manifests, claim-boundary audits, and a completed bibliography.
 
 ## Introduction
 
-This preprint studies verifier-to-witness SAT reasoning as a certificate-backed collapse program. Witnora asks when a CNF instance can be transformed, decomposed, certified, planned, or checked through a bounded operator grammar without losing the connection to the original formula.
+Witnora studies verifier-to-witness SAT reasoning as a certificate-backed collapse program. The project asks when a CNF instance can be transformed, decomposed, certified, planned, or checked through a bounded operator grammar while retaining an explicit connection to the original formula.
 
 ## Problem Framing
 
-The project does not attempt to replace SAT solvers. It instead organizes collapse paths, obstruction fingerprints, native certificates, and proof obligations so that each finite result can be independently audited.
+The framework does not attempt to replace SAT solvers or assert a universal collapse path. It organizes collapse operators, obstruction fingerprints, native certificates, theorem candidates, proof obligations, and finite execution evidence so that each claim can be audited separately.
 
 ## Contributions
 
@@ -28,31 +28,32 @@ The project does not attempt to replace SAT solvers. It instead organizes collap
 
 ### SAT Preprocessing and Inprocessing
 
-SAT solvers use simplification, variable elimination, blocked clause elimination, and bounded structural reductions. Witnora overlaps with these ideas but frames them as a native certificate-centered collapse hierarchy with obstruction-to-operator feedback. TODO citation: classic SAT preprocessing and inprocessing surveys.
+SAT preprocessing and inprocessing remove or simplify structure through techniques such as variable elimination, blocked clause elimination, covered clause elimination, and other bounded reductions [een-biere-2005-effective-preprocessing; biere-jarvisalo-kiesl-2021-preprocessing; heule-jarvisalo-biere-2011-covered-clause]. Witnora uses preprocessing-like ideas as collapse operators, but the unit of evidence is a native certificate and a checker obligation. Witnora does not claim novelty for variable elimination, blocked clauses, or simplification themselves; the claim is the certificate-centered collapse hierarchy and obstruction-to-operator loop.
 
 ### Proof Logging and Certified SAT Solving
 
-DRAT, LRAT, and FRAT style proof logging support externally checked SAT solving workflows. Witnora differs by using native operator certificates; external proof bridge not yet claimed unless a proof is exported and externally checked. TODO citation: DRAT/LRAT/FRAT proof logging references.
+DRAT-trim, DRAT, LRAT, and FRAT provide proof logging and checking pathways for SAT solvers [wetzler-heule-hunt-2014-drat-trim; heule-2016-drat-format; cruz-filipe-heule-hunt-kaufmann-schneiderkamp-2016-lrat; baek-carneiro-heule-2021-frat]. Witnora relates to this line because it also treats checking as central. Witnora differs by using native operator certificates for collapse-specific evidence. Native Witnora certificates are not DRAT/LRAT/FRAT proofs unless explicitly exported and externally checked.
 
 ### XOR / Affine Reasoning
 
-Gaussian elimination over GF(2), XOR extraction, and affine SAT tractability are standard tools for parity structure. Witnora uses this as G5 high-arity affine residue reasoning and as a dependency for TC-063 residual components. TODO citation: XOR reasoning in SAT and Gaussian-elimination-based SAT integration.
+Gaussian elimination over GF(2), XOR extraction, and affine SAT reasoning are established polynomial-time tools for parity structure, including XOR-aware solvers such as CryptoMiniSat [soos-nohl-castelluccia-2009-cryptominisat]. Witnora uses affine reasoning as G5 and as a dependency inside TC-063. Witnora does not claim to discover Gaussian elimination; its contribution is the integration of exact affine residual certificates into the collapse hierarchy and the SAF(c,r) theorem boundary.
 
 ### Graph Separators and Bounded-Width Reasoning
 
-Separator decomposition, bounded treewidth style reasoning, and component decomposition are established structural SAT approaches. TC-063 uses a fixed-size separator together with affine residual components; polynomiality is only for fixed separator bound c and supported affine extraction r. TODO citation: structural SAT and bounded treewidth references.
+Tree decompositions, treewidth algorithms, and separator-style decompositions are classical routes to structural tractability [robertson-seymour-1986-treewidth; bodlaender-1996-treewidth]. TC-063 uses a narrower construction: a fixed-size separator plus exact affine residual components. The polynomial bound is only for fixed separator bound c and supported affine extraction r, and TC-063 does not claim bounded-width completeness or coverage of arbitrary separator formulas.
 
 ### Circuit CNF and Definitional Encodings
 
-Tseitin-style auxiliary variables and exact definitional gates are common in circuit CNF encodings. G10 handles exact definitions only, rejects unsafe auxiliary projection, and trusts SAT lift only after checking the lifted assignment against the original CNF. TODO citation: Tseitin encodings and circuit-to-CNF references.
+Tseitin-style transformations and definitional CNF encodings introduce auxiliary variables to represent circuits equisatisfiably [tseitin-1968-propositional-calculus]. G10 is related to this work because it projects only exact definitional gates. It differs by requiring checker-verifiable definitions, direct original-CNF SAT witness validation, and equisatisfiability obligations for UNSAT preservation. It does not project arbitrary auxiliaries.
 
 ### SAT Portfolios / Algorithm Selection
 
-Portfolio and algorithm-selection systems choose among solvers or tactics. G12 differs by producing a plan-only certificate with an explicit execution-required boundary; the plan does not certify SAT, UNSAT, or proof success. TODO citation: SAT portfolio and algorithm selection references.
+SAT portfolio systems such as SATzilla select among solvers using per-instance features and empirical models [xu-hutter-hoos-leytonbrown-2011-satzilla]. G12 is related at the level of strategy selection, but it emits a plan-only certificate rather than choosing a solver result. The plan explicitly requires later certified execution; it does not certify SAT, UNSAT, DRAT, or theorem success.
 
 ### Proof Compression and Proof Motifs
 
-Repeated proof patterns and macro-proof ideas motivate proof compression. G6 and G11 use checked motif certificates; near similarity is not treated as proof unless every reuse instantiation verifies. TODO citation: proof compression and macro-proof references.
+Proof complexity and proof-system work studies proof representations, proof lengths, and proof checking [cook-reckhow-1979-proof-systems]. Witnora's G6 and G11 are related to proof compression and repeated proof motifs, but similarity is never treated as proof. Generalized motif reuse is trusted only when every concrete instantiation or verified parametric instantiation checks.
+
 
 ## Collapse Grammar Hierarchy G0-G14
 
@@ -103,4 +104,8 @@ This preprint does not claim P-vs-NP progress, polynomial-time SAT, all-SAT cove
 
 ## Future Work
 
-Future work includes external formalization of TC-063, proof-assistant checking of native checkers, external proof bridges, broader benchmarks, and choosing an appropriate preprint or workshop target.
+Future work includes external formalization of TC-063, proof-assistant checking of native checkers, external proof bridges, broader benchmarks, and venue-specific formatting after the user chooses a target.
+
+## References
+
+See `paper/references.bib` for structured bibliography entries.

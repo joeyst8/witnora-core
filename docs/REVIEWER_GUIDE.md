@@ -15,3 +15,7 @@ No P-vs-NP proof, no P-vs-NP progress, no polynomial-time SAT algorithm, no all-
 ## How to Attack It
 
 Attack related-work positioning, TC-063 assumptions, G5 affine soundness, SAT lifting, UNSAT cover, native certificate assumptions, and finite-vs-family language.
+
+## v2.26 Finalization
+
+v2.26 completes bibliography hardening and final submission checklists.

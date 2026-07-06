@@ -258,3 +258,14 @@ restricted theorem with proof obligations.
 No new hierarchy edge, operator, or theorem status is introduced. The public
 framing rejects P-vs-NP, all-SAT, completeness, unqualified theorem-proven, and
 fake DRAT/LRAT/FRAT claims.
+
+## v2.26 Submit / Release Frontier
+
+v2.26 is the final release-readiness pass. It completes the bibliography,
+replaces the public related-work citation placeholders with real references,
+and produces arXiv, workshop, and GitHub release checklists.
+
+The frontier is unchanged: no new operator, no new hierarchy edge, and no
+upgrade to TC-063. The public packet remains a certified collapse framework
+with TC-063 restricted to `SAF(c,r)` and proof obligations, not a P-vs-NP or
+all-SAT claim.
