@@ -1,5 +1,21 @@
 # Collapse Theory Lab
 
+## v2.22 Bounded Separator-Affine Family Theorem
+
+v2.22 is the first restricted infinite-family theorem attempt in the collapse
+theory lab. It defines `SAF(c,r)` and a native certificate/checker for formulas
+with a fixed-size separator and exact affine residual components.
+
+The SAT rule is existential over separator assignments: there must be one
+assignment whose components are all SAT, and the lifted witness must satisfy
+the original CNF. The UNSAT rule is universal over separator assignments:
+every assignment must be covered by at least one verified affine-UNSAT
+component.
+
+The theorem is restricted to `SAF(c,r)`. Polynomiality is for fixed `c`; finite
+tests support implementation behavior only. The release does not claim P-vs-NP,
+all SAT, hierarchy completeness, or DRAT.
+
 ## v2.21 G9-G13 Soundness Backbone Theoremization
 
 v2.21 is a theory pass over the certified engineering from v2.16 through v2.20.

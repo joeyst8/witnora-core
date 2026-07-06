@@ -1,5 +1,17 @@
 # Operator Frontier
 
+## v2.22 Separator-Affine Family Theorem Update
+
+v2.22 pauses broad operator expansion and adds
+`G14_BOUNDED_SEPARATOR_AFFINE_FAMILY_THEOREM`, a restricted infinite-family
+theorem attempt over `SAF(c,r)`.
+
+The frontier move is precise: fixed-size separators plus exact affine residual
+components. SAT needs one all-SAT separator assignment and original-CNF witness
+verification. UNSAT needs a complete separator-assignment cover. Polynomiality
+holds only for fixed `c` and supported affine extraction; v2.22 does not claim
+P-vs-NP progress, all SAT, hierarchy completeness, or DRAT.
+
 ## v2.21 Soundness Backbone Frontier Update
 
 v2.21 pauses operator expansion and theoremizes the G9-G13 backbone. It adds

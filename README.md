@@ -1,5 +1,26 @@
 # Witnora-Core v0.9.8
 
+## v2.22 Bounded Separator-Affine Family Theorem
+
+v2.22 adds `witnora_core.separator_affine_family_theorem` and
+`G14_BOUNDED_SEPARATOR_AFFINE_FAMILY_THEOREM`, the first restricted
+infinite-family theorem attempt in Witnora.
+
+The theorem is narrow: it applies only to `SAF(c,r)`, CNFs with a fixed-size
+variable separator whose separator-conditioned residual components are exact
+affine CNFs accepted by G5. Polynomiality is only for fixed separator bound
+`c` and supported affine extraction bound `r`; the exponential dependence on
+`c` is explicit.
+
+SAT certification requires one separator assignment where all residual
+components are SAT, followed by direct original-CNF witness verification. UNSAT
+certification requires a complete separator-assignment cover where every
+assignment is blocked by at least one affine-UNSAT component.
+
+v2.22 does not imply P-vs-NP progress, all SAT, hierarchy completeness, or
+DRAT. Finite `n=4,8,16,32` tests support the implementation only; the family
+claim comes from the restricted `SAF(c,r)` definition and proof sketch.
+
 ## v2.21 G9-G13 Soundness Backbone Theoremization
 
 v2.21 adds `witnora_core.soundness_theoremization`, a theoremization package

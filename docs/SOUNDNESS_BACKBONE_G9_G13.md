@@ -1,5 +1,16 @@
 # G9-G13 Soundness Backbone
 
+## v2.22 Next Gate
+
+v2.22 follows this backbone with a first restricted infinite-family theorem
+attempt: bounded separator-affine collapse for `SAF(c,r)`. It remains outside
+P-vs-NP, all-SAT, hierarchy-completeness, and DRAT claims.
+
+The finite G9-G13 evidence does not itself imply the v2.22 family theorem. The
+v2.22 claim is restricted to fixed separator bound `c`, supported affine
+extraction bound `r`, complete separator assignment enumeration, original-CNF
+SAT witness verification, and complete UNSAT cover checking.
+
 v2.21 theoremizes the G9-G13 backbone as proof sketches and proof obligations. It adds no new solver or SAT operator.
 
 The next mathematical gate is an infinite-family theorem. This release does not prove that theorem.

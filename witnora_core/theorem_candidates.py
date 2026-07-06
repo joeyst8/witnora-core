@@ -1445,6 +1445,43 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Attack the first infinite-family theorem gate after external review of the finite backbone."],
         ),
+        TheoremCandidate(
+            id="TC-063",
+            name="Bounded Separator-Affine Collapse Theorem",
+            statement=(
+                "For the restricted family SAF(c,r), where c and r are fixed constants, a CNF with a "
+                "separator S of size at most c whose separator-conditioned residual components are exact "
+                "GF(2) affine CNFs accepted by G5 can be recognized, collapsed, and checked by enumerating "
+                "all separator assignments and solving each residual affine component. SAT requires one "
+                "separator assignment where every component is SAT; UNSAT requires every separator "
+                "assignment to be covered by at least one affine-UNSAT component."
+            ),
+            status="RESTRICTED_FAMILY_THEOREM_PROOF_SKETCH",
+            supporting_witnesses=[
+                "saf_sat_chain_n",
+                "saf_unsat_cover_n",
+                "saf_mixed_components_n",
+            ],
+            required_proof_obligations=[
+                "State SAF(c,r) exactly and keep the theorem restricted to that family.",
+                "Prove separator enumeration is polynomial only for fixed c.",
+                "Verify every residual component is exact affine under G5, not affine plus leftovers.",
+                "For SAT, verify the combined separator/component assignment against the original CNF.",
+                "For UNSAT, verify a complete separator-assignment cover with affine UNSAT certificates.",
+                "Keep native separator-affine certificates separate from external DRAT proof claims.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim P vs NP progress.",
+                "Does not claim all SAT or arbitrary separator formulas.",
+                "Does not claim hierarchy completeness.",
+                "Does not claim DRAT unless an external proof is checked.",
+                "Does not claim polynomial-time SAT for arbitrary formulas.",
+            ],
+            next_experiments=[
+                "Mechanize the SAF(c,r) proof in an external proof assistant.",
+                "Investigate the next restricted infinite-family theorem beyond exact affine residuals.",
+            ],
+        ),
     ]
 
 

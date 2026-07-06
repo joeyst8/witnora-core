@@ -1,5 +1,22 @@
 # Collapse Grammar Program
 
+## v2.22 Bounded Separator-Affine Family Theorem
+
+`G14_BOUNDED_SEPARATOR_AFFINE_FAMILY_THEOREM` is a theorem layer over the
+existing affine and separator machinery. It is restricted to `SAF(c,r)`: fixed
+separator size and exact affine residual components after every separator
+assignment.
+
+The recognition algorithm enumerates separator candidates and separator
+assignments, so the polynomial claim is only for fixed `c`. SAT is certified
+only by one all-SAT separator assignment plus original-CNF witness verification.
+UNSAT is certified only by a complete cover over all separator assignments.
+
+This does not imply P-vs-NP progress, arbitrary SAT solving, hierarchy
+completeness, or DRAT proof production. Finite generator tests are
+implementation evidence, not a substitute for the restricted family proof
+sketch.
+
 ## v2.21 G9-G13 Soundness Backbone
 
 v2.21 pauses grammar expansion and theoremizes the G9-G13 backbone as proof

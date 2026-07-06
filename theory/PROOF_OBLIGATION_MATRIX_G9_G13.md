@@ -1,5 +1,17 @@
 # G9-G13 Proof Obligation Matrix
 
+## v2.22 Family-Theorem Follow-On
+
+v2.22 adds TC-063, the Bounded Separator-Affine Collapse Theorem, as a
+restricted family proof sketch for `SAF(c,r)`. Its obligations are separate
+from the G9-G13 finite-backbone obligations: exact separator verification,
+exact affine residual coverage, fixed-`c` polynomial accounting, original-CNF
+SAT witness checking, and complete UNSAT separator-assignment cover checking.
+
+TC-063 does not claim P-vs-NP progress, all SAT, hierarchy completeness, or
+DRAT. Native certificates remain native unless an external proof is exported
+and checked.
+
 Each row is still informal until discharged by an external formalization or a stronger proof artifact.
 
 | Candidate | Category | Risk | Current Status |
