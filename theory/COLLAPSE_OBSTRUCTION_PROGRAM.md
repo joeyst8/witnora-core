@@ -83,6 +83,19 @@ The checker rejects missing ALO clauses, missing capacity clauses, balanced
 controls, and orbit-compressed certificates that are not expanded. This keeps
 the operator from becoming a broad matching/allocation solver claim.
 
+## v2.6 High-Arity Affine Promotion
+
+v2.6 promotes the `MODULAR_RESIDUE_COLLAPSE` schema into
+`G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`. The obstruction it neutralizes is a
+bounded high-arity affine residue signal: an exact GF(2) equation is present as
+a full forbidden-assignment CNF encoding, but the arity is beyond G1's lower
+extraction cap.
+
+The checker rejects incomplete encodings, wrong parity bits, over-cap rows, and
+nontrivial row-scaling claims. This keeps the operator from becoming a broad
+modular arithmetic solver, a CryptoMiniSat-style mining claim, or a fake DRAT
+route.
+
 ## Relationship to Verifier-to-Witness Research
 
 The long-term program is to discover operators that turn verifier obstructions

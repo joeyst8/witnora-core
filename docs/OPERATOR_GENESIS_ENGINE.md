@@ -68,3 +68,17 @@ are recorded as duplicate controls. They are not counted as a new G4 delta.
 Generated-operator promotion still follows the same rule: a prototype is not a
 theorem, not DRAT, and not trusted beyond the certificates its checker expands
 and verifies.
+
+## v2.6 Promotion: High-Arity Affine Residue
+
+v2.6 promotes `MODULAR_RESIDUE_COLLAPSE` into
+`G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`.
+
+The promoted prototype is not a broad modular arithmetic solver. It accepts
+only exact full CNF encodings of GF(2) affine equations up to a configured arity
+cap and emits native Gaussian-elimination certificates. It does not perform
+heuristic XOR mining and does not claim CryptoMiniSat-style extraction.
+
+As with G4, generated-operator promotion remains evidence-bounded: native
+certificates are trusted only after the checker verifies source clauses,
+deterministic row operations, SAT witnesses, or UNSAT contradiction rows.

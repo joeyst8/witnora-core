@@ -327,6 +327,72 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use the promotion pipeline to select a second generated operator prototype."],
         ),
+        TheoremCandidate(
+            id="TC-015",
+            name="High-Arity Affine Native Certification Candidate",
+            statement=(
+                "For exact full CNF encodings of GF(2) affine equations up to bounded arity K, "
+                "G5 can extract equations and emit a native Gaussian-elimination certificate checkable "
+                "against the original CNF."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["parity_arity_7_unsat", "parity_arity_8_unsat", "parity_arity_9_unsat", "parity_arity_10_unsat"],
+            required_proof_obligations=[
+                "Verify every forbidden-assignment clause for each extracted equation exists in the original CNF.",
+                "Replay deterministic GF(2) Gaussian elimination using only row swaps and row-xor operations.",
+                "For UNSAT, verify a 0 = 1 contradiction row.",
+                "For SAT, verify the assignment against the original CNF.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim broad modular arithmetic solving.",
+                "Does not claim CryptoMiniSat-style XOR mining.",
+                "Does not claim DRAT verification.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Try arity 11-12 under explicit proof-size caps.", "Investigate a DRAT bridge only after native checks are stable."],
+        ),
+        TheoremCandidate(
+            id="TC-016",
+            name="G5 Affine Residue Strictness Candidate",
+            statement=(
+                "There exists a bounded profile B where exact parity-over-cap formulas are certified by "
+                "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE but not by G1_XOR under its lower extraction cap."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["parity_arity_7_unsat", "parity_arity_8_unsat"],
+            required_proof_obligations=[
+                "State the G1 extraction cap and G5 arity cap explicitly.",
+                "Replay native G5 certificates.",
+                "Provide formal bounded non-collapse evidence before promoting to theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim G5 strictness as a theorem.",
+                "Does not prove lower bounds against G1.",
+                "Does not claim full parity family solving beyond configured exact encodings.",
+            ],
+            next_experiments=["Scale exact parity-over-cap rows under fixed arity caps."],
+        ),
+        TheoremCandidate(
+            id="TC-017",
+            name="Operator Genesis Success Candidate 2",
+            statement=(
+                "The v2.4-generated MODULAR_RESIDUE_COLLAPSE candidate was promoted to a v2.6 "
+                "implemented prototype with native GF(2) certificates and bounded operator-delta evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["mixed_affine_arity_8_unsat", "mixed_affine_arity_8_sat"],
+            required_proof_obligations=[
+                "Record the generated candidate origin.",
+                "Replay the native affine-residue checker.",
+                "Keep generated-operator success separate from theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not mean generated operator discovery proves a theorem.",
+                "Does not imply broad modular arithmetic solving.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use the promotion pipeline to select a third generated operator prototype."],
+        ),
     ]
 
 

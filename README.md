@@ -1,5 +1,24 @@
 # Witnora-Core v0.9.8
 
+## v2.6 High-Arity Affine Residue Prototype
+
+v2.6 promotes the v2.4-generated `MODULAR_RESIDUE_COLLAPSE` candidate into
+`G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`.
+
+The implementation is deliberately scoped: it extends bounded affine reasoning
+to exact high-arity GF(2) parity encodings beyond the lower G1 extraction cap.
+It accepts only exact full forbidden-assignment CNF encodings of affine
+equations and emits native Gaussian-elimination certificates.
+
+Allowed row operations are `SWAP_ROWS` and `ADD_ROW_XOR`. Witnora does not use
+nontrivial row scaling for GF(2), does not mine heuristic XOR structure, does
+not claim CryptoMiniSat-style discovery, and does not claim DRAT for G5 rows.
+
+The allowed v2.6 claim is bounded: Witnora prototyped a generated high-arity
+affine residue operator with native certificates for exact parity-over-cap
+instances. It does not claim broad modular arithmetic solving, a G5 strictness
+theorem, or P vs NP progress.
+
 ## v2.5 Orbit Capacity Counting Prototype
 
 v2.5 promotes the v2.4-generated `ORBIT_COUNTING_COLLAPSE` candidate into

@@ -59,3 +59,22 @@ The promotion criteria were:
 - independent checker that expands orbit evidence;
 - balanced controls that do not emit contradictions;
 - duplicate complete-matching controls that are not counted as novel G4 deltas.
+
+## v2.6 Prototype Promotion
+
+The second promotion is `MODULAR_RESIDUE_COLLAPSE` to
+`G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`.
+
+The promoted operator is also bounded. It handles exact full-CNF encodings of
+high-arity GF(2) affine equations and emits native Gaussian-elimination
+certificates. It does not mine heuristic XOR structure, does not make a
+CryptoMiniSat-style extraction claim, does not claim DRAT, and does not become
+a broad modular arithmetic solver.
+
+The promotion criteria were:
+
+- exact forbidden-assignment CNF evidence for every extracted equation;
+- deterministic GF(2) row-operation trace using only swaps and row xor/add;
+- SAT witnesses checked against the original CNF when a SAT category is claimed;
+- UNSAT contradiction rows checked as native affine evidence;
+- negative controls for incomplete, polluted, wrong-parity, and over-cap rows.

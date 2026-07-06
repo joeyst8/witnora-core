@@ -19,10 +19,11 @@ import shutil
 from typing import Any, Iterable
 import zipfile
 
-from .cnf import CNFFormula, Clause
+from .cnf import CNFFormula, Clause, formula_satisfied
 from .dimacs import load_dimacs
+from .xor import canonical_xor_cnf_clauses
 
-GENESIS_VERSION = "2.5"
+GENESIS_VERSION = "2.6"
 
 SYMMETRY_HEAVY = "SYMMETRY_HEAVY"
 COUNTING_DEFICIT = "COUNTING_DEFICIT"
@@ -92,6 +93,20 @@ ORBIT_COUNTING_DRAT_NOT_CLAIMED = "ORBIT_COUNTING_DRAT_NOT_CLAIMED"
 UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED = "UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED"
 DUPLICATE_OF_G3_PIGEONHOLE_PATTERN = "DUPLICATE_OF_G3_PIGEONHOLE_PATTERN"
 G4_NO_NEW_DELTA = "G4_NO_NEW_DELTA"
+
+AFFINE_RESIDUE_STRUCTURE_DETECTED = "AFFINE_RESIDUE_STRUCTURE_DETECTED"
+AFFINE_RESIDUE_NATIVE_CERTIFIED = "AFFINE_RESIDUE_NATIVE_CERTIFIED"
+AFFINE_RESIDUE_DIAGNOSTIC_ONLY = "AFFINE_RESIDUE_DIAGNOSTIC_ONLY"
+AFFINE_RESIDUE_CERTIFICATE_VERIFIED = "AFFINE_RESIDUE_CERTIFICATE_VERIFIED"
+AFFINE_RESIDUE_CERTIFICATE_FAILED = "AFFINE_RESIDUE_CERTIFICATE_FAILED"
+AFFINE_RESIDUE_SAT_WITNESS_VERIFIED = "AFFINE_RESIDUE_SAT_WITNESS_VERIFIED"
+AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED = "AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED"
+AFFINE_RESIDUE_EXTRACTION_INCOMPLETE_REJECTED = "AFFINE_RESIDUE_EXTRACTION_INCOMPLETE_REJECTED"
+AFFINE_RESIDUE_OVER_CAP_DIAGNOSTIC = "AFFINE_RESIDUE_OVER_CAP_DIAGNOSTIC"
+G5_AFFINE_RESIDUE_NATIVE_CERTIFIED = "G5_AFFINE_RESIDUE_NATIVE_CERTIFIED"
+MODULAR_RESIDUE_DRAT_NOT_CLAIMED = "MODULAR_RESIDUE_DRAT_NOT_CLAIMED"
+UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
+SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
 
 
 @dataclass(frozen=True)
@@ -1846,6 +1861,637 @@ def _write_orbit_capacity_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
+@dataclass(frozen=True)
+class AffineResidueInstance:
+    instance_id: str
+    equations: tuple[dict[str, Any], ...]
+    formula: CNFFormula
+    family: str = "affine-residue"
+    expected_outcome: str = "diagnostic"
+    g1_result: str = "AFFINE_OVER_G1_CAP"
+    description: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "instance_id": self.instance_id,
+            "family": self.family,
+            "equations": [dict(eq) for eq in self.equations],
+            "formula_hash": self.formula.formula_hash,
+            "expected_outcome": self.expected_outcome,
+            "g1_result": self.g1_result,
+            "description": self.description,
+        }
+
+
+@dataclass(frozen=True)
+class AffineResidueCertificate:
+    type: str
+    instance_id: str
+    formula_hash: str
+    extraction_mode: str
+    equations: list[dict[str, Any]]
+    gaussian_elimination_trace: list[dict[str, Any]]
+    row_operations: list[dict[str, Any]]
+    final_rank: int
+    contradiction_row: dict[str, Any] | None
+    solution: dict[str, bool] | None
+    witness_verified_against_original_cnf: bool
+    checker_status: str
+    status: str
+    public_category: str
+    certification_level: str
+    drat_claim: str
+    g5_delta_status: str
+    claim_boundary: str
+    notes: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _affine_clause_ids(formula: CNFFormula, variables: Iterable[int], parity_bit: int) -> list[int]:
+    clause_ids = _clause_id_map(formula)
+    required = canonical_xor_cnf_clauses(tuple(variables), int(parity_bit) & 1)
+    return sorted(clause_ids[clause] for clause in required if clause in clause_ids)
+
+
+def _formula_from_affine_equations(
+    equations: Iterable[dict[str, Any]],
+    *,
+    omit_first_clause: bool = False,
+    extra_clauses: Iterable[Iterable[int]] = (),
+) -> CNFFormula:
+    raw: list[list[int]] = []
+    omitted = False
+    for equation in equations:
+        clauses = sorted(canonical_xor_cnf_clauses(equation["variables"], int(equation["parity_bit"])))
+        for clause in clauses:
+            if omit_first_clause and not omitted:
+                omitted = True
+                continue
+            raw.append(list(clause))
+    raw.extend([list(clause) for clause in extra_clauses])
+    return CNFFormula.from_raw_clauses(raw)
+
+
+def make_affine_residue_instance(instance_id: str) -> AffineResidueInstance:
+    def eq(variables: Iterable[int], parity_bit: int, equation_id: str) -> dict[str, Any]:
+        return {"equation_id": equation_id, "variables": list(variables), "parity_bit": int(parity_bit) & 1}
+
+    specs: dict[str, dict[str, Any]] = {
+        "parity_arity_7_unsat": {
+            "equations": [eq(range(1, 8), 0, "e1"), eq(range(1, 8), 1, "e2")],
+            "expected": "UNSAT",
+        },
+        "parity_arity_8_unsat": {
+            "equations": [eq(range(1, 9), 0, "e1"), eq(range(1, 9), 1, "e2")],
+            "expected": "UNSAT",
+        },
+        "parity_arity_9_unsat": {
+            "equations": [eq(range(1, 10), 0, "e1"), eq(range(1, 10), 1, "e2")],
+            "expected": "UNSAT",
+        },
+        "parity_arity_10_unsat": {
+            "equations": [eq(range(1, 11), 0, "e1"), eq(range(1, 11), 1, "e2")],
+            "expected": "UNSAT",
+        },
+        "parity_arity_7_sat": {
+            "equations": [eq(range(1, 8), 1, "e1")],
+            "expected": "SAT",
+        },
+        "parity_arity_8_sat": {
+            "equations": [eq(range(1, 9), 0, "e1")],
+            "expected": "SAT",
+        },
+        "mixed_affine_arity_8_unsat": {
+            "equations": [eq(range(1, 9), 0, "e1"), eq(range(2, 10), 0, "e2"), eq((1, 9), 1, "e3")],
+            "expected": "UNSAT",
+        },
+        "mixed_affine_arity_8_sat": {
+            "equations": [eq(range(1, 9), 0, "e1"), eq(range(2, 10), 1, "e2")],
+            "expected": "SAT",
+        },
+        "incomplete_affine_reject": {
+            "equations": [eq(range(1, 8), 0, "e1")],
+            "expected": "DIAGNOSTIC",
+            "omit_first_clause": True,
+            "g1_result": "NO_COLLAPSE_FOUND",
+        },
+        "polluted_affine_reject": {
+            "equations": [eq(range(1, 8), 1, "e1")],
+            "expected": "DIAGNOSTIC",
+            "omit_first_clause": True,
+            "extra_clauses": [[1, 2, 3], [-1, 4]],
+            "g1_result": "NO_COLLAPSE_FOUND",
+        },
+        "over_cap_affine_diagnostic": {
+            "equations": [eq(range(1, 12), 0, "e1")],
+            "expected": "DIAGNOSTIC",
+            "g1_result": "AFFINE_OVER_G1_CAP",
+        },
+        "non_affine_high_overlap_control": {
+            "equations": [],
+            "expected": "DIAGNOSTIC",
+            "formula": CNFFormula.from_raw_clauses([[1, 2, 3, 4, 5, 6, 7], [-1, -2], [-3, -4], [5, -6], [7, 8]]),
+            "g1_result": "NO_COLLAPSE_FOUND",
+        },
+    }
+    if instance_id not in specs:
+        raise ValueError(f"unsupported affine-residue instance id: {instance_id}")
+    spec = specs[instance_id]
+    formula = spec.get("formula")
+    if formula is None:
+        formula = _formula_from_affine_equations(
+            spec["equations"],
+            omit_first_clause=bool(spec.get("omit_first_clause", False)),
+            extra_clauses=spec.get("extra_clauses", ()),
+        )
+    return AffineResidueInstance(
+        instance_id=instance_id,
+        equations=tuple(dict(item) for item in spec.get("equations", ())),
+        formula=formula,
+        expected_outcome=str(spec.get("expected", "DIAGNOSTIC")),
+        g1_result=str(spec.get("g1_result", "AFFINE_OVER_G1_CAP")),
+        description=str(spec.get("description", "")),
+    )
+
+
+def extract_affine_residue_equations(formula: CNFFormula, *, max_arity: int = 10, min_arity: int = 2) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    clause_ids = _clause_id_map(formula)
+    groups: dict[tuple[int, ...], set[tuple[int, ...]]] = defaultdict(set)
+    diagnostics: list[dict[str, Any]] = []
+    for clause in formula.clauses:
+        variables = tuple(sorted({abs(lit) for lit in clause.literals}))
+        if len(variables) != len(clause.literals):
+            continue
+        groups[variables].add(clause.literals)
+    equations: list[dict[str, Any]] = []
+    for variables, group in sorted(groups.items(), key=lambda item: (len(item[0]), item[0])):
+        arity = len(variables)
+        if arity < min_arity:
+            continue
+        if arity > max_arity:
+            diagnostics.append(
+                {
+                    "status": AFFINE_RESIDUE_OVER_CAP_DIAGNOSTIC,
+                    "variables": list(variables),
+                    "arity": arity,
+                    "max_arity": max_arity,
+                    "message": "Exact affine group is over the configured G5 cap.",
+                }
+            )
+            continue
+        extracted_any = False
+        for parity_bit in (0, 1):
+            required = canonical_xor_cnf_clauses(variables, parity_bit)
+            if required.issubset(group):
+                equation_id = f"eq_{len(equations) + 1}"
+                equations.append(
+                    {
+                        "equation_id": equation_id,
+                        "variables": list(variables),
+                        "parity_bit": parity_bit,
+                        "arity": arity,
+                        "source_clause_ids": sorted(clause_ids[clause] for clause in required),
+                        "full_encoding_verified": True,
+                    }
+                )
+                extracted_any = True
+        if not extracted_any and arity >= min_arity:
+            expected = 1 << (arity - 1)
+            diagnostics.append(
+                {
+                    "status": AFFINE_RESIDUE_EXTRACTION_INCOMPLETE_REJECTED,
+                    "variables": list(variables),
+                    "arity": arity,
+                    "expected_clause_count": expected,
+                    "actual_clause_count": len(group),
+                    "message": "No exact full forbidden-assignment encoding was present.",
+                }
+            )
+    return equations, diagnostics
+
+
+def _gf2_rows(equations: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {"coefficients": sorted(map(int, eq["variables"])), "rhs": int(eq["parity_bit"]) & 1}
+        for eq in equations
+    ]
+
+
+def _xor_row(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "coefficients": sorted(set(map(int, left["coefficients"])) ^ set(map(int, right["coefficients"]))),
+        "rhs": (int(left["rhs"]) ^ int(right["rhs"])) & 1,
+    }
+
+
+def gaussian_eliminate_gf2(equations: list[dict[str, Any]]) -> dict[str, Any]:
+    rows = _gf2_rows(equations)
+    operations: list[dict[str, Any]] = []
+    trace: list[dict[str, Any]] = [{"type": "INITIAL_ROWS", "rows": [dict(row) for row in rows]}]
+    row_cursor = 0
+    variable_order = sorted({var for row in rows for var in row["coefficients"]})
+    for pivot in variable_order:
+        pivot_index = next((idx for idx in range(row_cursor, len(rows)) if pivot in rows[idx]["coefficients"]), None)
+        if pivot_index is None:
+            continue
+        if pivot_index != row_cursor:
+            rows[row_cursor], rows[pivot_index] = rows[pivot_index], rows[row_cursor]
+            operation = {"operation": "SWAP_ROWS", "row_a": row_cursor, "row_b": pivot_index, "rows_after": [dict(row) for row in rows]}
+            operations.append(operation)
+            trace.append(operation)
+        for idx in range(len(rows)):
+            if idx != row_cursor and pivot in rows[idx]["coefficients"]:
+                before = dict(rows[idx])
+                rows[idx] = _xor_row(rows[idx], rows[row_cursor])
+                operation = {
+                    "operation": "ADD_ROW_XOR",
+                    "target_row": idx,
+                    "source_row": row_cursor,
+                    "before": before,
+                    "source": dict(rows[row_cursor]),
+                    "after": dict(rows[idx]),
+                }
+                operations.append(operation)
+                trace.append(operation)
+        row_cursor += 1
+        if row_cursor >= len(rows):
+            break
+    contradiction = next((dict(row) for row in rows if not row["coefficients"] and row["rhs"] == 1), None)
+    rank = sum(1 for row in rows if row["coefficients"])
+    result: dict[str, Any] = {
+        "status": "UNSAT" if contradiction else "SAT",
+        "row_operations": operations,
+        "gaussian_elimination_trace": trace + [{"type": "FINAL_ROWS", "rows": [dict(row) for row in rows]}],
+        "final_rows": [dict(row) for row in rows],
+        "final_rank": rank,
+        "contradiction_row": contradiction,
+        "solution": None,
+    }
+    if contradiction is None:
+        pivots = [row["coefficients"][0] for row in rows if row["coefficients"]]
+        free = sorted(set(variable_order) - set(pivots))
+        assignment: dict[int, bool] = {var: False for var in free}
+        for row in sorted((row for row in rows if row["coefficients"]), key=lambda item: item["coefficients"][0], reverse=True):
+            pivot = row["coefficients"][0]
+            value = int(row["rhs"])
+            for var in row["coefficients"][1:]:
+                value ^= int(assignment.get(var, False))
+            assignment[pivot] = bool(value)
+        result["solution"] = {str(var): bool(assignment.get(var, False)) for var in sorted(variable_order)}
+    return result
+
+
+def _affine_assignment_from_payload(payload: dict[str, Any] | None) -> dict[int, bool]:
+    return {int(var): bool(value) for var, value in (payload or {}).items()}
+
+
+def _assignment_satisfies_equations(equations: list[dict[str, Any]], assignment: dict[int, bool]) -> bool:
+    for equation in equations:
+        value = int(equation["parity_bit"]) & 1
+        for var in equation["variables"]:
+            value ^= int(bool(assignment.get(int(var), False)))
+        if value != 0:
+            return False
+    return True
+
+
+def build_affine_residue_certificate(instance: AffineResidueInstance, *, max_arity: int = 10) -> AffineResidueCertificate:
+    equations, diagnostics = extract_affine_residue_equations(instance.formula, max_arity=max_arity)
+    status = AFFINE_RESIDUE_DIAGNOSTIC_ONLY
+    public_category = "NO_COLLAPSE_FOUND"
+    certification_level = "NOT_CERTIFIED"
+    notes = "No exact high-arity affine certificate was emitted."
+    elimination = {
+        "status": "DIAGNOSTIC",
+        "row_operations": [],
+        "gaussian_elimination_trace": [],
+        "final_rank": 0,
+        "contradiction_row": None,
+        "solution": None,
+    }
+    if equations:
+        elimination = gaussian_eliminate_gf2(equations)
+        if elimination["status"] == "UNSAT":
+            status = AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED
+            public_category = UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED
+            certification_level = AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED
+            notes = "Native GF(2) contradiction from exact high-arity affine equations."
+        else:
+            assignment = _affine_assignment_from_payload(elimination.get("solution"))
+            if formula_satisfied(instance.formula, assignment):
+                status = AFFINE_RESIDUE_SAT_WITNESS_VERIFIED
+                public_category = SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED
+                certification_level = AFFINE_RESIDUE_SAT_WITNESS_VERIFIED
+                notes = "Native GF(2) solution verified against the original CNF."
+    if diagnostics and not equations:
+        if any(item.get("status") == AFFINE_RESIDUE_OVER_CAP_DIAGNOSTIC for item in diagnostics):
+            status = AFFINE_RESIDUE_OVER_CAP_DIAGNOSTIC
+        else:
+            status = AFFINE_RESIDUE_EXTRACTION_INCOMPLETE_REJECTED
+
+    cert = AffineResidueCertificate(
+        type="AFFINE_RESIDUE_GF2_CERTIFICATE",
+        instance_id=instance.instance_id,
+        formula_hash=instance.formula.formula_hash,
+        extraction_mode="EXACT_FULL_CNF_ENCODING",
+        equations=equations,
+        gaussian_elimination_trace=list(elimination.get("gaussian_elimination_trace", [])),
+        row_operations=list(elimination.get("row_operations", [])),
+        final_rank=int(elimination.get("final_rank", 0)),
+        contradiction_row=elimination.get("contradiction_row"),
+        solution=elimination.get("solution"),
+        witness_verified_against_original_cnf=public_category == SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
+        checker_status="NOT_RUN" if public_category != "NO_COLLAPSE_FOUND" else AFFINE_RESIDUE_CERTIFICATE_FAILED,
+        status=status,
+        public_category=public_category,
+        certification_level=certification_level,
+        drat_claim=MODULAR_RESIDUE_DRAT_NOT_CLAIMED,
+        g5_delta_status="PENDING_CHECK" if public_category != "NO_COLLAPSE_FOUND" else "G5_NO_CERTIFIED_DELTA",
+        claim_boundary="native GF(2) affine certificate only; no DRAT proof claimed",
+        notes=notes,
+    )
+    check = check_affine_residue_certificate(instance.formula, cert, max_arity=max_arity)
+    data = cert.to_dict()
+    data["checker_status"] = check["status"]
+    if check["status"] == AFFINE_RESIDUE_CERTIFICATE_VERIFIED:
+        data["g5_delta_status"] = G5_AFFINE_RESIDUE_NATIVE_CERTIFIED
+    else:
+        data["status"] = status if public_category == "NO_COLLAPSE_FOUND" else AFFINE_RESIDUE_CERTIFICATE_FAILED
+        data["public_category"] = "NO_COLLAPSE_FOUND"
+        data["certification_level"] = "NOT_CERTIFIED"
+        data["g5_delta_status"] = "G5_NO_CERTIFIED_DELTA"
+        data["witness_verified_against_original_cnf"] = False
+    return AffineResidueCertificate(**data)
+
+
+def check_affine_residue_certificate(
+    formula: CNFFormula,
+    certificate: AffineResidueCertificate | dict[str, Any],
+    *,
+    max_arity: int = 10,
+) -> dict[str, Any]:
+    data = certificate.to_dict() if isinstance(certificate, AffineResidueCertificate) else dict(certificate)
+    errors: list[str] = []
+    if str(data.get("formula_hash", "")).lower() != formula.formula_hash.lower():
+        errors.append("FORMULA_HASH_MISMATCH")
+    if data.get("drat_claim") != MODULAR_RESIDUE_DRAT_NOT_CLAIMED:
+        errors.append("FAKE_DRAT_CLAIM")
+    if data.get("extraction_mode") not in {"EXACT_FULL_CNF_ENCODING", "HASH_BOUND_SIDECAR_WITH_FULL_CNF_CHECK"}:
+        errors.append("UNSUPPORTED_EXTRACTION_MODE")
+    if any(op.get("operation") not in {"SWAP_ROWS", "ADD_ROW_XOR"} for op in data.get("row_operations", [])):
+        errors.append("GF2_NONTRIVIAL_SCALE_ROW_FORBIDDEN")
+
+    clause_ids = _clause_id_map(formula)
+    verified_equations: list[dict[str, Any]] = []
+    for equation in data.get("equations", []):
+        variables = tuple(sorted(map(int, equation.get("variables", []))))
+        parity_bit = int(equation.get("parity_bit", 0)) & 1
+        arity = len(variables)
+        if int(equation.get("arity", arity)) != arity:
+            errors.append(f"ARITY_MISMATCH:{equation.get('equation_id')}")
+        if arity > max_arity:
+            errors.append(f"AFFINE_ARITY_OVER_CAP:{equation.get('equation_id')}")
+        required = canonical_xor_cnf_clauses(variables, parity_bit)
+        missing = sorted(clause for clause in required if clause not in clause_ids)
+        if missing:
+            errors.append(f"AFFINE_FULL_ENCODING_MISSING:{equation.get('equation_id')}")
+        expected_ids = sorted(clause_ids[clause] for clause in required if clause in clause_ids)
+        actual_ids = sorted(map(int, equation.get("source_clause_ids", [])))
+        if expected_ids != actual_ids:
+            errors.append(f"AFFINE_SOURCE_CLAUSE_IDS_MISMATCH:{equation.get('equation_id')}")
+        if equation.get("full_encoding_verified") is not True:
+            errors.append(f"AFFINE_FULL_ENCODING_FLAG_FALSE:{equation.get('equation_id')}")
+        if not missing:
+            verified_equations.append(
+                {
+                    "equation_id": str(equation.get("equation_id", f"eq_{len(verified_equations) + 1}")),
+                    "variables": list(variables),
+                    "parity_bit": parity_bit,
+                    "arity": arity,
+                    "source_clause_ids": expected_ids,
+                    "full_encoding_verified": True,
+                }
+            )
+
+    if not verified_equations:
+        errors.append("NO_VERIFIED_AFFINE_EQUATIONS")
+    recomputed = gaussian_eliminate_gf2(verified_equations)
+    if data.get("row_operations") != recomputed.get("row_operations"):
+        errors.append("GF2_TRACE_MISMATCH")
+    if int(data.get("final_rank", -1)) != int(recomputed.get("final_rank", -2)):
+        errors.append("GF2_RANK_MISMATCH")
+    status = data.get("status")
+    public_category = data.get("public_category")
+    if status == AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED or public_category == UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED:
+        if not recomputed.get("contradiction_row") or recomputed["contradiction_row"].get("coefficients") != [] or recomputed["contradiction_row"].get("rhs") != 1:
+            errors.append("GF2_CONTRADICTION_ROW_MISSING")
+    if status == AFFINE_RESIDUE_SAT_WITNESS_VERIFIED or public_category == SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED:
+        assignment = _affine_assignment_from_payload(data.get("solution"))
+        if not assignment:
+            errors.append("AFFINE_SAT_SOLUTION_MISSING")
+        elif not _assignment_satisfies_equations(verified_equations, assignment):
+            errors.append("AFFINE_SOLUTION_DOES_NOT_SATISFY_EQUATIONS")
+        elif data.get("witness_verified_against_original_cnf") is not True or not formula_satisfied(formula, assignment):
+            errors.append("AFFINE_SOLUTION_DOES_NOT_SATISFY_ORIGINAL_CNF")
+    if "DRAT" in str(public_category):
+        errors.append("PUBLIC_CATEGORY_FAKE_DRAT")
+
+    result_status = AFFINE_RESIDUE_CERTIFICATE_VERIFIED if not errors else AFFINE_RESIDUE_CERTIFICATE_FAILED
+    return {
+        "status": result_status,
+        "checker_status": result_status,
+        "errors": errors,
+        "equation_count": len(verified_equations),
+        "final_rank": recomputed.get("final_rank", 0),
+        "gf2_status": recomputed.get("status"),
+        "claim_boundary": "Exact full-CNF GF(2) affine certificate only; no heuristic XOR mining and no DRAT claim.",
+    }
+
+
+def affine_residue_report(rows: list[dict[str, Any]], delta: dict[str, Any]) -> str:
+    lines = [
+        "# Affine Residue Collapse Report",
+        "",
+        "## Executive Summary",
+        "",
+        "v2.6 promotes the v2.4-generated MODULAR_RESIDUE_COLLAPSE candidate into G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE. The implementation is bounded and exact: it accepts only full forbidden-assignment CNF encodings of GF(2) affine equations and emits native Gaussian-elimination certificates. It does not claim broad modular arithmetic solving, CryptoMiniSat-style XOR mining, DRAT verification, a theorem, or P vs NP progress.",
+        "",
+        "## Target Rows",
+        "",
+        "| instance | G1 result | G5 status | public category | equations | checker |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            f"| `{row['instance_id']}` | `{row['g1_result']}` | `{row['g5_status']}` | `{row['public_category']}` | {row['equation_count']} | `{row['checker_status']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Exact Extraction Boundary",
+            "",
+            "The operator does not mine arbitrary XOR structure. It verifies every required forbidden-assignment clause for each claimed equation against the original CNF. Incomplete, polluted, wrong-parity, and over-cap rows are rejected or diagnostic-only.",
+            "",
+            "## GF(2) Trace Boundary",
+            "",
+            "Allowed row operations are `SWAP_ROWS` and `ADD_ROW_XOR`. Nontrivial scaling is forbidden because GF(2) has no useful scale-row operation beyond multiplying by one.",
+            "",
+            "## Operator Delta Summary",
+            "",
+            stable_json(delta),
+            "## Forbidden Claims",
+            "",
+            "- no P vs NP progress claim",
+            "- no polynomial-time SAT claim",
+            "- no broad modular arithmetic solver claim",
+            "- no complete GF(2) extraction from arbitrary CNF",
+            "- no CryptoMiniSat-style XOR mining claim",
+            "- no DRAT verification claim",
+            "- no G5 strictness theorem claim",
+            "- no HARD or UNKNOWN statuses",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def run_affine_residue_lab(
+    *,
+    instances: Iterable[str],
+    out_root: str | Path,
+    strict: bool = False,
+    zip_path: str | Path | None = None,
+    max_arity: int = 10,
+) -> dict[str, Any]:
+    root = Path(out_root)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+    cert_root = root / "certificates"
+    cnf_root = root / "original_cnf"
+    cert_root.mkdir(parents=True, exist_ok=True)
+    cnf_root.mkdir(parents=True, exist_ok=True)
+
+    rows: list[dict[str, Any]] = []
+    certificates: list[dict[str, Any]] = []
+    extraction_traces: list[dict[str, Any]] = []
+    gaussian_traces: list[dict[str, Any]] = []
+    checker_rows: list[dict[str, Any]] = []
+    for instance_id in instances:
+        instance = make_affine_residue_instance(instance_id)
+        extracted, diagnostics = extract_affine_residue_equations(instance.formula, max_arity=max_arity)
+        certificate = build_affine_residue_certificate(instance, max_arity=max_arity)
+        check = check_affine_residue_certificate(instance.formula, certificate, max_arity=max_arity)
+        cert_path = cert_root / f"{instance_id}_affine_residue_certificate.json"
+        cnf_path = cnf_root / f"{instance_id}.cnf"
+        cert_path.write_text(stable_json(certificate.to_dict()), encoding="utf-8", newline="\n")
+        cnf_path.write_text(instance.formula.canonical_dimacs(), encoding="utf-8", newline="\n")
+        novel_delta = check["status"] == AFFINE_RESIDUE_CERTIFICATE_VERIFIED and certificate.public_category in {
+            UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
+            SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
+        }
+        row = {
+            "instance_id": instance_id,
+            "family": instance.family,
+            "g1_result": instance.g1_result,
+            "g5_grammar": "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE",
+            "g5_status": certificate.status,
+            "public_category": certificate.public_category,
+            "certification_level": certificate.certification_level,
+            "checker_status": check["status"],
+            "equation_count": len(certificate.equations),
+            "max_arity": max((eq["arity"] for eq in certificate.equations), default=0),
+            "g5_delta_status": certificate.g5_delta_status,
+            "novel_g5_delta": novel_delta,
+            "drat_claim": certificate.drat_claim,
+            "certificate_path": str(cert_path),
+            "cnf_path": str(cnf_path),
+        }
+        rows.append(row)
+        certificates.append(certificate.to_dict())
+        extraction_traces.append({"instance_id": instance_id, "extracted_equations": extracted, "diagnostics": diagnostics, "instance": instance.to_dict()})
+        gaussian_traces.append({"instance_id": instance_id, "trace": certificate.gaussian_elimination_trace, "row_operations": certificate.row_operations})
+        checker_rows.append({"instance_id": instance_id, **check})
+
+    delta = {
+        "operator_added": "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE",
+        "promoted_candidate": "MODULAR_RESIDUE_COLLAPSE",
+        "instances_total": len(rows),
+        "native_certified": sum(1 for row in rows if row["checker_status"] == AFFINE_RESIDUE_CERTIFICATE_VERIFIED),
+        "unsat_native_certified": sum(1 for row in rows if row["public_category"] == UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED),
+        "sat_native_certified": sum(1 for row in rows if row["public_category"] == SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED),
+        "controls_not_certified": sum(1 for row in rows if row["public_category"] == "NO_COLLAPSE_FOUND"),
+        "fake_drat_claims": sum(1 for row in rows if row["drat_claim"] != MODULAR_RESIDUE_DRAT_NOT_CLAIMED),
+        "strictness_status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+        "claim_boundary": "G5 native exact high-arity GF(2) affine evidence only; no broad modular/GF2 solver claim and no DRAT claim.",
+    }
+    theorem_queue = [
+        {
+            "id": "TC-015",
+            "name": "High-Arity Affine Native Certification Candidate",
+            "status": "FORMAL_PROOF_SKETCH",
+            "statement": "For exact full CNF encodings of GF(2) affine equations up to bounded arity K, G5 can extract equations and emit a native Gaussian-elimination certificate checkable against the original CNF.",
+            "forbidden_interpretations": ["not broad XOR mining", "not DRAT", "not P vs NP progress"],
+        },
+        {
+            "id": "TC-016",
+            "name": "G5 Affine Residue Strictness Candidate",
+            "status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            "statement": "Exact parity-over-cap formulas can be native-certified by G5 while G1_XOR is configured with a lower extraction cap.",
+            "forbidden_interpretations": ["not a strictness theorem", "no lower bound against G1 is proved"],
+        },
+        {
+            "id": "TC-017",
+            "name": "Operator Genesis Success Candidate 2",
+            "status": "EMPIRICAL_EVIDENCE",
+            "statement": "The v2.4-generated MODULAR_RESIDUE_COLLAPSE candidate was promoted to a v2.6 prototype with native certificate checks and bounded operator-delta evidence.",
+            "forbidden_interpretations": ["generated operator is not a theorem", "not a broad modular solver claim"],
+        },
+    ]
+    payloads = {
+        "affine_residue_certificates.json": {"certificates": certificates},
+        "affine_extraction_trace.json": {"traces": extraction_traces},
+        "gaussian_elimination_trace.json": {"traces": gaussian_traces},
+        "affine_residue_checker_summary.json": {"checks": checker_rows},
+        "g5_operator_delta_summary.json": delta,
+        "theorem_candidates.json": {"theorem_candidates": theorem_queue},
+        "manifest.json": {
+            "version": "2.6",
+            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "instances": list(instances),
+            "strict": strict,
+            "claim_boundary": "native exact high-arity GF(2) affine certificates only; no DRAT or P vs NP claim",
+        },
+    }
+    for name, payload in payloads.items():
+        _write_json(root / name, payload)
+    _write_affine_residue_csv(root / "affine_residue_structure_summary.csv", rows)
+    (root / "AFFINE_RESIDUE_COLLAPSE_REPORT.md").write_text(affine_residue_report(rows, delta), encoding="utf-8", newline="\n")
+    digest = make_zip(root, zip_path) if zip_path else ""
+    return {
+        "out_root": str(root),
+        "zip": str(zip_path) if zip_path else "",
+        "zip_sha256": digest,
+        "affine_residue_certificates": certificates,
+        "affine_residue_rows": rows,
+        "affine_extraction_trace": extraction_traces,
+        "gaussian_elimination_trace": gaussian_traces,
+        "affine_residue_checker_summary": checker_rows,
+        "g5_operator_delta_summary": delta,
+        "theorem_candidates": theorem_queue,
+    }
+
+
+def _write_affine_residue_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    headers = ["instance_id", "g1_result", "g5_status", "public_category", "checker_status", "equation_count", "max_arity", "g5_delta_status", "novel_g5_delta"]
+    lines = [",".join(headers)]
+    for row in rows:
+        lines.append(",".join(str(row.get(header, "")).replace(",", ";") for header in headers))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Witnora Operator Genesis Engine")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1879,6 +2525,32 @@ def main(argv: list[str] | None = None) -> int:
     check_orbit_parser = sub.add_parser("check-orbit-capacity-cert")
     check_orbit_parser.add_argument("--cnf", required=True)
     check_orbit_parser.add_argument("--certificate", required=True)
+    affine_parser = sub.add_parser("run-affine-residue-lab")
+    affine_parser.add_argument(
+        "--instances",
+        nargs="+",
+        default=[
+            "parity_arity_7_unsat",
+            "parity_arity_8_unsat",
+            "parity_arity_9_unsat",
+            "parity_arity_10_unsat",
+            "parity_arity_7_sat",
+            "parity_arity_8_sat",
+            "mixed_affine_arity_8_unsat",
+            "mixed_affine_arity_8_sat",
+            "incomplete_affine_reject",
+            "polluted_affine_reject",
+            "over_cap_affine_diagnostic",
+        ],
+    )
+    affine_parser.add_argument("--out-root", default="outputs/v2.6-affine-residue-collapse")
+    affine_parser.add_argument("--strict", action="store_true")
+    affine_parser.add_argument("--max-arity", type=int, default=10)
+    affine_parser.add_argument("--zip", default="witnora-core-v2.6-affine-residue-collapse.zip")
+    check_affine_parser = sub.add_parser("check-affine-residue-cert")
+    check_affine_parser.add_argument("--cnf", required=True)
+    check_affine_parser.add_argument("--certificate", required=True)
+    check_affine_parser.add_argument("--max-arity", type=int, default=10)
     args = parser.parse_args(argv)
     if args.command == "run":
         result = run_operator_genesis(families=args.families, out_root=args.out_root, strict=args.strict, zip_path=args.zip)
@@ -1919,6 +2591,30 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_orbit_capacity_certificate(formula, data)))
+        return 0
+    if args.command == "run-affine-residue-lab":
+        result = run_affine_residue_lab(
+            instances=args.instances,
+            out_root=args.out_root,
+            strict=args.strict,
+            zip_path=args.zip,
+            max_arity=args.max_arity,
+        )
+        print(
+            stable_json(
+                {
+                    "out_root": args.out_root,
+                    "zip": args.zip,
+                    "zip_sha256": result["zip_sha256"],
+                    "summary": result["g5_operator_delta_summary"],
+                }
+            )
+        )
+        return 0
+    if args.command == "check-affine-residue-cert":
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_affine_residue_certificate(formula, data, max_arity=args.max_arity)))
         return 0
     return 1
 

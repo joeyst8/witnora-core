@@ -40,6 +40,13 @@ discover a collapse path to a witness or proof?
 - `G3_SYMMETRY_CARDINALITY_CERTIFIED`: `G2_SYMMETRY_CERTIFIED` plus exact
   assignment-grid cardinality/PB recognition and native pigeonhole counting
   certificates for standard `php_n_m` encodings.
+- `G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE`: exact local Hall/capacity-deficit
+  certificates over generated assignment/resource CNFs. This is native
+  counting evidence, not a complete matching/allocation solver.
+- `G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`: exact high-arity GF(2) affine
+  extraction from full forbidden-assignment CNF encodings plus native
+  Gaussian-elimination certificates. This is not heuristic XOR mining,
+  CryptoMiniSat-style extraction, broad modular arithmetic solving, or DRAT.
 - `G4_BACKDOOR_DIAGNOSTIC`: honest stub.
 - `G2_SYMMETRY_PROTOTYPE`: `G1_XOR` plus deterministic syntactic orbit
   diagnostics. This is not full automorphism detection and does not certify
@@ -109,6 +116,22 @@ Orbit summaries may compress the display, but the checker trusts the result
 only after expanding the evidence back to concrete items, resources, and source
 clauses. Complete matching rows that duplicate standard pigeonhole are recorded
 as duplicate controls, not as novel G4 evidence.
+
+## v2.6 High-Arity Affine Residue
+
+v2.6 implements the second generated-operator prototype:
+`G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`. It promotes the v2.4
+`MODULAR_RESIDUE_COLLAPSE` candidate into a bounded native checker for exact
+GF(2) affine equations whose arity exceeds the lower G1 extraction cap.
+
+The extractor accepts only complete forbidden-assignment CNF encodings of
+equations. It rejects incomplete, polluted, wrong-parity, and over-cap controls
+or leaves them diagnostic-only. The certificate records deterministic GF(2)
+Gaussian elimination using `SWAP_ROWS` and `ADD_ROW_XOR`; there is no
+nontrivial row scaling over GF(2).
+
+This is a native affine certificate, not a DRAT proof, not broad modular
+arithmetic solving, and not a G5 strictness theorem.
 
 ## Claim Boundary
 

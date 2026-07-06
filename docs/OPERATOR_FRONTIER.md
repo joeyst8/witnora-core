@@ -86,3 +86,13 @@ certificates when the checker expands the evidence against the original CNF.
 This is not counted as a novel G4 delta for complete matching rows that are just
 the G3 pigeonhole pattern in another notation. It is not a full matching solver
 or a DRAT proof route.
+
+## v2.6 Affine-Residue Frontier Update
+
+The next promoted candidate is `MODULAR_RESIDUE_COLLAPSE`, implemented as
+`G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`. It addresses parity-over-cap rows by
+raising the exact full-CNF affine arity bound under a native checker.
+
+This is not broad modular arithmetic solving. It is exact GF(2) affine
+certificate evidence only, with no heuristic mining, no CryptoMiniSat-style
+claim, and no DRAT claim.

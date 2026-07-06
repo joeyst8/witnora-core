@@ -63,6 +63,14 @@ original formula. This is not a complete matching or allocation solver, and
 complete matching rows that duplicate G3 pigeonhole are not counted as novel G4
 deltas.
 
+v2.6 adds `G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE`, the second implemented
+prototype promoted from a generated operator candidate. It checks exact full
+forbidden-assignment CNF encodings of high-arity GF(2) affine equations and
+emits native Gaussian-elimination certificates. This extends the bounded arity
+frontier beyond G1's lower exact-XOR cap, but it is not heuristic XOR mining,
+not CryptoMiniSat-style extraction, not broad modular arithmetic solving, and
+not DRAT.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -109,3 +117,6 @@ not a general SAT-solving result.
    independently checked, tested, red-teamed, and frozen.
 10. For generated operator prototypes, distinguish duplicate controls from true
     operator deltas and keep native certificates separate from DRAT claims.
+11. For high-arity affine operators, require exact full-CNF evidence,
+    deterministic GF(2) row operations, and explicit rejection of incomplete,
+    wrong-parity, or over-cap encodings.

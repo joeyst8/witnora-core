@@ -85,6 +85,8 @@ G3_CARDINALITY_CERTIFIED = "G3_CARDINALITY_CERTIFIED"
 G3_SYMMETRY_CARDINALITY_NATIVE_CERTIFIED = "G3_SYMMETRY_CARDINALITY_NATIVE_CERTIFIED"
 UNSAT_PIGEONHOLE_NATIVE_CERTIFIED = "UNSAT_PIGEONHOLE_NATIVE_CERTIFIED"
 UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED = "UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED"
+UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
+SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
 
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
@@ -93,6 +95,8 @@ PUBLIC_CATEGORIES = [
     UNSAT_NOT_EXTERNALLY_VERIFIED,
     UNSAT_PIGEONHOLE_NATIVE_CERTIFIED,
     UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED,
+    UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
+    SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
     NO_COLLAPSE_FOUND,
     OPERATOR_STUB_NOT_EXECUTED,
     TIMEOUT,
@@ -455,6 +459,7 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     g2_sym_ops = (*g1_ops, "EXACT_AUTOMORPHISM_VALIDATION", "SYMMETRY_CERTIFICATE_CHECKER", "SBP_PRESERVATION_CHECK")
     g3_card_ops = (*g2_sym_ops, "CARDINALITY_PB_DIAGNOSTIC", "PIGEONHOLE_COUNTING_CERTIFICATE")
     g4_orbit_capacity_ops = (*g3_card_ops, "ORBIT_CAPACITY_COUNTING_CERTIFICATE")
+    g5_affine_ops = (*g4_orbit_capacity_ops, "HIGH_ARITY_AFFINE_RESIDUE_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -527,6 +532,15 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             6,
             {"proof_policy": "native_hall_capacity_certificate_no_drat_claim"},
             "G3_SYMMETRY_CARDINALITY_CERTIFIED plus a generated native Hall/capacity-deficit prototype for exact assignment/resource CNFs.",
+        ),
+        "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE": CollapseGrammar(
+            "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE",
+            g5_affine_ops,
+            (*terminals, "XOR_AFFINE", "HIGH_ARITY_AFFINE_RESIDUE_NATIVE"),
+            2,
+            10,
+            {"proof_policy": "native_high_arity_gf2_certificate_no_drat_claim"},
+            "G4 plus a generated exact high-arity GF(2) affine residue prototype. It is native-only and does not claim heuristic XOR mining or broad modular solving.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",
@@ -1565,7 +1579,7 @@ def run_instance(
     drat_trim_path: str | Path | None = None,
 ) -> CollapseResult:
     started = time.perf_counter()
-    if grammar.name == "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE":
+    if grammar.name in {"G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE", "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE"}:
         return _stub_result(instance, grammar, started)
     if any(op.endswith("_PROTOTYPE") or op == "BACKDOOR_DIAGNOSTIC" for op in grammar.operators):
         return _stub_result(instance, grammar, started)
@@ -2628,6 +2642,34 @@ def main(argv: list[str] | None = None) -> int:
     check_orbit_capacity_parser = sub.add_parser("check-orbit-capacity-cert")
     check_orbit_capacity_parser.add_argument("--cnf", required=True)
     check_orbit_capacity_parser.add_argument("--certificate", required=True)
+
+    affine_residue_parser = sub.add_parser("run-affine-residue-lab")
+    affine_residue_parser.add_argument(
+        "--instances",
+        nargs="+",
+        default=[
+            "parity_arity_7_unsat",
+            "parity_arity_8_unsat",
+            "parity_arity_9_unsat",
+            "parity_arity_10_unsat",
+            "parity_arity_7_sat",
+            "parity_arity_8_sat",
+            "mixed_affine_arity_8_unsat",
+            "mixed_affine_arity_8_sat",
+            "incomplete_affine_reject",
+            "polluted_affine_reject",
+            "over_cap_affine_diagnostic",
+        ],
+    )
+    affine_residue_parser.add_argument("--out-root", default="outputs/v2.6-affine-residue-collapse")
+    affine_residue_parser.add_argument("--strict", action="store_true")
+    affine_residue_parser.add_argument("--zip", default="witnora-core-v2.6-affine-residue-collapse.zip")
+    affine_residue_parser.add_argument("--max-arity", type=int, default=10)
+
+    check_affine_parser = sub.add_parser("check-affine-residue-cert")
+    check_affine_parser.add_argument("--cnf", required=True)
+    check_affine_parser.add_argument("--certificate", required=True)
+    check_affine_parser.add_argument("--max-arity", type=int, default=10)
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2694,6 +2736,22 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_orbit_capacity_certificate(formula, data)))
+        return 0
+
+    if args.command == "run-affine-residue-lab":
+        from .operator_genesis import run_affine_residue_lab
+
+        result = run_affine_residue_lab(instances=args.instances, out_root=args.out_root, strict=args.strict, max_arity=args.max_arity)
+        digest = make_zip(args.out_root, args.zip)
+        print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": result["g5_operator_delta_summary"]}))
+        return 0
+
+    if args.command == "check-affine-residue-cert":
+        from .operator_genesis import check_affine_residue_certificate
+
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_affine_residue_certificate(formula, data, max_arity=args.max_arity)))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)
