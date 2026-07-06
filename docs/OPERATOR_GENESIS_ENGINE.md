@@ -1,5 +1,15 @@
 # Operator Genesis Engine
 
+## v2.19 Self-Expanding Planner
+
+v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`.
+
+The planner connects operator genesis and obstruction duality: fingerprints
+feed deterministic planning rules, which produce operator sequence proposals,
+missing-operator hypotheses, or review plans. The verified artifact is a plan
+certificate only. It is not execution, not SAT/UNSAT evidence, not DRAT, not a
+theorem, and not a completeness claim.
+
 ## v2.18 Proof Motif Generalization Promotion
 
 v2.18 promotes the v2.14 recommendation

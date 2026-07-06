@@ -1162,6 +1162,73 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use obstruction-dual queues to find stronger near-motif generalization targets."],
         ),
+        TheoremCandidate(
+            id="TC-051",
+            name="Collapse Plan Certificate Soundness Candidate",
+            statement=(
+                "If a collapse plan certificate verifies, then the proposed plan is structurally "
+                "valid, claim-boundary safe, and executable only through future certified operator runs."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["composed_obstruction_plan", "circuit_projection_plan", "graph_separator_plan"],
+            required_proof_obligations=[
+                "Verify the source obstruction fingerprint.",
+                "Verify every planned operator is in the known portfolio.",
+                "Verify certificate types, handoff requirements, and lift obligations.",
+                "Reject fake execution, SAT/UNSAT, DRAT, theorem, and completeness claims.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim the plan executed.",
+                "Does not claim SAT or UNSAT.",
+                "Does not claim DRAT.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Connect verified plans to later executed certificate chains without weakening the claim boundary."],
+        ),
+        TheoremCandidate(
+            id="TC-052",
+            name="Obstruction-To-Plan Mapping Candidate",
+            statement=(
+                "For supported obstruction fingerprints, deterministic planning rules produce compatible "
+                "operator sequences or missing-operator hypotheses with declared certificate obligations."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["proof_motif_near_plan", "near_affine_missing_operator_plan", "no_confident_fingerprint_plan"],
+            required_proof_obligations=[
+                "Keep planning separate from execution.",
+                "Record missing operator soundness obligations and negative controls.",
+                "Verify review/theoremization plans are diagnostic only.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim all fingerprints are covered.",
+                "Does not claim a universal planner.",
+                "Does not claim lower bounds against G0-G11.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Expand planning rules only when new obstruction certificates justify them."],
+        ),
+        TheoremCandidate(
+            id="TC-053",
+            name="Self-Expanding Collapse Hierarchy Candidate",
+            statement=(
+                "A hierarchy with obstruction fingerprints and verified planner certificates can propose "
+                "future collapse paths and missing operators while preserving claim boundaries."
+            ),
+            status="SPECULATIVE",
+            supporting_witnesses=["G7 obstruction-dual queue", "G12 planner certificates"],
+            required_proof_obligations=[
+                "Define a formal semantics for plan certificates.",
+                "Prove that planner verification never implies formula satisfiability or unsatisfiability.",
+                "Connect future execution certificates through separately verified operator runs.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim autonomous discovery is complete.",
+                "Does not claim a theorem is proven.",
+                "Does not claim hierarchy completeness.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use G12 plans to select the next operator without counting plans as collapses."],
+        ),
     ]
 
 

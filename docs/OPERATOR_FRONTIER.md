@@ -1,5 +1,17 @@
 # Operator Frontier
 
+## v2.19 Self-Expanding Planner Frontier Update
+
+`G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE` adds a planning layer over the
+current operator portfolio. It maps obstruction fingerprints to proposed
+operator sequences, missing-operator hypotheses, or review/theoremization
+plans.
+
+The frontier rule is explicit: a plan is not execution. G12 verifies only plan
+structure, operator compatibility, certificate obligations, handoff
+requirements, execution-required status, and claim-boundary safety. It cannot
+certify SAT, UNSAT, DRAT, a theorem, or completeness.
+
 ## v2.18 Proof Motif Generalization Frontier Update
 
 `PROOF_MOTIF_NEAR_MISS` has been promoted into

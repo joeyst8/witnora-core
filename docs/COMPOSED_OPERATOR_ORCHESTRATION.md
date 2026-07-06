@@ -1,5 +1,12 @@
 # Composed Operator Orchestration
 
+## v2.19 Planner Interaction
+
+`G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE` may propose future G9
+orchestration sequences, but a plan is not a composed certificate. G9 still
+requires actual step certificates, formula handoffs, preservation declarations,
+and witness/proof lift checks before any composed result is trusted.
+
 ## v2.18 Interaction
 
 `G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE` may appear as a future

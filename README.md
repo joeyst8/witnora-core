@@ -1,5 +1,21 @@
 # Witnora-Core v0.9.8
 
+## v2.19 Self-Expanding Collapse Planner Prototype
+
+v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`, a meta-level
+planning layer over G0-G11.
+
+G12 maps obstruction fingerprints to operator-sequence plans, missing-operator
+hypotheses, or review/theoremization plans. The planner certificate verifies
+structural compatibility, operator portfolio membership, expected certificate
+types, handoff requirements, lift obligations, execution-required status, and
+claim boundaries.
+
+A plan is not a collapse. It is not execution, not SAT/UNSAT evidence, not
+DRAT, not a proof, and not a theorem. Future certified operator runs are
+required before any result can be claimed. The evidence grade is
+`FINITE_PLANNER_CERTIFICATE_VERIFIED`.
+
 ## v2.18 Proof Motif Generalization Checker Prototype
 
 v2.18 promotes the v2.14 obstruction recommendation

@@ -468,6 +468,7 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     g9_composed_ops = (*g8_separator_ops, "COMPOSED_ORCHESTRATION_CERTIFICATE")
     g10_projection_ops = (*g9_composed_ops, "CIRCUIT_PROJECTION_LIFT_CERTIFICATE")
     g11_motif_generalization_ops = (*g10_projection_ops, "PROOF_MOTIF_GENERALIZATION_CERTIFICATE")
+    g12_planner_ops = (*g11_motif_generalization_ops, "COLLAPSE_PLAN_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -603,6 +604,15 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             10,
             {"proof_policy": "native_generalized_macro_proof_certificate_no_drat_claim"},
             "G10 plus checked proof-motif generalization. Near similarity is diagnostic until every reuse instantiation expands into verified proof steps.",
+        ),
+        "G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE": CollapseGrammar(
+            "G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE",
+            g12_planner_ops,
+            (*terminals, "COLLAPSE_PLAN_CERTIFICATE"),
+            2,
+            10,
+            {"proof_policy": "planner_certificate_only_execution_required"},
+            "G11 plus a meta-level planner certificate. It verifies structural plan compatibility and claim boundaries only; it does not execute operators or certify SAT/UNSAT.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",

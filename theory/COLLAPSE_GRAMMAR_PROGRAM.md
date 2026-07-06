@@ -126,6 +126,12 @@ diagnostic-only. Exact G6 motif duplicates are not counted as novel G11
 deltas. This is not arbitrary proof-pattern learning, not DRAT, and not a
 proof-motif completeness theorem.
 
+v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`, a planning layer
+over G0-G11. G12 verifies plan structure, operator compatibility, handoff
+requirements, missing-operator hypotheses, and claim boundaries. It does not
+execute the plan and does not certify SAT, UNSAT, DRAT, a theorem, or hierarchy
+completeness. Its evidence grade is `FINITE_PLANNER_CERTIFICATE_VERIFIED`.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical

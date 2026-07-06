@@ -1,5 +1,18 @@
 # Collapse Theory Lab
 
+## v2.19 Self-Expanding Collapse Planner
+
+v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`.
+
+The planner consumes obstruction fingerprints and the known operator portfolio
+and emits verified planning certificates. It may propose an operator sequence,
+a missing-operator hypothesis, or a review/theoremization plan. Every accepted
+plan must state that execution is required before any formula result can be
+claimed.
+
+G12 is a planner, not a solver. A plan is not execution, not SAT/UNSAT
+evidence, not DRAT, not a theorem, and not P vs NP progress.
+
 ## v2.18 Proof Motif Generalization Checker
 
 v2.18 adds `G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`, promoted from

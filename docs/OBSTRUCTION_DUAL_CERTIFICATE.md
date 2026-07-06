@@ -76,6 +76,15 @@ verifies a generalized template and every concrete instantiation. The
 promotion does not turn G7 diagnostic traces into lower bounds and does not
 claim proof-pattern learning completeness.
 
+## v2.19 Planning Layer
+
+v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`.
+
+G12 consumes obstruction-dual fingerprints and produces plan certificates. A
+plan can recommend an existing operator sequence or a missing operator class,
+but it is not a SAT/UNSAT result and not proof that the sequence succeeds.
+Execution requires future operator certificates.
+
 ## v2.16 Promotion
 
 v2.16 promotes the `COMPOSED_OBSTRUCTION` recommendation into

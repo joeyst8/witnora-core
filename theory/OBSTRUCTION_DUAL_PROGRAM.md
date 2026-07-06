@@ -1,5 +1,12 @@
 # Obstruction Dual Program
 
+## v2.19 Planning Layer
+
+`G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE` consumes obstruction-dual
+fingerprints and emits verified plan certificates. It can recommend operator
+sequences or missing operators, but the plan itself is not execution and cannot
+certify SAT or UNSAT.
+
 ## v2.18 Promotion
 
 `PROOF_MOTIF_NEAR_MISS` is promoted into
