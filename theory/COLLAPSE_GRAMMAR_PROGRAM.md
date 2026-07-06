@@ -71,6 +71,13 @@ frontier beyond G1's lower exact-XOR cap, but it is not heuristic XOR mining,
 not CryptoMiniSat-style extraction, not broad modular arithmetic solving, and
 not DRAT.
 
+v2.7 adds `G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`, the third implemented
+prototype promoted from a generated operator candidate. It checks repeated
+native proof motifs by verifying one template proof and every reuse
+instantiation, then emits a compressed macro-proof certificate. This is not
+DRAT, not proof-compression completeness, and not a novel Tseitin claim when
+prior XOR grammars already apply.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -120,3 +127,5 @@ not a general SAT-solving result.
 11. For high-arity affine operators, require exact full-CNF evidence,
     deterministic GF(2) row operations, and explicit rejection of incomplete,
     wrong-parity, or over-cap encodings.
+12. For proof-motif operators, trust reuse only after expanding and checking
+    every instantiation against original source clauses.

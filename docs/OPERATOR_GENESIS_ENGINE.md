@@ -82,3 +82,18 @@ heuristic XOR mining and does not claim CryptoMiniSat-style extraction.
 As with G4, generated-operator promotion remains evidence-bounded: native
 certificates are trusted only after the checker verifies source clauses,
 deterministic row operations, SAT witnesses, or UNSAT contradiction rows.
+
+## v2.7 Promotion: Proof Motif Compression
+
+v2.7 promotes `PROOF_MOTIF_COMPRESSION` into
+`G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`.
+
+This promoted prototype is proof-structural rather than semantic. It detects
+repeated native proof motifs, verifies one motif template, verifies every reuse
+instantiation against original clauses, and emits a compressed native
+macro-proof certificate.
+
+The promotion remains bounded: G6 is not DRAT, not a proof-compression
+complete system, and not a theorem. Optional Tseitin/XOR-like rows are
+duplicate controls unless prior XOR grammars demonstrably fail under the
+configured profile and G6 supplies distinct verified proof-motif evidence.

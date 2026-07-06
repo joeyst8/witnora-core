@@ -78,3 +78,21 @@ The promotion criteria were:
 - SAT witnesses checked against the original CNF when a SAT category is claimed;
 - UNSAT contradiction rows checked as native affine evidence;
 - negative controls for incomplete, polluted, wrong-parity, and over-cap rows.
+
+## v2.7 Prototype Promotion
+
+The third promotion is `PROOF_MOTIF_COMPRESSION` to
+`G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`.
+
+The promoted operator is proof-native. It detects repeated local proof motifs,
+verifies a native resolution or unit-propagation template, verifies every reuse
+instantiation, and records a compressed macro-proof certificate. It does not
+claim DRAT, proof-compression completeness, a theorem, or P vs NP progress.
+
+The promotion criteria were:
+
+- native proof template schema;
+- resolution and unit-propagation step checkers;
+- reuse substitution and source-clause verification;
+- tamper, bad-reuse, and bad-substitution rejection tests;
+- duplicate Tseitin/XOR-style controls that are not counted as novel G6 deltas.

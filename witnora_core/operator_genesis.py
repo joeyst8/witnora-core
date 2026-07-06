@@ -19,11 +19,11 @@ import shutil
 from typing import Any, Iterable
 import zipfile
 
-from .cnf import CNFFormula, Clause, formula_satisfied
+from .cnf import CNFFormula, Clause, formula_satisfied, resolvent
 from .dimacs import load_dimacs
 from .xor import canonical_xor_cnf_clauses
 
-GENESIS_VERSION = "2.6"
+GENESIS_VERSION = "2.7"
 
 SYMMETRY_HEAVY = "SYMMETRY_HEAVY"
 COUNTING_DEFICIT = "COUNTING_DEFICIT"
@@ -107,6 +107,21 @@ G5_AFFINE_RESIDUE_NATIVE_CERTIFIED = "G5_AFFINE_RESIDUE_NATIVE_CERTIFIED"
 MODULAR_RESIDUE_DRAT_NOT_CLAIMED = "MODULAR_RESIDUE_DRAT_NOT_CLAIMED"
 UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
 SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
+
+PROOF_MOTIF_STRUCTURE_DETECTED = "PROOF_MOTIF_STRUCTURE_DETECTED"
+PROOF_MOTIF_TEMPLATE_EXTRACTED = "PROOF_MOTIF_TEMPLATE_EXTRACTED"
+PROOF_MOTIF_NATIVE_CERTIFIED = "PROOF_MOTIF_NATIVE_CERTIFIED"
+PROOF_MOTIF_CERTIFICATE_VERIFIED = "PROOF_MOTIF_CERTIFICATE_VERIFIED"
+PROOF_MOTIF_CERTIFICATE_FAILED = "PROOF_MOTIF_CERTIFICATE_FAILED"
+PROOF_MOTIF_COMPRESSION_NATIVE_UNSAT = "PROOF_MOTIF_COMPRESSION_NATIVE_UNSAT"
+PROOF_MOTIF_COMPRESSION_DIAGNOSTIC_ONLY = "PROOF_MOTIF_COMPRESSION_DIAGNOSTIC_ONLY"
+PROOF_MOTIF_EXPANSION_VERIFIED = "PROOF_MOTIF_EXPANSION_VERIFIED"
+PROOF_MOTIF_REUSE_VERIFIED = "PROOF_MOTIF_REUSE_VERIFIED"
+PROOF_MOTIF_DRAT_NOT_CLAIMED = "PROOF_MOTIF_DRAT_NOT_CLAIMED"
+G6_PROOF_MOTIF_NATIVE_CERTIFIED = "G6_PROOF_MOTIF_NATIVE_CERTIFIED"
+UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED = "UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED"
+PROOF_MOTIF_NO_DELTA = "PROOF_MOTIF_NO_DELTA"
+DUPLICATE_OF_G1_XOR_PATTERN = "DUPLICATE_OF_G1_XOR_PATTERN"
 
 
 @dataclass(frozen=True)
@@ -2492,6 +2507,616 @@ def _write_affine_residue_csv(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
+@dataclass(frozen=True)
+class ProofMotifInstance:
+    instance_id: str
+    motif_type: str
+    motif_count: int
+    formula: CNFFormula
+    prior_g0_g5_result: str
+    duplicate_of_prior: bool = False
+    family: str = "proof-motif"
+    description: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "instance_id": self.instance_id,
+            "family": self.family,
+            "motif_type": self.motif_type,
+            "motif_count": self.motif_count,
+            "formula_hash": self.formula.formula_hash,
+            "prior_g0_g5_result": self.prior_g0_g5_result,
+            "duplicate_of_prior": self.duplicate_of_prior,
+            "description": self.description,
+        }
+
+
+@dataclass(frozen=True)
+class ProofMotifCompressionCertificate:
+    type: str
+    instance_id: str
+    formula_hash: str
+    motif_templates: list[dict[str, Any]]
+    reuse_sites: list[dict[str, Any]]
+    compressed_proof: dict[str, Any]
+    checker_status: str
+    status: str
+    public_category: str
+    certification_level: str
+    drat_claim: str
+    g6_delta_status: str
+    claim_boundary: str
+    notes: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _proof_motif_template(motif_type: str) -> dict[str, Any]:
+    if motif_type == "UNIT_PROPAGATION_TEMPLATE":
+        return {
+            "motif_id": "unit_conflict_template",
+            "motif_type": "UNIT_PROPAGATION_TEMPLATE",
+            "template_source_clauses": [
+                {"label": "c1", "clause": [1]},
+                {"label": "c2", "clause": [-1, 2]},
+                {"label": "c3", "clause": [-2]},
+            ],
+            "template_steps": [
+                {"step_id": "u1", "kind": "UNIT_PROPAGATION", "unit_parent": "c1", "clause_parent": "c2", "unit_literal": 1, "result": [2]},
+                {"step_id": "u2", "kind": "UNIT_PROPAGATION", "unit_parent": "u1", "clause_parent": "c3", "unit_literal": 2, "result": []},
+            ],
+            "derived_template_lemma": [],
+            "template_verified": False,
+        }
+    return {
+        "motif_id": "resolution_conflict_template",
+        "motif_type": "RESOLUTION_TEMPLATE",
+        "template_source_clauses": [
+            {"label": "c1", "clause": [1, 2]},
+            {"label": "c2", "clause": [-1]},
+            {"label": "c3", "clause": [-2]},
+        ],
+        "template_steps": [
+            {"step_id": "r1", "kind": "RESOLUTION", "parents": ["c1", "c2"], "pivot": 1, "result": [2]},
+            {"step_id": "r2", "kind": "RESOLUTION", "parents": ["r1", "c3"], "pivot": 2, "result": []},
+        ],
+        "derived_template_lemma": [],
+        "template_verified": False,
+    }
+
+
+def _proof_motif_site_clauses(motif_type: str, x_var: int, y_var: int) -> list[list[int]]:
+    if motif_type == "UNIT_PROPAGATION_TEMPLATE":
+        return [[x_var], [-x_var, y_var], [-y_var]]
+    return [[x_var, y_var], [-x_var], [-y_var]]
+
+
+def _build_proof_motif_formula(motif_type: str, motif_count: int) -> CNFFormula:
+    clauses: list[list[int]] = []
+    for idx in range(1, motif_count + 1):
+        x_var = (2 * idx) - 1
+        y_var = 2 * idx
+        clauses.extend(_proof_motif_site_clauses(motif_type, x_var, y_var))
+    return CNFFormula.from_raw_clauses(clauses)
+
+
+def make_proof_motif_instance(instance_id: str) -> ProofMotifInstance:
+    specs: dict[str, dict[str, Any]] = {
+        "motif_ladder_4": {"motif_type": "RESOLUTION_TEMPLATE", "count": 4, "description": "Four renamed local resolution-conflict motifs."},
+        "motif_ladder_8": {"motif_type": "RESOLUTION_TEMPLATE", "count": 8, "description": "Eight renamed local resolution-conflict motifs."},
+        "motif_ladder_16": {"motif_type": "RESOLUTION_TEMPLATE", "count": 16, "description": "Sixteen renamed local resolution-conflict motifs."},
+        "renamed_conflict_motif_8": {"motif_type": "RESOLUTION_TEMPLATE", "count": 8, "description": "Eight proof-isomorphic conflicts under variable renaming."},
+        "motif_chain_with_selectors_8": {"motif_type": "UNIT_PROPAGATION_TEMPLATE", "count": 8, "description": "Eight selector-style unit-propagation conflict motifs."},
+        "repeated_coloring_gadget_6": {"motif_type": "RESOLUTION_TEMPLATE", "count": 6, "description": "Structured repeated gadget proxy; native motif certificate only."},
+        "repeated_capacity_gadget_6": {"motif_type": "UNIT_PROPAGATION_TEMPLATE", "count": 6, "description": "Structured repeated capacity-gadget proxy; native motif certificate only."},
+        "tseitin_grid_optional": {
+            "motif_type": "RESOLUTION_TEMPLATE",
+            "count": 0,
+            "duplicate": True,
+            "description": "Secondary optional Tseitin row; not counted as a G6 delta because prior XOR grammars may already handle the pattern.",
+        },
+    }
+    if instance_id not in specs:
+        raise ValueError(f"unsupported proof-motif instance id: {instance_id}")
+    spec = specs[instance_id]
+    motif_count = int(spec["count"])
+    motif_type = str(spec["motif_type"])
+    formula = _build_proof_motif_formula(motif_type, motif_count) if motif_count else CNFFormula.from_raw_clauses([[1, 2], [-1, -2]])
+    duplicate = bool(spec.get("duplicate", False))
+    prior = "DUPLICATE_OF_G1_XOR_PATTERN" if duplicate else "G0_G5_PROOF_SIZE_CAP_EXCEEDED"
+    return ProofMotifInstance(
+        instance_id=instance_id,
+        motif_type=motif_type,
+        motif_count=motif_count,
+        formula=formula,
+        prior_g0_g5_result=prior,
+        duplicate_of_prior=duplicate,
+        description=str(spec.get("description", "")),
+    )
+
+
+def _clause_from_maybe_empty(literals: Iterable[int]) -> Clause:
+    maybe = Clause.from_literals(literals)
+    if maybe is None:
+        raise ValueError("tautological clause is not valid inside proof motif certificate")
+    return maybe
+
+
+def _canonical_clause_list(literals: Iterable[int]) -> list[int]:
+    return list(_clause_from_maybe_empty(literals).literals)
+
+
+def _instantiate_literal(lit: int, substitution: dict[int, int]) -> int:
+    mapped = int(substitution[abs(int(lit))])
+    return mapped if int(lit) > 0 else -mapped
+
+
+def _instantiate_clause_list(literals: Iterable[int], substitution: dict[int, int]) -> list[int]:
+    return _canonical_clause_list(_instantiate_literal(lit, substitution) for lit in literals)
+
+
+def _verify_template_proof(template: dict[str, Any]) -> tuple[bool, list[str], dict[str, list[int]]]:
+    errors: list[str] = []
+    env: dict[str, Clause] = {}
+    for source in template.get("template_source_clauses", []):
+        try:
+            env[str(source["label"])] = _clause_from_maybe_empty(source["clause"])
+        except (KeyError, ValueError) as exc:
+            errors.append(f"TEMPLATE_SOURCE_INVALID:{source.get('label', '?')}:{exc}")
+    for step in template.get("template_steps", []):
+        step_id = str(step.get("step_id", ""))
+        try:
+            if step.get("kind") == "RESOLUTION":
+                parent_a = env[str(step["parents"][0])]
+                parent_b = env[str(step["parents"][1])]
+                pivot = int(step["pivot"])
+                derived = resolvent(parent_a, parent_b, pivot)
+                if derived is None:
+                    errors.append(f"TEMPLATE_RESOLUTION_TAUTOLOGY:{step_id}")
+                    continue
+            elif step.get("kind") == "UNIT_PROPAGATION":
+                unit_parent = env[str(step["unit_parent"])]
+                clause_parent = env[str(step["clause_parent"])]
+                unit_literal = int(step["unit_literal"])
+                if unit_parent.literals != (unit_literal,):
+                    errors.append(f"TEMPLATE_UNIT_PARENT_INVALID:{step_id}")
+                if -unit_literal not in clause_parent:
+                    errors.append(f"TEMPLATE_UNIT_COMPLEMENT_MISSING:{step_id}")
+                derived = clause_parent.without(-unit_literal)
+                if derived is None:
+                    errors.append(f"TEMPLATE_UNIT_TAUTOLOGY:{step_id}")
+                    continue
+            else:
+                errors.append(f"TEMPLATE_STEP_KIND_UNSUPPORTED:{step_id}")
+                continue
+            expected = _clause_from_maybe_empty(step.get("result", []))
+            if derived != expected:
+                errors.append(f"TEMPLATE_STEP_RESULT_MISMATCH:{step_id}")
+            env[step_id] = derived
+        except (KeyError, TypeError, ValueError) as exc:
+            errors.append(f"TEMPLATE_STEP_INVALID:{step_id}:{exc}")
+    derived_lemma = _clause_from_maybe_empty(template.get("derived_template_lemma", []))
+    if not template.get("template_steps"):
+        errors.append("TEMPLATE_HAS_NO_STEPS")
+    else:
+        last_id = str(template["template_steps"][-1].get("step_id", ""))
+        if env.get(last_id) != derived_lemma:
+            errors.append("TEMPLATE_DERIVED_LEMMA_MISMATCH")
+    return not errors, errors, {label: list(clause.literals) for label, clause in env.items()}
+
+
+def _instantiated_steps(template: dict[str, Any], substitution: dict[int, int]) -> list[dict[str, Any]]:
+    steps: list[dict[str, Any]] = []
+    for step in template.get("template_steps", []):
+        item = {
+            "step_id": str(step["step_id"]),
+            "kind": str(step["kind"]),
+            "result": _instantiate_clause_list(step.get("result", []), substitution),
+        }
+        if step.get("kind") == "RESOLUTION":
+            item["pivot"] = _instantiate_literal(int(step["pivot"]), substitution)
+            item["parents"] = list(step["parents"])
+        else:
+            item["unit_literal"] = _instantiate_literal(int(step["unit_literal"]), substitution)
+            item["unit_parent"] = str(step["unit_parent"])
+            item["clause_parent"] = str(step["clause_parent"])
+        steps.append(item)
+    return steps
+
+
+def _instantiated_steps_hash(template: dict[str, Any], substitution: dict[int, int]) -> str:
+    return hashlib.sha256(stable_json(_instantiated_steps(template, substitution)).encode("utf-8")).hexdigest()
+
+
+def detect_proof_motif_templates(instance: ProofMotifInstance) -> dict[str, Any]:
+    if instance.duplicate_of_prior or instance.motif_count <= 0:
+        return {
+            "status": PROOF_MOTIF_COMPRESSION_DIAGNOSTIC_ONLY,
+            "motif_templates": [],
+            "reuse_sites": [],
+            "message": "Optional duplicate/diagnostic row; no G6 proof-motif delta is claimed.",
+        }
+    template = _proof_motif_template(instance.motif_type)
+    verified, errors, _ = _verify_template_proof(template)
+    template = dict(template)
+    template["template_verified"] = verified
+    template["template_errors"] = errors
+    clause_ids = _clause_id_map(instance.formula)
+    reuse_sites: list[dict[str, Any]] = []
+    for idx in range(1, instance.motif_count + 1):
+        substitution = {1: (2 * idx) - 1, 2: 2 * idx}
+        source_clause_ids = [
+            clause_ids[tuple(_instantiate_clause_list(source["clause"], substitution))]
+            for source in template["template_source_clauses"]
+        ]
+        reuse_sites.append(
+            {
+                "reuse_id": f"reuse_{idx}",
+                "motif_id": template["motif_id"],
+                "substitution_map": {str(key): value for key, value in substitution.items()},
+                "source_clause_ids": source_clause_ids,
+                "instantiated_steps_hash": _instantiated_steps_hash(template, substitution),
+                "derived_instantiated_lemma": _instantiate_clause_list(template["derived_template_lemma"], substitution),
+                "reuse_verified": False,
+            }
+        )
+    return {
+        "status": PROOF_MOTIF_TEMPLATE_EXTRACTED,
+        "motif_templates": [template],
+        "reuse_sites": reuse_sites,
+        "message": "Repeated proof motif template and reuse sites detected.",
+    }
+
+
+def build_proof_motif_certificate(instance: ProofMotifInstance) -> ProofMotifCompressionCertificate:
+    detection = detect_proof_motif_templates(instance)
+    templates = list(detection["motif_templates"])
+    reuse_sites = list(detection["reuse_sites"])
+    template_steps = len(templates[0]["template_steps"]) if templates else 0
+    expanded = template_steps * len(reuse_sites)
+    compressed = template_steps + 1 if reuse_sites else 0
+    compression_ratio = round(expanded / compressed, 4) if compressed else 0.0
+    compressed_proof = {
+        "macro_steps": [
+            {"macro_step_id": f"macro_{idx + 1}", "reuse_id": reuse["reuse_id"], "lemma": reuse["derived_instantiated_lemma"]}
+            for idx, reuse in enumerate(reuse_sites)
+        ],
+        "final_contradiction": bool(reuse_sites),
+        "expanded_step_count_estimate": expanded,
+        "compressed_step_count": compressed,
+        "compression_ratio": compression_ratio,
+    }
+    status = PROOF_MOTIF_COMPRESSION_DIAGNOSTIC_ONLY
+    public_category = "NO_COLLAPSE_FOUND"
+    certification_level = "NOT_CERTIFIED"
+    g6_delta_status = PROOF_MOTIF_NO_DELTA
+    notes = "No proof-motif certificate is claimed."
+    if reuse_sites and not instance.duplicate_of_prior:
+        status = PROOF_MOTIF_COMPRESSION_NATIVE_UNSAT
+        public_category = UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED
+        certification_level = PROOF_MOTIF_NATIVE_CERTIFIED
+        g6_delta_status = "PENDING_CHECK"
+        notes = "Native proof-motif macro certificate candidate; checker must verify every reuse instantiation."
+    cert = ProofMotifCompressionCertificate(
+        type="PROOF_MOTIF_COMPRESSION_CERTIFICATE",
+        instance_id=instance.instance_id,
+        formula_hash=instance.formula.formula_hash,
+        motif_templates=templates,
+        reuse_sites=reuse_sites,
+        compressed_proof=compressed_proof,
+        checker_status="NOT_RUN" if reuse_sites else PROOF_MOTIF_CERTIFICATE_FAILED,
+        status=status,
+        public_category=public_category,
+        certification_level=certification_level,
+        drat_claim=PROOF_MOTIF_DRAT_NOT_CLAIMED,
+        g6_delta_status=g6_delta_status,
+        claim_boundary="native proof-motif certificate only; no DRAT proof claimed",
+        notes=notes,
+    )
+    check = check_proof_motif_certificate(instance.formula, cert)
+    data = cert.to_dict()
+    data["checker_status"] = check["status"]
+    if check["status"] == PROOF_MOTIF_CERTIFICATE_VERIFIED:
+        data["g6_delta_status"] = G6_PROOF_MOTIF_NATIVE_CERTIFIED
+        data["status"] = PROOF_MOTIF_COMPRESSION_NATIVE_UNSAT
+        data["public_category"] = UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED
+        data["certification_level"] = PROOF_MOTIF_NATIVE_CERTIFIED
+        data["reuse_sites"] = [{**reuse, "reuse_verified": True} for reuse in data["reuse_sites"]]
+        data["notes"] = "Every motif reuse was expanded and verified against original clauses."
+    elif instance.duplicate_of_prior:
+        data["g6_delta_status"] = DUPLICATE_OF_G1_XOR_PATTERN
+        data["notes"] = "Duplicate prior XOR/Tseitin-style row; not counted as a G6 delta."
+    else:
+        data["status"] = PROOF_MOTIF_CERTIFICATE_FAILED
+        data["public_category"] = "NO_COLLAPSE_FOUND"
+        data["certification_level"] = "NOT_CERTIFIED"
+        data["g6_delta_status"] = PROOF_MOTIF_NO_DELTA
+    return ProofMotifCompressionCertificate(**data)
+
+
+def _clause_by_id(formula: CNFFormula) -> dict[int, tuple[int, ...]]:
+    return {idx: clause for clause, idx in _clause_id_map(formula).items()}
+
+
+def check_proof_motif_certificate(formula: CNFFormula, certificate: ProofMotifCompressionCertificate | dict[str, Any]) -> dict[str, Any]:
+    data = certificate.to_dict() if isinstance(certificate, ProofMotifCompressionCertificate) else dict(certificate)
+    errors: list[str] = []
+    if str(data.get("formula_hash", "")).lower() != formula.formula_hash.lower():
+        errors.append("FORMULA_HASH_MISMATCH")
+    if data.get("drat_claim") != PROOF_MOTIF_DRAT_NOT_CLAIMED:
+        errors.append("FAKE_DRAT_CLAIM")
+    if "DRAT" in str(data.get("public_category", "")):
+        errors.append("PUBLIC_CATEGORY_FAKE_DRAT")
+    templates = {str(template.get("motif_id")): template for template in data.get("motif_templates", [])}
+    verified_templates: dict[str, dict[str, Any]] = {}
+    for motif_id, template in templates.items():
+        verified, template_errors, _ = _verify_template_proof(template)
+        if not verified:
+            errors.extend([f"TEMPLATE_INVALID:{motif_id}:{error}" for error in template_errors])
+        else:
+            verified_templates[motif_id] = template
+    clause_by_id = _clause_by_id(formula)
+    verified_reuses: dict[str, list[int]] = {}
+    for reuse in data.get("reuse_sites", []):
+        reuse_id = str(reuse.get("reuse_id", ""))
+        motif_id = str(reuse.get("motif_id", ""))
+        template = verified_templates.get(motif_id)
+        if template is None:
+            errors.append(f"REUSE_TEMPLATE_NOT_VERIFIED:{reuse_id}")
+            continue
+        try:
+            substitution = {int(key): int(value) for key, value in reuse.get("substitution_map", {}).items()}
+            if set(substitution) != {1, 2} or len(set(substitution.values())) != len(substitution.values()):
+                errors.append(f"SUBSTITUTION_INVALID:{reuse_id}")
+            source_ids = [int(clause_id) for clause_id in reuse.get("source_clause_ids", [])]
+            if len(source_ids) != len(template.get("template_source_clauses", [])):
+                errors.append(f"REUSE_SOURCE_ID_COUNT_MISMATCH:{reuse_id}")
+            for source, clause_id in zip(template.get("template_source_clauses", []), source_ids):
+                expected = tuple(_instantiate_clause_list(source["clause"], substitution))
+                if clause_by_id.get(clause_id) != expected:
+                    errors.append(f"REUSE_SOURCE_CLAUSE_MISMATCH:{reuse_id}:{source.get('label')}")
+            expected_hash = _instantiated_steps_hash(template, substitution)
+            if reuse.get("instantiated_steps_hash") != expected_hash:
+                errors.append(f"REUSE_INSTANTIATED_STEPS_HASH_MISMATCH:{reuse_id}")
+            derived = _instantiate_clause_list(template.get("derived_template_lemma", []), substitution)
+            if _canonical_clause_list(reuse.get("derived_instantiated_lemma", [])) != derived:
+                errors.append(f"REUSE_DERIVED_LEMMA_MISMATCH:{reuse_id}")
+            verified_reuses[reuse_id] = derived
+        except (KeyError, TypeError, ValueError) as exc:
+            errors.append(f"REUSE_INVALID:{reuse_id}:{exc}")
+    compressed = data.get("compressed_proof", {})
+    macro_steps = compressed.get("macro_steps", [])
+    final_empty = False
+    for step in macro_steps:
+        reuse_id = str(step.get("reuse_id", ""))
+        lemma = _canonical_clause_list(step.get("lemma", []))
+        if reuse_id not in verified_reuses:
+            errors.append(f"MACRO_REUSE_NOT_VERIFIED:{reuse_id}")
+        elif verified_reuses[reuse_id] != lemma:
+            errors.append(f"MACRO_LEMMA_MISMATCH:{reuse_id}")
+        elif lemma == []:
+            final_empty = True
+    if data.get("public_category") == UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED:
+        if compressed.get("final_contradiction") is not True or not final_empty:
+            errors.append("FINAL_CONTRADICTION_NOT_VERIFIED")
+    if int(compressed.get("compressed_step_count", 0)) <= 0 and macro_steps:
+        errors.append("COMPRESSED_STEP_COUNT_INVALID")
+    if float(compressed.get("compression_ratio", 0.0)) <= 1.0 and len(macro_steps) >= 4:
+        errors.append("COMPRESSION_RATIO_NOT_MEANINGFUL")
+    if not templates and data.get("public_category") != "NO_COLLAPSE_FOUND":
+        errors.append("NO_TEMPLATE_FOR_CERTIFIED_ROW")
+    status = PROOF_MOTIF_CERTIFICATE_VERIFIED if not errors and templates and verified_reuses else PROOF_MOTIF_CERTIFICATE_FAILED
+    return {
+        "status": status,
+        "checker_status": status,
+        "errors": errors,
+        "template_count": len(verified_templates),
+        "reuse_count": len(verified_reuses),
+        "final_contradiction_verified": final_empty,
+        "claim_boundary": "Native proof-motif certificate only; every reuse instantiation is checked and no DRAT proof is claimed.",
+    }
+
+
+def proof_motif_report(rows: list[dict[str, Any]], delta: dict[str, Any]) -> str:
+    lines = [
+        "# Proof Motif Compression Report",
+        "",
+        "## Executive Summary",
+        "",
+        "v2.7 promotes the v2.4-generated PROOF_MOTIF_COMPRESSION candidate into G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE. It detects repeated local proof motifs, verifies one native template proof, checks every reuse instantiation, and records a compressed native macro-proof certificate. It does not claim DRAT verification, a theorem, P vs NP progress, or that repeated patterns are proofs without checker verification.",
+        "",
+        "## Target Rows",
+        "",
+        "| instance | prior G0-G5 result | G6 status | public category | reuse sites | compression ratio | delta |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            f"| `{row['instance_id']}` | `{row['prior_g0_g5_result']}` | `{row['g6_status']}` | `{row['public_category']}` | {row['reuse_count']} | {row['compression_ratio']} | `{row['g6_delta_status']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Native Motif Certificate Boundary",
+            "",
+            "A repeated pattern is not treated as proof. The checker verifies the motif template, source clauses, substitution map, instantiated proof hash, derived lemma, and final macro contradiction for every reuse site.",
+            "",
+            "## Optional Tseitin Handling",
+            "",
+            "Tseitin/XOR-like optional rows are not counted as novel G6 deltas when prior XOR grammars may already collapse them. Such rows are marked as duplicate prior-pattern controls.",
+            "",
+            "## Operator Delta Summary",
+            "",
+            stable_json(delta),
+            "## Forbidden Claims",
+            "",
+            "- no P vs NP progress claim",
+            "- no polynomial-time SAT claim",
+            "- no proof motif completeness claim",
+            "- no DRAT verification claim",
+            "- no G6 strictness theorem claim",
+            "- no Tseitin duplicate counted as a novel G6 delta",
+            "- no HARD or UNKNOWN statuses",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def run_proof_motif_lab(
+    *,
+    instances: Iterable[str],
+    out_root: str | Path,
+    strict: bool = False,
+    zip_path: str | Path | None = None,
+) -> dict[str, Any]:
+    root = Path(out_root)
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True, exist_ok=True)
+    cert_root = root / "certificates"
+    cnf_root = root / "original_cnf"
+    cert_root.mkdir(parents=True, exist_ok=True)
+    cnf_root.mkdir(parents=True, exist_ok=True)
+
+    rows: list[dict[str, Any]] = []
+    certificates: list[dict[str, Any]] = []
+    detection_traces: list[dict[str, Any]] = []
+    reuse_summaries: list[dict[str, Any]] = []
+    compression_summaries: list[dict[str, Any]] = []
+    for instance_id in instances:
+        instance = make_proof_motif_instance(instance_id)
+        detection = detect_proof_motif_templates(instance)
+        certificate = build_proof_motif_certificate(instance)
+        check = check_proof_motif_certificate(instance.formula, certificate)
+        cert_path = cert_root / f"{instance_id}_proof_motif_certificate.json"
+        cnf_path = cnf_root / f"{instance_id}.cnf"
+        cert_path.write_text(stable_json(certificate.to_dict()), encoding="utf-8", newline="\n")
+        cnf_path.write_text(instance.formula.canonical_dimacs(), encoding="utf-8", newline="\n")
+        reuse_count = len(certificate.reuse_sites)
+        compressed = certificate.compressed_proof
+        novel_delta = (
+            check["status"] == PROOF_MOTIF_CERTIFICATE_VERIFIED
+            and not instance.duplicate_of_prior
+            and certificate.public_category == UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED
+        )
+        row = {
+            "instance_id": instance_id,
+            "family": instance.family,
+            "prior_g0_g5_result": instance.prior_g0_g5_result,
+            "g6_grammar": "G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE",
+            "g6_status": certificate.status,
+            "public_category": certificate.public_category,
+            "certification_level": certificate.certification_level,
+            "checker_status": check["status"],
+            "motif_template_count": len(certificate.motif_templates),
+            "reuse_count": reuse_count,
+            "expanded_step_count_estimate": compressed.get("expanded_step_count_estimate", 0),
+            "compressed_step_count": compressed.get("compressed_step_count", 0),
+            "compression_ratio": compressed.get("compression_ratio", 0.0),
+            "g6_delta_status": DUPLICATE_OF_G1_XOR_PATTERN if instance.duplicate_of_prior else certificate.g6_delta_status,
+            "novel_g6_delta": novel_delta,
+            "duplicate_of_prior": instance.duplicate_of_prior,
+            "drat_claim": certificate.drat_claim,
+            "certificate_path": str(cert_path),
+            "cnf_path": str(cnf_path),
+        }
+        rows.append(row)
+        certificates.append(certificate.to_dict())
+        detection_traces.append({"instance_id": instance_id, "detection": detection, "instance": instance.to_dict()})
+        reuse_summaries.append({"instance_id": instance_id, "reuse_sites": certificate.reuse_sites, "checker": check})
+        compression_summaries.append({"instance_id": instance_id, "compressed_proof": compressed})
+
+    delta = {
+        "operator_added": "G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE",
+        "promoted_candidate": "PROOF_MOTIF_COMPRESSION",
+        "instances_total": len(rows),
+        "native_certified": sum(1 for row in rows if row["checker_status"] == PROOF_MOTIF_CERTIFICATE_VERIFIED),
+        "novel_g6_deltas": sum(1 for row in rows if row["novel_g6_delta"]),
+        "duplicate_prior_controls": sum(1 for row in rows if row["duplicate_of_prior"]),
+        "max_compression_ratio": max((float(row["compression_ratio"]) for row in rows), default=0.0),
+        "fake_drat_claims": sum(1 for row in rows if row["drat_claim"] != PROOF_MOTIF_DRAT_NOT_CLAIMED),
+        "strictness_status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+        "claim_boundary": "G6 native macro-proof motif certificates only; no DRAT claim and no proof-completeness or P vs NP claim.",
+    }
+    theorem_queue = [
+        {
+            "id": "TC-018",
+            "name": "Proof Motif Native Certification Candidate",
+            "status": "FORMAL_PROOF_SKETCH",
+            "statement": "For formulas containing repeated isomorphic local proof motifs, G6 can emit a native macro-proof certificate whose checker verifies one motif template and all instantiations.",
+            "forbidden_interpretations": ["not DRAT", "not proof-complete", "not P vs NP progress"],
+        },
+        {
+            "id": "TC-019",
+            "name": "G6 Proof Motif Compression Strictness Candidate",
+            "status": "EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            "statement": "Repeated-motif formulas can be certified by G6 within a proof-size profile where G0-G5 are treated as exceeding configured proof-size bounds.",
+            "forbidden_interpretations": ["not a strictness theorem", "no lower bound against G0-G5 is proved"],
+        },
+        {
+            "id": "TC-020",
+            "name": "Operator Genesis Success Candidate 3",
+            "status": "EMPIRICAL_EVIDENCE",
+            "statement": "The v2.4-generated PROOF_MOTIF_COMPRESSION candidate was promoted to a v2.7 prototype with native macro-proof certificates and bounded operator-delta evidence.",
+            "forbidden_interpretations": ["generated operator is not a theorem", "not a DRAT route"],
+        },
+    ]
+    payloads = {
+        "proof_motif_certificates.json": {"certificates": certificates},
+        "motif_detection_trace.json": {"traces": detection_traces},
+        "motif_reuse_summary.json": {"reuse_summaries": reuse_summaries},
+        "proof_compression_summary.json": {"compression_summaries": compression_summaries},
+        "g6_operator_delta_summary.json": delta,
+        "theorem_candidates.json": {"theorem_candidates": theorem_queue},
+        "manifest.json": {
+            "version": "2.7",
+            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "instances": list(instances),
+            "strict": strict,
+            "claim_boundary": "native proof-motif macro certificates only; no DRAT or P vs NP claim",
+        },
+    }
+    for name, payload in payloads.items():
+        _write_json(root / name, payload)
+    _write_proof_motif_csv(root / "proof_motif_structure_summary.csv", rows)
+    (root / "PROOF_MOTIF_COMPRESSION_REPORT.md").write_text(proof_motif_report(rows, delta), encoding="utf-8", newline="\n")
+    digest = make_zip(root, zip_path) if zip_path else ""
+    return {
+        "out_root": str(root),
+        "zip": str(zip_path) if zip_path else "",
+        "zip_sha256": digest,
+        "proof_motif_certificates": certificates,
+        "proof_motif_rows": rows,
+        "motif_detection_trace": detection_traces,
+        "motif_reuse_summary": reuse_summaries,
+        "proof_compression_summary": compression_summaries,
+        "g6_operator_delta_summary": delta,
+        "theorem_candidates": theorem_queue,
+    }
+
+
+def _write_proof_motif_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    headers = [
+        "instance_id",
+        "prior_g0_g5_result",
+        "g6_status",
+        "public_category",
+        "checker_status",
+        "reuse_count",
+        "expanded_step_count_estimate",
+        "compressed_step_count",
+        "compression_ratio",
+        "g6_delta_status",
+        "novel_g6_delta",
+    ]
+    lines = [",".join(headers)]
+    for row in rows:
+        lines.append(",".join(str(row.get(header, "")).replace(",", ";") for header in headers))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Witnora Operator Genesis Engine")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2551,6 +3176,27 @@ def main(argv: list[str] | None = None) -> int:
     check_affine_parser.add_argument("--cnf", required=True)
     check_affine_parser.add_argument("--certificate", required=True)
     check_affine_parser.add_argument("--max-arity", type=int, default=10)
+    motif_parser = sub.add_parser("run-proof-motif-lab")
+    motif_parser.add_argument(
+        "--instances",
+        nargs="+",
+        default=[
+            "motif_ladder_4",
+            "motif_ladder_8",
+            "motif_ladder_16",
+            "renamed_conflict_motif_8",
+            "motif_chain_with_selectors_8",
+            "repeated_coloring_gadget_6",
+            "repeated_capacity_gadget_6",
+            "tseitin_grid_optional",
+        ],
+    )
+    motif_parser.add_argument("--out-root", default="outputs/v2.7-proof-motif-compression")
+    motif_parser.add_argument("--strict", action="store_true")
+    motif_parser.add_argument("--zip", default="witnora-core-v2.7-proof-motif-compression.zip")
+    check_motif_parser = sub.add_parser("check-proof-motif-cert")
+    check_motif_parser.add_argument("--cnf", required=True)
+    check_motif_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
     if args.command == "run":
         result = run_operator_genesis(families=args.families, out_root=args.out_root, strict=args.strict, zip_path=args.zip)
@@ -2615,6 +3261,29 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_affine_residue_certificate(formula, data, max_arity=args.max_arity)))
+        return 0
+    if args.command == "run-proof-motif-lab":
+        result = run_proof_motif_lab(
+            instances=args.instances,
+            out_root=args.out_root,
+            strict=args.strict,
+            zip_path=args.zip,
+        )
+        print(
+            stable_json(
+                {
+                    "out_root": args.out_root,
+                    "zip": args.zip,
+                    "zip_sha256": result["zip_sha256"],
+                    "summary": result["g6_operator_delta_summary"],
+                }
+            )
+        )
+        return 0
+    if args.command == "check-proof-motif-cert":
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_proof_motif_certificate(formula, data)))
         return 0
     return 1
 

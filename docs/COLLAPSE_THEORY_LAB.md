@@ -47,6 +47,10 @@ discover a collapse path to a witness or proof?
   extraction from full forbidden-assignment CNF encodings plus native
   Gaussian-elimination certificates. This is not heuristic XOR mining,
   CryptoMiniSat-style extraction, broad modular arithmetic solving, or DRAT.
+- `G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`: repeated native proof motif
+  detection, template verification, reuse instantiation checking, and
+  compressed macro-proof certificates. This is not DRAT and not a
+  proof-compression completeness claim.
 - `G4_BACKDOOR_DIAGNOSTIC`: honest stub.
 - `G2_SYMMETRY_PROTOTYPE`: `G1_XOR` plus deterministic syntactic orbit
   diagnostics. This is not full automorphism detection and does not certify
@@ -132,6 +136,21 @@ nontrivial row scaling over GF(2).
 
 This is a native affine certificate, not a DRAT proof, not broad modular
 arithmetic solving, and not a G5 strictness theorem.
+
+## v2.7 Proof Motif Compression
+
+v2.7 implements the third generated-operator prototype:
+`G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`. It promotes the v2.4
+`PROOF_MOTIF_COMPRESSION` candidate into a native macro-proof checker for
+repeated local proof motifs.
+
+The checker trusts a reuse only after verifying the template proof, the
+substitution map, original source clause IDs, deterministic instantiated proof
+hash, derived lemma, and final contradiction. Optional Tseitin rows are not
+counted as G6 deltas if earlier XOR grammars can already collapse them.
+
+This is native proof-structure evidence, not DRAT, not proof-compression
+completeness, and not a G6 strictness theorem.
 
 ## Claim Boundary
 

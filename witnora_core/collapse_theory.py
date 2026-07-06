@@ -40,7 +40,7 @@ from .runner import solve, solve_with_xor
 from .theorem_candidates import initial_theorem_candidates, theorem_candidates_markdown
 from .xor import canonical_xor_cnf_clauses, detect_cnf_xor_patterns
 
-THEORY_VERSION = "2.4"
+THEORY_VERSION = "2.7"
 OPERATOR_STUB_NOT_EXECUTED = "OPERATOR_STUB_NOT_EXECUTED"
 
 WITHIN_BOUNDS = "WITHIN_BOUNDS"
@@ -87,6 +87,7 @@ UNSAT_PIGEONHOLE_NATIVE_CERTIFIED = "UNSAT_PIGEONHOLE_NATIVE_CERTIFIED"
 UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED = "UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED"
 UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
 SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED = "SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED"
+UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED = "UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED"
 
 PUBLIC_CATEGORIES = [
     SAT_ASSIGNMENT_VERIFIED,
@@ -97,6 +98,7 @@ PUBLIC_CATEGORIES = [
     UNSAT_ORBIT_CAPACITY_NATIVE_CERTIFIED,
     UNSAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
     SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED,
+    UNSAT_PROOF_MOTIF_NATIVE_CERTIFIED,
     NO_COLLAPSE_FOUND,
     OPERATOR_STUB_NOT_EXECUTED,
     TIMEOUT,
@@ -460,6 +462,7 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     g3_card_ops = (*g2_sym_ops, "CARDINALITY_PB_DIAGNOSTIC", "PIGEONHOLE_COUNTING_CERTIFICATE")
     g4_orbit_capacity_ops = (*g3_card_ops, "ORBIT_CAPACITY_COUNTING_CERTIFICATE")
     g5_affine_ops = (*g4_orbit_capacity_ops, "HIGH_ARITY_AFFINE_RESIDUE_CERTIFICATE")
+    g6_proof_motif_ops = (*g5_affine_ops, "PROOF_MOTIF_COMPRESSION_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -541,6 +544,15 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             10,
             {"proof_policy": "native_high_arity_gf2_certificate_no_drat_claim"},
             "G4 plus a generated exact high-arity GF(2) affine residue prototype. It is native-only and does not claim heuristic XOR mining or broad modular solving.",
+        ),
+        "G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE": CollapseGrammar(
+            "G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE",
+            g6_proof_motif_ops,
+            (*terminals, "XOR_AFFINE", "HIGH_ARITY_AFFINE_RESIDUE_NATIVE", "PROOF_MOTIF_NATIVE_MACRO_PROOF"),
+            2,
+            10,
+            {"proof_policy": "native_macro_proof_motif_certificate_no_drat_claim"},
+            "G5 plus a generated native proof-motif compression prototype. It verifies motif templates and every reuse instantiation; it does not claim DRAT or proof completeness.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",
@@ -1579,7 +1591,11 @@ def run_instance(
     drat_trim_path: str | Path | None = None,
 ) -> CollapseResult:
     started = time.perf_counter()
-    if grammar.name in {"G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE", "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE"}:
+    if grammar.name in {
+        "G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE",
+        "G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE",
+        "G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE",
+    }:
         return _stub_result(instance, grammar, started)
     if any(op.endswith("_PROTOTYPE") or op == "BACKDOOR_DIAGNOSTIC" for op in grammar.operators):
         return _stub_result(instance, grammar, started)
@@ -2670,6 +2686,29 @@ def main(argv: list[str] | None = None) -> int:
     check_affine_parser.add_argument("--cnf", required=True)
     check_affine_parser.add_argument("--certificate", required=True)
     check_affine_parser.add_argument("--max-arity", type=int, default=10)
+
+    proof_motif_parser = sub.add_parser("run-proof-motif-lab")
+    proof_motif_parser.add_argument(
+        "--instances",
+        nargs="+",
+        default=[
+            "motif_ladder_4",
+            "motif_ladder_8",
+            "motif_ladder_16",
+            "renamed_conflict_motif_8",
+            "motif_chain_with_selectors_8",
+            "repeated_coloring_gadget_6",
+            "repeated_capacity_gadget_6",
+            "tseitin_grid_optional",
+        ],
+    )
+    proof_motif_parser.add_argument("--out-root", default="outputs/v2.7-proof-motif-compression")
+    proof_motif_parser.add_argument("--strict", action="store_true")
+    proof_motif_parser.add_argument("--zip", default="witnora-core-v2.7-proof-motif-compression.zip")
+
+    check_proof_motif_parser = sub.add_parser("check-proof-motif-cert")
+    check_proof_motif_parser.add_argument("--cnf", required=True)
+    check_proof_motif_parser.add_argument("--certificate", required=True)
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2752,6 +2791,22 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_affine_residue_certificate(formula, data, max_arity=args.max_arity)))
+        return 0
+
+    if args.command == "run-proof-motif-lab":
+        from .operator_genesis import run_proof_motif_lab
+
+        result = run_proof_motif_lab(instances=args.instances, out_root=args.out_root, strict=args.strict)
+        digest = make_zip(args.out_root, args.zip)
+        print(stable_json({"out_root": args.out_root, "zip": args.zip, "zip_sha256": digest, "summary": result["g6_operator_delta_summary"]}))
+        return 0
+
+    if args.command == "check-proof-motif-cert":
+        from .operator_genesis import check_proof_motif_certificate
+
+        formula = load_dimacs(args.cnf)
+        data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
+        print(stable_json(check_proof_motif_certificate(formula, data)))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)

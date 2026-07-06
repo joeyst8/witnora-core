@@ -393,6 +393,71 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use the promotion pipeline to select a third generated operator prototype."],
         ),
+        TheoremCandidate(
+            id="TC-018",
+            name="Proof Motif Native Certification Candidate",
+            statement=(
+                "For formulas containing repeated isomorphic local proof motifs, G6 can emit a native "
+                "macro-proof certificate whose checker verifies one motif template and all instantiations."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["motif_ladder_4", "motif_ladder_8", "renamed_conflict_motif_8"],
+            required_proof_obligations=[
+                "Verify each motif template as a native resolution or unit-propagation proof.",
+                "Verify each reuse substitution against original source clauses.",
+                "Verify each instantiated proof hash and derived lemma.",
+                "Verify the final macro contradiction uses only verified instantiated lemmas.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim DRAT verification.",
+                "Does not claim proof motif compression is complete for structured formulas.",
+                "Does not claim repeated patterns are proofs without checker verification.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Try repeated proof motifs in non-synthetic scheduling and graph gadget families."],
+        ),
+        TheoremCandidate(
+            id="TC-019",
+            name="G6 Proof Motif Compression Strictness Candidate",
+            statement=(
+                "There exists a bounded profile B where repeated-motif formulas are certified by G6 "
+                "within proof-size bounds while G0-G5 fail or exceed configured proof-size bounds."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["motif_ladder_16", "motif_chain_with_selectors_8"],
+            required_proof_obligations=[
+                "State the configured proof-size bound.",
+                "Replay native G6 macro-proof certificates.",
+                "Provide formal bounded non-collapse or proof-size evidence before promoting to theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim G6 strictness as a theorem.",
+                "Does not prove lower bounds against G0-G5.",
+                "Does not count Tseitin/XOR duplicates as novel G6 deltas.",
+            ],
+            next_experiments=["Measure compression ratios on larger repeated motif ladders under fixed bounds."],
+        ),
+        TheoremCandidate(
+            id="TC-020",
+            name="Operator Genesis Success Candidate 3",
+            statement=(
+                "The v2.4-generated PROOF_MOTIF_COMPRESSION candidate was promoted to a v2.7 "
+                "implemented prototype with native macro-proof certificates and bounded operator-delta evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["motif_ladder_8", "motif_chain_with_selectors_8"],
+            required_proof_obligations=[
+                "Record the generated candidate origin.",
+                "Replay the native proof-motif checker.",
+                "Keep generated-operator success separate from theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not mean generated operator discovery proves a theorem.",
+                "Does not imply a complete proof-compression system.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use the promotion pipeline to select a fourth generated operator prototype."],
+        ),
     ]
 
 

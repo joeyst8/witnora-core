@@ -96,3 +96,14 @@ raising the exact full-CNF affine arity bound under a native checker.
 This is not broad modular arithmetic solving. It is exact GF(2) affine
 certificate evidence only, with no heuristic mining, no CryptoMiniSat-style
 claim, and no DRAT claim.
+
+## v2.7 Proof-Motif Frontier Update
+
+The next promoted candidate is `PROOF_MOTIF_COMPRESSION`, implemented as
+`G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`. Unlike G1-G5, it is not primarily a
+semantic detector. It targets repeated proof structure: verify one motif proof,
+check every instantiation, and account for compressed macro-proof size.
+
+Tseitin/XOR-like rows are treated as duplicate controls when prior XOR
+grammars may already handle them. G6 evidence is counted only when the native
+proof-motif checker verifies template and reuse obligations.

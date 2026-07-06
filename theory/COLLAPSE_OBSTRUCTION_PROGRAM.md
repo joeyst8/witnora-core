@@ -96,6 +96,16 @@ nontrivial row-scaling claims. This keeps the operator from becoming a broad
 modular arithmetic solver, a CryptoMiniSat-style mining claim, or a fake DRAT
 route.
 
+## v2.7 Proof-Motif Promotion
+
+v2.7 promotes the `PROOF_MOTIF_COMPRESSION` schema into
+`G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`. The obstruction it addresses is repeated
+proof structure: many local proof obligations share an isomorphic template, but
+expanding each proof independently can exceed configured proof-size bounds.
+
+The checker verifies the template and every reuse instantiation. This keeps the
+operator from becoming a fake proof-compression claim or a fake DRAT route.
+
 ## Relationship to Verifier-to-Witness Research
 
 The long-term program is to discover operators that turn verifier obstructions

@@ -1,5 +1,27 @@
 # Witnora-Core v0.9.8
 
+## v2.7 Proof Motif Compression Prototype
+
+v2.7 promotes the v2.4-generated `PROOF_MOTIF_COMPRESSION` candidate into
+`G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`.
+
+This is Witnora's first proof-structural generated operator prototype. It does
+not recognize a semantic family such as XOR, cardinality, capacity, or
+symmetry. Instead, it detects repeated native proof motifs, verifies one motif
+template, checks every reuse instantiation against original clauses, and emits
+a compressed native macro-proof certificate.
+
+The certificate is native, not DRAT. A repeated pattern is not trusted as a
+proof unless the checker verifies the template proof, substitution map, source
+clause IDs, instantiated proof hash, derived lemma, and final contradiction.
+Tseitin/XOR-like optional rows are marked as duplicate prior-pattern controls
+when earlier XOR grammars may already collapse them.
+
+The allowed v2.7 claim is bounded: Witnora prototyped a generated proof motif
+compression operator with verified native template/reuse certificates on
+repeated-motif families. It does not claim proof-compression completeness, a G6
+strictness theorem, DRAT verification, or P vs NP progress.
+
 ## v2.6 High-Arity Affine Residue Prototype
 
 v2.6 promotes the v2.4-generated `MODULAR_RESIDUE_COLLAPSE` candidate into
