@@ -28,3 +28,7 @@ P vs NP progress, all-SAT coverage, hierarchy completeness, an unqualified
 theorem-proven status, or DRAT/LRAT/FRAT proof status. It asks reviewers to
 attack the restricted `SAF(c,r)` theorem, its G5 dependency, and its native
 certificate assumptions directly.
+
+v2.25 keeps the same TC-063 boundary in the public preprint: TC-063 is a
+restricted theorem with proof obligations over `SAF(c,r)`, not a fully proven
+unqualified theorem, not all-SAT coverage, and not P-vs-NP progress.

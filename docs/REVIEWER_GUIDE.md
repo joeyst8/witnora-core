@@ -1,41 +1,17 @@
-# Reviewer Guide v2.24
+# Reviewer Guide v2.25
 
 ## What to Inspect First
 
-Read the external review draft, TC-063 appendix, G9-G13 appendix, claim-boundary table, and evidence manifest.
+Read `Witnora: A Certified Collapse Hierarchy for Verifier-to-Witness SAT Reasoning`, the TC-063 section, the limitations, and the claim-boundary audit.
 
-## How to Reproduce Tests
+## What This Package Claims
 
-Set `WITNORA_DRAT_TRIM` to a real `drat-trim.exe`, then run `python -m unittest discover -s tests -v`.
+It claims a certified collapse hierarchy and public preprint package with native certificates, obstruction-to-operator planning, planner-guided finite execution, G9-G13 soundness sketches, and TC-063 restricted to SAF(c,r) with proof obligations.
 
-## Where TC-063 Lives
+## What This Package Does Not Claim
 
-Inspect `TC063_THEOREM_APPENDIX.md`, `tc063_obligation_manifest.json`, and `theory/TC063_BOUNDED_SEPARATOR_AFFINE_HARDENED_THEOREM.md`.
+No P-vs-NP proof, no P-vs-NP progress, no polynomial-time SAT algorithm, no all-SAT coverage, no hierarchy completeness, no unqualified theorem-proven status, and no fake external proof claim.
 
-## Where Proof Obligations Live
+## How to Attack It
 
-Read `tc063_obligation_manifest.json`, `G9_G13_SOUNDNESS_APPENDIX.md`, and the theory lemma files.
-
-## What Claims Are Not Made
-
-No P vs NP proof, no P vs NP progress, no all-SAT coverage, no hierarchy completeness, no polynomial-time arbitrary SAT claim, no fake DRAT claim, and no unqualified theorem-proven claim.
-
-## How to Verify Archives and SHAs
-
-Compare release entries in `artifact_sha_manifest.json` and `evidence_manifest.json` against local source and artifact zips.
-
-## How to Inspect Native Certificates
-
-Inspect native checker modules and their tests. Native means Witnora-checkable, not external DRAT/LRAT/FRAT.
-
-## How to Attack the Framework
-
-Attack G5 affine soundness, separator decomposition, UNSAT cover, native certificate boundary, finite-vs-family boundary, and claim-boundary wording.
-
-## How to Audit Claim Boundaries
-
-Read `CLAIM_BOUNDARY_TABLE.md` and `claim_boundary_manifest.json`, then compare against the paper draft and appendices.
-
-## Known Limitations
-
-Native checkers are not proof-assistant verified. TC-063 has proof obligations. Finite tests support implementation only. The hierarchy may need a lattice formalization.
+Attack related-work positioning, TC-063 assumptions, G5 affine soundness, SAT lifting, UNSAT cover, native certificate assumptions, and finite-vs-family language.

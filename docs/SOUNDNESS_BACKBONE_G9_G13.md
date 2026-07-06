@@ -67,3 +67,9 @@ The package also points reviewers to TC-063, which is restricted to `SAF(c,r)`
 and depends on fixed `c`, supported affine extraction, and G5 affine checker
 soundness. It does not claim P vs NP progress, hierarchy completeness, all-SAT
 coverage, or external DRAT/LRAT/FRAT proof status.
+
+## v2.25 Preprint Boundary
+
+v2.25 carries this backbone into the public preprint as soundness sketches and
+proof obligations. It does not convert G9-G13 into unqualified proven theorems
+and does not claim planner/execution completeness.

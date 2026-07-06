@@ -1354,3 +1354,23 @@ Regenerate the package with:
 ```bash
 python -m witnora_core.external_review_package_v224 run --out-root outputs/v2.24-external-review-package-v2.23 --strict
 ```
+
+## v2.25 Public Preprint Preparation
+
+v2.25 prepares the public-facing preprint/submission package under the title
+`Witnora: A Certified Collapse Hierarchy for Verifier-to-Witness SAT
+Reasoning`. It adds related work, limitations, release notes, reviewer outreach,
+and a submission checklist.
+
+v2.25 does not add a new operator and does not strengthen TC-063 beyond
+`RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`. It makes no P-vs-NP,
+polynomial-time SAT, all-SAT, hierarchy-completeness, unqualified
+theorem-proven, or fake external-proof claim. Native certificates remain
+native-only unless exported and externally checked, and finite evidence remains
+implementation support rather than proof.
+
+Regenerate the package with:
+
+```bash
+python -m witnora_core.public_preprint_prep_v225 run --out-root outputs/v2.25-public-preprint-preparation --strict
+```

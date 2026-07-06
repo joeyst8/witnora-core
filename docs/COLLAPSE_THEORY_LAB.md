@@ -320,3 +320,14 @@ is restricted to `SAF(c,r)` and remains
 Witnora-native and not DRAT/LRAT/FRAT unless exported and externally checked.
 Finite evidence supports implementation behavior but does not substitute for a
 family proof.
+
+## v2.25 Public Preprint Preparation
+
+v2.25 turns the external-review package into a public preprint/submission
+packet. It adds a safe public title, abstract nonclaims, contribution list,
+related work, limitations, release notes, reviewer outreach, and a submission
+checklist.
+
+The lab claim boundary is unchanged: no P-vs-NP progress, no polynomial-time
+SAT claim, no all-SAT coverage, no hierarchy completeness, no unqualified
+theorem-proven status, and no external DRAT/LRAT/FRAT proof claim.

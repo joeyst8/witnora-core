@@ -247,3 +247,14 @@ Reviewers should attack the G5 affine dependency, separator decomposition,
 UNSAT cover, native-certificate boundary, finite-vs-family boundary, and claim
 wording. The package is not a P-vs-NP proof, not all-SAT coverage, not
 hierarchy completeness, and not an external DRAT/LRAT/FRAT proof package.
+
+## v2.25 Public Preprint Frontier
+
+v2.25 is submission preparation, not operator expansion. It keeps the public
+title focused on a certified collapse hierarchy for verifier-to-witness SAT
+reasoning, adds related work and limitations, and preserves TC-063 as a
+restricted theorem with proof obligations.
+
+No new hierarchy edge, operator, or theorem status is introduced. The public
+framing rejects P-vs-NP, all-SAT, completeness, unqualified theorem-proven, and
+fake DRAT/LRAT/FRAT claims.

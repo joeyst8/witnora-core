@@ -788,9 +788,6 @@ def run_external_review_package(
     manifest["verification_status"] = check["verification_status"]
     _write_json(root / "external_review_package_manifest.json", manifest)
 
-    docs_guide = Path("docs/REVIEWER_GUIDE.md")
-    _write_text(docs_guide, reviewer_guide_text())
-
     if strict and check["verification_status"] != "PASS":
         raise RuntimeError("external review package validation failed: " + ";".join(check["errors"]))
     digest = _make_zip(root, zip_path) if zip_path else ""
