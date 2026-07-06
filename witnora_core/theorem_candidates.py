@@ -1229,6 +1229,73 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use G12 plans to select the next operator without counting plans as collapses."],
         ),
+        TheoremCandidate(
+            id="TC-054",
+            name="Planner-Guided Execution Soundness Candidate",
+            statement=(
+                "If a verified plan certificate is paired with a separately verified execution chain whose "
+                "operator certificates, formula handoffs, and result obligations verify, then the execution "
+                "result is sound for that finite instance."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["projected_affine_plan_execution", "proof_motif_plan_execution"],
+            required_proof_obligations=[
+                "Verify the referenced G12 plan certificate.",
+                "Verify every actual operator step certificate with the matching checker.",
+                "Verify every formula-state handoff hash.",
+                "Verify SAT witnesses against the original CNF and UNSAT preservation chains where claimed.",
+                "Reject fake execution, fake SAT/UNSAT, fake DRAT, and diagnostic steps used as results.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim all plans succeed.",
+                "Does not claim planner completeness.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Broaden planner-guided execution to more independently checked operator chains."],
+        ),
+        TheoremCandidate(
+            id="TC-055",
+            name="Plan-Execution Match Candidate",
+            statement=(
+                "For supported finite fixtures, G12 can propose plans whose expected certificate chain matches "
+                "actual certified G13 execution."
+            ),
+            status="FINITE_PLANNER_EXECUTION_VERIFIED",
+            supporting_witnesses=["projected_affine_plan_execution", "proof_motif_plan_execution"],
+            required_proof_obligations=[
+                "Compute planned-vs-actual comparison from records rather than trusting metadata.",
+                "Separate MATCH, PARTIAL_MATCH, MISMATCH, and EXECUTION_FAILED outcomes.",
+                "Ensure mismatches do not certify planner success.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim matching examples prove all plans succeed.",
+                "Does not claim strictness or lower bounds.",
+                "Does not claim hierarchy completeness.",
+            ],
+            next_experiments=["Add more finite plan-execution fixtures with independently checked handoffs."],
+        ),
+        TheoremCandidate(
+            id="TC-056",
+            name="Self-Expanding Loop Candidate",
+            statement=(
+                "The loop obstruction fingerprint to plan to execution to verified result is demonstrated on "
+                "finite controlled instances."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["composed_plan_execution", "graph_separator_plan_execution", "mismatch_control"],
+            required_proof_obligations=[
+                "Keep obstruction, plan, and execution artifacts separate.",
+                "Record failed and mismatched executions honestly.",
+                "Do not upgrade finite execution evidence into a family theorem.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim universal collapse planning.",
+                "Does not claim a polynomial-time SAT algorithm.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use mismatch records to improve G12 without treating planner improvement as proof."],
+        ),
     ]
 
 

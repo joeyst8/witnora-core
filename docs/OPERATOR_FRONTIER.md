@@ -1,5 +1,14 @@
 # Operator Frontier
 
+## v2.20 Planner-Guided Execution Frontier Update
+
+`G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE` is the first layer that pairs a
+verified G12 plan with separately checked finite execution records. The
+frontier moves from planning to plan-guided execution, while preserving the
+claim boundary: a plan match is not a general success theorem.
+
+G13 records `FINITE_PLANNER_EXECUTION_VERIFIED`, not strictness or completeness.
+
 ## v2.19 Self-Expanding Planner Frontier Update
 
 `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE` adds a planning layer over the

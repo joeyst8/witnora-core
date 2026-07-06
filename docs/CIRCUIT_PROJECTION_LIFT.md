@@ -1,5 +1,15 @@
 # Circuit Projection Lift
 
+## v2.20 Planner-Guided Execution Use
+
+G13 can use G10 circuit projection as an actual execution step only when the
+G10 projection certificate verifies and the projected core hash is handed to
+the next step exactly. SAT trust still comes from a lifted assignment satisfying
+the original CNF directly. UNSAT trust still requires verified
+equisatisfiability or preservation.
+
+The G13 layer does not broaden G10 into a circuit-SAT solver.
+
 v2.17 adds `G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`, promoted from the v2.14
 obstruction-dual recommendation
 `CIRCUIT_PROJECTION_SIGNAL -> CIRCUIT_PROJECTION_LIFT`.

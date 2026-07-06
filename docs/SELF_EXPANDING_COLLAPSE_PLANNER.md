@@ -2,6 +2,17 @@
 
 v2.19 introduces `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`.
 
+## v2.20 Planner-Guided Execution
+
+v2.20 adds `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE` as a separate execution
+layer over verified G12 plans. G12 still emits plan-only certificates. G13
+checks whether a selected finite plan was actually executed by a separate
+operator certificate chain.
+
+A plan/execution match does not prove all plans succeed. It only records that
+the specific planned chain, actual certificates, formula handoffs, and result
+obligations verified for the checked finite instance.
+
 ## What It Does
 
 G12 consumes:

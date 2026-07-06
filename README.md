@@ -1,5 +1,20 @@
 # Witnora-Core v0.9.8
 
+## v2.20 Planner-Guided Execution Prototype
+
+v2.20 adds `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE`, a finite execution layer
+that pairs a verified G12 plan with a separate actual execution certificate.
+
+The G13 checker verifies the referenced plan, actual operator step
+certificates, formula-hash handoffs, planned-vs-actual comparison, and result
+obligations. SAT results require direct original-CNF witness verification.
+UNSAT results require preservation or equisatisfiability obligations to verify.
+
+A matching plan/execution proves only that this finite execution chain matched
+and checked. It does not prove all plans succeed, planner completeness, a
+theorem, DRAT, hierarchy completeness, or P-vs-NP progress. The evidence grade
+is `FINITE_PLANNER_EXECUTION_VERIFIED`.
+
 ## v2.19 Self-Expanding Collapse Planner Prototype
 
 v2.19 adds `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE`, a meta-level

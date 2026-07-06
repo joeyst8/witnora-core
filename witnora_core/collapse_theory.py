@@ -469,6 +469,7 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     g10_projection_ops = (*g9_composed_ops, "CIRCUIT_PROJECTION_LIFT_CERTIFICATE")
     g11_motif_generalization_ops = (*g10_projection_ops, "PROOF_MOTIF_GENERALIZATION_CERTIFICATE")
     g12_planner_ops = (*g11_motif_generalization_ops, "COLLAPSE_PLAN_CERTIFICATE")
+    g13_planner_execution_ops = (*g12_planner_ops, "PLANNER_EXECUTION_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -613,6 +614,15 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             10,
             {"proof_policy": "planner_certificate_only_execution_required"},
             "G11 plus a meta-level planner certificate. It verifies structural plan compatibility and claim boundaries only; it does not execute operators or certify SAT/UNSAT.",
+        ),
+        "G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE": CollapseGrammar(
+            "G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE",
+            g13_planner_execution_ops,
+            (*terminals, "PLANNER_EXECUTION_CERTIFICATE"),
+            2,
+            10,
+            {"proof_policy": "separate_plan_and_execution_certificates_no_drat_claim"},
+            "G12 plus finite planner-guided execution certificates. A verified plan is paired with a separate checked execution chain, formula handoffs, and SAT/UNSAT result obligations.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",

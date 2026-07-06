@@ -1,5 +1,12 @@
 # Proof Motif Generalization
 
+## v2.20 Planner-Guided Execution Use
+
+G13 can use G11 as an actual execution step only when the generalized motif
+certificate verifies. A planned G11 step does not prove a macro-proof exists.
+The execution certificate must show that the concrete generalized template,
+reuse instantiations, and final contradiction checked.
+
 v2.18 introduces `G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`, promoted
 from the v2.14 obstruction recommendation
 `PROOF_MOTIF_NEAR_MISS -> PROOF_MOTIF_GENERALIZATION_CHECKER`.

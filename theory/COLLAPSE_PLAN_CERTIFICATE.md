@@ -26,3 +26,11 @@ certificates.
 ## Evidence Grade
 
 The only v2.19 evidence grade is `FINITE_PLANNER_CERTIFICATE_VERIFIED`.
+
+## v2.20 Boundary
+
+v2.20 keeps the plan certificate separate from the execution certificate. A
+`PLANNER_EXECUTION_CERTIFICATE` may reference a verified plan, but it must also
+verify actual step certificates, formula handoffs, and result obligations. A
+plan/execution match is finite evidence only; it does not prove all plans
+succeed.

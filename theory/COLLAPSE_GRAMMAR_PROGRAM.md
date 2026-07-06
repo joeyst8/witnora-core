@@ -132,6 +132,12 @@ requirements, missing-operator hypotheses, and claim boundaries. It does not
 execute the plan and does not certify SAT, UNSAT, DRAT, a theorem, or hierarchy
 completeness. Its evidence grade is `FINITE_PLANNER_CERTIFICATE_VERIFIED`.
 
+v2.20 adds `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE`, an execution layer over
+verified G12 plans. G13 requires separate actual operator certificates, checked
+formula-hash handoffs, planned-vs-actual comparison, and SAT/UNSAT result
+obligations. A matching execution is finite execution evidence only, not a
+planner success theorem, not hierarchy completeness, and not P-vs-NP progress.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical

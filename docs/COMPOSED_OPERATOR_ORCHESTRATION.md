@@ -1,5 +1,15 @@
 # Composed Operator Orchestration
 
+## v2.20 Planner-Guided Execution Interaction
+
+G13 may use a G9 composed orchestration certificate as one actual execution
+step. The G13 checker still treats the G9 certificate as separate from the G12
+plan: the G9 step certificate must verify, its formula handoff must be
+recorded, and any SAT witness or UNSAT preservation obligation must be checked.
+
+Matching a G12 plan to a G9 execution is finite evidence only. It is not a
+theorem, not DRAT, not planner completeness, and not P-vs-NP progress.
+
 ## v2.19 Planner Interaction
 
 `G12_SELF_EXPANDING_COLLAPSE_PLANNER_PROTOTYPE` may propose future G9

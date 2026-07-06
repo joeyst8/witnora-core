@@ -85,6 +85,13 @@ plan can recommend an existing operator sequence or a missing operator class,
 but it is not a SAT/UNSAT result and not proof that the sequence succeeds.
 Execution requires future operator certificates.
 
+## v2.20 Execution Loop
+
+v2.20 adds `G13_PLANNER_GUIDED_EXECUTION_PROTOTYPE`. It closes the finite loop
+from obstruction fingerprint to plan to checked execution, but only for the
+specific execution certificate being checked. Mismatches and failed executions
+are reported as diagnostics and do not certify planner success.
+
 ## v2.16 Promotion
 
 v2.16 promotes the `COMPOSED_OBSTRUCTION` recommendation into
