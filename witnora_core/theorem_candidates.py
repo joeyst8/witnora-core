@@ -747,6 +747,60 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
                 "Attempt a scalable graph-family proof separately from finite certification.",
             ],
         ),
+        TheoremCandidate(
+            id="TC-034",
+            name="Finite G1-to-G2 Empirical Edge Delta Certificate",
+            statement=(
+                "For the finite checked instance set I, each F in I is not accepted by G1_XOR "
+                "under the configured bound profile during replay, while G2_SYMMETRY_CERTIFIED "
+                "verifies a SAT witness reconstruction."
+            ),
+            status="FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED",
+            supporting_witnesses=[
+                "cycle_4_3color",
+                "cycle_6_3color",
+                "cycle_8_3color",
+                "cycle_10_3color",
+            ],
+            required_proof_obligations=[
+                "Replay lower G1_XOR bounded non-acceptance.",
+                "Do not call replay non-acceptance a lower-bound proof.",
+                "Replay G2 symmetry witness reconstruction and verify the final assignment against the original CNF.",
+                "Keep claim scope finite and empirical.",
+            ],
+            forbidden_interpretations=[
+                "Not lower-bound strictness.",
+                "Not full G1-vs-G2 theorem.",
+                "Not a family theorem.",
+                "Not P vs NP progress.",
+            ],
+            next_experiments=[
+                "Develop an actual lower-obstruction certificate for G1 if a strictness theorem is desired.",
+                "Reuse finite edge-delta evidence grading for later hierarchy edges.",
+            ],
+        ),
+        TheoremCandidate(
+            id="TC-035",
+            name="G1-to-G2 Symmetry Strictness Candidate",
+            statement=(
+                "The graph-coloring symmetry edge may admit a bounded strictness theorem only if a lower-bound "
+                "or obstruction certificate for G1_XOR is supplied in addition to the existing G2 witness evidence."
+            ),
+            status="FORMAL_PROOF_OBLIGATION",
+            supporting_witnesses=["cycle graph coloring symmetry family"],
+            required_proof_obligations=[
+                "Prove G1_XOR cannot accept the selected family under the same bound profile.",
+                "Keep finite replay evidence separate from lower-bound evidence.",
+                "Verify G2 native symmetry certificate soundness.",
+            ],
+            forbidden_interpretations=[
+                "No G1 lower bound is supplied by v2.11.",
+                "No G1-vs-G2 family theorem is claimed.",
+                "No hierarchy completeness claim.",
+                "No P vs NP progress claim.",
+            ],
+            next_experiments=["Search for a real G1 obstruction certificate for color-symmetry families."],
+        ),
     ]
 
 

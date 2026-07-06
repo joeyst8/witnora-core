@@ -43,3 +43,13 @@ routes in full `G0_BASE`.
 
 Native XOR certificates are not DRAT unless a DRAT proof is separately exported
 and checked against the original CNF.
+
+## Relationship To Finite Edge Delta Certificates
+
+v2.11 adds `FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED` for hierarchy edges where the
+lower grammar only has bounded replay non-acceptance. That is not a lower-bound
+proof.
+
+`FINITE_STRICTNESS_CERTIFIED` remains reserved for finite certificates like
+v2.10 where the lower grammar rejection is backed by a certified obstruction,
+such as width lower bound greater than the configured cap.

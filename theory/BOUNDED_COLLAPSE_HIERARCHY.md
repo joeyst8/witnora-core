@@ -28,4 +28,10 @@ The hierarchy currently formalized is:
 Strictness along this chain is empirical evidence unless a formal proof is
 supplied and checked. v2.8 supplies proof obligations, not final lower bounds.
 
+v2.11 introduces a finite empirical edge-delta certificate for
+`G1_XOR -> G2_SYMMETRY_CERTIFIED`. Its lower side is
+`LOWER_REPLAY_NO_COLLAPSE`, not a lower-bound proof, so the evidence grade is
+`FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`. This is distinct from v2.10's
+`FINITE_STRICTNESS_CERTIFIED`, which relies on certified width obstruction.
+
 This work does not prove P vs NP.

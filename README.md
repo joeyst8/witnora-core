@@ -1,5 +1,22 @@
 # Witnora-Core v0.9.8
 
+## v2.11 Finite Empirical Edge Delta Certificate
+
+v2.11 adds `witnora_core.finite_edge_certificate`, a reusable certificate
+format for finite hierarchy-edge deltas where the lower side has replay
+evidence rather than a certified lower-bound obstruction.
+
+For the `G1_XOR -> G2_SYMMETRY_CERTIFIED` edge, the checked cycle-coloring
+instances replay as bounded `LOWER_REPLAY_NO_COLLAPSE` under `G1_XOR`, while
+`G2_SYMMETRY_CERTIFIED` verifies SAT witness reconstruction through native
+symmetry evidence.
+
+The status is `FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`, not
+`FINITE_STRICTNESS_CERTIFIED`. Lower replay is not called a lower-bound proof.
+This does not prove a G1-vs-G2 family theorem, hierarchy completeness,
+strictness as a theorem, or P vs NP progress. Native symmetry certificates are
+not DRAT.
+
 ## v2.10 Formal Finite Strictness Certificate
 
 v2.10 adds `witnora_core.finite_strictness_certificate`, a reusable

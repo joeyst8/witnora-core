@@ -54,3 +54,11 @@ The checker recomputes the formula hash, replays the width obstruction, replays
 the G1 XOR certificate, verifies the finite claim boundary, and rejects any
 certificate that claims a scalable family theorem, full `G0_BASE` strictness,
 hierarchy completeness, P vs NP progress, `HARD`, or `UNKNOWN`.
+
+## Contrast With v2.11 Edge Delta Certificates
+
+`FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED` is a separate evidence grade for finite
+edge deltas whose lower side is only bounded replay evidence. It is not a
+strictness certificate and not a lower-bound proof.
+
+`FINITE_STRICTNESS_CERTIFIED` requires certified lower obstruction evidence.

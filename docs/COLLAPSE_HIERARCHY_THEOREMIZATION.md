@@ -21,6 +21,19 @@ XOR acceptance.
 It is not a scalable family theorem, not full `G0_BASE` strictness, not a
 hierarchy strictness theorem, and not P vs NP progress.
 
+## v2.11 Finite Empirical Edge Delta Certificate
+
+v2.11 extends the finite-certificate framework to `G1_XOR ->
+G2_SYMMETRY_CERTIFIED` without calling replay-only evidence strictness.
+
+The lower side is bounded replay evidence:
+`LOWER_REPLAY_NO_COLLAPSE`. It is not a lower-bound proof. The upper side is a
+checked G2 symmetry SAT witness reconstruction. The evidence grade is
+`FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED`, not `FINITE_STRICTNESS_CERTIFIED`.
+
+This does not prove a G1-vs-G2 family theorem, hierarchy completeness, or P vs
+NP progress.
+
 v2.8 formalizes the current Witnora hierarchy without adding a new operator.
 It turns the G0-G6 ladder into a theoremization artifact: bounded definitions,
 empirical strictness evidence, theorem candidates, proof obligations, evidence
