@@ -40,3 +40,18 @@ empirical obstruction evidence used for next-operator selection.
 
 It does not claim P vs NP progress, hierarchy completeness, satisfiability, or
 unsatisfiability.
+
+## v2.15 Promotion Example
+
+The first promoted obstruction-dual recommendation is:
+
+`GRAPH_SEPARATOR_OBSTRUCTION -> GRAPH_SEPARATOR_LIFT`
+
+v2.15 implements this as `G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`, not as another G7
+mode. G7 remains the obstruction-dual recorder; G8 is a native separator-lift
+prototype with its own checker.
+
+The promotion is still bounded. It verifies separator decomposition, SAT
+witness lifting, and UNSAT separator cover for selected finite rows. It does
+not claim a family theorem, graph-separator completeness, lower bounds, or
+P vs NP progress.

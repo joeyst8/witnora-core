@@ -1,5 +1,19 @@
 # Operator Genesis Engine
 
+## v2.15 Graph Separator Promotion
+
+v2.15 promotes the v2.14 recommendation `GRAPH_SEPARATOR_LIFT` into
+`G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`.
+
+This is the first obstruction-dual recommendation to become an implemented
+operator prototype. Its certificate is native: SAT lift checks separator
+agreement and final original-CNF satisfaction; UNSAT lift checks that every
+separator assignment is blocked by a verified component contradiction.
+
+The promotion is finite empirical edge-delta evidence. It is not a lower-bound
+proof, not DRAT, not a graph-separator completeness theorem, and not P vs NP
+progress.
+
 ## v2.14 Obstruction Dual Hand-Off
 
 v2.14 adds `G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE`, which turns selected

@@ -1,5 +1,18 @@
 # Collapse Theory Lab
 
+## v2.15 Graph Separator Lift
+
+v2.15 adds `G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`, promoted from v2.14's
+`GRAPH_SEPARATOR_OBSTRUCTION` recommendation.
+
+G8 uses a primal graph model. It removes a small separator, verifies the
+resulting components, conditions components on separator assignments, and emits
+native certificates for SAT witness lift or UNSAT separator cover. Invalid
+cross-component clauses and incomplete UNSAT covers are rejected.
+
+This is a prototype and not a theorem, not DRAT, not a complete separator
+solver, and not P vs NP progress.
+
 ## v2.14 Obstruction Dual Layer
 
 v2.14 adds a diagnostic G7 layer for rows where the current G0-G6 ladder does

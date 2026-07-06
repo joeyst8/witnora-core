@@ -1,5 +1,22 @@
 # Witnora-Core v0.9.8
 
+## v2.15 Graph Separator Lift Prototype
+
+v2.15 promotes the v2.14 obstruction recommendation
+`GRAPH_SEPARATOR_OBSTRUCTION -> GRAPH_SEPARATOR_LIFT` into
+`G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`.
+
+G8 detects exact primal separators, conditions components on separator
+assignments, verifies component evidence, and lifts the result back to the
+original CNF. SAT lift requires component witnesses to agree on the separator
+assignment and the combined assignment to satisfy the original CNF. UNSAT lift
+requires every separator assignment to be covered by a verified component
+contradiction.
+
+This is a native prototype, not DRAT, not a graph-formula completeness claim,
+not a strictness theorem, and not P vs NP progress. Duplicate rows already
+handled by earlier grammars are marked `GRAPH_SEPARATOR_NO_NEW_DELTA`.
+
 ## v2.14 Obstruction Dual Certificate Prototype
 
 v2.14 adds `witnora_core.obstruction_dual` and the diagnostic grammar layer

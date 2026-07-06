@@ -89,6 +89,17 @@ instantiation, then emits a compressed macro-proof certificate. This is not
 DRAT, not proof-compression completeness, and not a novel Tseitin claim when
 prior XOR grammars already apply.
 
+v2.14 adds `G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE`, which records bounded
+G0-G6 non-certification traces, obstruction fingerprints, proof obligations,
+and missing-operator recommendations. G7 does not solve the row and does not
+turn replay failure into a lower-bound proof.
+
+v2.15 adds `G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`, promoted from G7's
+`GRAPH_SEPARATOR_OBSTRUCTION` recommendation. G8 uses exact primal separators,
+component conditioning under separator assignments, SAT witness lift, and UNSAT
+separator cover. Its native certificate is not DRAT and not a separator
+completeness theorem.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical

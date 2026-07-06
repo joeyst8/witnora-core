@@ -51,3 +51,17 @@ python -m witnora_core.operator_genesis run-obstruction-dual-lab --out-root outp
 
 The resulting queue is a planning artifact. It is not an implemented operator,
 not a theorem, and not a solver result.
+
+## v2.15 Promotion
+
+v2.15 promotes the `GRAPH_SEPARATOR_OBSTRUCTION` recommendation into
+`G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`.
+
+This promotion keeps G7 and G8 distinct:
+
+- G7 records obstruction-dual evidence and queues missing operators.
+- G8 implements one queued recommendation with a native graph-separator
+  certificate.
+
+The promotion does not retroactively turn G7 no-collapse traces into lower
+bounds.

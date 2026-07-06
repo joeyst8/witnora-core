@@ -833,6 +833,97 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
                 "Audit whether repeated obstruction fingerprints stabilize across broader benchmarks.",
             ],
         ),
+        TheoremCandidate(
+            id="TC-037",
+            name="Graph Separator Lift Soundness Candidate",
+            statement=(
+                "If a CNF decomposes over separator S and all component witnesses agree on the "
+                "same separator assignment, then the combined assignment satisfies the original "
+                "CNF when the checker verifies that assignment directly."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["separator_sat_pair", "repeated_separator_chain_sat"],
+            required_proof_obligations=[
+                "Reconstruct the primal decomposition from the original CNF.",
+                "Reject clauses whose non-separator variables span multiple components.",
+                "Verify each component witness under the chosen separator assignment.",
+                "Verify the combined assignment against the original CNF.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim DRAT.",
+                "Does not claim separator completeness.",
+                "Does not claim a graph-coloring family theorem.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Extend the proof sketch to recursive separator trees."],
+        ),
+        TheoremCandidate(
+            id="TC-038",
+            name="Graph Separator UNSAT Cover Candidate",
+            statement=(
+                "If every separator assignment is covered by at least one verified component "
+                "contradiction after conditioning, then the original CNF is UNSAT under the "
+                "native separator-cover checker."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["separator_unsat_cover", "separator_toy_unsat"],
+            required_proof_obligations=[
+                "Enumerate every separator assignment within the configured bound.",
+                "Verify the conditioned component contradiction for each covered assignment.",
+                "Reject incomplete separator covers.",
+                "Keep the native covering argument separate from DRAT claims.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim DRAT.",
+                "Does not claim a general UNSAT solver.",
+                "Does not claim a lower bound against prior grammars.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Replace bounded component search with reusable native component certificates."],
+        ),
+        TheoremCandidate(
+            id="TC-039",
+            name="G8 Empirical Edge Delta Candidate",
+            statement=(
+                "There exist finite separator-structured rows certified by G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE "
+                "while prior G0-G7 replay does not produce a certified collapse under the configured profile."
+            ),
+            status="FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED",
+            supporting_witnesses=["separator_sat_pair", "separator_unsat_cover"],
+            required_proof_obligations=[
+                "Keep prior-grammar replay separate from lower-bound proof.",
+                "Verify G8 SAT lift or UNSAT cover certificates.",
+                "Mark duplicate prior-grammar rows as GRAPH_SEPARATOR_NO_NEW_DELTA.",
+            ],
+            forbidden_interpretations=[
+                "No G8 strictness theorem is claimed.",
+                "No lower bound against G0-G7 is claimed.",
+                "No hierarchy completeness claim.",
+                "No P vs NP progress claim.",
+            ],
+            next_experiments=["Find a certified lower obstruction for the prior grammar side."],
+        ),
+        TheoremCandidate(
+            id="TC-040",
+            name="Obstruction-To-Operator Success Candidate",
+            statement=(
+                "The v2.14 GRAPH_SEPARATOR_LIFT recommendation was promoted into a v2.15 "
+                "implemented prototype with native certificate evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["graph_separator_bridge_toy", "separator_sat_pair", "separator_unsat_cover"],
+            required_proof_obligations=[
+                "Record the recommendation source from v2.14.",
+                "Verify the G8 checker on SAT, UNSAT, and negative-control rows.",
+                "Avoid claiming that all obstruction recommendations are automatically implementable.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim autonomous operator discovery is complete.",
+                "Does not claim graph separator lift is a theorem.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use G7 queues to select the next promoted obstruction recommendation."],
+        ),
     ]
 
 

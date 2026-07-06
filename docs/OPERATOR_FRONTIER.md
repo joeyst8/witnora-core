@@ -1,5 +1,18 @@
 # Operator Frontier
 
+## v2.15 Graph Separator Frontier Update
+
+`GRAPH_SEPARATOR_OBSTRUCTION` has been promoted into
+`G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`.
+
+The frontier rule is now explicit: separator evidence becomes trusted only
+when the checker reconstructs the primal decomposition, rejects invalid
+cross-component clauses, verifies SAT witness lift under a shared separator
+assignment, or verifies UNSAT cover over every separator assignment.
+
+Grid/structured duplicate controls are marked `GRAPH_SEPARATOR_NO_NEW_DELTA`
+when a prior grammar already accounts for the row.
+
 ## v2.14 Obstruction Dual Frontier Update
 
 The frontier now has a failure-certificate layer. When G0-G6 do not produce a
