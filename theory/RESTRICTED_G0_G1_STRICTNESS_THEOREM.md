@@ -57,11 +57,16 @@ assignment.
 Only the finite restricted proof object is supported: bounded-width rejection
 for `G0_WIDTH_C` and native XOR acceptance for `G1_XOR_FOR_STRICTNESS`.
 
+v2.10 names the reusable machine-checked finite status
+`FINITE_STRICTNESS_CERTIFIED`. This status applies only to the checked finite
+instance set and is not a scalable family theorem.
+
 ## 9. What is not proven
 
 This does not prove full `G0_BASE` strictness. It does not prove a lower bound
 against UP, PLE, SUB, BCE, components, 2SAT, or safe preprocessing routes. It
-does not prove hierarchy completeness.
+does not prove hierarchy completeness. Scalable Tseitin/expander strictness
+remains a proof obligation unless a separate proof is supplied.
 
 ## 10. Why this is not P vs NP
 

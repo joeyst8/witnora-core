@@ -11,6 +11,16 @@ The theorem is restricted to the width/treewidth subroute. Full `G0_BASE`
 strictness is not claimed. Scalable expander/Tseitin strictness remains a proof
 obligation unless a real graph-theoretic proof is supplied.
 
+## v2.10 Finite Strictness Certificate
+
+v2.10 turns the restricted proof kernel into a reusable finite certificate
+format. `FINITE_STRICTNESS_CERTIFIED` means the checked finite instances replay
+successfully under `G0_WIDTH_C` width obstruction and `G1_XOR_FOR_STRICTNESS`
+XOR acceptance.
+
+It is not a scalable family theorem, not full `G0_BASE` strictness, not a
+hierarchy strictness theorem, and not P vs NP progress.
+
 v2.8 formalizes the current Witnora hierarchy without adding a new operator.
 It turns the G0-G6 ladder into a theoremization artifact: bounded definitions,
 empirical strictness evidence, theorem candidates, proof obligations, evidence

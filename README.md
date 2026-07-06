@@ -1,5 +1,21 @@
 # Witnora-Core v0.9.8
 
+## v2.10 Formal Finite Strictness Certificate
+
+v2.10 adds `witnora_core.finite_strictness_certificate`, a reusable
+machine-checkable certificate format for finite restricted strictness claims.
+
+`FINITE_STRICTNESS_CERTIFIED` means that each checked finite instance is
+replayed under the restricted proof obligations: `G0_WIDTH_C` rejects by a
+verified width obstruction above cap `c`, and `G1_XOR_FOR_STRICTNESS` accepts
+by verified exact XOR extraction and native GF(2) elimination.
+
+FINITE_STRICTNESS_CERTIFIED is a machine-checked finite-instance certificate,
+not a scalable family theorem. It does not prove full `G0_BASE` strictness, a
+strict hierarchy, hierarchy completeness, lower bounds against all G0 routes,
+or P vs NP progress. Scalable Tseitin/expander strictness remains a proof
+obligation.
+
 ## v2.9 Restricted G0-vs-G1 Strictness Proof Kernel
 
 v2.9 adds `witnora_core.strictness_proof`, the first formal strictness proof

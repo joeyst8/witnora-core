@@ -713,6 +713,40 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Write a formal graph-family proof note and corresponding checker assumptions."],
         ),
+        TheoremCandidate(
+            id="TC-033",
+            name="Finite Restricted G0-vs-G1 Strictness Certificate",
+            statement=(
+                "For the finite checked instance set I, each F in I is rejected by G0_WIDTH_C "
+                "under cap c via verified width obstruction and accepted by G1_XOR_FOR_STRICTNESS "
+                "via verified XOR certificate."
+            ),
+            status="FINITE_STRICTNESS_CERTIFIED",
+            supporting_witnesses=[
+                "tseitin_10",
+                "xor_chain_unsat_n5",
+                "tseitin_12",
+                "xor_chain_unsat_n7",
+                "tseitin_14",
+                "xor_chain_unsat_n9",
+            ],
+            required_proof_obligations=[
+                "Replay every finite width obstruction certificate.",
+                "Replay every G1 XOR upper-bound certificate.",
+                "Keep the claim scope finite and restricted to G0_WIDTH_C.",
+                "Leave scalable Tseitin/expander strictness as a proof obligation.",
+            ],
+            forbidden_interpretations=[
+                "Does not prove full G0_BASE strictness.",
+                "Does not prove a scalable family theorem.",
+                "Does not prove hierarchy strictness.",
+                "Does not prove P vs NP progress.",
+            ],
+            next_experiments=[
+                "Reuse the finite certificate format for other hierarchy edges.",
+                "Attempt a scalable graph-family proof separately from finite certification.",
+            ],
+        ),
     ]
 
 

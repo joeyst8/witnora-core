@@ -137,24 +137,73 @@ def _xor_formula(equations: Iterable[tuple[Iterable[int], int]]) -> CNFFormula:
 
 
 def strictness_witness_formula(instance_id: str) -> tuple[str, CNFFormula, str]:
-    """Return finite v2.9 witnesses with exact high-width XOR encodings."""
+    """Return finite strictness witnesses with exact high-width XOR encodings."""
 
-    equations = [
-        ((1, 2, 3, 4, 5, 6), 0),
-        ((1, 2, 3, 4, 5, 7), 0),
-        ((6, 7), 1),
-    ]
-    if instance_id == "tseitin_10":
-        return (
+    witness_equations: dict[str, tuple[str, list[tuple[tuple[int, ...], int]], str]] = {
+        "tseitin_10": (
             "tseitin",
-            _xor_formula(equations),
+            [
+                ((1, 2, 3, 4, 5, 6), 0),
+                ((1, 2, 3, 4, 5, 7), 0),
+                ((6, 7), 1),
+            ],
             "finite Tseitin-style affine obstruction fixture; exact full-CNF XOR groups, not a scalable expander theorem",
-        )
-    if instance_id == "xor_chain_unsat_n5":
-        return (
+        ),
+        "tseitin_12": (
+            "tseitin",
+            [
+                ((1, 2, 3, 4, 5, 6), 0),
+                ((4, 5, 6, 7, 8, 9), 0),
+                ((7, 8, 9, 10, 11, 12), 0),
+                ((1, 2, 3, 10, 11, 12), 1),
+            ],
+            "finite Tseitin-style width fixture with chained arity-6 affine constraints; not a scalable family theorem",
+        ),
+        "tseitin_14": (
+            "tseitin",
+            [
+                ((1, 2, 3, 4, 5, 6), 0),
+                ((4, 5, 6, 7, 8, 9), 0),
+                ((7, 8, 9, 10, 11, 12), 0),
+                ((1, 2, 3, 10, 11, 12), 1),
+                ((9, 10, 11, 12, 13, 14), 0),
+            ],
+            "finite Tseitin-style witness with additional exact affine component; not an expander lower-bound theorem",
+        ),
+        "xor_chain_unsat_n5": (
             "xor-chain",
-            _xor_formula(equations),
+            [
+                ((1, 2, 3, 4, 5, 6), 0),
+                ((1, 2, 3, 4, 5, 7), 0),
+                ((6, 7), 1),
+            ],
             "finite high-width XOR-chain strictness fixture for G0_WIDTH_C vs G1_XOR",
+        ),
+        "xor_chain_unsat_n7": (
+            "xor-chain",
+            [
+                ((1, 2, 3, 4, 5, 6), 0),
+                ((2, 3, 4, 5, 6, 7), 0),
+                ((1, 7), 1),
+            ],
+            "finite arity-6 XOR-chain witness with a checked native GF(2) contradiction",
+        ),
+        "xor_chain_unsat_n9": (
+            "xor-chain",
+            [
+                ((1, 2, 3, 4, 5, 6), 0),
+                ((4, 5, 6, 7, 8, 9), 0),
+                ((1, 2, 3, 7, 8, 9), 1),
+            ],
+            "finite arity-6 overlapping XOR-chain witness with exact width obstruction",
+        ),
+    }
+    if instance_id in witness_equations:
+        family, equations, description = witness_equations[instance_id]
+        return (
+            family,
+            _xor_formula(equations),
+            description,
         )
     raise ValueError(f"unsupported v2.9 strictness witness: {instance_id}")
 

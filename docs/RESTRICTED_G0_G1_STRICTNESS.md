@@ -24,3 +24,12 @@ P vs NP progress, or a lower bound against all G0 operators.
 Scalable Tseitin/expander strictness remains a theorem candidate until a real
 graph-theoretic proof is supplied.
 
+## v2.10 Finite Certificate
+
+v2.10 packages the v2.9 proof records into a reusable
+`FINITE_STRICTNESS_CERTIFICATE`. The checker replays the finite width
+obstruction and G1 XOR upper-bound evidence for each listed witness.
+
+`FINITE_STRICTNESS_CERTIFIED` is a machine-checked finite-instance certificate,
+not a scalable family theorem. It does not prove full `G0_BASE` strictness,
+hierarchy strictness, hierarchy completeness, or P vs NP progress.

@@ -39,6 +39,18 @@ This does not prove full G0_BASE strictness.
 This does not prove P vs NP.
 This does not prove hierarchy completeness.
 
+## Formal Finite Strictness Certificate
+
+v2.10 defines `FINITE_STRICTNESS_CERTIFIED` as a machine-checked finite-instance certificate. The checker replays, for each listed finite witness, the `G0_WIDTH_C` width obstruction and the `G1_XOR_FOR_STRICTNESS` exact XOR upper-bound certificate.
+
+FINITE_STRICTNESS_CERTIFIED is a machine-checked finite-instance certificate, not a scalable family theorem.
+
+This does not prove full G0_BASE strictness.
+This does not prove the hierarchy is strict.
+This does not prove P vs NP.
+
+Scalable Tseitin/expander strictness remains a proof obligation.
+
 ## Proof obligations
 
 The proof-obligation matrix records non-collapse obligations, checker soundness obligations, scaling obligations, and optional DRAT bridge work.
