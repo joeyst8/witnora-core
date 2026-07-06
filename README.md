@@ -1,5 +1,22 @@
 # Witnora-Core v0.9.8
 
+## v2.18 Proof Motif Generalization Checker Prototype
+
+v2.18 promotes the v2.14 obstruction recommendation
+`PROOF_MOTIF_NEAR_MISS -> PROOF_MOTIF_GENERALIZATION_CHECKER` into
+`G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`.
+
+G11 detects near-repeated proof motifs, but near motif similarity is not proof.
+A generalized motif is trusted only when the checker verifies the generalized
+template constraints and every concrete reuse instantiation against original
+CNF clauses. When verification cannot be completed, the row remains
+diagnostic-only and cannot certify SAT or UNSAT.
+
+This is a native generalized macro-proof prototype, not DRAT, not a theorem,
+not arbitrary proof-pattern learning, not proof-motif completeness, and not a
+P-vs-NP result. Exact G6 proof-motif duplicates are retained as controls and
+are not counted as novel G11 deltas.
+
 ## v2.17 Circuit Projection Lift Prototype
 
 v2.17 promotes the v2.14 obstruction recommendation

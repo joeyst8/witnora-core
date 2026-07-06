@@ -463,6 +463,11 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
     g4_orbit_capacity_ops = (*g3_card_ops, "ORBIT_CAPACITY_COUNTING_CERTIFICATE")
     g5_affine_ops = (*g4_orbit_capacity_ops, "HIGH_ARITY_AFFINE_RESIDUE_CERTIFICATE")
     g6_proof_motif_ops = (*g5_affine_ops, "PROOF_MOTIF_COMPRESSION_CERTIFICATE")
+    g7_obstruction_dual_ops = (*g6_proof_motif_ops, "OBSTRUCTION_DUAL_CERTIFICATE")
+    g8_separator_ops = (*g7_obstruction_dual_ops, "GRAPH_SEPARATOR_LIFT_CERTIFICATE")
+    g9_composed_ops = (*g8_separator_ops, "COMPOSED_ORCHESTRATION_CERTIFICATE")
+    g10_projection_ops = (*g9_composed_ops, "CIRCUIT_PROJECTION_LIFT_CERTIFICATE")
+    g11_motif_generalization_ops = (*g10_projection_ops, "PROOF_MOTIF_GENERALIZATION_CERTIFICATE")
     terminals = ("SAT_ASSIGNMENT", "UNSAT_CONFLICT", "2SAT", "TREEWIDTH_LEQ_C", "NO_COLLAPSE_FOUND")
     xor_policy = {
         "xor_drat": True,
@@ -553,6 +558,51 @@ def grammar_profiles() -> dict[str, CollapseGrammar]:
             10,
             {"proof_policy": "native_macro_proof_motif_certificate_no_drat_claim"},
             "G5 plus a generated native proof-motif compression prototype. It verifies motif templates and every reuse instantiation; it does not claim DRAT or proof completeness.",
+        ),
+        "G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE": CollapseGrammar(
+            "G7_OBSTRUCTION_DUAL_CERTIFICATE_PROTOTYPE",
+            g7_obstruction_dual_ops,
+            (*terminals, "OBSTRUCTION_DUAL_CERTIFICATE"),
+            2,
+            10,
+            {"proof_policy": "diagnostic_obstruction_certificate_no_sat_unsat_claim"},
+            "G6 plus a diagnostic obstruction-dual certificate layer. It records bounded non-certification evidence and missing-operator recommendations; it does not solve the row.",
+        ),
+        "G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE": CollapseGrammar(
+            "G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE",
+            g8_separator_ops,
+            (*terminals, "GRAPH_SEPARATOR_NATIVE_CERTIFICATE"),
+            2,
+            10,
+            {"proof_policy": "native_graph_separator_certificate_no_drat_claim"},
+            "G7 plus a native graph-separator lift prototype with checked SAT separator agreement and UNSAT separator-cover evidence.",
+        ),
+        "G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE": CollapseGrammar(
+            "G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE",
+            g9_composed_ops,
+            (*terminals, "COMPOSED_ORCHESTRATION_NATIVE_CERTIFICATE"),
+            2,
+            10,
+            {"proof_policy": "native_certificate_chain_no_drat_claim"},
+            "G8 plus certified operator sequencing with formula-hash handoffs, step certificates, and checked witness/proof lifts.",
+        ),
+        "G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE": CollapseGrammar(
+            "G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE",
+            g10_projection_ops,
+            (*terminals, "CIRCUIT_PROJECTION_NATIVE_CERTIFICATE"),
+            2,
+            10,
+            {"proof_policy": "native_circuit_projection_certificate_no_drat_claim"},
+            "G9 plus exact definitional circuit projection and checked SAT/UNSAT lift rules for supported rows.",
+        ),
+        "G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE": CollapseGrammar(
+            "G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE",
+            g11_motif_generalization_ops,
+            (*terminals, "PROOF_MOTIF_GENERALIZATION_NATIVE_MACRO_PROOF"),
+            2,
+            10,
+            {"proof_policy": "native_generalized_macro_proof_certificate_no_drat_claim"},
+            "G10 plus checked proof-motif generalization. Near similarity is diagnostic until every reuse instantiation expands into verified proof steps.",
         ),
         "G2_HORN_PROTOTYPE": CollapseGrammar(
             "G2_HORN_PROTOTYPE",

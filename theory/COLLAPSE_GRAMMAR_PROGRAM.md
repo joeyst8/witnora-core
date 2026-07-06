@@ -118,6 +118,14 @@ equisatisfiability-preserving for the supported exact definitional family. This
 is not arbitrary auxiliary projection, not DRAT, and not a complete circuit-SAT
 method.
 
+v2.18 adds `G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`, promoted from
+G7's `PROOF_MOTIF_NEAR_MISS` recommendation. G11 turns near-repetition into a
+certificate only when the generalized template and every concrete reuse
+instantiation verify over the original CNF. Loose similarity is
+diagnostic-only. Exact G6 motif duplicates are not counted as novel G11
+deltas. This is not arbitrary proof-pattern learning, not DRAT, and not a
+proof-motif completeness theorem.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical

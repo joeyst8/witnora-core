@@ -1,5 +1,18 @@
 # Collapse Theory Lab
 
+## v2.18 Proof Motif Generalization Checker
+
+v2.18 adds `G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`, promoted from
+the v2.14 `PROOF_MOTIF_NEAR_MISS` obstruction recommendation.
+
+The operator generalizes proof motifs only through checked native evidence.
+Similarity is not proof. A generalized motif certificate is accepted only when
+every reuse instantiation expands into valid proof steps over clauses in the
+original CNF. Loose similarity remains diagnostic-only.
+
+This is not DRAT, not a theorem, not a proof-motif completeness claim, and not
+P vs NP progress.
+
 ## v2.17 Circuit Projection Lift
 
 v2.17 adds `G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`, promoted from v2.14's

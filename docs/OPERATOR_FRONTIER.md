@@ -1,5 +1,19 @@
 # Operator Frontier
 
+## v2.18 Proof Motif Generalization Frontier Update
+
+`PROOF_MOTIF_NEAR_MISS` has been promoted into
+`G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`.
+
+The frontier rule is proof expansion first. Near motif similarity remains a
+diagnostic signal until the checker verifies a generalized template and every
+reuse instantiation against original CNF clauses. Loose similarity rows stay
+diagnostic-only and cannot certify SAT or UNSAT.
+
+G11 evidence is finite empirical edge-delta evidence. Exact G6 motif rows are
+duplicate controls, not novel G11 deltas. The prototype is not DRAT, not a
+proof-motif completeness claim, and not a theorem.
+
 ## v2.17 Circuit Projection Frontier Update
 
 `CIRCUIT_PROJECTION_SIGNAL` has been promoted into

@@ -1,5 +1,20 @@
 # Operator Genesis Engine
 
+## v2.18 Proof Motif Generalization Promotion
+
+v2.18 promotes the v2.14 recommendation
+`PROOF_MOTIF_NEAR_MISS -> PROOF_MOTIF_GENERALIZATION_CHECKER` into
+`G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`.
+
+The promotion is checker-first. Near-motif similarity can propose a template,
+but it cannot certify a result. Certification requires either a verified
+generalized template with checked instantiations or a concrete fallback
+expansion for every reuse site. Diagnostic-only motifs cannot certify SAT or
+UNSAT.
+
+G11 is native-only, not DRAT, not a theorem, and not arbitrary proof-pattern
+learning.
+
 ## v2.17 Circuit Projection Promotion
 
 v2.17 promotes the v2.14 recommendation `CIRCUIT_PROJECTION_LIFT` into

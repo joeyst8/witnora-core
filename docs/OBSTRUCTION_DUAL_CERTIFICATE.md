@@ -66,6 +66,16 @@ This promotion keeps G7 and G8 distinct:
 The promotion does not retroactively turn G7 no-collapse traces into lower
 bounds.
 
+## v2.18 Promotion
+
+v2.18 promotes the `PROOF_MOTIF_NEAR_MISS` recommendation into
+`G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`.
+
+Near motif similarity remains obstruction evidence until the G11 checker
+verifies a generalized template and every concrete instantiation. The
+promotion does not turn G7 diagnostic traces into lower bounds and does not
+claim proof-pattern learning completeness.
+
 ## v2.16 Promotion
 
 v2.16 promotes the `COMPOSED_OBSTRUCTION` recommendation into

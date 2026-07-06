@@ -1,5 +1,15 @@
 # Obstruction Dual Program
 
+## v2.18 Promotion
+
+`PROOF_MOTIF_NEAR_MISS` is promoted into
+`G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE`.
+
+The promotion keeps the obstruction-dual claim boundary: near-motif evidence is
+only a recommendation until a native checker verifies a generalized template
+and every reuse instantiation. If the proof expansion fails, the row remains
+diagnostic-only and cannot certify SAT or UNSAT.
+
 The obstruction-dual program asks whether failure under a bounded collapse
 grammar can become useful evidence for the next operator.
 

@@ -1,5 +1,13 @@
 # Composed Operator Orchestration
 
+## v2.18 Interaction
+
+`G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE` may appear as a future
+native proof step in composed orchestration only when its generalized template
+and every reuse instantiation have already been checked. A diagnostic-only
+near-motif signal is not a certifying step and cannot contribute to a composed
+SAT or UNSAT certificate.
+
 v2.16 adds `G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`, promoted from the
 v2.14 obstruction-dual recommendation
 `COMPOSED_OBSTRUCTION -> COMPOSED_OPERATOR_ORCHESTRATION`.

@@ -1090,6 +1090,78 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Promote projection into larger composed orchestration rows only after handoff certificates verify."],
         ),
+        TheoremCandidate(
+            id="TC-048",
+            name="Proof Motif Generalization Soundness Candidate",
+            statement=(
+                "If a generalized proof motif template verifies and every reuse instantiation "
+                "expands into checked concrete proof steps over original CNF clauses, then the "
+                "native generalized macro-proof certificate is sound."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["ladder_near_4", "ladder_near_8", "gadget_variants"],
+            required_proof_obligations=[
+                "Verify every base motif proof expansion.",
+                "Verify generalized template parameter constraints.",
+                "Verify every concrete reuse instantiation against original clauses.",
+                "Reject diagnostic-only similarity as certification.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim DRAT.",
+                "Does not claim arbitrary proof-pattern learning.",
+                "Does not claim proof motif generalization completeness.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Move the proof sketch into a proof-assistant audit once the template language stabilizes."],
+        ),
+        TheoremCandidate(
+            id="TC-049",
+            name="G11 Empirical Edge Delta Candidate",
+            statement=(
+                "There exist finite near-motif rows certified by "
+                "G11_PROOF_MOTIF_GENERALIZATION_CHECKER_PROTOTYPE while G6 exact motif "
+                "compression and prior G0-G10 replay do not certify the same rows under the "
+                "configured profile."
+            ),
+            status="FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED",
+            supporting_witnesses=["ladder_near_4", "chain_near_6", "proof_motif_near_miss"],
+            required_proof_obligations=[
+                "Keep prior-grammar replay separate from lower-bound proof.",
+                "Require at least one generalized template covering non-identical motif variants.",
+                "Exclude exact G6 motif duplicate rows from novel G11 delta counts.",
+                "Reject loose similarity without proof expansion.",
+            ],
+            forbidden_interpretations=[
+                "No G11 strictness theorem is claimed.",
+                "No lower bound against G0-G10 is claimed.",
+                "No proof motif completeness claim.",
+                "No P vs NP progress claim.",
+            ],
+            next_experiments=["Search for non-synthetic near-motif rows with checked generalized instantiations."],
+        ),
+        TheoremCandidate(
+            id="TC-050",
+            name="Obstruction-To-Proof-Motif-Generalization Success Candidate",
+            statement=(
+                "The v2.14 PROOF_MOTIF_NEAR_MISS recommendation was promoted into a v2.18 "
+                "implemented prototype with native generalized macro-proof certificate evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["proof_motif_near_miss", "ladder_near_8"],
+            required_proof_obligations=[
+                "Record the recommendation source from v2.14.",
+                "Verify generalized templates and every reuse instantiation.",
+                "Reject bad generalizations, loose similarity, fake DRAT, and tampering.",
+                "Avoid claiming arbitrary proof-pattern learning.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a theorem.",
+                "Does not claim DRAT.",
+                "Does not claim proof motif completeness.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Use obstruction-dual queues to find stronger near-motif generalization targets."],
+        ),
     ]
 
 
