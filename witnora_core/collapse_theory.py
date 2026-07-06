@@ -2709,6 +2709,11 @@ def main(argv: list[str] | None = None) -> int:
     check_proof_motif_parser = sub.add_parser("check-proof-motif-cert")
     check_proof_motif_parser.add_argument("--cnf", required=True)
     check_proof_motif_parser.add_argument("--certificate", required=True)
+
+    hierarchy_parser = sub.add_parser("run-hierarchy-theoremization")
+    hierarchy_parser.add_argument("--out-root", default="outputs/v2.8-collapse-hierarchy-theoremization")
+    hierarchy_parser.add_argument("--strict", action="store_true")
+    hierarchy_parser.add_argument("--zip", default="witnora-core-v2.8-collapse-hierarchy-theoremization.zip")
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2807,6 +2812,13 @@ def main(argv: list[str] | None = None) -> int:
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         print(stable_json(check_proof_motif_certificate(formula, data)))
+        return 0
+
+    if args.command == "run-hierarchy-theoremization":
+        from .hierarchy_formalization import build_hierarchy_theoremization
+
+        result = build_hierarchy_theoremization(out_root=args.out_root, strict=args.strict, zip_path=args.zip)
+        print(stable_json({"out_root": result["out_root"], "zip": result["zip"], "zip_sha256": result["zip_sha256"], "summary": result["summary"]}))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)

@@ -1,5 +1,16 @@
 # Collapse Grammar Program
 
+## v2.8 Hierarchy Theoremization
+
+v2.8 formalizes the complete G0-G6 hierarchy as a bounded research program:
+
+`G0_BASE -> G1_XOR -> G2_SYMMETRY_CERTIFIED -> G3_SYMMETRY_CARDINALITY_CERTIFIED -> G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE -> G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE -> G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`.
+
+The output is a theoremization bundle: definitions, empirical strictness
+evidence, theorem candidates, proof obligations, gap analysis, and a draft
+paper. It does not add an operator and does not prove strictness,
+completeness, lower bounds, or P vs NP progress.
+
 ## Verifier-to-Witness Motivation
 
 Witnora studies whether structured verifier instances can be transformed by

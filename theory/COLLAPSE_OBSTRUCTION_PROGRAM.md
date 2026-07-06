@@ -1,5 +1,13 @@
 # Collapse Obstruction Program
 
+## v2.8 Gap Analysis Layer
+
+v2.8 turns obstruction records into a gap-analysis artifact. Each gap records
+which grammars have been tried, what failure mode remains, which obstruction
+fingerprint appears, which operator candidate might help, and what proof or
+certificate obstacle blocks promotion. The gap analysis is a v2.9 planning
+object, not a completeness claim.
+
 The obstruction program turns bounded non-collapse rows into research objects.
 The goal is to learn which structural feature blocks the current grammar and
 which certificate-backed operator could remove that obstacle.

@@ -1,5 +1,13 @@
 # Operator Frontier
 
+## v2.8 Theoremization Update
+
+The frontier now feeds a theoremization layer. v2.8 does not add a new
+operator; it records the full G0-G6 hierarchy, bounded collapse class
+definitions, empirical strictness evidence, proof obligations, and gap
+analysis. Frontier rows are still planning and evidence objects, not theorem
+claims or hierarchy completeness claims.
+
 The operator frontier is a planning diagnostic. It records formulas that remain
 `NO_COLLAPSE_FOUND` under a selected grammar and suggests candidate operators
 that may be worth formalizing later.

@@ -1,5 +1,14 @@
 # Operator Genesis Engine
 
+## v2.8 Theoremization Hand-Off
+
+v2.8 does not generate or promote a new operator. It turns the generated and
+promoted operator ladder into a theoremization artifact: empirical edge
+evidence, proof obligations, theorem candidates, and gap analysis. Generated
+operators remain trusted only when implemented, independently checked, tested,
+red-teamed, and frozen. The theoremization layer does not claim proven
+strictness or P vs NP progress.
+
 Witnora-Core v2.4 starts the transition from hand-named operators to generated
 operator schemas.
 

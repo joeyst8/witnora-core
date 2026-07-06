@@ -1,5 +1,19 @@
 # Witnora-Core v0.9.8
 
+## v2.8 Collapse Hierarchy Theoremization
+
+v2.8 formalizes the full current hierarchy:
+
+`G0_BASE -> G1_XOR -> G2_SYMMETRY_CERTIFIED -> G3_SYMMETRY_CARDINALITY_CERTIFIED -> G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE -> G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE -> G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`.
+
+It adds `witnora_core.hierarchy_formalization`, which emits bounded collapse
+class definitions `W_B(G)`, empirical strictness evidence, theorem candidates,
+proof obligations, evidence bundles, gap analysis, and a paper draft.
+
+v2.8 does not add a new operator. It does not prove strictness, hierarchy
+completeness, P vs NP progress, or any lower bound. Native certificates are not
+DRAT unless explicitly exported and checked.
+
 ## v2.7 Proof Motif Compression Prototype
 
 v2.7 promotes the v2.4-generated `PROOF_MOTIF_COMPRESSION` candidate into

@@ -1,5 +1,12 @@
 # Operator Genesis Program
 
+## v2.8 Theoremization Layer
+
+v2.8 consumes the operator genesis history and emits theorem candidates and
+proof-obligation matrices. It explicitly separates generated candidates,
+implemented prototypes, empirical strictness evidence, and theorem status. No
+candidate is marked proven without a proof artifact.
+
 The Operator Genesis program asks whether obstruction fingerprints can guide
 the invention of new collapse operators.
 

@@ -458,6 +458,211 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use the promotion pipeline to select a fourth generated operator prototype."],
         ),
+        TheoremCandidate(
+            id="TC-021",
+            name="Bounded XOR Strictness Candidate",
+            statement=(
+                "Under an explicit bound profile B, G1_XOR has empirical certificate-backed rows "
+                "on Tseitin and XOR-chain families not certified by G0_BASE in the recorded bounded run."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["tseitin", "xor-chain"],
+            required_proof_obligations=[
+                "Specify the bound profile B.",
+                "Replay G1 certificates/proofs.",
+                "Replace bounded G0 no-collapse records with formal non-collapse proof before theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a strictness theorem.",
+                "Does not claim a lower bound against all algorithms.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Formalize the G0 non-collapse side for selected bounded Tseitin rows."],
+        ),
+        TheoremCandidate(
+            id="TC-022",
+            name="Bounded Symmetry Strictness Candidate",
+            statement=(
+                "Under an explicit bound profile B, G2_SYMMETRY_CERTIFIED has empirical witness "
+                "reconstruction rows not certified by G1_XOR in the recorded bounded run."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["cycle_4_3color", "cycle_6_3color"],
+            required_proof_obligations=[
+                "Replay certified automorphism and witness-reconstruction checks.",
+                "Prove G1 non-collapse under the same bound before theorem status.",
+                "Keep native symmetry certification separate from DRAT.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim graph coloring is solved generally.",
+                "Does not claim W(G1) is strictly contained in W(G2) as a theorem.",
+            ],
+            next_experiments=["Scale graph-coloring symmetry examples with fixed bound profiles."],
+        ),
+        TheoremCandidate(
+            id="TC-023",
+            name="Bounded Pigeonhole/Cardinality Strictness Candidate",
+            statement=(
+                "Under an explicit bound profile B, G3_SYMMETRY_CARDINALITY_CERTIFIED has native "
+                "pigeonhole counting certificates not certified by G2_SYMMETRY_CERTIFIED alone."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["php_3_2", "php_4_3", "php_5_4", "php_6_5"],
+            required_proof_obligations=[
+                "Replay native PHP counting certificates.",
+                "Prove symmetry-only G2 cannot certify the counting contradiction under the bound.",
+                "Keep standard assignment-grid scope explicit.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a complete PB solver.",
+                "Does not claim G3 strictness as a theorem.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Mechanize a proof sketch for the standard PHP native checker."],
+        ),
+        TheoremCandidate(
+            id="TC-024",
+            name="Bounded Orbit-Capacity Strictness Candidate",
+            statement=(
+                "Under an explicit bound profile B, G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE has "
+                "native local Hall/capacity certificates not counted as duplicate G3 pigeonhole rows."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["hall_local_3_2", "hall_local_4_3", "hall_local_5_4"],
+            required_proof_obligations=[
+                "Replay orbit-capacity checker output.",
+                "Prove G3's standard PHP recognizer does not cover local Hall deficits under the bound.",
+                "Keep complete matching duplicates out of novel delta counts.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a complete matching or allocation solver.",
+                "Does not claim G4 strictness as a theorem.",
+            ],
+            next_experiments=["Add more local deficit families with exact checker evidence."],
+        ),
+        TheoremCandidate(
+            id="TC-025",
+            name="Bounded High-Arity Affine Strictness Candidate",
+            statement=(
+                "Under an explicit bound profile B, G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE has "
+                "native GF(2) certificates for exact parity-over-cap rows not handled by the lower G1 cap."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["parity_arity_7_unsat", "parity_arity_8_unsat", "parity_arity_9_unsat", "parity_arity_10_unsat"],
+            required_proof_obligations=[
+                "Replay exact full-CNF affine extraction and GF(2) trace checks.",
+                "State the lower G1 cap and G5 cap.",
+                "Prove lower-cap non-coverage before theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim broad modular arithmetic solving.",
+                "Does not claim heuristic XOR mining.",
+                "Does not claim G5 strictness as a theorem.",
+            ],
+            next_experiments=["Write a proof sketch for exact high-arity affine checker soundness."],
+        ),
+        TheoremCandidate(
+            id="TC-026",
+            name="Bounded Proof-Motif Strictness Candidate",
+            statement=(
+                "Under an explicit bound profile B, G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE has native "
+                "macro-proof certificates for repeated-motif rows not certified by G5 within the proof-size profile."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["motif_ladder_8", "renamed_conflict_motif_8", "motif_chain_with_selectors_8"],
+            required_proof_obligations=[
+                "Replay template, reuse, substitution, and final contradiction checks.",
+                "State the proof-size bound.",
+                "Prove G5 non-certification under the same bound before theorem status.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim proof motif compression is complete.",
+                "Does not count Tseitin/XOR duplicates as novel G6 deltas.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Search for non-synthetic repeated proof motifs with checked reuse sites."],
+        ),
+        TheoremCandidate(
+            id="TC-027",
+            name="Collapse Hierarchy Strictness Program",
+            statement=(
+                "The G0-G6 ladder is a program for turning empirical operator deltas into bounded "
+                "strictness theorems by discharging explicit proof obligations."
+            ),
+            status="FORMAL_PROOF_OBLIGATION",
+            supporting_witnesses=["G0-G6 hierarchy"],
+            required_proof_obligations=[
+                "Prove non-collapse side for each edge.",
+                "Mechanize native checker soundness arguments.",
+                "Define scaling witness families.",
+            ],
+            forbidden_interpretations=[
+                "Does not mark the hierarchy as proven strict.",
+                "Does not claim hierarchy completeness.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Prioritize the smallest edge with a plausible formal non-collapse argument."],
+        ),
+        TheoremCandidate(
+            id="TC-028",
+            name="Collapse Hierarchy Completeness Speculation",
+            statement=(
+                "Future operator hierarchies may cover broader verifier-to-witness classes, but v2.8 "
+                "records this only as speculative program material."
+            ),
+            status="SPECULATIVE_PROGRAM",
+            supporting_witnesses=["gap analysis"],
+            required_proof_obligations=[
+                "Define the target formula universe.",
+                "Prove coverage only for restricted classes.",
+                "Avoid completeness language without proof.",
+            ],
+            forbidden_interpretations=[
+                "No hierarchy completeness claim.",
+                "No complete SAT algorithm claim.",
+            ],
+            next_experiments=["Use gap analysis to select a narrow v2.9 target."],
+        ),
+        TheoremCandidate(
+            id="TC-029",
+            name="Operator Genesis Progress Candidate",
+            statement=(
+                "Operator genesis has promoted ORBIT_COUNTING_COLLAPSE, MODULAR_RESIDUE_COLLAPSE, "
+                "and PROOF_MOTIF_COMPRESSION into bounded prototypes with native checkers."
+            ),
+            status="EMPIRICAL_EVIDENCE_NOT_THEOREM",
+            supporting_witnesses=["v2.5", "v2.6", "v2.7"],
+            required_proof_obligations=[
+                "Separate implemented prototypes from theorem status.",
+                "Track safety and duplicate controls.",
+                "Show each checker is sound.",
+            ],
+            forbidden_interpretations=[
+                "Generated operators are not automatically trusted.",
+                "No autonomous theorem discovery claim.",
+            ],
+            next_experiments=["Choose v2.9 from gap-ranked proof obligations."],
+        ),
+        TheoremCandidate(
+            id="TC-030",
+            name="Obstruction-to-Operator Program Candidate",
+            statement=(
+                "Persistent obstruction fingerprints can guide candidate operator generation and "
+                "proof-obligation queues."
+            ),
+            status="CONJECTURE",
+            supporting_witnesses=["operator genesis fingerprints", "gap analysis"],
+            required_proof_obligations=[
+                "Show fingerprint stability.",
+                "Show candidate generation improves next-operator selection.",
+                "Prove promoted operators preserve satisfiability or certificates.",
+            ],
+            forbidden_interpretations=[
+                "Not a proof of obstruction completeness.",
+                "No lower-bound claim.",
+            ],
+            next_experiments=["Audit v2.9 candidate selection against v2.8 gap analysis."],
+        ),
     ]
 
 

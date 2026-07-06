@@ -1,5 +1,22 @@
 # Collapse Theory Lab
 
+## v2.8 Hierarchy Theoremization
+
+v2.8 formalizes the current G0-G6 ladder as a bounded theoremization program.
+It adds no new operator. It defines `W_B(G)`, records empirical strictness
+evidence, emits theorem candidates, and lists proof obligations needed before
+any strictness statement can become a theorem.
+
+The full chain is `G0_BASE -> G1_XOR -> G2_SYMMETRY_CERTIFIED ->
+G3_SYMMETRY_CARDINALITY_CERTIFIED ->
+G4_ORBIT_CAPACITY_COUNTING_PROTOTYPE ->
+G5_HIGH_ARITY_AFFINE_RESIDUE_PROTOTYPE ->
+G6_PROOF_MOTIF_COMPRESSION_PROTOTYPE`.
+
+v2.8 does not prove P vs NP, hierarchy completeness, lower bounds, or proven
+strictness. Native certificates remain native certificates, not DRAT, unless
+explicitly exported and checked.
+
 Witnora-Core v2.0 adds a research lab for comparing bounded collapse
 grammars. It is not a product feature and it is not a new SAT-solver claim.
 
