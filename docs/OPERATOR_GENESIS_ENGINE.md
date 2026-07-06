@@ -1,5 +1,20 @@
 # Operator Genesis Engine
 
+## v2.16 Composed Orchestration Promotion
+
+v2.16 promotes the v2.14 recommendation `COMPOSED_OPERATOR_ORCHESTRATION` into
+`G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`.
+
+This is certified operator sequencing, not arbitrary transformation chaining.
+Each step must verify its formula-state handoff, step certificate,
+preservation type, and lift rule before the chain can certify a final result.
+If a diagnostic-only step is used as if it proved SAT or UNSAT, the checker
+rejects the composed certificate.
+
+The promotion is finite empirical edge-delta evidence. It is not a theorem,
+not a lower-bound proof, not DRAT, not composition completeness, and not a
+P-vs-NP result.
+
 ## v2.15 Graph Separator Promotion
 
 v2.15 promotes the v2.14 recommendation `GRAPH_SEPARATOR_LIFT` into

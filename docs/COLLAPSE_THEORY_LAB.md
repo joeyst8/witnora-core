@@ -1,5 +1,20 @@
 # Collapse Theory Lab
 
+## v2.16 Composed Operator Orchestration
+
+v2.16 adds `G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`, promoted from
+v2.14's `COMPOSED_OBSTRUCTION` recommendation.
+
+G9 is a certified chaining layer. Each operator step records and checks an
+input formula hash, output formula hash, native step certificate, preservation
+type, and witness/proof lift rule. Each step output must match the next step
+input. Diagnostic-only steps cannot certify SAT or UNSAT.
+
+SAT chains finish with a witness verified against the original CNF. UNSAT
+chains require preservation through every step. This is finite empirical
+edge-delta evidence, not DRAT, not a theorem, not composition completeness, and
+not a P-vs-NP result.
+
 ## v2.15 Graph Separator Lift
 
 v2.15 adds `G8_GRAPH_SEPARATOR_LIFT_PROTOTYPE`, promoted from v2.14's

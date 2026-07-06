@@ -55,3 +55,19 @@ The promotion is still bounded. It verifies separator decomposition, SAT
 witness lifting, and UNSAT separator cover for selected finite rows. It does
 not claim a family theorem, graph-separator completeness, lower bounds, or
 P vs NP progress.
+
+## v2.16 Promotion Example
+
+The second promoted obstruction-dual recommendation is:
+
+`COMPOSED_OBSTRUCTION -> COMPOSED_OPERATOR_ORCHESTRATION`
+
+v2.16 implements this as `G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`. G9 is
+a native certificate-chain checker. It verifies step certificates, formula
+hash handoffs, preservation declarations, and witness/proof lift traces across
+multiple operator applications.
+
+This promotion does not make orchestration universal. A chain fails if a
+handoff hash is broken, a step certificate is missing, a diagnostic-only step
+is used as a proof, a SAT witness fails the original CNF, or an UNSAT step lacks
+preservation.

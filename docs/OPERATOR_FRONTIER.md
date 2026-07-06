@@ -1,5 +1,19 @@
 # Operator Frontier
 
+## v2.16 Composed Orchestration Frontier Update
+
+`COMPOSED_OBSTRUCTION` has been promoted into
+`G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`.
+
+The frontier rule is certificate chaining: composition is trusted only when
+every step certificate verifies, every output formula hash matches the next
+input formula hash, every preservation type is declared, and the witness/proof
+lift trace checks. Diagnostic-only steps cannot certify SAT or UNSAT.
+
+G9 evidence is finite empirical edge-delta evidence. It is not a strictness
+theorem, not a lower-bound proof against G0-G8, not DRAT, and not composition
+completeness.
+
 ## v2.15 Graph Separator Frontier Update
 
 `GRAPH_SEPARATOR_OBSTRUCTION` has been promoted into

@@ -100,6 +100,15 @@ component conditioning under separator assignments, SAT witness lift, and UNSAT
 separator cover. Its native certificate is not DRAT and not a separator
 completeness theorem.
 
+v2.16 adds `G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`, promoted from G7's
+`COMPOSED_OBSTRUCTION` recommendation. G9 is a certificate-chain layer: every
+operator step must verify its input formula hash, output formula hash, native
+step certificate, preservation type, and lift rule, and every handoff between
+steps must match. SAT composition verifies the final lifted witness against the
+original CNF. UNSAT composition requires preservation through every step. This
+is not arbitrary transformation chaining, not DRAT, and not a composition
+completeness theorem.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -151,3 +160,6 @@ not a general SAT-solving result.
     wrong-parity, or over-cap encodings.
 12. For proof-motif operators, trust reuse only after expanding and checking
     every instantiation against original source clauses.
+13. For composed orchestration, trust a chain only when all formula handoffs,
+    step certificates, preservation declarations, and witness/proof lifts
+    verify end to end.

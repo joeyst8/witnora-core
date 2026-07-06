@@ -924,6 +924,77 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Use G7 queues to select the next promoted obstruction recommendation."],
         ),
+        TheoremCandidate(
+            id="TC-041",
+            name="Composed Orchestration Soundness Candidate",
+            statement=(
+                "If every step in a composed orchestration certificate verifies, every formula-state "
+                "handoff hash matches, every preservation declaration is checked, and the witness/proof "
+                "lift trace verifies, then the final native result is sound for the original CNF."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["composed_sat_lift", "composed_unsat_cover"],
+            required_proof_obligations=[
+                "Verify every operator step certificate independently.",
+                "Require step output formula hashes to match the next step input formula hashes.",
+                "Reject diagnostic-only steps used as SAT or UNSAT certificates.",
+                "Verify SAT witnesses against the original CNF.",
+                "Require UNSAT preservation or a native UNSAT lift rule at every step.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim DRAT.",
+                "Does not claim composition completeness.",
+                "Does not claim a theorem is proven.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Formalize a proof-assistant version of the certificate-chain soundness sketch."],
+        ),
+        TheoremCandidate(
+            id="TC-042",
+            name="G9 Empirical Edge Delta Candidate",
+            statement=(
+                "There exist finite composed-obstruction rows certified by "
+                "G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE while no single G0-G8 operator "
+                "is counted as certifying the same row under the configured replay."
+            ),
+            status="FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED",
+            supporting_witnesses=["affine_separator", "cardinality_separator", "proof_motif_separator"],
+            required_proof_obligations=[
+                "Keep prior-grammar replay separate from lower-bound proof.",
+                "Use at least two nontrivial checked operator steps before counting a novel G9 delta.",
+                "Mark single-operator duplicate rows as not novel G9 deltas.",
+            ],
+            forbidden_interpretations=[
+                "No G9 strictness theorem is claimed.",
+                "No lower bound against G0-G8 is claimed.",
+                "No orchestration-completeness claim.",
+                "No P vs NP progress claim.",
+            ],
+            next_experiments=["Build finite edge-delta certificates for more mixed operator pairs."],
+        ),
+        TheoremCandidate(
+            id="TC-043",
+            name="Obstruction-To-Orchestration Success Candidate",
+            statement=(
+                "The v2.14 COMPOSED_OPERATOR_ORCHESTRATION recommendation was promoted into "
+                "a v2.16 implemented prototype with native certificate-chain evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["mixed", "affine_separator", "composed_unsat_cover"],
+            required_proof_obligations=[
+                "Record the recommendation source from v2.14.",
+                "Verify SAT and UNSAT composed certificates.",
+                "Reject broken handoffs, diagnostic proof steps, fake DRAT, and bad witness lifts.",
+                "Avoid claiming autonomous orchestration is complete.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a theorem.",
+                "Does not claim universal operator chaining.",
+                "Does not claim DRAT.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Promote the next obstruction-dual recommendation only after a checker design exists."],
+        ),
     ]
 
 

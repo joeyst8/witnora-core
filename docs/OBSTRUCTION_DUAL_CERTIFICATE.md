@@ -65,3 +65,20 @@ This promotion keeps G7 and G8 distinct:
 
 The promotion does not retroactively turn G7 no-collapse traces into lower
 bounds.
+
+## v2.16 Promotion
+
+v2.16 promotes the `COMPOSED_OBSTRUCTION` recommendation into
+`G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`.
+
+This promotion keeps the obstruction-dual boundary intact:
+
+- G7 records composed-obstruction evidence and queues orchestration as a missing
+  operator class.
+- G9 implements a bounded native certificate-chain checker for selected
+  controlled rows.
+
+G9 does not trust arbitrary operator sequences. Each step must carry a checked
+input formula hash, output formula hash, step certificate, preservation type,
+and witness/proof lift rule. A missing handoff or diagnostic-only step fails the
+composed certificate.

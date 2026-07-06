@@ -1,5 +1,25 @@
 # Witnora-Core v0.9.8
 
+## v2.16 Composed Operator Orchestration Prototype
+
+v2.16 promotes the v2.14 obstruction recommendation
+`COMPOSED_OBSTRUCTION -> COMPOSED_OPERATOR_ORCHESTRATION` into
+`G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`.
+
+G9 is certified certificate chaining, not arbitrary operator chaining. Each
+operator application records an input formula hash, output formula hash, step
+certificate, preservation type, lift rule, and handoff verification. A composed
+certificate verifies only when every step certificate checks and every formula
+handoff matches.
+
+SAT composition ends with a lifted witness checked directly against the
+original CNF. UNSAT composition requires preservation through every step and a
+verified native final certificate. Diagnostic-only steps cannot certify SAT or
+UNSAT, and single-operator duplicate rows are not counted as novel G9 deltas.
+
+This is finite empirical edge-delta evidence, not DRAT, not a theorem, not a
+composition-completeness claim, and not a P-vs-NP result.
+
 ## v2.15 Graph Separator Lift Prototype
 
 v2.15 promotes the v2.14 obstruction recommendation
