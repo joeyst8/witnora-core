@@ -1,5 +1,12 @@
 # Strictness Proof Obligations
 
+## v2.9 Restricted G0-vs-G1 Obligations
+
+v2.9 satisfies finite width-obstruction and XOR-upper-bound checks for selected
+witnesses, but leaves full `G0_BASE` strictness open. The scalable
+Tseitin/expander statement remains `SCALABLE_FAMILY_PROOF_OBLIGATION` unless a
+formal graph-theoretic proof is supplied.
+
 The v2.8 theoremization layer separates operator wins from theorem claims.
 
 For each hierarchy edge, empirical strictness evidence has two sides:
@@ -26,4 +33,3 @@ Proof obligations tracked by v2.8 include:
 
 No candidate is marked proven unless an explicit proof artifact exists and the
 tests verify the proof file. v2.8 marks no strictness candidate as proven.
-

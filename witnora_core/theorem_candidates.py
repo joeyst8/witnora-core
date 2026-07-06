@@ -663,6 +663,56 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Audit v2.9 candidate selection against v2.8 gap analysis."],
         ),
+        TheoremCandidate(
+            id="TC-031",
+            name="Restricted G0 Width vs G1 XOR Strictness Candidate",
+            statement=(
+                "For a fixed cap c, finite exact-XOR witnesses can be rejected by the restricted "
+                "G0_WIDTH_C route due to verified width obstruction and accepted by "
+                "G1_XOR_FOR_STRICTNESS due to checked exact XOR extraction and native GF(2) elimination."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["tseitin_10", "xor_chain_unsat_n5"],
+            required_proof_obligations=[
+                "Keep the prior grammar restricted to G0_WIDTH_C.",
+                "Verify exact bounded-width obstruction for each finite witness.",
+                "Verify exact XOR extraction and GF(2) certificate for G1_XOR_FOR_STRICTNESS.",
+                "Do not promote to full G0_BASE strictness without proving every G0 route cannot collapse the family.",
+            ],
+            forbidden_interpretations=[
+                "Does not prove full G0_BASE strictness.",
+                "Does not prove hierarchy completeness.",
+                "Does not prove P vs NP progress.",
+                "Does not prove a scalable Tseitin family theorem.",
+            ],
+            next_experiments=[
+                "Mechanize a scalable treewidth lower-bound proof for bounded-degree Tseitin graph families.",
+                "Audit safe preprocessors before considering G0_WIDTH_C_WITH_SAFE_PREPROCESS.",
+            ],
+        ),
+        TheoremCandidate(
+            id="TC-032",
+            name="Scalable Tseitin Width Obstruction Obligation",
+            statement=(
+                "Tseitin formulas over suitable graph families are expected to provide scalable "
+                "width/treewidth obstruction evidence, but v2.9 treats this as a proof obligation "
+                "unless an explicit graph-theoretic proof is supplied."
+            ),
+            status="FORMAL_PROOF_OBLIGATION",
+            supporting_witnesses=["scalable Tseitin family"],
+            required_proof_obligations=[
+                "Specify the graph family.",
+                "Prove the required treewidth or induced-width lower bound.",
+                "Show any allowed preprocessing does not lower the formula below cap c.",
+                "Connect the lower bound to the restricted G0_WIDTH_C route only unless full G0 obligations are discharged.",
+            ],
+            forbidden_interpretations=[
+                "No expander family theorem is marked proven.",
+                "No lower bound against all G0 operators is claimed.",
+                "No P vs NP progress claim.",
+            ],
+            next_experiments=["Write a formal graph-family proof note and corresponding checker assumptions."],
+        ),
     ]
 
 

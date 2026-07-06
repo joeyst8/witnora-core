@@ -1,5 +1,12 @@
 # Bounded Collapse Hierarchy
 
+## v2.9 Restricted Edge
+
+v2.9 introduces a restricted theorem kernel for the edge
+`G0_WIDTH_C -> G1_XOR_FOR_STRICTNESS`. This is not a full `G0_BASE` theorem.
+It is a bounded statement about the width/treewidth subroute under cap `c` and
+the exact XOR route that extends it.
+
 The bounded hierarchy uses `W_B(G)` rather than an absolute `W(G)` claim.
 
 `W_B(G)` is the set of formulas for which Witnora can produce, under bound
@@ -22,4 +29,3 @@ Strictness along this chain is empirical evidence unless a formal proof is
 supplied and checked. v2.8 supplies proof obligations, not final lower bounds.
 
 This work does not prove P vs NP.
-

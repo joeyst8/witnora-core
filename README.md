@@ -1,5 +1,19 @@
 # Witnora-Core v0.9.8
 
+## v2.9 Restricted G0-vs-G1 Strictness Proof Kernel
+
+v2.9 adds `witnora_core.strictness_proof`, the first formal strictness proof
+attempt in Witnora. The target is deliberately restricted:
+`G0_WIDTH_C` / bounded-width route versus `G1_XOR_FOR_STRICTNESS`.
+
+The v2.9 records show finite witnesses where exact width obstruction rejects
+the restricted G0 route under cap `c`, while exact XOR extraction and native
+GF(2) elimination verify the G1 route.
+
+This does not prove full `G0_BASE` strictness, a scalable Tseitin theorem,
+hierarchy completeness, lower bounds against all G0 operators, or P vs NP
+progress.
+
 ## v2.8 Collapse Hierarchy Theoremization
 
 v2.8 formalizes the full current hierarchy:

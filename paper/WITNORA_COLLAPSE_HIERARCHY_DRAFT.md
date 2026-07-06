@@ -31,6 +31,14 @@ Native certificates include symmetry, pigeonhole counting, orbit-capacity counti
 
 Each hierarchy edge has witness families and bounded operator-delta records, but none is promoted to theorem status in v2.8.
 
+## First Restricted Strictness Theorem Candidate: G0_WIDTH_C vs G1_XOR
+
+v2.9 introduces a restricted proof kernel for the width/treewidth subroute. This is a restricted theorem candidate/proof sketch unless explicitly marked proven. The finite witnesses record exact width obstruction for `G0_WIDTH_C` and checked exact XOR/native GF(2) acceptance for `G1_XOR_FOR_STRICTNESS`.
+
+This does not prove full G0_BASE strictness.
+This does not prove P vs NP.
+This does not prove hierarchy completeness.
+
 ## Proof obligations
 
 The proof-obligation matrix records non-collapse obligations, checker soundness obligations, scaling obligations, and optional DRAT bridge work.

@@ -1,5 +1,16 @@
 # Collapse Hierarchy Theoremization
 
+## v2.9 Restricted Proof Kernel
+
+v2.9 starts the first formal strictness proof attempt. It targets only
+`G0_WIDTH_C` against `G1_XOR_FOR_STRICTNESS`: the bounded-width/treewidth route
+is rejected by exact finite width obstruction, while the G1 XOR route is
+accepted by checked native GF(2) evidence.
+
+The theorem is restricted to the width/treewidth subroute. Full `G0_BASE`
+strictness is not claimed. Scalable expander/Tseitin strictness remains a proof
+obligation unless a real graph-theoretic proof is supplied.
+
 v2.8 formalizes the current Witnora hierarchy without adding a new operator.
 It turns the G0-G6 ladder into a theoremization artifact: bounded definitions,
 empirical strictness evidence, theorem candidates, proof obligations, evidence
@@ -41,4 +52,3 @@ v2.8 does not add a new operator.
 v2.8 does not prove hierarchy completeness.
 v2.8 does not prove strictness for any edge.
 Native certificates are not DRAT unless explicitly exported and checked.
-

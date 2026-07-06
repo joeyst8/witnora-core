@@ -2714,6 +2714,13 @@ def main(argv: list[str] | None = None) -> int:
     hierarchy_parser.add_argument("--out-root", default="outputs/v2.8-collapse-hierarchy-theoremization")
     hierarchy_parser.add_argument("--strict", action="store_true")
     hierarchy_parser.add_argument("--zip", default="witnora-core-v2.8-collapse-hierarchy-theoremization.zip")
+
+    strictness_proof_parser = sub.add_parser("run-strictness-proof")
+    strictness_proof_parser.add_argument("--instances", nargs="+", default=["tseitin_10", "xor_chain_unsat_n5"])
+    strictness_proof_parser.add_argument("--cap-c", type=int, default=4)
+    strictness_proof_parser.add_argument("--out-root", default="outputs/v2.9-restricted-g0-g1-strictness")
+    strictness_proof_parser.add_argument("--strict", action="store_true")
+    strictness_proof_parser.add_argument("--zip", default="witnora-core-v2.9-restricted-g0-g1-strictness.zip")
     args = parser.parse_args(argv)
 
     if args.command in {"run", "run-strictness"}:
@@ -2819,6 +2826,13 @@ def main(argv: list[str] | None = None) -> int:
 
         result = build_hierarchy_theoremization(out_root=args.out_root, strict=args.strict, zip_path=args.zip)
         print(stable_json({"out_root": result["out_root"], "zip": result["zip"], "zip_sha256": result["zip_sha256"], "summary": result["summary"]}))
+        return 0
+
+    if args.command == "run-strictness-proof":
+        from .strictness_proof import FULL_G0_STRICTNESS_NOT_CLAIMED, SCALABLE_FAMILY_PROOF_OBLIGATION, run_strictness_proof
+
+        result = run_strictness_proof(instances=args.instances, cap_c=args.cap_c, out_root=args.out_root, strict=args.strict, zip_path=args.zip)
+        print(stable_json({"out_root": result["out_root"], "zip": result["zip"], "zip_sha256": result["zip_sha256"], "summary": {"records": len(result["strictness_proof_records"]), "cap_c": args.cap_c, "full_g0_claim": FULL_G0_STRICTNESS_NOT_CLAIMED, "scalable_family_status": SCALABLE_FAMILY_PROOF_OBLIGATION}}))
         return 0
 
     result = run_collapse_theory_frontier(grammars=args.grammars, families=args.families, out_root=args.out_root, drat_trim_path=args.drat_trim, strict=args.strict, cnfgen_path=args.cnfgen_path, prefer_official_tseitin=args.official_tseitin)
