@@ -1,5 +1,21 @@
 # Witnora-Core v0.9.8
 
+## v2.23 TC-063 Theorem Hardening
+
+v2.23 hardens `TC-063 Bounded Separator-Affine Collapse Theorem` from
+`RESTRICTED_FAMILY_THEOREM_PROOF_SKETCH` to
+`RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`.
+
+The theorem remains restricted to `SAF(c,r)`. Polynomiality holds only for
+fixed separator bound `c`, with the exponential dependence on `c` explicit.
+G5 affine checker soundness is an explicit dependency, native certificates are
+not external proofs, and scaling tests for `n=64` and `n=128` support
+implementation only.
+
+v2.23 does not claim P vs NP progress, all SAT, hierarchy completeness,
+polynomial-time SAT for arbitrary formulas, fake DRAT, or unqualified theorem
+proven status.
+
 ## v2.22 Bounded Separator-Affine Family Theorem
 
 v2.22 adds `witnora_core.separator_affine_family_theorem` and

@@ -1,5 +1,11 @@
 # Bounded Separator-Affine Family
 
+v2.23 hardens this family theorem surface through TC-063 lemma records, proof
+obligations, a structural SAF membership validator, and scaling evidence for
+`n=64` and `n=128`. The hardened status is
+`RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`, not
+`THEOREM_PROVEN_UNQUALIFIED`.
+
 v2.22 introduces `G14_BOUNDED_SEPARATOR_AFFINE_FAMILY_THEOREM`.
 
 This is a restricted infinite-family theorem layer, not a general SAT solver

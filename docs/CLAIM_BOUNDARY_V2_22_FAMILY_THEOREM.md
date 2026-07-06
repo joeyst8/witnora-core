@@ -1,5 +1,9 @@
 # v2.22 Claim Boundary
 
+v2.23 carries this boundary forward for TC-063 hardening. The updated allowed
+status is `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`; the forbidden status
+remains `THEOREM_PROVEN_UNQUALIFIED`.
+
 Allowed wording:
 
 - Restricted family theorem for `SAF(c,r)`.

@@ -1,5 +1,14 @@
 # Operator Frontier
 
+## v2.23 TC-063 Hardening Frontier Update
+
+v2.23 does not chase a new operator. It hardens TC-063 with formal lemma
+statements, proof obligations, a structural `SAF(c,r)` validator, explicit G5
+soundness dependency, and scaling evidence for `n=64` and `n=128`.
+
+The status is `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`. No P vs NP, all-SAT,
+hierarchy-completeness, fake DRAT, or unqualified theorem-proven claim is made.
+
 ## v2.22 Separator-Affine Family Theorem Update
 
 v2.22 pauses broad operator expansion and adds

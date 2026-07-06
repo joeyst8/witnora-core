@@ -1,5 +1,17 @@
 # Collapse Theory Lab
 
+## v2.23 Harden TC-063
+
+v2.23 hardens the bounded separator-affine theorem by adding lemma records,
+proof-obligation mapping, a structural SAF membership validator, polynomial
+bound accounting, G5 affine-soundness dependency tracking, and scaling evidence
+for `n=64` and `n=128`.
+
+TC-063 remains restricted to `SAF(c,r)`. Scaling tests support implementation,
+not proof. Native certificates are not external proofs. The release does not
+claim P vs NP progress, all SAT, hierarchy completeness, or unqualified theorem
+proven status.
+
 ## v2.22 Bounded Separator-Affine Family Theorem
 
 v2.22 is the first restricted infinite-family theorem attempt in the collapse

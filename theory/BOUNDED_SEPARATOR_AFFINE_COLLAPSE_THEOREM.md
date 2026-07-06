@@ -1,5 +1,10 @@
 # Bounded Separator-Affine Collapse Theorem
 
+v2.23 hardens TC-063 into `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS` by
+factoring this proof sketch into formal lemma records and explicit proof
+obligations. The theorem is still restricted to `SAF(c,r)` and is not an
+unqualified proven theorem.
+
 Status: `RESTRICTED_FAMILY_THEOREM_PROOF_SKETCH`
 
 This is a restricted family theorem, subject to the stated `SAF(c,r)`

@@ -31,7 +31,7 @@ class SeparatorAffineFamilyTheoremTest(unittest.TestCase):
         self.assertIn("TC-063", candidates)
         tc063 = candidates["TC-063"]
         self.assertEqual(tc063.name, "Bounded Separator-Affine Collapse Theorem")
-        self.assertEqual(tc063.status, "RESTRICTED_FAMILY_THEOREM_PROOF_SKETCH")
+        self.assertEqual(tc063.status, "RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS")
         joined = "\n".join(tc063.forbidden_interpretations)
         self.assertIn("Does not claim P vs NP progress", joined)
         self.assertIn("Does not claim all SAT", joined)

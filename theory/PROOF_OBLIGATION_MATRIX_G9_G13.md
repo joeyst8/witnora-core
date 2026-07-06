@@ -1,5 +1,15 @@
 # G9-G13 Proof Obligation Matrix
 
+## v2.23 TC-063 Hardening Obligations
+
+v2.23 adds an explicit TC-063 proof-obligation matrix covering separator
+decomposition, assignment exhaustiveness, G5 affine component soundness, SAT
+lifting, UNSAT cover, polynomial bounds, native certificate boundary, and
+restricted scope.
+
+The G5 affine checker soundness dependency remains open. Native certificates
+remain native, and scaling tests do not replace proof.
+
 ## v2.22 Family-Theorem Follow-On
 
 v2.22 adds TC-063, the Bounded Separator-Affine Collapse Theorem, as a

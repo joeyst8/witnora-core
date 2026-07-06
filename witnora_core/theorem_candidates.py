@@ -21,6 +21,13 @@ class TheoremCandidate:
     known_counterexamples: list[str] = field(default_factory=list)
     forbidden_interpretations: list[str] = field(default_factory=list)
     next_experiments: list[str] = field(default_factory=list)
+    lemma_count: int | None = None
+    proof_obligation_count: int | None = None
+    dependency_on_g5_affine_soundness: bool | None = None
+    fixed_c_polynomiality: bool | None = None
+    native_certificate_only: bool | None = None
+    external_proof_bridge_absent: bool | None = None
+    finite_tests_are_support_only: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -1456,7 +1463,7 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
                 "separator assignment where every component is SAT; UNSAT requires every separator "
                 "assignment to be covered by at least one affine-UNSAT component."
             ),
-            status="RESTRICTED_FAMILY_THEOREM_PROOF_SKETCH",
+            status="RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS",
             supporting_witnesses=[
                 "saf_sat_chain_n",
                 "saf_unsat_cover_n",
@@ -1481,6 +1488,13 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
                 "Mechanize the SAF(c,r) proof in an external proof assistant.",
                 "Investigate the next restricted infinite-family theorem beyond exact affine residuals.",
             ],
+            lemma_count=8,
+            proof_obligation_count=32,
+            dependency_on_g5_affine_soundness=True,
+            fixed_c_polynomiality=True,
+            native_certificate_only=True,
+            external_proof_bridge_absent=True,
+            finite_tests_are_support_only=True,
         ),
     ]
 

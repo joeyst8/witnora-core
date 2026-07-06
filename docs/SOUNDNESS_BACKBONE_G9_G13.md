@@ -1,5 +1,11 @@
 # G9-G13 Soundness Backbone
 
+## v2.23 TC-063 Hardening
+
+v2.23 hardens the first restricted family theorem attempt by turning TC-063
+into a lemma-and-obligation package. It does not create a new operator and does
+not upgrade TC-063 to an unqualified proven theorem.
+
 ## v2.22 Next Gate
 
 v2.22 follows this backbone with a first restricted infinite-family theorem

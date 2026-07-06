@@ -1,5 +1,16 @@
 # Collapse Grammar Program
 
+## v2.23 TC-063 Hardening
+
+v2.23 hardens `TC-063 Bounded Separator-Affine Collapse Theorem` without adding
+a new grammar operator. The status becomes
+`RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`.
+
+The hardened package records eight lemmas, proof obligations, G5 affine
+soundness dependency, native-certificate boundaries, and n=64/n=128 scaling
+evidence. The theorem remains restricted to `SAF(c,r)`; polynomiality is only
+for fixed `c`.
+
 ## v2.22 Bounded Separator-Affine Family Theorem
 
 `G14_BOUNDED_SEPARATOR_AFFINE_FAMILY_THEOREM` is a theorem layer over the
