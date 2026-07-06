@@ -995,6 +995,101 @@ def initial_theorem_candidates() -> list[TheoremCandidate]:
             ],
             next_experiments=["Promote the next obstruction-dual recommendation only after a checker design exists."],
         ),
+        TheoremCandidate(
+            id="TC-044",
+            name="Circuit Projection SAT Lift Soundness Candidate",
+            statement=(
+                "If every projected auxiliary variable has a verified exact definitional gate and "
+                "the lifted assignment evaluates all gates consistently, then direct verification "
+                "against the original CNF certifies the SAT witness."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["half_adder_sat", "mux2_sat", "mux4_sat"],
+            required_proof_obligations=[
+                "Verify every gate definition against original CNF clauses.",
+                "Reject unsafe auxiliary occurrences that remain after projection.",
+                "Evaluate projected gates from the core assignment.",
+                "Verify the lifted full assignment against the original CNF.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a complete circuit-SAT method.",
+                "Does not claim arbitrary auxiliary projection.",
+                "Does not claim DRAT.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Add more gate families only when exact definition checkers exist."],
+        ),
+        TheoremCandidate(
+            id="TC-045",
+            name="Circuit Projection UNSAT Preservation Candidate",
+            statement=(
+                "For supported exact definitional rows, if every projection step is "
+                "equisatisfiability-preserving and the projected core is natively certified UNSAT, "
+                "then the original CNF is UNSAT under the native checker."
+            ),
+            status="FORMAL_PROOF_SKETCH",
+            supporting_witnesses=["circuit_unsat_control"],
+            required_proof_obligations=[
+                "Verify each projected gate definition.",
+                "Verify each projection step removes only definitional clauses.",
+                "Verify no projected variable remains unsafely in the core.",
+                "Verify native core UNSAT evidence.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim DRAT.",
+                "Does not claim broad projection completeness.",
+                "Does not claim a family theorem.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Replace bounded core UNSAT checks with reusable native core certificates where possible."],
+        ),
+        TheoremCandidate(
+            id="TC-046",
+            name="G10 Empirical Edge Delta Candidate",
+            statement=(
+                "There exist finite circuit/projection rows certified by "
+                "G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE while prior G0-G9 replay does not "
+                "produce a certified collapse under the configured profile."
+            ),
+            status="FINITE_EMPIRICAL_EDGE_DELTA_CERTIFIED",
+            supporting_witnesses=["half_adder_sat", "mux2_sat", "projected_affine_core", "projected_capacity_core"],
+            required_proof_obligations=[
+                "Keep prior-grammar replay separate from lower-bound proof.",
+                "Verify exact definitional projection certificates.",
+                "Exclude trivial single-gate validation rows from novel G10 delta counts.",
+                "Verify orchestration handoffs for projected-core rows.",
+            ],
+            forbidden_interpretations=[
+                "No G10 strictness theorem is claimed.",
+                "No lower bound against G0-G9 is claimed.",
+                "No complete circuit-SAT method is claimed.",
+                "No P vs NP progress claim.",
+            ],
+            next_experiments=["Build a finite edge certificate for a projected-core-to-G9 orchestration chain."],
+        ),
+        TheoremCandidate(
+            id="TC-047",
+            name="Obstruction-To-Circuit-Projection Success Candidate",
+            statement=(
+                "The v2.14 CIRCUIT_PROJECTION_LIFT recommendation was promoted into a "
+                "v2.17 implemented prototype with native circuit-projection certificate evidence."
+            ),
+            status="EMPIRICAL_EVIDENCE",
+            supporting_witnesses=["circuit-sat-toy", "projected_affine_core", "projected_capacity_core"],
+            required_proof_obligations=[
+                "Record the recommendation source from v2.14.",
+                "Verify AND, OR, and NOT exact gate definitions.",
+                "Reject incomplete, polluted, unsafe, and bad-lift controls.",
+                "Avoid claiming broad circuit solving.",
+            ],
+            forbidden_interpretations=[
+                "Does not claim a theorem.",
+                "Does not claim arbitrary projection.",
+                "Does not claim DRAT.",
+                "Does not claim P vs NP progress.",
+            ],
+            next_experiments=["Promote projection into larger composed orchestration rows only after handoff certificates verify."],
+        ),
     ]
 
 

@@ -109,6 +109,15 @@ original CNF. UNSAT composition requires preservation through every step. This
 is not arbitrary transformation chaining, not DRAT, and not a composition
 completeness theorem.
 
+v2.17 adds `G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`, promoted from G7's
+`CIRCUIT_PROJECTION_SIGNAL` recommendation. G10 detects exact definitional
+gate encodings, projects only verified auxiliary variables, recomputes the core
+formula hash, and lifts SAT witnesses by evaluating the gate definitions. UNSAT
+projection is accepted only when the projection chain is
+equisatisfiability-preserving for the supported exact definitional family. This
+is not arbitrary auxiliary projection, not DRAT, and not a complete circuit-SAT
+method.
+
 ## Theorem Candidates
 
 Theorem candidates are tracked with explicit statuses: conjecture, empirical
@@ -163,3 +172,5 @@ not a general SAT-solving result.
 13. For composed orchestration, trust a chain only when all formula handoffs,
     step certificates, preservation declarations, and witness/proof lifts
     verify end to end.
+14. For circuit projection, eliminate only exact definitional auxiliary
+    variables and require SAT or UNSAT lift evidence against the original CNF.

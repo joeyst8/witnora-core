@@ -82,3 +82,16 @@ G9 does not trust arbitrary operator sequences. Each step must carry a checked
 input formula hash, output formula hash, step certificate, preservation type,
 and witness/proof lift rule. A missing handoff or diagnostic-only step fails the
 composed certificate.
+
+## v2.17 Promotion
+
+v2.17 promotes the `CIRCUIT_PROJECTION_SIGNAL` recommendation into
+`G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`.
+
+G10 turns circuit-projection evidence into a native checker-backed operator
+prototype. The promotion is deliberately narrow: only exact definitional gate
+encodings are projected, SAT lifts must satisfy the original CNF directly, and
+UNSAT preservation requires an equisatisfiability-preserving projection chain.
+
+This promotion does not make arbitrary auxiliary projection sound, and it does
+not claim a complete circuit-SAT method.

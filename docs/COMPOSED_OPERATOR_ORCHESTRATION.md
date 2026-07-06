@@ -52,6 +52,15 @@ DRAT. G9 is a prototype, not a theorem. It does not claim composition
 completeness, lower bounds against G0-G8, hierarchy completeness, or a P-vs-NP
 result.
 
+## v2.17 Front-End Integration
+
+`G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE` can act as a certified front-end step
+for composed orchestration when its projected core hash is handed to a
+downstream native operator. The G10 handoff is valid only if exact gate
+definitions, projection steps, and SAT/UNSAT lift obligations verify first.
+
+Projection diagnostics alone cannot serve as a composed SAT/UNSAT certificate.
+
 ## CLI
 
 ```bash

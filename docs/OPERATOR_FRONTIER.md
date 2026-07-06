@@ -1,5 +1,19 @@
 # Operator Frontier
 
+## v2.17 Circuit Projection Frontier Update
+
+`CIRCUIT_PROJECTION_SIGNAL` has been promoted into
+`G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`.
+
+The frontier rule is exact definition first. Projection is trusted only when
+the checker verifies each definitional gate encoding, removes only those
+definition clauses, recomputes the projected core hash, and verifies the lift
+back to the original CNF. Unsafe auxiliary occurrences are rejected.
+
+Trivial single-gate rows validate the checker but are not counted as novel G10
+deltas. Novel evidence requires a small circuit/projection row or a projected
+core that chains into another native operator.
+
 ## v2.16 Composed Orchestration Frontier Update
 
 `COMPOSED_OBSTRUCTION` has been promoted into

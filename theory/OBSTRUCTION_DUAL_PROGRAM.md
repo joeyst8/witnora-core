@@ -71,3 +71,17 @@ This promotion does not make orchestration universal. A chain fails if a
 handoff hash is broken, a step certificate is missing, a diagnostic-only step
 is used as a proof, a SAT witness fails the original CNF, or an UNSAT step lacks
 preservation.
+
+## v2.17 Promotion Example
+
+The next promoted obstruction-dual recommendation is:
+
+`CIRCUIT_PROJECTION_SIGNAL -> CIRCUIT_PROJECTION_LIFT`
+
+v2.17 implements this as `G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`. G10 verifies
+exact definitional gate clauses, projects only safe auxiliary variables,
+recomputes the projected core, and checks SAT or UNSAT lift evidence.
+
+This promotion does not authorize arbitrary projection. If a projected variable
+has an incomplete definition, polluted definition, unsafe outside use, bad SAT
+lift, or missing UNSAT equisatisfiability evidence, the certificate fails.

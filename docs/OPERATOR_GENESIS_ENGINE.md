@@ -1,5 +1,18 @@
 # Operator Genesis Engine
 
+## v2.17 Circuit Projection Promotion
+
+v2.17 promotes the v2.14 recommendation `CIRCUIT_PROJECTION_LIFT` into
+`G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`.
+
+This is a certified front-end projection operator, not broad circuit solving.
+It projects only exact definitional gate variables, records core formula hashes,
+and verifies SAT witness lifts against the original CNF. UNSAT rows require a
+checked equisatisfiability chain.
+
+The promotion is finite empirical edge-delta evidence. It is not a theorem,
+not DRAT, not a complete circuit-SAT method, and not a P-vs-NP result.
+
 ## v2.16 Composed Orchestration Promotion
 
 v2.16 promotes the v2.14 recommendation `COMPOSED_OPERATOR_ORCHESTRATION` into

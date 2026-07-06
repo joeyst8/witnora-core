@@ -1,5 +1,20 @@
 # Collapse Theory Lab
 
+## v2.17 Circuit Projection Lift
+
+v2.17 adds `G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`, promoted from v2.14's
+`CIRCUIT_PROJECTION_SIGNAL` recommendation.
+
+G10 projects only exact definitional gate variables. The checker verifies each
+gate definition against original CNF clauses, recomputes the projected core
+hash, rejects unsafe auxiliary-variable occurrences, and requires each
+projection step to preserve equisatisfiability.
+
+SAT lift is trusted only after the lifted assignment satisfies the original CNF
+directly. UNSAT lift is accepted only for supported exact definitional families
+where the projection chain and native core UNSAT evidence verify. This is not a
+complete circuit-SAT method, not DRAT, not a theorem, and not a P-vs-NP result.
+
 ## v2.16 Composed Operator Orchestration
 
 v2.16 adds `G9_COMPOSED_OPERATOR_ORCHESTRATION_PROTOTYPE`, promoted from

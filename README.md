@@ -1,5 +1,25 @@
 # Witnora-Core v0.9.8
 
+## v2.17 Circuit Projection Lift Prototype
+
+v2.17 promotes the v2.14 obstruction recommendation
+`CIRCUIT_PROJECTION_SIGNAL -> CIRCUIT_PROJECTION_LIFT` into
+`G10_CIRCUIT_PROJECTION_LIFT_PROTOTYPE`.
+
+G10 detects exact definitional gate encodings for bounded AND, OR, NOT, and
+optional exact XOR rows. It projects only auxiliary variables whose definitions
+are checker-verifiable. The projected core hash is recomputed after definition
+clauses are removed, and unsafe auxiliary occurrences are rejected.
+
+SAT projection is trusted only when the core witness is lifted by evaluating the
+gate definitions and the lifted assignment satisfies the original CNF directly.
+UNSAT projection requires an equisatisfiability-preserving projection chain and
+a verified native core UNSAT certificate.
+
+This is a native prototype, not DRAT, not a theorem, not a complete circuit-SAT
+method, and not a P-vs-NP result. Trivial single-gate validation rows are not
+counted as novel G10 deltas.
+
 ## v2.16 Composed Operator Orchestration Prototype
 
 v2.16 promotes the v2.14 obstruction recommendation
