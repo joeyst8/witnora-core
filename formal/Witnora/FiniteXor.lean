@@ -63,21 +63,20 @@ a nonpositive (zero in Nat) variable. -/
 theorem normalizePositiveVariables_valid_iff (raw : List Nat) :
     (normalizePositiveVariables raw).isSome = true ↔
       ∀ v ∈ raw, 0 < v := by
-  unfold normalizePositiveVariables
-  by_cases h : raw.all (fun v => decide (0 < v)) = true
-  · simp [h]
-    constructor
-    · intro _ v hv
-      have hval := List.all_eq_true.mp h v hv
-      simpa using hval
-    · intro _
-      trivial
-  · simp [h]
-    intro hvalid
-    apply h
-    apply List.all_eq_true.mpr
+  constructor
+  · intro hsome
+    have hall : raw.all (fun v => decide (0 < v)) = true := by
+      by_contra hn
+      simp [normalizePositiveVariables, hn] at hsome
     intro v hv
-    simpa using hvalid v hv
+    have ht := List.all_eq_true.mp hall v hv
+    simpa using ht
+  · intro hvalid
+    have hall : raw.all (fun v => decide (0 < v)) = true := by
+      apply List.all_eq_true.mpr
+      intro v hv
+      simpa using hvalid v hv
+    simp [normalizePositiveVariables, hall]
 
 /-- Concrete regression examples of the canonical ordering and GF(2)
 cancellation behavior, including the empty case. -/
