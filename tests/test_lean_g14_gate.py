@@ -84,7 +84,8 @@ class G14LeanCoverGateTest(unittest.TestCase):
     def test_single_failed_branch_rejects_cover(self):
         with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
                    side_effect=[
-                       {"verified": True, "normalization_check": {"verified": True}},
+                       {"verified": True, "lean_formal_status": "LEAN_VERIFIED",
+                        "normalization_check": {"verified": True}},
                        {"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED"},
                    ]) as gate:
             result = verify_g14_unsat_cover_with_lean(
@@ -101,6 +102,28 @@ class G14LeanCoverGateTest(unittest.TestCase):
             result = verify_g14_unsat_cover_with_lean(self.instance.formula, data)
         self.assertFalse(result["verified"])
         gate.assert_not_called()
+
+    def test_forged_g14_formal_status_is_rejected(self):
+        data = self.certificate.to_dict()
+        data["lean_formal_status"] = "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED"
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean") as gate:
+            result = verify_g14_unsat_cover_with_lean(self.instance.formula, data)
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["lean_formal_status"], "NOT_LEAN_VERIFIED")
+        gate.assert_not_called()
+
+    def test_g14_digest_binds_raw_input(self):
+        accepted = {"verified": True, "lean_formal_status": "LEAN_VERIFIED",
+                    "normalization_check": {"verified": True}}
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
+                   return_value=accepted):
+            a = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate, raw_clauses=[[1]])
+            b = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate, raw_clauses=[[2]])
+        self.assertTrue(a["source_normalization_verified"])
+        self.assertEqual(a["source_formula_hash"], self.instance.formula.formula_hash)
+        self.assertNotEqual(a["input_sha256"], b["input_sha256"])
 
     def test_sat_certificate_not_accepted_as_unsat_cover(self):
         instance = make_separator_affine_instance("saf_sat_chain_2")
