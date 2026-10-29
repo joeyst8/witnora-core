@@ -52,10 +52,15 @@ def _check_partitions_with_lean(
     lines = [
         "import Witnora.ComponentPartition",
         "import Witnora.SeparatorAssignments",
+        "import Witnora.SignedSerialization",
         "set_option maxRecDepth 16384",
         "set_option maxHeartbeats 0",
     ]
     source_cnf = _serialize_cnf(original)
+    lines.append(
+        "example : Witnora.SignedSerialization.decodeCNF "
+        f"{original.to_clause_lists()} = {source_cnf} := by decide"
+    )
     # The same Lean proof checks that Python supplied every branch in
     # the specified order, not merely that supplied branches are valid.
     variables = sorted(branch_partitions[0][0]) if branch_partitions else []
@@ -74,6 +79,11 @@ def _check_partitions_with_lean(
     )
     for assignment, parts in branch_partitions:
         cnfs = "[" + ", ".join(_serialize_cnf(part) for part in parts) + "]"
+        for part in parts:
+            lines.append(
+                "example : Witnora.SignedSerialization.decodeCNF "
+                f"{part.to_clause_lists()} = {_serialize_cnf(part)} := by decide"
+            )
         lines.append(
             "example : Witnora.ComponentPartition.checkPartition "
             "(Witnora.Conditioning.conditionCNF "
