@@ -48,7 +48,7 @@ theorem fixedOf_encode_agrees (variables : List Nat) (a : Nat → Bool) :
       by_cases h : v = x
       · subst v
         simp [fixedOf, encode] at hv
-        exact hv.symm
+        exact hv
       · have htail : fixedOf (encode xs a) v = some b := by
           simpa [fixedOf, encode, h] using hv
         exact ih htail
