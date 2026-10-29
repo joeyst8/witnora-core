@@ -25,7 +25,7 @@ def canonical_literal_tuple(literals: Iterable[Literal]) -> tuple[Literal, ...] 
 
     seen: set[int] = set()
     for lit in literals:
-        if not isinstance(lit, int):
+        if type(lit) is not int:
             raise CNFError(f"literal is not an integer: {lit!r}")
         if lit == 0:
             raise CNFError("literal 0 is reserved as a DIMACS clause terminator")
