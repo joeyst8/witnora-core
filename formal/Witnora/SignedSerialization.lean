@@ -22,7 +22,10 @@ def decode : Int → Literal
   | .negSucc n => (n + 1, false)
 
 def encode (literal : Literal) : Int :=
-  if literal.2 then Int.ofNat literal.1 else -(Int.ofNat literal.1)
+  if literal.2 then Int.ofNat literal.1
+  else match literal.1 with
+    | 0 => 0
+    | n + 1 => Int.negSucc n
 
 def validSigned (z : Int) : Bool := decide (z ≠ 0)
 
