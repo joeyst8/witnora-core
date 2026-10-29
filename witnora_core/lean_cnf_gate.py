@@ -114,7 +114,8 @@ def verify_cnf_normalization_with_lean(
             lean_source = "import Witnora.DIMACSLexemes\n" + lean_source
             lean_source += (
                 "example : Witnora.DIMACSLexemes.checkLexemes "
-                f"{json.dumps(spellings)} {str(tokens)} = true := by decide\n"
+                f"{str([[ord(ch) for ch in spelling] for spelling in spellings])} "
+                f"{str(tokens)} = true := by decide\n"
             )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
