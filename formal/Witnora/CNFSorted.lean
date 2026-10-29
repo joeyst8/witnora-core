@@ -141,6 +141,22 @@ def literalLE (x y : Literal) : Bool :=
 def sortLiterals (clause : List Literal) : List Literal :=
   sortBy literalLE clause
 
+theorem literalLE_total (x y : Literal) :
+    literalLE x y = true ∨ literalLE y x = true := by
+  simp only [literalLE, decide_eq_true_eq]
+  exact le_total (Witnora.SignedSerialization.encode x)
+    (Witnora.SignedSerialization.encode y)
+
+theorem literalLE_trans (x y z : Literal) :
+    literalLE x y = true → literalLE y z = true →
+      literalLE x z = true := by
+  simp only [literalLE, decide_eq_true_eq]
+  exact le_trans
+
+theorem sortLiterals_sorted (clause : List Literal) :
+    SortedAll literalLE (sortLiterals clause) := by
+  exact sortBy_sorted literalLE literalLE_total literalLE_trans clause
+
 def sortClauses (cnf : CNF) : CNF :=
   sortBy (fun x y => lexLE (x.map Witnora.SignedSerialization.encode)
     (y.map Witnora.SignedSerialization.encode)) cnf
@@ -205,6 +221,7 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
 #print axioms Witnora.CNFSorted.insertBy_perm
 #print axioms Witnora.CNFSorted.sortBy_perm
 #print axioms Witnora.CNFSorted.mem_sortBy
+#print axioms Witnora.CNFSorted.sortLiterals_sorted
 #print axioms Witnora.CNFSorted.sortLiterals_perm
 #print axioms Witnora.CNFSorted.sortClauses_perm
 #print axioms Witnora.CNFSorted.sortLiterals_correct
