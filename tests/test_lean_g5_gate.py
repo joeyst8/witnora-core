@@ -15,6 +15,15 @@ from witnora_core.operator_genesis import (
 
 
 class G5LeanGateTest(unittest.TestCase):
+    def setUp(self):
+        patcher = patch(
+            "witnora_core.lean_g5_gate.verify_cnf_normalization_with_lean",
+            return_value={"verified": True,
+                          "lean_formal_status": "LEAN_CNF_NORMALIZATION_VERIFIED"},
+        )
+        self.normalization_gate = patcher.start()
+        self.addCleanup(patcher.stop)
+
     @classmethod
     def setUpClass(cls):
         cls.instance = make_affine_residue_instance("parity_arity_7_unsat")
@@ -34,7 +43,19 @@ class G5LeanGateTest(unittest.TestCase):
             result = verify_g5_certificate_with_lean(self.instance.formula, self.cert)
         self.assertTrue(result["verified"])
         self.assertEqual(result["lean_formal_status"], "LEAN_VERIFIED")
+        self.assertTrue(result["normalization_check"]["verified"])
         self.assertEqual(len(result["input_sha256"]), 64)
+
+    def test_normalization_rejection_blocks_g5_proof(self):
+        self.normalization_gate.return_value = {
+            "verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED",
+        }
+        with patch("witnora_core.lean_g5_gate.subprocess.run") as runner:
+            result = verify_g5_certificate_with_lean(self.instance.formula, self.cert)
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["reason"], "CNF_NORMALIZATION_REJECTED")
+        runner.assert_not_called()
+        self.normalization_gate.assert_called_once()
 
     def test_lean_unavailable_is_not_verified(self):
         with patch("witnora_core.lean_g5_gate.subprocess.run", side_effect=FileNotFoundError):
