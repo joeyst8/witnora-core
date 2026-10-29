@@ -35,6 +35,29 @@ def lean_rows(rows):
     ) + "]"
 
 
+def lean_snapshots(snapshots):
+    return "[" + ", ".join(lean_rows(rows) for rows in snapshots) + "]"
+
+
+def python_snapshots(initial_rows, operations):
+    """Serialize Python-recorded intermediate states; Lean replays independently."""
+    current = [dict(row) for row in initial_rows]
+    snapshots = []
+    for op in operations:
+        if op["operation"] == "SWAP_ROWS":
+            current = [dict(row) for row in op["rows_after"]]
+        elif op["operation"] == "ADD_ROW_XOR":
+            target, source = op["target_row"], op["source_row"]
+            if current[target] != op["before"] or current[source] != op["source"]:
+                raise AssertionError("Python trace metadata inconsistent with previous rows")
+            current = [dict(row) for row in current]
+            current[target] = dict(op["after"])
+        else:
+            raise AssertionError(f"unknown op: {op}")
+        snapshots.append(current)
+    return snapshots
+
+
 def lean_steps(operations):
     chunks = []
     for op in operations:
@@ -68,6 +91,21 @@ def main():
             f"{lean_steps(cert.row_operations)} "
         )
         lines.append(f"example : {prefix}{lean_rows(trace[-1]['rows'])} = true := by decide")
+        snapshots = python_snapshots(trace[0]["rows"], cert.row_operations)
+        if not snapshots:
+            raise AssertionError(f"{name}: expected nonempty Python row trace")
+        snapshot_prefix = (
+            f"Witnora.G5Trace.checkSnapshots "
+            f"{lean_rows(trace[0]['rows'])} {lean_steps(cert.row_operations)} "
+        )
+        lines.append(
+            f"example : {snapshot_prefix}{lean_snapshots(snapshots)} = true := by decide"
+        )
+        tampered = list(snapshots)
+        tampered[0] = []
+        lines.append(
+            f"example : {snapshot_prefix}{lean_snapshots(tampered)} = false := by decide"
+        )
         lines.append(f"example : {prefix}[] = false := by decide")
         lines.append(
             f"example : {prefix}[{{ coefficients := [0], rhs := true }}] "
