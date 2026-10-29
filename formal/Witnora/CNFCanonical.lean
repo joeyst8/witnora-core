@@ -116,10 +116,24 @@ theorem dropTautologies_bool (cnf : CNF) (a : Nat → Bool) :
   | cons clause rest ih =>
       by_cases ht : isTautology clause = true
       · have htrue := tautology_is_true clause a ht
-        simp [dropTautologies, ht, List.all_cons, htrue, ih]
+        simp only [dropTautologies, List.filter_cons, ht,
+          Bool.not_true, List.all_cons]
+        change (dropTautologies rest).all
+            (fun clause => clause.any (signedLitTrue a)) =
+          (clause.any (signedLitTrue a) &&
+            rest.all (fun clause => clause.any (signedLitTrue a)))
+        rw [ih, htrue]
+        simp
       · have hf : isTautology clause = false := by
           cases hbit : isTautology clause <;> simp_all
-        simp [dropTautologies, hf, List.all_cons, ih]
+        simp only [dropTautologies, List.filter_cons, hf,
+          Bool.not_false, List.all_cons]
+        change (clause.any (signedLitTrue a) &&
+            (dropTautologies rest).all
+              (fun clause => clause.any (signedLitTrue a))) =
+          (clause.any (signedLitTrue a) &&
+            rest.all (fun clause => clause.any (signedLitTrue a)))
+        rw [ih]
 
 theorem dropTautologies_correct (cnf : CNF) (a : Nat → Bool) :
     CNFHolds (dropTautologies cnf) a ↔ CNFHolds cnf a := by
