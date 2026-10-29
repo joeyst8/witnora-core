@@ -1,5 +1,6 @@
 import Witnora.Separator
 import Witnora.SparseBridge
+import Witnora.SignedSerialization
 
 /-!
 # G5/G14 composition boundary
@@ -56,6 +57,43 @@ theorem original_unsat_of_checked_g5_branch_cover
     (Witnora.Separator.unsat_iff_cover F C hdecomposes).mpr hcover
   intro hsat
   exact hdecomposedUnsat (horiginal hsat)
+
+
+/-- Signed-source end-to-end G14 cover soundness, still conditional on
+    the explicitly supplied decomposition and residual-model bridges.
+    No Python parser correctness or arbitrary-instance completeness is claimed. -/
+theorem signed_source_unsat_of_checked_g5_branch_cover
+    (raw : List (List Int))
+    (F : S → ((i : I) → R i) → Prop)
+    (C : S → (i : I) → R i → Prop)
+    (hdecomposes : Witnora.Separator.Decomposes F C)
+    (hsource : (∃ a, Witnora.SignedSerialization.signedCNFHolds raw a) →
+      ∃ s b, F s b)
+    (selected : S → I)
+    (residualCNF : S → Witnora.Concrete.CNF)
+    (toAssignment : (s : S) → R (selected s) → Nat → Bool)
+    (bound : S → Nat)
+    (rows : S → List Witnora.G5Trace.Row)
+    (steps : S → List Witnora.G5Dag.XorRef)
+    (hresidual : ∀ s x, C s (selected s) x →
+      CNFHolds (residualCNF s) (toAssignment s x))
+    (hcert : ∀ s, Witnora.SparseBridge.checkG5Closed
+      (bound s) (residualCNF s) (rows s) (steps s) = true) :
+    ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds raw a := by
+  have hbridge : (∃ a, CNFHolds
+      (Witnora.SignedSerialization.decodeCNF raw) a) → ∃ s b, F s b := by
+    intro ⟨a, ha⟩
+    exact hsource ⟨a,
+      (Witnora.SignedSerialization.signedCNFHolds_iff raw a).mpr ha⟩
+  have hun := original_unsat_of_checked_g5_branch_cover
+    (Witnora.SignedSerialization.decodeCNF raw) F C hdecomposes
+    hbridge selected residualCNF toAssignment bound rows steps
+    hresidual hcert
+  intro ⟨a, ha⟩
+  exact hun ⟨a,
+    (Witnora.SignedSerialization.signedCNFHolds_iff raw a).mp ha⟩
+
+#print axioms Witnora.G5G14Composition.signed_source_unsat_of_checked_g5_branch_cover
 
 #print axioms Witnora.G5G14Composition.original_unsat_of_checked_g5_branch_cover
 
