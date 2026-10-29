@@ -26,11 +26,12 @@ theorem forbidClause_true (bits : List Bool) (fixed : List (Nat × Bool)) :
   | cons p tail ih =>
     rcases p with ⟨v, value⟩
     simp only [forbidClause, List.map_cons, List.any_cons,
-      agrees, List.all_cons, litTrue, ih]
+      agrees, List.all_cons] at ih ⊢
+    rw [ih]
     cases hb : readVar bits v <;>
       cases hv : value <;>
-      cases ht : agrees bits tail <;>
-      decide
+      cases ht : tail.all (fun p => readVar bits p.1 == p.2) <;>
+      simp [litTrue, hb, hv, ht]
 
 #print axioms Witnora.Extraction.forbidClause_true
 
