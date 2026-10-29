@@ -75,16 +75,26 @@ theorem conditionCNF_bool
   | nil => rfl
   | cons clause rest ih =>
       have heq := conditionClause_correct fixed a h clause
-      simp only [conditionCNF, List.filterMap_cons]
       cases hc : conditionClause fixed clause with
       | none =>
-          simp [conditionedClauseTrue, hc] at heq
-          simp only [hc, List.all_cons]
-          simp [conditionCNF, ih, heq]
+          have ht : clause.any (signedLitTrue a) = true := by
+            simpa [conditionedClauseTrue, hc] using heq.symm
+          change (conditionCNF fixed rest).all
+              (fun clause => clause.any (signedLitTrue a)) =
+            (clause.any (signedLitTrue a) &&
+              rest.all (fun clause => clause.any (signedLitTrue a)))
+          rw [ih, ht]
+          simp
       | some reduced =>
-          simp [conditionedClauseTrue, hc] at heq
-          simp only [hc, List.all_cons]
-          simp [conditionCNF, ih, heq]
+          have hred : reduced.any (signedLitTrue a) =
+              clause.any (signedLitTrue a) := by
+            simpa [conditionedClauseTrue, hc] using heq
+          change (reduced.any (signedLitTrue a) &&
+              (conditionCNF fixed rest).all
+                (fun clause => clause.any (signedLitTrue a))) =
+            (clause.any (signedLitTrue a) &&
+              rest.all (fun clause => clause.any (signedLitTrue a)))
+          rw [hred, ih]
 
 theorem conditionCNF_correct
     (fixed : Nat → Option Bool) (a : Nat → Bool)
