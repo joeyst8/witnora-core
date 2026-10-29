@@ -164,14 +164,6 @@ theorem signForbiddenClause_true
         cases ht : rest.all (fun p => a p.1 == p.2) <;>
         decide
 
-/-- Literal-list generator mirroring Python's sign construction.
-Python additionally sorts each clause's signed integers; clause order does
-not affect its Boolean disjunction. -/
-def generateSignedClauses (vars : List Nat) (rhs : Bool) :
-    List (List (Nat × Bool)) :=
-  (generateForbiddenPatterns vars.length rhs).map (fun bad =>
-    signForbiddenClause (List.zip vars bad))
-
 #print axioms Witnora.FiniteXor.signForbiddenClause_true
 
 /-- Executable generator: enumerate all n-bit assignments and retain exactly
@@ -179,6 +171,14 @@ those with parity opposite rhs. Each retained bit vector represents the
 literal clause that forbids precisely that assignment. -/
 def generateForbiddenPatterns (n : Nat) (rhs : Bool) : List (List Bool) :=
   (allBits n).filter (fun bad => decide (parityBits bad ≠ rhs))
+
+/-- Literal-list generator mirroring Python's sign construction.
+Python additionally sorts each clause's signed integers; clause order does
+not affect its Boolean disjunction. -/
+def generateSignedClauses (vars : List Nat) (rhs : Bool) :
+    List (List (Nat × Bool)) :=
+  (generateForbiddenPatterns vars.length rhs).map (fun bad =>
+    signForbiddenClause (List.zip vars bad))
 
 /-- Evaluate the concrete generated clause family. -/
 def generatedFinite (n : Nat) (rhs : Bool) (actual : List Bool) : Bool :=
