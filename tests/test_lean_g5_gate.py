@@ -132,6 +132,21 @@ class G5LeanGateTest(unittest.TestCase):
         self.assertEqual(self.normalization_gate.call_args.args[1],
                          self.instance.formula.to_clause_lists())
 
+    def test_raw_source_compiles_source_level_g5_claim(self):
+        raw = self.instance.formula.to_clause_lists()
+        def inspect_run(argv, **kwargs):
+            source = Path(argv[3]).read_text(encoding="utf-8")
+            self.assertIn("import Witnora.SourceG5", source)
+            self.assertIn("Witnora.SourceG5.checkRawG5", source)
+            self.assertNotIn("example : Witnora.SparseBridge.checkG5Closed", source)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with patch("witnora_core.lean_g5_gate.subprocess.run", side_effect=inspect_run):
+            result = verify_g5_certificate_with_lean(
+                self.instance.formula, self.cert, raw_clauses=raw,
+            )
+        self.assertTrue(result["verified"])
+        self.assertTrue(result["source_normalization_verified"])
+
     def test_attestation_digest_binds_raw_source(self):
         with patch("witnora_core.lean_g5_gate.subprocess.run",
                    return_value=subprocess.CompletedProcess([], 0, "", "")):
