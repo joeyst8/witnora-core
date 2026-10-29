@@ -29,7 +29,7 @@ G5_CASES = (
     "parity_arity_7_unsat",
     "parity_arity_8_sat",
     "parity_arity_8_unsat",
-    "parity_arity_9_sat",
+    "parity_arity_10_unsat",
     "parity_arity_9_unsat",
 )
 G14_CASES = (
