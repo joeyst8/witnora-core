@@ -61,6 +61,28 @@ theorem sparseParity_xor (bound : Nat)
     cases ha : assignment v <;>
     decide
 
+/-- Interpret an executable sparse row as the abstract equation used by the
+unbounded reconstruction theorem. -/
+def interpret (bound : Nat) (row : Row) : Witnora.Affine.Equation (Nat → Bool) where
+  lhs := sparseParity bound row.coefficients
+  rhs := row.rhs
+
+/-- The concrete XOR row constructor and the abstract XOR equation have the
+same left- and right-hand sides for every assignment. -/
+theorem xorRow_interpret (bound : Nat) (left right : Row)
+    (assignment : Nat → Bool) :
+    (interpret bound (xorRow left right)).lhs assignment =
+      (Witnora.Affine.xorEquation (interpret bound left)
+        (interpret bound right)).lhs assignment ∧
+    (interpret bound (xorRow left right)).rhs =
+      (Witnora.Affine.xorEquation (interpret bound left)
+        (interpret bound right)).rhs := by
+  constructor
+  · exact sparseParity_xor bound left.coefficients right.coefficients assignment
+  · rfl
+
+#print axioms Witnora.SparseParity.xorRow_interpret
+
 #print axioms Witnora.SparseParity.xorFold_distrib
 #print axioms Witnora.SparseParity.xor_member_bit
 #print axioms Witnora.SparseParity.sparseParity_xor
