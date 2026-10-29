@@ -20,7 +20,7 @@ from typing import Any, Iterable
 import zipfile
 
 from .cnf import CNFFormula, Clause, formula_satisfied, resolvent
-from .dimacs import load_dimacs
+from .dimacs import load_dimacs, load_dimacs_with_raw
 from .xor import canonical_xor_cnf_clauses
 
 GENESIS_VERSION = "2.7"
@@ -3287,7 +3287,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     if args.command == "check-affine-residue-cert":
-        formula = load_dimacs(args.cnf)
+        if args.lean:
+            formula, raw_clauses = load_dimacs_with_raw(args.cnf)
+        else:
+            formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
         native = check_affine_residue_certificate(formula, data, max_arity=args.max_arity)
         if not args.lean:
@@ -3296,6 +3299,7 @@ def main(argv: list[str] | None = None) -> int:
         from .lean_g5_gate import verify_g5_certificate_with_lean
         formal = verify_g5_certificate_with_lean(
             formula, data, timeout_seconds=args.lean_timeout, max_arity=args.max_arity,
+            raw_clauses=raw_clauses,
         )
         print(stable_json({"native_check": native, "lean_check": formal}))
         return 0 if formal["verified"] else 1
