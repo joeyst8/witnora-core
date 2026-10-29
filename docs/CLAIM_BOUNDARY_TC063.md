@@ -401,3 +401,15 @@ formula-hash and independently reconstructed branch checks remain mandatory.
 The hashes are binding identifiers, **not** signed attestations or a proof of
 correctness of arbitrary Python execution; a trusted caller still must pair
 an attestation with the same input bytes and verified invocation.
+
+### Source signed-CNF to G5 theorem
+
+`formal/Witnora/SourceG5.lean` composes the kernel-proved canonicalization
+semantic equivalence with the verified indexed G5 contradiction checker:
+if `checkRawG5 bound raw rows steps = true`, **the signed clause list `raw`
+is UNSAT**. Unlike canonical-only checks, this conclusion refers directly to
+the pre-normalization clause list. The G5 runtime gate emits this closed
+proposition when `raw_clauses` is supplied; the separate normalization check
+must also accept. Neither this theorem nor the runtime gate proves that the
+original DIMACS text was lexed into `raw` correctly, that every UNSAT formula
+has a G5 proof, or that all G14 certificates are covered by G5.
