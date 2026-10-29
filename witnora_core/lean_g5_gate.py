@@ -189,7 +189,7 @@ def verify_g5_certificate_with_lean(
                 timeout=timeout_seconds, check=False,
             )
         if result.returncode != 0:
-            raise ValueError("Lean kernel rejected the certificate")
+            raise ValueError("Lean kernel rejected the certificate: " + result.stderr[-1200:])
         return {
             "lean_formal_status": "LEAN_VERIFIED",
             "verified": True,
@@ -201,4 +201,5 @@ def verify_g5_certificate_with_lean(
         }
     except (ValueError, TypeError, KeyError, IndexError, OSError,
             subprocess.TimeoutExpired) as exc:
-        return {**failure, "reason": type(exc).__name__}
+        return {**failure, "reason": type(exc).__name__,
+                "detail": str(exc)[-1200:]}
