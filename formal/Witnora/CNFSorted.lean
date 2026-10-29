@@ -312,6 +312,26 @@ theorem canonicalize_literals_ordered (cnf : CNF) :
   rw [← heq]
   exact sortLiterals_sorted (dedup raw)
 
+theorem canonicalize_clause_nodup (cnf : CNF) :
+    (canonicalize cnf).Nodup := by
+  exact sortBy_nodup clauseLE _
+    (dedup_nodup (dropTautologies
+      (cnf.map (fun clause => sortLiterals (dedup clause)))))
+
+theorem canonicalize_literals_nodup (cnf : CNF) :
+    ∀ clause, clause ∈ canonicalize cnf → clause.Nodup := by
+  intro clause h
+  change clause ∈ sortBy clauseLE
+    (dedupClauses (dropTautologies
+      (cnf.map (fun raw => sortLiterals (dedup raw))))) at h
+  have h₁ := (mem_sortBy clauseLE _ clause).mp h
+  have h₂ := (mem_dedup _ clause).mp h₁
+  have h₃ : clause ∈ cnf.map (fun raw => sortLiterals (dedup raw)) := by
+    exact (List.mem_filter.mp h₂).1
+  obtain ⟨raw, _, heq⟩ := List.mem_map.mp h₃
+  rw [← heq]
+  exact sortBy_nodup literalLE (dedup raw) (dedup_nodup raw)
+
 theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
     CNFHolds (canonicalize cnf) a ↔ CNFHolds cnf a := by
   unfold canonicalize
@@ -351,6 +371,8 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
 #print axioms Witnora.CNFSorted.sortLiterals_correct
 #print axioms Witnora.CNFSorted.canonicalize_clause_ordered
 #print axioms Witnora.CNFSorted.canonicalize_literals_ordered
+#print axioms Witnora.CNFSorted.canonicalize_clause_nodup
+#print axioms Witnora.CNFSorted.canonicalize_literals_nodup
 #print axioms Witnora.CNFSorted.canonicalize_correct
 
 end Witnora.CNFSorted
