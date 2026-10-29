@@ -64,3 +64,20 @@ This closes a concrete per-certificate runtime verification path for supported
 G5 UNSAT claims. It does **not** prove the universal correctness of arbitrary
 Python execution, provide a formal Python-to-Lean compiler refinement, establish
 TC-063 composition, or prove any P-versus-NP claim.
+
+## G5/G14 formal composition milestone
+
+`Witnora.G5G14Composition.original_unsat_of_checked_g5_branch_cover`
+combines the G14 abstract separator coverage principle with the closed G5
+certificate checker. The conclusion is original-CNF UNSAT **conditional on**
+these still-unproved implementation contracts:
+
+1. Original-CNF model lifting into the separator/component decomposition.
+2. Selected component-model interpretation into the residual CNF.
+3. Existence of an accepted G5 certificate for a selected component on
+   **every** separator branch.
+
+The theorem requires no exponential original-CNF UNSAT enumeration and
+does not trust a Python UNSAT verdict. The three premises are substantial:
+this composition theorem alone is not an end-to-end proof of Python G14
+branch production, TC-063, or its stated runtime bounds.
