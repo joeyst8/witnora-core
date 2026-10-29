@@ -72,7 +72,7 @@ class DifferentialTest(unittest.TestCase):
             n = rng.randrange(2, 8)
             formula = CNFFormula.from_raw_clauses([
                 [rng.choice((-1, 1)) * v
-                 for v in rng.sample(range(1, n + 1), rng.randrange(1, 5))]
+                 for v in rng.sample(range(1, n + 1), rng.randrange(1, min(n, 4) + 1))]
                 for _ in range(rng.randrange(1, 14))
             ])
             separator = sorted(rng.sample(range(1, n + 1), rng.randrange(1, min(n, 3) + 1)))
