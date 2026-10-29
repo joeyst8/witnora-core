@@ -116,6 +116,7 @@ def verify_g14_unsat_cover_with_lean(
     timeout_seconds: int = 120,
     project_root: Path | None = None,
     raw_clauses: object | None = None,
+    source_tokens: object | None = None,
 ) -> dict[str, Any]:
     """Accept only when every recomputed separator branch has a Lean G5 proof."""
     try:
@@ -124,7 +125,7 @@ def verify_g14_unsat_cover_with_lean(
             raise ValueError("malformed G14 certificate")
         digest = sha256(json.dumps(
             {"cnf": formula.to_clause_lists(), "certificate": data,
-             "raw_clauses": raw_clauses},
+             "raw_clauses": raw_clauses, "source_tokens": source_tokens},
             sort_keys=True, separators=(",", ":"), allow_nan=False,
         ).encode("utf-8")).hexdigest()
     except (ValueError, TypeError, AttributeError):
@@ -134,6 +135,8 @@ def verify_g14_unsat_cover_with_lean(
     failure = {"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED",
                "input_sha256": digest}
     try:
+        if source_tokens is not None and raw_clauses is None:
+            raise ValueError("source tokens require original clauses")
         if data.get("lean_formal_status", "NOT_LEAN_VERIFIED") != "NOT_LEAN_VERIFIED":
             raise ValueError("untrusted G14 formal verification claim")
         if data.get("formula_hash") != formula.formula_hash:
@@ -148,6 +151,7 @@ def verify_g14_unsat_cover_with_lean(
             formula.to_clause_lists() if raw_clauses is None else raw_clauses,
             formula.to_clause_lists(),
             timeout_seconds=timeout_seconds, project_root=project_root,
+            source_tokens=source_tokens,
         )
         if not normalization_check.get("verified"):
             return {**failure, "reason": "CNF_NORMALIZATION_REJECTED",
@@ -213,6 +217,8 @@ def verify_g14_unsat_cover_with_lean(
         return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED",
                 "input_sha256": digest, "normalization_check": normalization_check,
                 "source_normalization_verified": raw_clauses is not None,
+                "source_tokens_verified": source_tokens is not None,
+            "source_tokens_verified": source_tokens is not None,
                 "source_formula_hash": formula.formula_hash,
                 "partition_proof_source_sha256": partition_digest,
                 "branches": branches,
