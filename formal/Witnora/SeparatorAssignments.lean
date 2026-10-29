@@ -31,6 +31,37 @@ theorem enumerate_complete (variables : List Nat) (a : Nat → Bool) :
       · cases a v <;> simp
       · exact List.mem_map.mpr ⟨encode rest a, ih, rfl⟩
 
+
+/-- The partial assignment represented by an ordered branch. -/
+def fixedOf : List (Nat × Bool) → Nat → Option Bool
+  | [], _ => none
+  | (v, b) :: tail, query =>
+      if query == v then some b else fixedOf tail query
+
+theorem fixedOf_encode_agrees (variables : List Nat) (a : Nat → Bool) :
+    Witnora.Conditioning.agreesWith (fixedOf (encode variables a)) a := by
+  intro v b hv
+  induction variables with
+  | nil =>
+      simp [fixedOf, encode] at hv
+  | cons x xs ih =>
+      by_cases h : v = x
+      · subst v
+        simp [fixedOf, encode] at hv
+        exact hv.symm
+      · have htail : fixedOf (encode xs a) v = some b := by
+          simpa [fixedOf, encode, h] using hv
+        exact ih htail
+
+/-- Every total assignment extends one of the finitely enumerated branches. -/
+theorem enumerate_covers_assignments (variables : List Nat) (a : Nat → Bool) :
+    ∃ branch ∈ enumerate variables,
+      Witnora.Conditioning.agreesWith (fixedOf branch) a := by
+  exact ⟨encode variables a, enumerate_complete variables a,
+    fixedOf_encode_agrees variables a⟩
+
+#print axioms Witnora.SeparatorAssignments.enumerate_covers_assignments
+
 example : enumerate [1, 2] =
   [[(1, false), (2, false)], [(1, false), (2, true)],
    [(1, true), (2, false)], [(1, true), (2, true)]] := by decide
