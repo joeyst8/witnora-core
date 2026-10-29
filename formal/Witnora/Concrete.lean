@@ -29,6 +29,14 @@ def allBits : Nat → List (List Bool)
   | 0 => [[]]
   | n + 1 => (allBits n).flatMap (fun xs => [false :: xs, true :: xs])
 
+/-- Independent finite SAT and UNSAT decision oracles for small regression
+fixtures. These are exponential-time functions and are not the G5 solver. -/
+def isSat (n : Nat) (original : CNF) : Bool :=
+  (allBits n).any (fun bits => cnfTrue bits original)
+
+def isUnsat (n : Nat) (original : CNF) : Bool :=
+  (allBits n).all (fun bits => !(cnfTrue bits original))
+
 /-- Independently evaluate whether the Python-produced residual components
 are equivalent to the original CNF on a particular separator branch.
 No Python-produced boolean verdict is an input. -/
