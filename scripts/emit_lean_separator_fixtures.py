@@ -37,6 +37,7 @@ def main():
         "import Witnora.Verdict",
         "import Witnora.ComponentPartition",
         "import Witnora.SeparatorAssignments",
+        "import Witnora.SignedSerialization",
         "",
         "/- Actual G14 Python conditioning outputs; independent Lean claims. -/",
         "namespace Witnora.Generated",
@@ -48,6 +49,11 @@ def main():
         if n > 10:
             raise RuntimeError("bounded fixture too large")
         cert = build_separator_affine_certificate(instance)
+        # Exact integer-to-polarity correspondence for original Python CNF.
+        out.append(
+            "example : Witnora.SignedSerialization.decodeCNF "
+            f"{instance.formula.to_clause_lists()} = {lean_cnf(instance.formula)} := by decide"
+        )
         check = check_separator_affine_certificate(instance.formula, cert)
         if check["checker_status"] != "SEPARATOR_AFFINE_CERTIFICATE_VERIFIED":
             raise RuntimeError(f"{name}: Python certificate rejected")
@@ -87,6 +93,13 @@ def main():
             component_list = "[" + ", ".join(
                 lean_cnf(parts[c["component_id"]]) for c in comps
             ) + "]"
+            for component in comps:
+                component_formula = parts[component["component_id"]]
+                out.append(
+                    "example : Witnora.SignedSerialization.decodeCNF "
+                    f"{component_formula.to_clause_lists()} = "
+                    f"{lean_cnf(component_formula)} := by decide"
+                )
             out.append(
                 f"example : Witnora.Concrete.checkBranch {n} "
                 f"{lean_cnf(instance.formula)} {fixed} {component_list} = true := by decide"
