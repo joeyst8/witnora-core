@@ -64,26 +64,34 @@ theorem conditionClause_correct
           | mk v polarity =>
               cases polarity <;> cases b <;>
                 simp [conditionedClauseTrue, signedLitTrue, hv, hab,
-                  List.any_cons, ih]
+                  List.any_cons] <;> exact ih
+
+theorem conditionCNF_bool
+    (fixed : Nat → Option Bool) (a : Nat → Bool)
+    (h : agreesWith fixed a) (cnf : CNF) :
+    (conditionCNF fixed cnf).all (fun clause => clause.any (signedLitTrue a)) =
+      cnf.all (fun clause => clause.any (signedLitTrue a)) := by
+  induction cnf with
+  | nil => rfl
+  | cons clause rest ih =>
+      have heq := conditionClause_correct fixed a h clause
+      simp only [conditionCNF, List.filterMap_cons]
+      cases hc : conditionClause fixed clause with
+      | none =>
+          simp [conditionedClauseTrue, hc] at heq
+          simp only [hc, List.all_cons]
+          simp [conditionCNF, ih, heq]
+      | some reduced =>
+          simp [conditionedClauseTrue, hc] at heq
+          simp only [hc, List.all_cons]
+          simp [conditionCNF, ih, heq]
 
 theorem conditionCNF_correct
     (fixed : Nat → Option Bool) (a : Nat → Bool)
     (h : agreesWith fixed a) (cnf : CNF) :
     CNFHolds (conditionCNF fixed cnf) a ↔ CNFHolds cnf a := by
-  induction cnf with
-  | nil => simp [CNFHolds, conditionCNF]
-  | cons clause rest ih =>
-      simp only [conditionCNF, List.filterMap_cons]
-      cases hc : conditionClause fixed clause with
-      | none =>
-          simp [CNFHolds, conditionCNF, hc] at ih ⊢
-          have htrue := conditionClause_correct fixed a h clause
-          simp [conditionedClauseTrue, hc] at htrue
-          simp [htrue, ih]
-      | some reduced =>
-          have heq := conditionClause_correct fixed a h clause
-          simp [conditionedClauseTrue, hc] at heq
-          simp [CNFHolds, conditionCNF, hc, heq, ih]
+  unfold CNFHolds
+  rw [conditionCNF_bool fixed a h cnf]
 
 #print axioms Witnora.Conditioning.conditionClause_correct
 #print axioms Witnora.Conditioning.conditionCNF_correct
