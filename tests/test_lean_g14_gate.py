@@ -21,6 +21,13 @@ class G14LeanCoverGateTest(unittest.TestCase):
         )
         self.partition_runner = patcher.start()
         self.addCleanup(patcher.stop)
+        normalization_patcher = patch(
+            "witnora_core.lean_g14_gate.verify_cnf_normalization_with_lean",
+            return_value={"verified": True,
+                          "lean_formal_status": "LEAN_CNF_NORMALIZATION_VERIFIED"},
+        )
+        self.normalization_gate = normalization_patcher.start()
+        self.addCleanup(normalization_patcher.stop)
 
     @classmethod
     def setUpClass(cls):
@@ -36,9 +43,23 @@ class G14LeanCoverGateTest(unittest.TestCase):
             )
         self.assertTrue(result["verified"])
         self.assertEqual(result["lean_formal_status"], "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED")
+        self.assertTrue(result["normalization_check"]["verified"])
         self.partition_runner.assert_called_once()
         self.assertEqual(gate.call_count, 2)
         self.assertEqual([b["assignment_id"] for b in result["branches"]], ["S1", "S2"])
+
+    def test_normalization_rejection_blocks_g14_before_partitions(self):
+        self.normalization_gate.return_value = {
+            "verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED",
+        }
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean") as g5:
+            result = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate,
+            )
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["reason"], "CNF_NORMALIZATION_REJECTED")
+        self.partition_runner.assert_not_called()
+        g5.assert_not_called()
 
     def test_lean_partition_rejection_stops_before_g5(self):
         self.partition_runner.return_value = subprocess.CompletedProcess([], 1, "", "error")
