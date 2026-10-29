@@ -20,7 +20,7 @@ from typing import Any, Iterable
 import zipfile
 
 from .cnf import CNFFormula, Clause, formula_satisfied, resolvent
-from .dimacs import load_dimacs, load_dimacs_with_evidence
+from .dimacs import load_dimacs, load_dimacs_with_text_evidence
 from .xor import canonical_xor_cnf_clauses
 
 GENESIS_VERSION = "2.7"
@@ -3300,6 +3300,7 @@ def main(argv: list[str] | None = None) -> int:
         formal = verify_g5_certificate_with_lean(
             formula, data, timeout_seconds=args.lean_timeout, max_arity=args.max_arity,
             raw_clauses=raw_clauses, source_tokens=source_tokens,
+            source_spellings=source_spellings,
         )
         print(stable_json({"native_check": native, "lean_check": formal}))
         return 0 if formal["verified"] else 1
