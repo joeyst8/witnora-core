@@ -64,6 +64,36 @@ theorem signed_unsat_of_checked_conditioned_partitions
     (rows branch) (steps branch) (hcert branch hb)
   exact hun ⟨a, hchosen⟩
 
+
+/-- Concrete finite-branch theorem: the separator coverage assumption is
+    discharged by the kernel-proved Boolean assignment enumeration. -/
+theorem signed_unsat_of_enumerated_partitions
+    (raw : List (List Int))
+    (separator : List Nat)
+    (components : List (Nat × Bool) → List Witnora.Concrete.CNF)
+    (hpart : ∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
+      checkPartition
+        (conditionCNF (Witnora.SeparatorAssignments.fixedOf branch)
+          (decodeCNF raw))
+        (components branch) = true)
+    (selected : List (Nat × Bool) → Witnora.Concrete.CNF)
+    (hselected : ∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
+      selected branch ∈ components branch)
+    (bound : List (Nat × Bool) → Nat)
+    (rows : List (Nat × Bool) → List Witnora.G5Trace.Row)
+    (steps : List (Nat × Bool) → List Witnora.G5Dag.XorRef)
+    (hcert : ∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
+      checkG5Closed (bound branch) (selected branch)
+        (rows branch) (steps branch) = true) :
+    ¬ ∃ a, signedCNFHolds raw a := by
+  exact signed_unsat_of_checked_conditioned_partitions
+    raw (Witnora.SeparatorAssignments.enumerate separator)
+    Witnora.SeparatorAssignments.fixedOf
+    (Witnora.SeparatorAssignments.enumerate_covers_assignments separator)
+    components hpart selected hselected bound rows steps hcert
+
+#print axioms Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
+
 #print axioms Witnora.G14ConcreteBridge.signed_unsat_of_checked_conditioned_partitions
 
 end Witnora.G14ConcreteBridge
