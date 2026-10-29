@@ -4,6 +4,7 @@ import unittest
 import subprocess
 import io
 import json
+from pathlib import Path
 from contextlib import redirect_stdout
 from unittest.mock import patch
 
@@ -57,6 +58,16 @@ class G14LeanCoverGateTest(unittest.TestCase):
         source = self.instance.formula.canonical_dimacs()
         tokens = [item for clause in raw for item in (*clause, 0)]
         spellings = [str(item) for item in tokens]
+        captured = []
+        def inspect_lean(argv, **kwargs):
+            path = Path(argv[3])
+            source_code = path.read_text(encoding="utf-8")
+            if path.name == "G14CompleteSourceProof.lean":
+                self.assertIn("checked_ascii_dimacs_g14_canonical_unsat", source_code)
+                self.assertNotIn(chr(92) + "n", source_code)
+                captured.append(source_code)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        self.partition_runner.side_effect = inspect_lean
         with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
                    return_value=accepted):
             result = verify_g14_unsat_cover_with_lean(
@@ -64,6 +75,7 @@ class G14LeanCoverGateTest(unittest.TestCase):
                 raw_clauses=raw, source_tokens=tokens,
                 source_spellings=spellings, source_text=source,
             )
+        self.assertEqual(len(captured), 1)
         self.assertTrue(result["verified"], result)
         self.assertEqual(result["lean_formal_status"],
                          "LEAN_END_TO_END_G14_UNSAT_VERIFIED")
