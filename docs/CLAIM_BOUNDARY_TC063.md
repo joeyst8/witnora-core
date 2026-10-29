@@ -201,3 +201,18 @@ to the proof checker. G14 fixture CI also checks signed original and
 component CNFs. This closes a universal mathematical representation
 lemma and concrete per-certificate serialization equality checks; it
 is not a universal proof of Python execution or parsing correctness.
+
+## DIMACS parser trust-boundary hardening
+
+The Python CNF literal constructor now rejects Boolean pseudo-integers
+(`True` and `False`) as invalid signed literals. A deterministic
+adversarial regression suite checks 160 randomized raw formulas over
+all their small Boolean assignments, comparing direct raw-clause
+satisfaction with Python's canonicalization and DIMACS export/reparse.
+It also checks malformed headers, missing terminators, variable bounds,
+and preservation of contradictory empty clauses.
+
+These are tests and input-validation hardening, **not** a Lean proof of
+Python DIMACS parsing or canonicalization for every input. Formalizing
+tautology elimination, duplicate removal, and raw-text parsing remains
+a separate source-to-Lean refinement obligation.
