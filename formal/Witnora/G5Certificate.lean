@@ -109,6 +109,22 @@ theorem checkContradiction_unsat (bound : Nat)
       rw [hempty, sparseParity_empty, hrhs] at hrow
       cases hrow
 
+/-- Genuine contradiction from two conflicting input rows. -/
+example :
+    checkContradiction
+      [⟨[1], true⟩, ⟨[1], false⟩]
+      (.xor (.input ⟨[1], true⟩) (.input ⟨[1], false⟩)) = true := by decide
+
+/-- A fabricated contradiction cannot be introduced as an input row. -/
+example :
+    checkContradiction []
+      (.input ⟨[], true⟩) = false := by decide
+
+/-- Two equal affine rows cancel to the tautology, not a contradiction. -/
+example :
+    checkContradiction [⟨[2], true⟩]
+      (.xor (.input ⟨[2], true⟩) (.input ⟨[2], true⟩)) = false := by decide
+
 #print axioms Witnora.G5Certificate.derive_sound
 #print axioms Witnora.G5Certificate.checkContradiction_unsat
 
