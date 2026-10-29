@@ -76,6 +76,16 @@ def allProposals (ids : List Nat) : List Proposal :=
                 ([false, true] : List Bool).map (fun r2 =>
                   ⟨x, z, ⟨m, l, r⟩, ⟨n, l2, r2⟩⟩))))))))
 
+/-- Every assignment to the four variable IDs and four parity bits is
+    present in the finite universe. No candidate is omitted by enumeration. -/
+theorem allProposals_complete (ids : List Nat) (p : Proposal)
+    (hx : p.x ∈ ids) (hz : p.z ∈ ids)
+    (hm : p.first.middle ∈ ids)
+    (hn : p.second.middle ∈ ids) :
+    p ∈ allProposals ids := by
+  rcases p with ⟨x, z, ⟨m, l, r⟩, ⟨n, l2, r2⟩⟩
+  simp [allProposals, List.mem_flatMap, hx, hz, hm, hn]
+
 def discoverComplete (cnf : Witnora.Concrete.CNF)
     (ids : List Nat) : List Proposal :=
   discoverFrom cnf (allProposals ids)
