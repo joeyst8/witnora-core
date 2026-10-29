@@ -193,7 +193,7 @@ def _check_complete_g14_with_lean(
             "    simp only [List.mem_cons, List.mem_singleton] at hb",
             "    rcases hb with " + " | ".join(f"h{i}" for i in range(len(branch_patterns))),
         ] + [
-            "    · subst branch" + "\\n" + "      decide" for _ in branch_patterns
+            "    · subst branch" + "\n" + "      decide" for _ in branch_patterns
         ]
 
     lines.append(
