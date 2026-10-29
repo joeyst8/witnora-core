@@ -237,3 +237,22 @@ makes the clause tautological, and regression tests reject invalid trailing
 values. Remaining work includes a universal ordering/serialization refinement
 for Python, an independently justified parser semantics, and the complete
 G5/G14-to-TC-063 composition theorem.
+
+## Deterministic CNF order: executable Lean refinement target
+
+`Witnora.CNFSorted.canonicalize` now models Python's signed-integer
+ascending literal sort, lexicographic clause sort, tautology removal,
+and duplicate elimination using an executable insertion-sort model.
+The universal `canonicalize_correct` Lean theorem establishes that this
+ordered normalization preserves satisfaction for every Lean CNF and total
+assignment. Its helper theorem establishes that sorting preserves list
+membership independently of the comparator.
+
+The Python-produced fixtures additionally check **exact equality of ordered
+clauses**, not merely equal literal/clause sets, against this Lean
+canonicalizer on 43 deterministic adversarial and randomized formulas.
+Those closed concrete checks do not prove that every CPython call to
+`sorted`, `set`, or the constructor refines the Lean model. In particular,
+the arbitrary-input Python interpreter semantics and a universal ordering
+correspondence are still open; neither the P=NP question nor complete TC-063
+has been resolved.
