@@ -424,3 +424,16 @@ for selected components of every branch. These hypotheses are displayed
 in the theorem statement; the Python G14 decomposition/refinement bridge
 has **not** been universally proved. This theorem must not be presented
 as unconditional TC-063 or a P-versus-NP solution.
+
+### DIMACS token-stream refinement checkpoint
+
+`Witnora.DIMACSTokens.checkStream_sound` proves that, for every accepted
+integer-token stream and proposed clause segmentation, the tokens are exactly
+the signed clause lists separated by zero terminators, with no embedded zero
+literals. `parse_dimacs_with_evidence` preserves the integer stream and raw
+clauses from one source-text read, and the `--lean` G5/G14 commands feed both
+through the closed Lean normalization checker. The checker fails closed on
+missing or altered terminators. **This is not a proof of UTF-8 decoding,
+Python `str.split`/`int` tokenization, header/line parsing, or CPython execution
+for all possible input texts.** The universal Python-to-Lean refinement and
+unconditional TC-063 theorem remain open.
