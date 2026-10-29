@@ -10,7 +10,7 @@ separator assignment has at least one affine-UNSAT component.
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from itertools import combinations, product
 import json
@@ -565,7 +565,21 @@ def build_separator_affine_certificate(instance: SeparatorAffineFamilyInstance) 
 
 
 def _same_components(left: list[dict[str, Any]], right: list[dict[str, Any]]) -> bool:
-    return [sorted(item["variables"]) for item in left] == [sorted(item["variables"]) for item in right]
+    """Check exact recomputed component metadata, not just vertex sets."""
+    return left == right
+
+
+def _branch_partition_exact(
+    residual: CNFFormula, components: dict[str, CNFFormula],
+) -> bool:
+    """Every surviving clause must occur exactly once across components."""
+    expected = Counter(tuple(clause) for clause in residual.clauses)
+    actual = Counter(
+        tuple(clause)
+        for component in components.values()
+        for clause in component.clauses
+    )
+    return expected == actual
 
 
 def _status_values(data: Any) -> list[str]:
@@ -606,6 +620,8 @@ def check_separator_affine_certificate(
     separator = [int(var) for var in data.get("separator_variables", [])]
     if any(var not in formula.variables for var in separator):
         errors.append("SEPARATOR_VARIABLE_NOT_IN_FORMULA")
+    if len(set(separator)) != len(separator):
+        errors.append("SEPARATOR_VARIABLE_DUPLICATE")
     if len(separator) > c:
         errors.append("SEPARATOR_SIZE_OVER_BOUND")
     if int(params.get("separator_size", -1)) != len(separator):
@@ -640,6 +656,8 @@ def check_separator_affine_certificate(
         residual_formula, component_formulas, localization_errors = _condition_by_separator(formula, assignment, recomputed_components)
         if localization_errors:
             errors.extend(localization_errors)
+        if not _branch_partition_exact(residual_formula, component_formulas):
+            errors.append(f"RESIDUAL_CLAUSE_PARTITION_MISMATCH:{assignment_id}")
         if str(record.get("residual_formula_hash", "")).lower() != residual_formula.formula_hash.lower():
             errors.append(f"RESIDUAL_FORMULA_HASH_MISMATCH:{assignment_id}")
         component_records = {item.get("component_id"): item for item in record.get("component_records", [])}
