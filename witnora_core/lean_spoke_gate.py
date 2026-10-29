@@ -67,9 +67,14 @@ def verify_discovered_spoke_with_lean(
         # This example has *no assumed correctness of Python's discovery*.
         # The kernel checks each complete pattern against raw source clauses.
         proof = (
-            "import Witnora.SpokeSourceBridge\n"
+            "import Witnora.SpokeDiscoverySpec\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
+            "example : Witnora.SpokeDiscoverySpec.discoverFrom "
+            f"(Witnora.SignedSerialization.decodeCNF {raw}) "
+            f"[{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
+            f"= [{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
+            ":= by decide\n"
             "example : Witnora.DIMACSDocument.parseDocument "
             f"{source_bytes} = some (Witnora.DIMACSTokens.serialize {raw}) "
             "∧ ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds "
