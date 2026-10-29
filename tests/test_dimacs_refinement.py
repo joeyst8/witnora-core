@@ -4,7 +4,8 @@ import random
 import unittest
 
 from witnora_core.cnf import CNFError, CNFFormula, Clause, formula_satisfied
-from witnora_core.dimacs import DIMACSError, export_dimacs, parse_dimacs
+from witnora_core.dimacs import (DIMACSError, export_dimacs, parse_dimacs,
+                                parse_dimacs_with_raw, load_dimacs_with_raw)
 
 
 def raw_cnf_holds(raw, assignment):
@@ -66,6 +67,14 @@ class DIMACSRefinementTest(unittest.TestCase):
         for text in invalid:
             with self.subTest(text=text), self.assertRaises(DIMACSError):
                 parse_dimacs(text)
+
+    def test_source_clauses_preserved_before_normalization(self):
+        text = "c keep the actual source\np cnf 4 4\n2 1 2 0\n1 -1 4 0\n-4 0\n0\n"
+        formula, raw = parse_dimacs_with_raw(text)
+        self.assertEqual(raw, [[2, 1, 2], [1, -1, 4], [-4], []])
+        self.assertEqual(formula, parse_dimacs(text))
+        self.assertEqual(formula, CNFFormula.from_raw_clauses(raw))
+        self.assertNotEqual(raw, formula.to_clause_lists())
 
     def test_empty_clause_is_preserved_as_contradiction(self):
         formula = parse_dimacs("p cnf 1 1\n0\n")
