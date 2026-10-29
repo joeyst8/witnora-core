@@ -12,7 +12,7 @@ from witnora_core.operator_genesis import (
     make_affine_residue_instance,
 )
 
-CASES = ("parity_arity_7_unsat", "parity_arity_8_unsat")
+CASES = ("parity_arity_7_unsat",)
 
 
 def lean_bool(x):
