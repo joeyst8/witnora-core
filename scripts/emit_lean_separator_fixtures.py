@@ -50,6 +50,11 @@ def main():
                 f"example : Witnora.Concrete.checkBranch {n} "
                 f"{lean_cnf(instance.formula)} {fixed} {component_list} = true := by decide"
             )
+            if name == "saf_sat_chain_2" and not any(a.values()):
+                out.append(
+                    f"example : Witnora.Concrete.checkBranch {n} "
+                    f"{lean_cnf(instance.formula)} {fixed} [] = false := by decide"
+                )
             count += 1
     out.extend(["", "end Witnora.Generated", ""])
     target = Path("formal/Witnora/Generated.lean")
