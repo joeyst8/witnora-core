@@ -107,7 +107,7 @@ class G5LeanGateTest(unittest.TestCase):
     def test_cli_lean_mode_accepts_only_gate_success(self):
         from witnora_core.operator_genesis import main
         certificate_json = json.dumps(self.cert.to_dict())
-        with patch("witnora_core.operator_genesis.load_dimacs_with_evidence", return_value=(self.instance.formula, [[1, -1]], [1, -1, 0], ["1", "-1", "0"])):
+        with patch("witnora_core.operator_genesis.load_dimacs_with_text_evidence", return_value=(self.instance.formula, [[1, -1]], [1, -1, 0], ["1", "-1", "0"])):
             with patch("pathlib.Path.read_text", return_value=certificate_json):
                 with patch("witnora_core.lean_g5_gate.verify_g5_certificate_with_lean",
                            return_value={"verified": True, "lean_formal_status": "LEAN_VERIFIED"}):
