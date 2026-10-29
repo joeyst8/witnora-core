@@ -51,6 +51,17 @@ theorem parityVars_append (front back : List Nat) (a : Nat → Bool) :
         cases hb : parityVars back a <;>
         decide
 
+/-- Swapping adjacent variable occurrences leaves XOR parity unchanged;
+this is the local law underlying deterministic variable sorting. -/
+theorem parityVars_swap_adjacent (x y : Nat) (rest : List Nat)
+    (a : Nat → Bool) :
+    parityVars (x :: y :: rest) a = parityVars (y :: x :: rest) a := by
+  simp only [parityVars]
+  cases hx : a x <;>
+    cases hy : a y <;>
+    cases hr : parityVars rest a <;>
+    decide
+
 /-- Repeated occurrences of the same variable cancel in GF(2), regardless
 of the remaining variables. -/
 theorem parityVars_cancel_adjacent (v : Nat) (rest : List Nat)
@@ -126,6 +137,7 @@ theorem original_entails_extracted_xor
 #print axioms Witnora.Extraction.original_entails_extracted_xor
 
 #print axioms Witnora.Extraction.parityVars_append
+#print axioms Witnora.Extraction.parityVars_swap_adjacent
 #print axioms Witnora.Extraction.parityVars_cancel_adjacent
 #print axioms Witnora.Extraction.parityVars_congr
 #print axioms Witnora.Extraction.canonicalXorCNF_iff
