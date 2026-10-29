@@ -52,7 +52,7 @@ theorem all_endpoint_syndromes
 theorem conflicting_syndromes_unsat
     (spokes : List Spoke) (s t : Spoke)
     (hs : s ∈ spokes) (ht : t ∈ spokes)
-    (hconflict : syndrome s != syndrome t = true) :
+    (hconflict : (syndrome s != syndrome t) = true) :
     ¬ ∃ x z ys, SystemHolds spokes x z ys := by
   rintro ⟨x, z, ys, hmodels⟩
   have h1 := all_endpoint_syndromes spokes x z ys hmodels s hs
