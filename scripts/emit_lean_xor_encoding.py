@@ -63,6 +63,29 @@ def main():
                     "= false := by decide"
                 )
             count += 1
+    # Independently verify variable-ID mapping and modulo-2 duplicate
+    # cancellation against the same formal finite reference.
+    for raw_variables, rhs in (
+        ([2, 5], 0),
+        ([2, 5, 7], 1),
+        ([2, 2, 5], 1),
+        ([2, 5, 2], 0),
+    ):
+        odd = {}
+        for var in raw_variables:
+            odd[var] = odd.get(var, 0) ^ 1
+        effective = sorted(v for v, bit in odd.items() if bit)
+        original_clauses = list(canonical_xor_cnf_clauses(raw_variables, rhs))
+        bound = max(raw_variables, default=0)
+        projection = "[" + ", ".join(
+            f"Witnora.Concrete.readVar bits {var}" for var in effective
+        ) + "]"
+        lines.append(
+            f"example : (Witnora.Concrete.allBits {bound}).all "
+            f"(fun bits => Witnora.Concrete.cnfTrue bits {lean_cnf(original_clauses)} == "
+            f"(Witnora.FiniteXor.canonicalFinite {len(effective)} "
+            f"{lean_bool(rhs)} {projection})) = true := by decide"
+        )
     lines.extend(["", "end Witnora.XorGenerated", ""])
     destination = Path("formal/Witnora/XorGenerated.lean")
     destination.write_text("\n".join(lines), encoding="utf-8")
