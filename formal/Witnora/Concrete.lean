@@ -86,6 +86,21 @@ theorem checkBranch_sound_for_all
   · simpa [hlen] using allBits_complete bits
   · exact hag
 
+/-- A positive result from the independent exhaustive UNSAT checker
+rules out any satisfying assignment of length n. -/
+theorem isUnsat_sound_for_all
+    (n : Nat) (original : CNF)
+    (h : isUnsat n original = true)
+    (bits : List Bool) (hlen : bits.length = n) :
+    cnfTrue bits original = false := by
+  unfold isUnsat at h
+  have hmem : bits ∈ allBits n := by
+    simpa [hlen] using allBits_complete bits
+  have hrow := List.all_eq_true.mp h bits hmem
+  simp at hrow
+  exact hrow
+
+#print axioms Witnora.Concrete.isUnsat_sound_for_all
 #print axioms Witnora.Concrete.checkBranch_sound
 #print axioms Witnora.Concrete.allBits_complete
 #print axioms Witnora.Concrete.checkBranch_sound_for_all
