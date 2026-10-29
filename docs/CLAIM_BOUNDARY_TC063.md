@@ -150,3 +150,21 @@ not been universally refined into Lean, and there is not yet one
 kernel-checked theorem applying the combined Python gate to arbitrary G14
 certificate input. Neither TC-063 completeness nor arbitrary-SAT
 polynomiality follows from this runtime gate.
+
+## Strengthened runtime G14 partition gate
+
+The G14 Lean runtime gate now emits a closed, numeric Lean proposition
+for the **actual original CNF and every recomputed separator branch**.
+Lean independently runs `Conditioning.conditionCNF` and verifies
+`ComponentPartition.checkPartition` against the supplied component CNFs.
+Only after all partition obligations pass does the gate run the existing
+G5 Lean UNSAT verifier on each selected covering component. Any missing
+toolchain, failed partition, malformed data, or failed G5 certificate
+returns `NOT_LEAN_VERIFIED`. The success code is
+`LEAN_G5_COVER_AND_PARTITIONS_VERIFIED`.
+
+This is a stronger per-certificate trusted-checking path, not a universal
+formal semantics of CPython or a proof that Python always emits accepted
+certificates. The finite separator enumeration and the signed-literal
+serialization implementation still require a universal refinement
+argument to close complete TC-063 correctness.
