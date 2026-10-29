@@ -943,8 +943,15 @@ def _cmd_check(args: argparse.Namespace) -> int:
     formula = load_dimacs(args.cnf)
     cert = _load_json(args.certificate)
     result = check_separator_affine_certificate(formula, cert)
-    print(stable_json(result))
-    return 0 if result["checker_status"] == SEPARATOR_AFFINE_CERTIFICATE_VERIFIED else 1
+    if not args.lean:
+        print(stable_json(result))
+        return 0 if result["checker_status"] == SEPARATOR_AFFINE_CERTIFICATE_VERIFIED else 1
+    from .lean_g14_gate import verify_g14_unsat_cover_with_lean
+    formal = verify_g14_unsat_cover_with_lean(
+        formula, cert, timeout_seconds=args.lean_timeout,
+    )
+    print(stable_json({"native_check": result, "lean_cover_check": formal}))
+    return 0 if formal["verified"] else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -974,6 +981,8 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("check")
     check.add_argument("--cnf", required=True)
     check.add_argument("--certificate", required=True)
+    check.add_argument("--lean", action="store_true", help="require a Lean G5 proof for each UNSAT-cover branch")
+    check.add_argument("--lean-timeout", type=int, default=120)
     check.set_defaults(func=_cmd_check)
     args = parser.parse_args(argv)
     return int(args.func(args))
