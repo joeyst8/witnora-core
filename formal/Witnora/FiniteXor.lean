@@ -243,11 +243,12 @@ theorem checkedPythonEncodingOutput_sound
     (a : Nat → Bool) :
     Extraction.parityVars normalized a = Extraction.parityVars raw a ∧
       submitted = serializedSignedClauses normalized rhs := by
-  have hsplit := Bool.and_eq_true.mp h
   have hnorm : checkNormalizedOutput raw normalized = true := by
-    exact (Bool.and_eq_true.mp hsplit.1).2
-  have hclauses : checkSerializedClauses normalized rhs submitted = true :=
-    hsplit.2
+    simp [checkPythonEncodingOutput] at h
+    exact h.2.1
+  have hclauses : checkSerializedClauses normalized rhs submitted = true := by
+    simp [checkPythonEncodingOutput] at h
+    exact h.2.2
   exact ⟨checkedNormalizedOutput_parity raw normalized a hnorm,
     checkedSerializedClauses_exact normalized rhs submitted hclauses⟩
 
