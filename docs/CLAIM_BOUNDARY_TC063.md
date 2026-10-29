@@ -500,3 +500,18 @@ that assembles those checked artifacts as premises of
 `signed_unsat_of_enumerated_partitions` has not yet been emitted or
 kernel-checked end-to-end. Python parsing / certificate-production
 refinement and broad unconditional TC-063 claims likewise remain open.
+
+### Conditional source-text to G14/G5 UNSAT composition
+
+`G14ConcreteBridge.checked_ascii_dimacs_g14_unsat` combines the executable
+`DIMACSDocument.checkDocument` and `DIMACSTokens.checkStream` acceptance
+premises with checked conditioned partitions, exhaustive finite separator
+enumeration, selected residual components, and per-branch G5 contradiction
+checks. Its conclusion states both that the original accepted ASCII source
+parses to exactly the zero-terminated signed clauses and that those clauses
+have **no satisfying assignment**. This is a *universal conditional
+soundness theorem* for supported input/certificate objects, not an
+unconditional result for every CNF or a formal semantics of every Python run.
+The actual G14 runtime checker still needs to emit/instantiate this
+combined theorem in one closed kernel check before its strongest status can
+be equated with this end-to-end conclusion.
