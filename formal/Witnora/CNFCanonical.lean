@@ -25,6 +25,9 @@ theorem mem_dedup {α : Type} [DecidableEq α]
   | cons y ys ih =>
       by_cases h : y ∈ ys
       · simp [dedup, h, ih, h]
+        intro hxy
+        subst x
+        exact h
       · simp [dedup, h, ih]
 
 theorem any_dedup_iff {α : Type} [DecidableEq α]
