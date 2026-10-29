@@ -10,3 +10,4 @@ import Witnora.FiniteXor
 
 import Witnora.G5Certificate
 import Witnora.G5Dag
+import Witnora.G5Extraction
