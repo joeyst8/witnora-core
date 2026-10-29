@@ -1919,6 +1919,10 @@ class AffineResidueCertificate:
     g5_delta_status: str
     claim_boundary: str
     notes: str
+    # A native Python certificate check is NOT a Lean formal verification.
+    # This status remains fail-closed until a trusted external Lean attestation
+    # is integrated into the production certificate lifecycle.
+    lean_formal_status: str = "NOT_LEAN_VERIFIED"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -2253,6 +2257,8 @@ def check_affine_residue_certificate(
         errors.append("FORMULA_HASH_MISMATCH")
     if data.get("drat_claim") != MODULAR_RESIDUE_DRAT_NOT_CLAIMED:
         errors.append("FAKE_DRAT_CLAIM")
+    if data.get("lean_formal_status", "NOT_LEAN_VERIFIED") != "NOT_LEAN_VERIFIED":
+        errors.append("UNTRUSTED_LEAN_FORMAL_CERTIFICATION_CLAIM")
     if data.get("extraction_mode") not in {"EXACT_FULL_CNF_ENCODING", "HASH_BOUND_SIDECAR_WITH_FULL_CNF_CHECK"}:
         errors.append("UNSUPPORTED_EXTRACTION_MODE")
     if any(op.get("operation") not in {"SWAP_ROWS", "ADD_ROW_XOR"} for op in data.get("row_operations", [])):
