@@ -36,6 +36,7 @@ def main():
         "import Witnora.Concrete",
         "import Witnora.Verdict",
         "import Witnora.ComponentPartition",
+        "import Witnora.SeparatorAssignments",
         "",
         "/- Actual G14 Python conditioning outputs; independent Lean claims. -/",
         "namespace Witnora.Generated",
@@ -66,7 +67,17 @@ def main():
             f"{lean_cnf(instance.formula)} {claimed_sat} = true := by decide"
         )
         comps = _component_dicts(instance.formula, instance.separator_variables)
-        for a in _all_assignments(instance.separator_variables):
+        assignments = _all_assignments(instance.separator_variables)
+        ordered_vars = sorted(instance.separator_variables)
+        serialized_patterns = "[" + ", ".join(
+            "[" + ", ".join(f"({v}, {lean_bool(a[v])})" for v in ordered_vars) + "]"
+            for a in assignments
+        ) + "]"
+        out.append(
+            "example : Witnora.SeparatorAssignments.enumerate "
+            f"{ordered_vars} = {serialized_patterns} := by decide"
+        )
+        for a in assignments:
             _, parts, errors = _condition_by_separator(instance.formula, a, comps)
             if errors:
                 raise RuntimeError(f"{name}: unexpected conditioning errors {errors}")
