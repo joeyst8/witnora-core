@@ -133,7 +133,7 @@ def lean_dag_refs(steps):
 
 
 def main():
-    lines = ["import Witnora.G5Trace", "import Witnora.G5Certificate", "import Witnora.G5Dag", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
+    lines = ["import Witnora.G5Trace", "import Witnora.G5Certificate", "import Witnora.G5Dag", "import Witnora.SparseBridge", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
     for name in CASES:
         instance = make_affine_residue_instance(name)
         cert = build_affine_residue_certificate(instance)
@@ -162,6 +162,12 @@ def main():
         )
         dag_ops = dag_refs_from_operations(
             trace[0]["rows"], cert.row_operations
+        )
+        lines.append(
+            "example : Witnora.SparseBridge.checkG5Closed "
+            f"{n + 1} {lean_cnf(instance.formula)} "
+            f"{lean_rows(trace[0]['rows'])} {lean_dag_refs(dag_ops)} "
+            "= true := by decide"
         )
         lines.append(
             "example : Witnora.G5Dag.checkDagContradiction "
