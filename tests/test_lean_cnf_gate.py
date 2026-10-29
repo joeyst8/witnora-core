@@ -73,7 +73,7 @@ class LeanCNFNormalizationGateTest(unittest.TestCase):
         with patch("witnora_core.lean_cnf_gate.subprocess.run") as runner:
             result = verify_cnf_normalization_with_lean(
                 [[1]], source_tokens=[1, 0], source_spellings=["1", "0"],
-                source_text="p cnf 1 1\\n1 0\\n\\u00e9",
+                source_text="p cnf 1 1\\n1 0\\né",
             )
         self.assertFalse(result["verified"])
         runner.assert_not_called()
