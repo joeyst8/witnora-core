@@ -223,7 +223,6 @@ def verify_g14_unsat_cover_with_lean(
                 "source_normalization_verified": raw_clauses is not None,
                 "source_tokens_verified": source_tokens is not None,
                 "source_lexemes_verified": source_spellings is not None,
-            "source_lexemes_verified": source_spellings is not None,
                 "source_formula_hash": formula.formula_hash,
                 "partition_proof_source_sha256": partition_digest,
                 "branches": branches,
