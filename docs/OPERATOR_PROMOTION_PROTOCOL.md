@@ -53,7 +53,9 @@ advantage. Research claims must preserve both distinctions.
 ## Known open work
 
 The general spoke contradiction theorem and a source-bound theorem connecting
-four checked patterns in an arbitrary CNF are built in Lean. The production
+four checked patterns in an arbitrary CNF are built in Lean. The executable
+`SpokeDiscoverySpec.discoverFrom` filter also has universal output-soundness
+and exact filter-membership theorems. The production
 gate checks concrete discovered instances with this theorem; **universal
-correctness of the Python detector itself** remains unproved. Universal Python interpreter
+correctness and completeness of the Python detector's proposal enumeration** remains unproved. Universal Python interpreter
 refinement and independent novelty audit also remain open.
