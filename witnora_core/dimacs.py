@@ -91,6 +91,13 @@ def parse_dimacs(text: str) -> CNFFormula:
     return parse_dimacs_with_evidence(text)[0]
 
 
+def load_dimacs_with_document_evidence(path: str | Path) -> tuple[CNFFormula, list[list[int]], list[int], list[str], str]:
+    """Read the input once; retain the *same* source text used by the parser."""
+    source = Path(path).read_text(encoding="utf-8")
+    formula, raw, tokens, spellings = parse_dimacs_with_text_evidence(source)
+    return formula, raw, tokens, spellings, source
+
+
 def load_dimacs_with_text_evidence(path: str | Path) -> tuple[CNFFormula, list[list[int]], list[int], list[str]]:
     """Read and parse once, retaining exact integer token spellings."""
     return parse_dimacs_with_text_evidence(Path(path).read_text(encoding="utf-8"))
