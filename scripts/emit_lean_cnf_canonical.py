@@ -51,6 +51,7 @@ def examples() -> list[list[list[int]]]:
 def main() -> None:
     lines = [
         "import Witnora.CNFCanonical",
+        "import Witnora.CNFSorted",
         "import Witnora.SignedSerialization",
         "",
         "/- Concrete Python output / Lean normalization correspondence,",
@@ -68,6 +69,14 @@ def main() -> None:
     ]
     for i, raw in enumerate(examples()):
         actual = CNFFormula.from_raw_clauses(raw).to_clause_lists()
+        lines += [
+            f"-- Exact signed clause and literal ordering, case {i}.",
+            "example : Witnora.CNFSorted.canonicalize",
+            f"  (Witnora.SignedSerialization.decodeCNF {lean_signed_cnf(raw)}) =",
+            f"  (Witnora.SignedSerialization.decodeCNF {lean_signed_cnf(actual)})",
+            "  := by decide",
+            "",
+        ]
         lines += [
             f"-- Case {i}: actual Python CNFFormula.from_raw_clauses output.",
             "example : sameClauses",
