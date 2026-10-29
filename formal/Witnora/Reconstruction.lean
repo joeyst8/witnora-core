@@ -83,6 +83,29 @@ theorem adjacent_xor_sound (front suffix : List (Equation A))
       Satisfies (front ++ x :: xorEquation x y :: suffix) assignment := by
   exact step_sound (step_under_front front (Step.addXor x y suffix)) assignment
 
+/-- A row-system solution does not depend on the ordering of its equations. -/
+theorem sat_perm (xs ys : List (Equation A))
+    (hperm : xs.Perm ys) (assignment : A) :
+    Satisfies xs assignment ↔ Satisfies ys assignment := by
+  constructor
+  · intro h row hmem
+    exact h row (hperm.mem_iff.mpr hmem)
+  · intro h row hmem
+    exact h row (hperm.mem_iff.mp hmem)
+
+/-- Any two equations can be placed next to each other by row permutation.
+The XOR step is sound regardless of their original positions, provided
+the before/after systems have these two displayed permutations. -/
+theorem arbitrary_xor_sound (before after : List (Equation A))
+    (x y : Equation A) (rest : List (Equation A))
+    (hbefore : before.Perm (x :: y :: rest))
+    (hafter : after.Perm (x :: xorEquation x y :: rest))
+    (assignment : A) :
+    Satisfies before assignment ↔ Satisfies after assignment := by
+  exact (sat_perm before (x :: y :: rest) hbefore assignment).trans
+    ((step_sound (Step.addXor x y rest) assignment).trans
+      (sat_perm after (x :: xorEquation x y :: rest) hafter assignment).symm)
+
 /-- A finite sequence of certified local steps. -/
 inductive Steps : List (Equation A) → List (Equation A) → Prop where
   | refl (rows : List (Equation A)) : Steps rows rows
@@ -118,5 +141,6 @@ theorem reconstructed_unsat
 #print axioms Witnora.Reconstruction.steps_sound
 #print axioms Witnora.Reconstruction.adjacent_swap_sound
 #print axioms Witnora.Reconstruction.adjacent_xor_sound
+#print axioms Witnora.Reconstruction.arbitrary_xor_sound
 
 end Witnora.Reconstruction
