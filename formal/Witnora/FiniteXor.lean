@@ -137,6 +137,43 @@ example : normalizePositiveVariables [3, 1, 3, 2, 1, 5] = some [2, 5] := by deci
 example : normalizePositiveVariables [1, 1] = some [] := by decide
 example : normalizePositiveVariables [0, 0] = none := by decide
 
+/-- Construct the actual positive/negative literal signs of one forbidden
+assignment: a forbidden true bit produces a negative literal. -/
+def signForbiddenClause (fixed : List (Nat × Bool)) : List (Nat × Bool) :=
+  fixed.map (fun p => (p.1, !p.2))
+
+def signedLitTrue (a : Nat → Bool) (lit : Nat × Bool) : Bool :=
+  if lit.2 then a lit.1 else !(a lit.1)
+
+/-- A signed clause is true exactly if the actual assignment differs from
+the forbidden assignment at some listed occurrence. This includes empty
+clauses and does not require the variable IDs to be contiguous. -/
+theorem signForbiddenClause_true
+    (fixed : List (Nat × Bool)) (a : Nat → Bool) :
+    (signForbiddenClause fixed).any (signedLitTrue a) =
+      !(fixed.all (fun p => a p.1 == p.2)) := by
+  induction fixed with
+  | nil => rfl
+  | cons p rest ih =>
+      rcases p with ⟨v, bad⟩
+      simp only [signForbiddenClause, List.map_cons, List.any_cons,
+        List.all_cons]
+      rw [ih]
+      cases hv : a v <;>
+        cases hb : bad <;>
+        cases ht : rest.all (fun p => a p.1 == p.2) <;>
+        decide
+
+/-- Literal-list generator mirroring Python's sign construction.
+Python additionally sorts each clause's signed integers; clause order does
+not affect its Boolean disjunction. -/
+def generateSignedClauses (vars : List Nat) (rhs : Bool) :
+    List (List (Nat × Bool)) :=
+  (generateForbiddenPatterns vars.length rhs).map (fun bad =>
+    signForbiddenClause (List.zip vars bad))
+
+#print axioms Witnora.FiniteXor.signForbiddenClause_true
+
 /-- Executable generator: enumerate all n-bit assignments and retain exactly
 those with parity opposite rhs. Each retained bit vector represents the
 literal clause that forbids precisely that assignment. -/
