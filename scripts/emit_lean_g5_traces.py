@@ -69,6 +69,14 @@ def main():
         )
         lines.append(f"example : {prefix}{lean_rows(trace[-1]['rows'])} = true := by decide")
         lines.append(f"example : {prefix}[] = false := by decide")
+        lines.append(
+            f"example : {prefix}[{{ coefficients := [0], rhs := true }}] "
+            "= false := by decide"
+        )
+        lines.append(
+            f"example : {prefix}[{{ coefficients := [1, 1], rhs := true }}] "
+            "= false := by decide"
+        )
     lines.extend(["", "end Witnora.G5Generated", ""])
     dest = Path("formal/Witnora/G5Generated.lean")
     dest.write_text("\n".join(lines), encoding="utf-8")
