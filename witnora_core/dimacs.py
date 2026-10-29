@@ -93,7 +93,7 @@ def parse_dimacs(text: str) -> CNFFormula:
 
 def load_dimacs_with_document_evidence(path: str | Path) -> tuple[CNFFormula, list[list[int]], list[int], list[str], str]:
     """Read the input once; retain the *same* source text used by the parser."""
-    source = Path(path).read_text(encoding="utf-8")
+    source = Path(path).read_bytes().decode("utf-8")
     formula, raw, tokens, spellings = parse_dimacs_with_text_evidence(source)
     return formula, raw, tokens, spellings, source
 
