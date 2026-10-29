@@ -48,7 +48,7 @@ def lean_steps(operations):
 
 
 def main():
-    lines = ["import Witnora.G5Trace", "", "namespace Witnora.G5Generated"]
+    lines = ["import Witnora.G5Trace", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
     for name in CASES:
         instance = make_affine_residue_instance(name)
         cert = build_affine_residue_certificate(instance)
