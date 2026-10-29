@@ -22,6 +22,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Run G14 Python regression suite
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_separator_affine_family_*.py'
+      - name: Run G5 Python regression suite
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Generate concrete Lean claims from Python G14
         run: PYTHONPATH=. python scripts/emit_lean_separator_fixtures.py
       - uses: leanprover/lean-action@v1
