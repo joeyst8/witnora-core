@@ -158,6 +158,7 @@ theorem signForbiddenClause_true
       rcases p with ⟨v, bad⟩
       simp only [signForbiddenClause, List.map_cons, List.any_cons,
         List.all_cons]
+      simp only [signForbiddenClause] at ih
       rw [ih]
       cases hv : a v <;>
         cases hb : bad <;>
