@@ -41,7 +41,11 @@ theorem encode_decode (z : Int) (hz : z ≠ 0) :
 theorem decode_encode (v : Nat) (hv : v > 0) (positive : Bool) :
     decode (encode (v, positive)) = (v, positive) := by
   obtain ⟨n, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (Nat.ne_of_gt hv)
-  cases positive <;> simp [decode, encode]
+  cases positive with
+  | false => rfl
+  | true =>
+      change decode (Int.ofNat (n + 1)) = (n + 1, true)
+      rfl
 
 def decodeCNF (cnf : List (List Int)) : CNF :=
   cnf.map (fun clause => clause.map decode)
