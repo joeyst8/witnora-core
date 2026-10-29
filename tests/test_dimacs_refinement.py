@@ -5,7 +5,8 @@ import unittest
 
 from witnora_core.cnf import CNFError, CNFFormula, Clause, formula_satisfied
 from witnora_core.dimacs import (DIMACSError, export_dimacs, parse_dimacs,
-                                parse_dimacs_with_raw, parse_dimacs_with_evidence, load_dimacs_with_raw)
+                                parse_dimacs_with_raw, parse_dimacs_with_evidence,
+                                parse_dimacs_with_text_evidence, load_dimacs_with_raw)
 
 
 def raw_cnf_holds(raw, assignment):
@@ -79,6 +80,8 @@ class DIMACSRefinementTest(unittest.TestCase):
         self.assertEqual(with_evidence, formula)
         self.assertEqual(raw_again, raw)
         self.assertEqual(tokens, [2, 1, 2, 0, 1, -1, 4, 0, -4, 0, 0])
+        _, _, _, spellings = parse_dimacs_with_text_evidence(text)
+        self.assertEqual(spellings, ["2", "1", "2", "0", "1", "-1", "4", "0", "-4", "0", "0"])
 
     def test_empty_clause_is_preserved_as_contradiction(self):
         formula = parse_dimacs("p cnf 1 1\n0\n")
