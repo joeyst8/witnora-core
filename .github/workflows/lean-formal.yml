@@ -22,8 +22,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Generate concrete Lean claims from Python G14
+        run: python scripts/emit_lean_separator_fixtures.py
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: formal
           build: true
           test: false
+
+      - name: Kernel-check concrete G14 branch claims
+        working-directory: formal
+        run: lake env lean Witnora/Generated.lean
