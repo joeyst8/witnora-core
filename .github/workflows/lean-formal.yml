@@ -22,6 +22,7 @@ on:
       - 'tests/test_separator_affine_family_*.py'
       - 'tests/test_lean_g5_gate.py'
       - 'scripts/benchmark_affine_sat.py'
+      - 'scripts/benchmark_spoke_collapse.py'
       - 'scripts/emit_lean_separator_fixtures.py'
       - 'scripts/emit_lean_g5_traces.py'
       - 'scripts/emit_lean_xor_encoding.py'
@@ -50,6 +51,7 @@ on:
       - 'tests/test_separator_affine_family_*.py'
       - 'tests/test_lean_g5_gate.py'
       - 'scripts/benchmark_affine_sat.py'
+      - 'scripts/benchmark_spoke_collapse.py'
       - 'scripts/emit_lean_separator_fixtures.py'
       - 'scripts/emit_lean_g5_traces.py'
       - 'scripts/emit_lean_xor_encoding.py'
@@ -88,6 +90,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_formal_differential.py'
       - name: Cross-check G5 and G14 certificates against Glucose3
         run: PYTHONPATH=. python scripts/benchmark_affine_sat.py
+      - name: Benchmark experimental spoke collapse against Gaussian and Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_spoke_collapse.py
       - name: Generate concrete Lean claims from Python G14
         run: PYTHONPATH=. python scripts/emit_lean_separator_fixtures.py
       - name: Generate concrete Lean G5 trace claims from Python
