@@ -11,7 +11,7 @@ class DIMACSError(CNFError):
     """Raised for invalid DIMACS input."""
 
 
-def parse_dimacs_with_raw(text: str) -> tuple[CNFFormula, list[list[int]]]:
+def parse_dimacs_with_evidence(text: str) -> tuple[CNFFormula, list[list[int]], list[int]]:
     """Return canonical formula and exact pre-normalization parsed clauses."""
     if not text.strip():
         raise DIMACSError("empty file")
@@ -21,6 +21,7 @@ def parse_dimacs_with_raw(text: str) -> tuple[CNFFormula, list[list[int]]]:
     declared_clauses: int | None = None
     clauses: list[list[int]] = []
     current: list[int] = []
+    literal_stream: list[int] = []
 
     for line_no, raw_line in enumerate(text.splitlines(), start=1):
         line = raw_line.strip()
@@ -48,6 +49,7 @@ def parse_dimacs_with_raw(text: str) -> tuple[CNFFormula, list[list[int]]]:
                 lit = int(token)
             except ValueError as exc:
                 raise DIMACSError(f"non-integer token {token!r} at line {line_no}") from exc
+            literal_stream.append(lit)
             if lit == 0:
                 clauses.append(current)
                 current = []
@@ -68,18 +70,29 @@ def parse_dimacs_with_raw(text: str) -> tuple[CNFFormula, list[list[int]]]:
         )
 
     try:
-        return CNFFormula.from_raw_clauses(clauses), clauses
+        return CNFFormula.from_raw_clauses(clauses), clauses, literal_stream
     except CNFError as exc:
         raise DIMACSError(str(exc)) from exc
 
 
+def parse_dimacs_with_raw(text: str) -> tuple[CNFFormula, list[list[int]]]:
+    formula, raw, _ = parse_dimacs_with_evidence(text)
+    return formula, raw
+
+
 def parse_dimacs(text: str) -> CNFFormula:
-    return parse_dimacs_with_raw(text)[0]
+    return parse_dimacs_with_evidence(text)[0]
+
+
+def load_dimacs_with_evidence(path: str | Path) -> tuple[CNFFormula, list[list[int]], list[int]]:
+    """Read once; retain literal tokens and clauses from the same source."""
+    return parse_dimacs_with_evidence(Path(path).read_text(encoding="utf-8"))
 
 
 def load_dimacs_with_raw(path: str | Path) -> tuple[CNFFormula, list[list[int]]]:
     """Read once; retain the clause parse from the same input bytes."""
-    return parse_dimacs_with_raw(Path(path).read_text(encoding="utf-8"))
+    formula, raw, _ = load_dimacs_with_evidence(path)
+    return formula, raw
 
 
 def load_dimacs(path: str | Path) -> CNFFormula:
