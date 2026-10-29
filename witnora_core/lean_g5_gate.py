@@ -97,6 +97,7 @@ def verify_g5_certificate_with_lean(
     max_arity: int = 10,
     project_root: Path | None = None,
     raw_clauses: object | None = None,
+    source_tokens: object | None = None,
 ) -> dict[str, Any]:
     """Return LEAN_VERIFIED only after independent Lean execution succeeds.
 
@@ -106,13 +107,15 @@ def verify_g5_certificate_with_lean(
     data = certificate.to_dict() if hasattr(certificate, "to_dict") else certificate
     identity = sha256(json.dumps(
         {"formula": formula.to_clause_lists(), "certificate": data,
-         "raw_clauses": raw_clauses},
+         "raw_clauses": raw_clauses, "source_tokens": source_tokens},
         sort_keys=True, separators=(",", ":"), default=str,
     ).encode("utf-8")).hexdigest()
     failure = {"lean_formal_status": "NOT_LEAN_VERIFIED",
                "verified": False, "input_sha256": identity}
 
     try:
+        if source_tokens is not None and raw_clauses is None:
+            raise ValueError("source tokens require original clauses")
         if not isinstance(data, dict):
             raise ValueError("certificate must be a mapping")
         if data.get("lean_formal_status", "NOT_LEAN_VERIFIED") != "NOT_LEAN_VERIFIED":
@@ -135,6 +138,7 @@ def verify_g5_certificate_with_lean(
             formula.to_clause_lists() if raw_clauses is None else raw_clauses,
             formula.to_clause_lists(),
             timeout_seconds=timeout_seconds, project_root=project_root,
+            source_tokens=source_tokens,
         )
         if not normalization_check.get("verified"):
             return {**failure, "reason": "CNF_NORMALIZATION_REJECTED",
@@ -202,6 +206,7 @@ def verify_g5_certificate_with_lean(
             "input_sha256": identity,
             "normalization_check": normalization_check,
             "source_normalization_verified": raw_clauses is not None,
+            "source_tokens_verified": source_tokens is not None,
             "source_formula_hash": formula.formula_hash,
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
         }
