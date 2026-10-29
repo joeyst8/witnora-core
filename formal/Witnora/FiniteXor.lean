@@ -1,4 +1,5 @@
 import Witnora.Concrete
+import Witnora.Extraction
 
 /-!
 # Finite canonical XOR-CNF specification
@@ -47,6 +48,57 @@ theorem canonicalFinite_iff (n : Nat) (rhs : Bool)
         subst bad
         exact hbad hright
       simp [hneq]
+
+/-- Toggle the first occurrence of a variable, or insert it if absent.
+This is a directly executable GF(2) accumulator primitive. -/
+def toggleVar (v : Nat) : List Nat → List Nat
+  | [] => [v]
+  | x :: rest => if v == x then rest else x :: toggleVar v rest
+
+/-- Toggling an occurrence changes parity exactly by that variable's bit,
+for arbitrary lists, without assuming distinct elements. -/
+theorem parity_toggleVar (v : Nat) (vars : List Nat)
+    (a : Nat → Bool) :
+    Extraction.parityVars (toggleVar v vars) a =
+      Bool.xor (a v) (Extraction.parityVars vars a) := by
+  induction vars with
+  | nil =>
+      simp [toggleVar, Extraction.parityVars]
+  | cons x rest ih =>
+      by_cases heq : v = x
+      · subst x
+        simp only [toggleVar, beq_self_eq_true, ite_true,
+          Extraction.parityVars]
+        cases hv : a v <;>
+          cases hr : Extraction.parityVars rest a <;>
+          decide
+      · have hbeq : (v == x) = false := by
+          exact decide_eq_false heq
+        simp only [toggleVar, hbeq, Bool.false_eq_true,
+          ite_false, Extraction.parityVars, ih]
+        cases hv : a v <;>
+          cases hx : a x <;>
+          cases hr : Extraction.parityVars rest a <;>
+          decide
+
+/-- Executable parity normalization by toggling every occurrence. -/
+def normalizeByToggle : List Nat → List Nat
+  | [] => []
+  | v :: rest => toggleVar v (normalizeByToggle rest)
+
+/-- Universal parity preservation for every variable list and assignment.
+This is the normalization algebra needed before proving correspondence to
+Python's separately ordered odd-count output. -/
+theorem normalizeByToggle_parity (raw : List Nat) (a : Nat → Bool) :
+    Extraction.parityVars (normalizeByToggle raw) a =
+      Extraction.parityVars raw a := by
+  induction raw with
+  | nil => rfl
+  | cons v rest ih =>
+      simp only [normalizeByToggle, parity_toggleVar,
+        Extraction.parityVars, ih]
+
+#print axioms Witnora.FiniteXor.normalizeByToggle_parity
 
 /-- Executable normalization model for Python's positive integer-ID domain.
 Reject zero, retain variables with odd occurrence counts and enumerate IDs in
