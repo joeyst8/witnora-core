@@ -3182,6 +3182,8 @@ def main(argv: list[str] | None = None) -> int:
     check_affine_parser.add_argument("--cnf", required=True)
     check_affine_parser.add_argument("--certificate", required=True)
     check_affine_parser.add_argument("--max-arity", type=int, default=10)
+    check_affine_parser.add_argument("--lean", action="store_true", help="require a genuine Lean G5 UNSAT proof before acceptance")
+    check_affine_parser.add_argument("--lean-timeout", type=int, default=120)
     motif_parser = sub.add_parser("run-proof-motif-lab")
     motif_parser.add_argument(
         "--instances",
@@ -3287,8 +3289,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "check-affine-residue-cert":
         formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
-        print(stable_json(check_affine_residue_certificate(formula, data, max_arity=args.max_arity)))
-        return 0
+        native = check_affine_residue_certificate(formula, data, max_arity=args.max_arity)
+        if not args.lean:
+            print(stable_json(native))
+            return 0
+        from .lean_g5_gate import verify_g5_certificate_with_lean
+        formal = verify_g5_certificate_with_lean(
+            formula, data, timeout_seconds=args.lean_timeout, max_arity=args.max_arity,
+        )
+        print(stable_json({"native_check": native, "lean_check": formal}))
+        return 0 if formal["verified"] else 1
     if args.command == "run-proof-motif-lab":
         result = run_proof_motif_lab(
             instances=args.instances,
