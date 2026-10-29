@@ -227,6 +227,32 @@ theorem checkedSerializedClauses_exact (vars : List Nat) (rhs : Bool)
 
 #print axioms Witnora.FiniteXor.checkedSerializedClauses_exact
 
+/-- End-to-end acceptance predicate for the finite XOR encoder boundary.
+It validates raw IDs, algebraic normalization, and exact signed clauses.
+It is a checker of submitted results, not a proof about Python execution. -/
+def checkPythonEncodingOutput (raw normalized : List Nat)
+    (rhs : Bool) (submitted : List (List Int)) : Bool :=
+  (raw.all (fun v => decide (0 < v))) &&
+    checkNormalizedOutput raw normalized &&
+    checkSerializedClauses normalized rhs submitted
+
+theorem checkedPythonEncodingOutput_sound
+    (raw normalized : List Nat) (rhs : Bool)
+    (submitted : List (List Int))
+    (h : checkPythonEncodingOutput raw normalized rhs submitted = true)
+    (a : Nat → Bool) :
+    Extraction.parityVars normalized a = Extraction.parityVars raw a ∧
+      submitted = serializedSignedClauses normalized rhs := by
+  have hsplit := Bool.and_eq_true.mp h
+  have hnorm : checkNormalizedOutput raw normalized = true := by
+    exact (Bool.and_eq_true.mp hsplit.1).2
+  have hclauses : checkSerializedClauses normalized rhs submitted = true :=
+    hsplit.2
+  exact ⟨checkedNormalizedOutput_parity raw normalized a hnorm,
+    checkedSerializedClauses_exact normalized rhs submitted hclauses⟩
+
+#print axioms Witnora.FiniteXor.checkedPythonEncodingOutput_sound
+
 /-- Evaluate the concrete generated clause family. -/
 def generatedFinite (n : Nat) (rhs : Bool) (actual : List Bool) : Bool :=
   (generateForbiddenPatterns n rhs).all (fun bad => decide (actual ≠ bad))
