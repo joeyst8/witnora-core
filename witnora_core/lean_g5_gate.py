@@ -20,6 +20,7 @@ from tempfile import TemporaryDirectory
 from typing import Any
 
 from .cnf import CNFFormula
+from .lean_cnf_gate import verify_cnf_normalization_with_lean
 
 
 def _strict_nonnegative(value: Any) -> int:
@@ -124,6 +125,17 @@ def verify_g5_certificate_with_lean(
         if native.get("status") != "AFFINE_RESIDUE_CERTIFICATE_VERIFIED":
             raise ValueError("native certificate consistency check failed")
 
+        # The input CNF is already a CNFFormula: check that its serialized
+        # canonical form is accepted by Lean before issuing any G5 status.
+        # This cannot reconstruct raw DIMACS text that was discarded upstream.
+        normalization_check = verify_cnf_normalization_with_lean(
+            formula.to_clause_lists(), formula.to_clause_lists(),
+            timeout_seconds=timeout_seconds, project_root=project_root,
+        )
+        if not normalization_check.get("verified"):
+            return {**failure, "reason": "CNF_NORMALIZATION_REJECTED",
+                    "normalization_check": normalization_check}
+
         trace = data.get("gaussian_elimination_trace")
         if (not isinstance(trace, list) or len(trace) < 2
                 or not isinstance(trace[0], dict)
@@ -166,6 +178,7 @@ def verify_g5_certificate_with_lean(
             "lean_formal_status": "LEAN_VERIFIED",
             "verified": True,
             "input_sha256": identity,
+            "normalization_check": normalization_check,
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
         }
     except (ValueError, TypeError, KeyError, IndexError, OSError,
