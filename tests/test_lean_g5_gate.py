@@ -89,7 +89,7 @@ class G5LeanGateTest(unittest.TestCase):
     def test_cli_lean_mode_fails_closed_and_reports_separate_statuses(self):
         from witnora_core.operator_genesis import main
         certificate_json = json.dumps(self.cert.to_dict())
-        with patch("witnora_core.operator_genesis.load_dimacs", return_value=self.instance.formula):
+        with patch("witnora_core.operator_genesis.load_dimacs_with_raw", return_value=(self.instance.formula, [[1, 1, -1], [2, -2]])):
             with patch("pathlib.Path.read_text", return_value=certificate_json):
                 with patch("witnora_core.lean_g5_gate.verify_g5_certificate_with_lean",
                            return_value={"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED"}) as gate:
@@ -102,6 +102,7 @@ class G5LeanGateTest(unittest.TestCase):
         self.assertEqual(payload["native_check"]["status"], "AFFINE_RESIDUE_CERTIFICATE_VERIFIED")
         self.assertFalse(payload["lean_check"]["verified"])
         gate.assert_called_once()
+        self.assertEqual(gate.call_args.kwargs["raw_clauses"], [[1, 1, -1], [2, -2]])
 
     def test_cli_lean_mode_accepts_only_gate_success(self):
         from witnora_core.operator_genesis import main
@@ -117,6 +118,29 @@ class G5LeanGateTest(unittest.TestCase):
         self.assertEqual(code, 0)
         payload = json.loads(output.getvalue())
         self.assertTrue(payload["lean_check"]["verified"])
+
+    def test_raw_provenance_is_forwarded_to_lean(self):
+        raw = [[2, 2, 1], [1, -1]]
+        with patch("witnora_core.lean_g5_gate.subprocess.run",
+                   return_value=subprocess.CompletedProcess([], 0, "", "")):
+            result = verify_g5_certificate_with_lean(
+                self.instance.formula, self.cert, raw_clauses=raw,
+            )
+        self.assertTrue(result["verified"])
+        self.assertTrue(result["source_normalization_verified"])
+        self.assertEqual(self.normalization_gate.call_args.args[0], raw)
+        self.assertEqual(self.normalization_gate.call_args.args[1],
+                         self.instance.formula.to_clause_lists())
+
+    def test_bad_raw_provenance_fails_closed(self):
+        self.normalization_gate.return_value = {"verified": False}
+        with patch("witnora_core.lean_g5_gate.subprocess.run") as runner:
+            result = verify_g5_certificate_with_lean(
+                self.instance.formula, self.cert, raw_clauses=[[999]],
+            )
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["reason"], "CNF_NORMALIZATION_REJECTED")
+        runner.assert_not_called()
 
 
 if __name__ == "__main__":
