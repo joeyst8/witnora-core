@@ -21,7 +21,7 @@ universe u v w
 
 namespace Witnora.G5G14Composition
 
-open Witnora.Extraction
+open Witnora.G5Extraction
 
 variable {S : Type u} {I : Type v} {R : I → Type w}
 
