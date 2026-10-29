@@ -7,6 +7,9 @@ on:
       - 'tests/test_formal_differential.py'
       - 'tests/test_xor_empty_encoding.py'
       - 'witnora_core/xor.py'
+      - 'witnora_core/cnf.py'
+      - 'witnora_core/dimacs.py'
+      - 'tests/test_dimacs_refinement.py'
       - 'witnora_core/lean_g5_gate.py'
       - 'witnora_core/lean_g14_gate.py'
       - 'tests/test_lean_g14_gate.py'
@@ -26,6 +29,9 @@ on:
       - 'tests/test_formal_differential.py'
       - 'tests/test_xor_empty_encoding.py'
       - 'witnora_core/xor.py'
+      - 'witnora_core/cnf.py'
+      - 'witnora_core/dimacs.py'
+      - 'tests/test_dimacs_refinement.py'
       - 'witnora_core/lean_g5_gate.py'
       - 'witnora_core/lean_g14_gate.py'
       - 'tests/test_lean_g14_gate.py'
@@ -50,6 +56,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run G14 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_separator_affine_family_*.py'
+      - name: Test DIMACS parse/canonicalization refinement
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_dimacs_refinement.py'
       - name: Run zero-variable XOR regression tests
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_xor_empty_encoding.py'
       - name: Run G5 Python regression suite
