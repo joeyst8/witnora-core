@@ -112,3 +112,18 @@ refinement from Python's component discovery, clause simplification,
 serialized signed-literal encoding, and assignment iteration into this Lean
 checker is **not yet proved**. Nor does this theorem ensure that Python
 generates accepted G5 certificates on every required separator branch.
+
+## Concrete Python G14-to-Lean partition integration
+
+The G14 fixture emitter now serializes Python's actual separator assignments
+and residual component CNFs into closed Lean propositions checking
+`ComponentPartition.checkPartition (Conditioning.conditionCNF ...)`.
+CI kernel-checks these generated positive checks and missing-partition
+negative controls, alongside the prior finite-oracle branch checks.
+The generator is deterministic and does not import arbitrary certificate text
+as Lean commands.
+
+This establishes checked correspondence for emitted fixtures only. A
+universal proof that Python's reduction, component graph discovery, and
+serialization implement Lean's specification remains open; per-branch G5
+proof acceptance still needs integration into one G14 trusted gate.
