@@ -56,6 +56,7 @@ def verify_cnf_normalization_with_lean(
     project_root: Path | None = None,
     source_tokens: object | None = None,
     source_spellings: object | None = None,
+    source_text: object | None = None,
 ) -> dict[str, object]:
     """Check exact ordered normalization through Lean, fail closed on error.
 
@@ -88,9 +89,16 @@ def verify_cnf_normalization_with_lean(
                    for s in source_spellings):
                 raise ValueError("unsupported or malformed DIMACS decimal lexeme")
             spellings = list(source_spellings)
+        document = None
+        if source_text is not None:
+            if type(source_text) is not str or tokens is None or spellings is None:
+                raise ValueError("source document requires decimal tokens and lexemes")
+            if len(source_text) > 65536 or not source_text.isascii():
+                raise ValueError("unsupported DIMACS source character encoding or size")
+            document = [ord(ch) for ch in source_text]
         digest = sha256(json.dumps(
             {"raw": raw, "normalized": actual, "source_tokens": tokens,
-             "source_spellings": spellings},
+             "source_spellings": spellings, "source_text": source_text},
             sort_keys=True, separators=(",", ":"),
         ).encode("utf-8")).hexdigest()
         lean_source = (
@@ -117,6 +125,12 @@ def verify_cnf_normalization_with_lean(
                 f"{str([[ord(ch) for ch in spelling] for spelling in spellings])} "
                 f"{str(tokens)} = true := by decide\n"
             )
+        if document is not None:
+            lean_source = "import Witnora.DIMACSDocument\\n" + lean_source
+            lean_source += (
+                "example : Witnora.DIMACSDocument.checkDocument "
+                f"{str(document)} {str(tokens)} = true := by decide\\n"
+            )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
         if not (formal_dir / "lakefile.toml").is_file():
@@ -138,6 +152,7 @@ def verify_cnf_normalization_with_lean(
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
             "token_stream_verified": tokens is not None,
             "decimal_lexemes_verified": spellings is not None,
+            "source_document_verified": document is not None,
         }
     except (ValueError, TypeError, OSError, subprocess.TimeoutExpired) as exc:
         return {**failure, "reason": type(exc).__name__}
