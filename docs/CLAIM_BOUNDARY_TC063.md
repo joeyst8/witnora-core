@@ -453,3 +453,25 @@ source-verified subset is narrower than the native parser's input set.
 **Whitespace splitting, comment/header recognition, source byte decoding,
 and Python execution are still not universally verified.** Likewise the
 conditional G14 decomposition bridge and TC-063 remain open.
+
+### Full ASCII DIMACS document acceptance checkpoint
+
+`Witnora.DIMACSDocument.parseDocument` independently parses a complete
+list of ASCII character codes, including ASCII whitespace, whole-line
+comments, a single `p cnf N M` header, the declared variable bound,
+signed decimal clause tokens, and the declared number of zero-terminated
+clauses. `checkDocument_sound` relates accepted source codes to the
+executable parser. Together with the existing `checkLexemes_sound`,
+`checkStream_sound`, and source-level G5 theorem, this reduces trust in
+Python's `splitlines`/`int` results for **accepted** concrete documents:
+the Lean normalization gate independently checks the same complete source
+string and claimed integer stream.
+
+The production G5/G14 `--lean` paths now carry the same-read, exact decoded
+source text to this mandatory check. ASCII-only and size limits are enforced
+in the gate; unsupported source strings fail closed. Programmatic calls
+without `source_text` retain weaker attestation and must not be described
+as having full-document provenance. An accepted source document is checked,
+not a universal guarantee that arbitrary CPython executions produce accepted
+outputs. Full interpreter refinement, all UTF-8 inputs, byte-to-string
+decoding, G14 residual-model bridges, and unconditional TC-063 remain open.
