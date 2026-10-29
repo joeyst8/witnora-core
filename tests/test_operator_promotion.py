@@ -1,4 +1,4 @@
-"""Operator-promotion policy tests; no forged Lean status may promote research."""
+"""Operator promotion policy: direct Lean spoke proof and fail-closed status."""
 import unittest
 from unittest.mock import patch
 
@@ -19,73 +19,94 @@ class OperatorPromotionTest(unittest.TestCase):
         cls.spellings = list(map(str, cls.tokens))
         cls.source = cls.unsat.canonical_dimacs()
 
+    def setUp(self):
+        self.norm = patch(
+            "witnora_core.operator_promotion.verify_cnf_normalization_with_lean",
+            return_value={
+                "verified": True, "source_document_verified": True,
+                "token_stream_verified": True, "decimal_lexemes_verified": True,
+                "proof_source_sha256": "n" * 64,
+            }).start()
+        self.addCleanup(patch.stopall)
+        self.spoke = patch(
+            "witnora_core.operator_promotion.verify_discovered_spoke_with_lean",
+            return_value={
+                "verified": True,
+                "lean_formal_status": "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",
+                "proof_source_sha256": "s" * 64,
+            }).start()
+
     def call(self, cert=None):
         return assess_parity_spoke_operator(
-            self.unsat, cert,
-            raw_clauses=self.raw, source_tokens=self.tokens,
-            source_spellings=self.spellings, source_text=self.source,
+            self.unsat, cert, raw_clauses=self.raw,
+            source_tokens=self.tokens, source_spellings=self.spellings,
+            source_text=self.source,
         )
 
     def test_no_discovery_never_invokes_lean(self):
-        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean") as gate:
-            result = assess_parity_spoke_operator(self.sat)
+        result = assess_parity_spoke_operator(self.sat)
         self.assertEqual(result["status"], NO_DISCOVERY)
         self.assertFalse(result["promoted"])
-        gate.assert_not_called()
+        self.norm.assert_not_called()
+        self.spoke.assert_not_called()
 
-    def test_missing_document_proof_never_invokes_lean(self):
-        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean") as gate:
-            result = assess_parity_spoke_operator(self.unsat, {"fake": "proof"})
+    def test_missing_original_document_never_invokes_lean(self):
+        result = assess_parity_spoke_operator(self.unsat, {"fake": "proof"})
         self.assertEqual(result["status"], CANDIDATE_ONLY)
         self.assertFalse(result["promoted"])
-        gate.assert_not_called()
+        self.norm.assert_not_called()
+        self.spoke.assert_not_called()
 
-    def test_forged_status_without_document_attestation_rejected(self):
-        fake = {
+    def test_missing_normalization_attestation_rejected(self):
+        self.norm.return_value = {"verified": True}
+        result = self.call()
+        self.assertEqual(result["status"], PROOF_REJECTED)
+        self.assertFalse(result["promoted"])
+        self.spoke.assert_not_called()
+
+    def test_forged_status_without_source_spoke_acceptance_rejected(self):
+        self.spoke.return_value = {
             "verified": True, "lean_formal_status": "LEAN_VERIFIED",
-            "normalization_check": {"verified": True},
         }
-        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean",
-                   return_value=fake):
-            result = self.call({"fake": "proof"})
+        result = self.call()
         self.assertEqual(result["status"], PROOF_REJECTED)
         self.assertFalse(result["promoted"])
 
-    def test_failed_proof_rejected(self):
-        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean",
-                   return_value={"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED"}):
-            result = self.call({"fake": "proof"})
-        self.assertEqual(result["status"], PROOF_REJECTED)
-
-    def test_full_acceptance_only_proves_instance_not_promotion(self):
-        accepted = {
-            "verified": True, "lean_formal_status": "LEAN_VERIFIED",
-            "source_document_verified": True,
-            "source_normalization_verified": True,
-            "source_tokens_verified": True,
-            "source_lexemes_verified": True,
-            "normalization_check": {"verified": True},
-            "proof_source_sha256": "a" * 64,
-            "input_sha256": "b" * 64,
-        }
-        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean",
-                   return_value=accepted) as gate:
-            result = self.call({"fake": "proof"})
+    def test_direct_proof_suffices_without_separate_g5_certificate(self):
+        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean") as g5:
+            result = self.call()
         self.assertEqual(result["status"], PROOF_VERIFIED)
         self.assertFalse(result["promoted"])
         self.assertFalse(result["novelty_verified"])
         self.assertFalse(result["performance_advantage_verified"])
-        self.assertEqual(gate.call_args.kwargs["source_text"], self.source)
-        self.assertEqual(gate.call_args.kwargs["raw_clauses"], self.raw)
+        self.assertEqual(self.spoke.call_args.kwargs["source_text"], self.source)
+        self.assertEqual(self.norm.call_args.args[0], self.raw)
+        g5.assert_not_called()
 
-    def test_caller_provided_promotion_claim_ignored(self):
-        forged = {"promoted": True, "lean_formal_status": "LEAN_VERIFIED"}
+    def test_supplied_bad_g5_certificate_is_not_ignored(self):
         with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean",
-                   return_value={"verified": False}) as gate:
-            result = self.call(forged)
+                   return_value={"verified": False}) as g5:
+            result = self.call({"fake": "proof"})
         self.assertEqual(result["status"], PROOF_REJECTED)
+        self.assertEqual(result["reason"], "SUPPLIED_G5_CERTIFICATE_REJECTED")
+        g5.assert_called_once()
+
+    def test_supplied_g5_requires_real_source_attestation(self):
+        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean",
+                   return_value={"verified": True,
+                                 "lean_formal_status": "LEAN_VERIFIED"}) as g5:
+            result = self.call({"fake": "proof"})
+        self.assertEqual(result["status"], PROOF_REJECTED)
+        g5.assert_called_once()
+
+    def test_accepted_additional_g5_still_cannot_promote(self):
+        with patch("witnora_core.operator_promotion.verify_g5_certificate_with_lean",
+                   return_value={"verified": True,
+                                 "lean_formal_status": "LEAN_VERIFIED",
+                                 "source_document_verified": True}):
+            result = self.call({"fake": "proof"})
+        self.assertEqual(result["status"], PROOF_VERIFIED)
         self.assertFalse(result["promoted"])
-        gate.assert_called_once()
 
 
 if __name__ == "__main__":
