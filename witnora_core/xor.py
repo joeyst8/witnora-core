@@ -295,7 +295,14 @@ def _clause_for_forbidden_assignment(variables: tuple[int, ...], bits: tuple[int
 def canonical_xor_cnf_clauses(variables: Iterable[int], rhs: int) -> set[tuple[int, ...]]:
     """Return the exact full CNF encoding of a positive-variable XOR equation."""
 
-    canonical = tuple(sorted({int(var) for var in variables}))
+    counts: dict[int, int] = {}
+    for raw_var in variables:
+        var = int(raw_var)
+        if var <= 0:
+            raise ValueError("XOR CNF variables must be positive")
+        counts[var] = counts.get(var, 0) ^ 1
+    # Repeated occurrences cancel over GF(2), as in XorEquation.__init__.
+    canonical = tuple(sorted(var for var, odd in counts.items() if odd))
     if any(var <= 0 for var in canonical):
         raise ValueError("XOR CNF variables must be positive")
     target_rhs = int(rhs) & 1
