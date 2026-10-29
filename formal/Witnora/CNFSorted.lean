@@ -105,6 +105,14 @@ where
     | x :: xs, y :: ys =>
         if x < y then true else if x == y then lexLE xs ys else false
 
+theorem sortLiterals_perm (clause : List Literal) :
+    List.Perm (sortLiterals clause) clause := by
+  exact sortBy_perm literalLE clause
+
+theorem sortClauses_perm (cnf : CNF) :
+    List.Perm (sortClauses cnf) cnf := by
+  exact sortBy_perm _ cnf
+
 theorem sortLiterals_correct (clause : List Literal) (a : Nat → Bool) :
     (sortLiterals clause).any (signedLitTrue a) =
       clause.any (signedLitTrue a) := by
@@ -149,6 +157,8 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
 #print axioms Witnora.CNFSorted.insertBy_perm
 #print axioms Witnora.CNFSorted.sortBy_perm
 #print axioms Witnora.CNFSorted.mem_sortBy
+#print axioms Witnora.CNFSorted.sortLiterals_perm
+#print axioms Witnora.CNFSorted.sortClauses_perm
 #print axioms Witnora.CNFSorted.sortLiterals_correct
 #print axioms Witnora.CNFSorted.canonicalize_correct
 
