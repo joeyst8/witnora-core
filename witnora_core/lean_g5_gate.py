@@ -104,7 +104,8 @@ def verify_g5_certificate_with_lean(
     """
     data = certificate.to_dict() if hasattr(certificate, "to_dict") else certificate
     identity = sha256(json.dumps(
-        {"formula": formula.to_clause_lists(), "certificate": data},
+        {"formula": formula.to_clause_lists(), "certificate": data,
+         "raw_clauses": raw_clauses},
         sort_keys=True, separators=(",", ":"), default=str,
     ).encode("utf-8")).hexdigest()
     failure = {"lean_formal_status": "NOT_LEAN_VERIFIED",
@@ -182,6 +183,7 @@ def verify_g5_certificate_with_lean(
             "input_sha256": identity,
             "normalization_check": normalization_check,
             "source_normalization_verified": raw_clauses is not None,
+            "source_formula_hash": formula.formula_hash,
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
         }
     except (ValueError, TypeError, KeyError, IndexError, OSError,
