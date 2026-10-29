@@ -63,8 +63,11 @@ theorem checkCanonicalRows_sound
   have heq : row.coefficients =
       canonicalSupport bound row.coefficients := by
     simpa [checkCanonicalRows, checkCanonicalRow] using hrow
-  rw [heq]
-  exact sparseParity_canonicalSupport bound row.coefficients a
+  calc
+    sparseParity bound row.coefficients a =
+        parityVars (canonicalSupport bound row.coefficients) a :=
+      sparseParity_canonicalSupport bound row.coefficients a
+    _ = parityVars row.coefficients a := by rw [← heq]
 
 /-- A closed, executable checker: original CNF clause coverage, canonical
 sparse-row representation, and indexed DAG contradiction proof. -/
