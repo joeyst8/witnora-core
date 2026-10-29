@@ -30,12 +30,13 @@ def main():
         "namespace Witnora.XorGenerated",
     ]
     count = 0
-    for arity in (2, 3, 4, 5):
+    for arity in (0, 2, 3, 4, 5):
         variables = list(range(1, arity + 1))
         var_expr = "[" + ", ".join(map(str, variables)) + "]"
         for rhs in (0, 1):
             clauses = list(canonical_xor_cnf_clauses(variables, rhs))
-            if len(clauses) != (1 << (arity - 1)):
+            expected = (rhs if arity == 0 else (1 << (arity - 1)))
+            if len(clauses) != expected:
                 raise RuntimeError("Python XOR generator did not emit full canonical family")
             condition = (
                 f"Witnora.Extraction.parityVars {var_expr} "
