@@ -216,3 +216,24 @@ These are tests and input-validation hardening, **not** a Lean proof of
 Python DIMACS parsing or canonicalization for every input. Formalizing
 tautology elimination, duplicate removal, and raw-text parsing remains
 a separate source-to-Lean refinement obligation.
+
+## CNF canonicalization specification and concrete Python checks
+
+`Witnora.CNFCanonical.normalize_correct` proves in Lean that removing
+repeated literals, removing clauses with complementary literal pairs, and
+removing repeated clauses preserves CNF satisfaction for every assignment.
+This is a universal theorem over Lean's abstract paired-literal CNFs; the
+canonical ordering used in Python is not part of the theorem.
+
+`scripts/emit_lean_cnf_canonical.py` emits closed Lean examples from actual
+`CNFFormula.from_raw_clauses` output on adversarial and seeded randomized
+valid signed-integer input. The CI checker compares each Python output to
+Lean's executable normalization, allowing clause and literal reordering but
+requiring matching literal and clause sets. These finite examples guard the
+boundary, but they are **not** a universal CPython source-refinement proof.
+
+The Python constructor now validates every literal even if an earlier pair
+makes the clause tautological, and regression tests reject invalid trailing
+values. Remaining work includes a universal ordering/serialization refinement
+for Python, an independently justified parser semantics, and the complete
+G5/G14-to-TC-063 composition theorem.
