@@ -11,7 +11,8 @@ class DIMACSError(CNFError):
     """Raised for invalid DIMACS input."""
 
 
-def parse_dimacs(text: str) -> CNFFormula:
+def parse_dimacs_with_raw(text: str) -> tuple[CNFFormula, list[list[int]]]:
+    """Return canonical formula and exact pre-normalization parsed clauses."""
     if not text.strip():
         raise DIMACSError("empty file")
 
@@ -67,13 +68,22 @@ def parse_dimacs(text: str) -> CNFFormula:
         )
 
     try:
-        return CNFFormula.from_raw_clauses(clauses)
+        return CNFFormula.from_raw_clauses(clauses), clauses
     except CNFError as exc:
         raise DIMACSError(str(exc)) from exc
 
 
+def parse_dimacs(text: str) -> CNFFormula:
+    return parse_dimacs_with_raw(text)[0]
+
+
+def load_dimacs_with_raw(path: str | Path) -> tuple[CNFFormula, list[list[int]]]:
+    """Read once; retain the clause parse from the same input bytes."""
+    return parse_dimacs_with_raw(Path(path).read_text(encoding="utf-8"))
+
+
 def load_dimacs(path: str | Path) -> CNFFormula:
-    return parse_dimacs(Path(path).read_text(encoding="utf-8"))
+    return load_dimacs_with_raw(path)[0]
 
 
 def export_dimacs(formula: CNFFormula) -> str:
