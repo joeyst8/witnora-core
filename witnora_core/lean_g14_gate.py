@@ -123,7 +123,8 @@ def verify_g14_unsat_cover_with_lean(
         if not isinstance(data, dict):
             raise ValueError("malformed G14 certificate")
         digest = sha256(json.dumps(
-            {"cnf": formula.to_clause_lists(), "certificate": data},
+            {"cnf": formula.to_clause_lists(), "certificate": data,
+             "raw_clauses": raw_clauses},
             sort_keys=True, separators=(",", ":"), allow_nan=False,
         ).encode("utf-8")).hexdigest()
     except (ValueError, TypeError, AttributeError):
@@ -133,6 +134,10 @@ def verify_g14_unsat_cover_with_lean(
     failure = {"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED",
                "input_sha256": digest}
     try:
+        if data.get("lean_formal_status", "NOT_LEAN_VERIFIED") != "NOT_LEAN_VERIFIED":
+            raise ValueError("untrusted G14 formal verification claim")
+        if data.get("formula_hash") != formula.formula_hash:
+            raise ValueError("G14 source formula hash mismatch")
         native = check_separator_affine_certificate(formula, data)
         if (native.get("checker_status") != SEPARATOR_AFFINE_CERTIFICATE_VERIFIED
                 or data.get("final_result") != UNSAT_CERTIFIED):
@@ -199,6 +204,7 @@ def verify_g14_unsat_cover_with_lean(
             branches.append({"assignment_id": branch_id, "component_id": selected,
                              "lean_check": result})
             if (not result.get("verified")
+                    or result.get("lean_formal_status") != "LEAN_VERIFIED"
                     or not isinstance(result.get("normalization_check"), dict)
                     or not result["normalization_check"].get("verified")):
                 return {**failure, "reason": "BRANCH_G5_LEAN_REJECTED",
@@ -207,6 +213,7 @@ def verify_g14_unsat_cover_with_lean(
         return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED",
                 "input_sha256": digest, "normalization_check": normalization_check,
                 "source_normalization_verified": raw_clauses is not None,
+                "source_formula_hash": formula.formula_hash,
                 "partition_proof_source_sha256": partition_digest,
                 "branches": branches,
                 "claim_boundary": "Lean verifies per-branch partitions and G5 proofs; universal Python refinement unproved"}
