@@ -65,6 +65,17 @@ def sameRow (a b : Row) : Bool :=
 def sameRows (a b : List Row) : Bool :=
   (a.length == b.length) && (List.zipWith sameRow a b).all id
 
+/-- Independently check each intermediate row-table snapshot emitted by Python.
+The snapshots must correspond to the actual indexed update at every step. -/
+def checkSnapshots (rows : List Row) : List Step → List (List Row) → Bool
+  | [], [] => true
+  | step :: steps, snapshot :: snapshots =>
+      match applyStep rows step with
+      | none => false
+      | some actual =>
+          sameRows actual snapshot && checkSnapshots actual steps snapshots
+  | _, _ => false
+
 def hasContradiction (rows : List Row) : Bool :=
   rows.any (fun r => r.coefficients.isEmpty && r.rhs)
 
