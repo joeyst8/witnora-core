@@ -168,3 +168,20 @@ formal semantics of CPython or a proof that Python always emits accepted
 certificates. The finite separator enumeration and the signed-literal
 serialization implementation still require a universal refinement
 argument to close complete TC-063 correctness.
+
+## Complete separator-branch enumeration gate
+
+`Witnora.SeparatorAssignments.enumerate_complete` proves that Lean's
+deterministic Boolean-pattern generator includes every assignment of an
+arbitrary supplied separator-variable list. The list order matches
+Python's use of the Cartesian product of `[False, True]` over sorted
+separator IDs. Generated G14 CI claims compare Python's complete output
+sequence against this executable Lean generator.
+
+The runtime G14 Lean source now also checks equality between the complete
+Python branch list and `SeparatorAssignments.enumerate` before checking
+conditioned partitions and every G5 contradiction. These are concrete
+per-certificate proof obligations: a Python generator that omits or
+reorders a branch cannot pass this Lean equality. Universal CPython
+execution correctness and signed-literal serialization refinement remain
+separate unproved obligations.
