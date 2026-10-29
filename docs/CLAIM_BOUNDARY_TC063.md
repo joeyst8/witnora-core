@@ -302,3 +302,18 @@ therefore has verified literal and clause sorting stages. The remaining
 refinement problem is a general semantics bridge from actual Python
 `sorted` / sets / constructor / DIMACS operations to Lean, beyond the
 current 43 exact-output examples. End-to-end TC-063 remains conditional.
+
+## Combined canonical-output ordering invariants
+
+The Lean theorems `canonicalize_clause_ordered` and
+`canonicalize_literals_ordered` now close the composition of the earlier
+sorting lemmas: for **every** input paired-literal CNF, the exact executable
+`canonicalize` result is globally lexicographically clause-ordered, and
+each surviving clause is internally signed-integer ordered. Together with
+`canonicalize_correct`, this gives a universally sound and ordered Lean
+normalization target for the Python refinement proof.
+
+It is still **not** a source-level proof that arbitrary CPython executions
+return that exact output. The 43 generated examples check concrete source
+outputs only. Universal implementation refinement, parser semantics, and
+complete G5/G14 TC-063 composition remain unproved.
