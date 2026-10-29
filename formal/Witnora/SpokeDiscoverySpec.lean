@@ -55,8 +55,10 @@ theorem discoverFrom_unsat
     (p : Proposal) (hp : p ∈ discoverFrom cnf proposals) :
     ¬ ∃ a, CNFHolds cnf a := by
   have hv := (mem_discoverFrom_iff cnf proposals p).mp hp
+  have hvalid := hv.2
+  simp only [valid, Bool.and_eq_true] at hvalid
   have hpattern : checkSpokeConflict cnf p.x p.z p.first p.second = true :=
-    (Bool.and_eq_true.mp hv.2).2
+    hvalid.2
   exact checkSpokeConflict_unsat cnf p.x p.z p.first p.second hpattern
 
 #print axioms Witnora.SpokeDiscoverySpec.discoverFrom_unsat
