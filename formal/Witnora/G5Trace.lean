@@ -43,6 +43,14 @@ def replay (rows : List Row) : List Step → Option (List Row)
       let next ← applyStep rows op
       replay next rest
 
+def sameRow (a b : Row) : Bool :=
+  (a.rhs == b.rhs) && (a.coefficients.length == b.coefficients.length) &&
+  a.coefficients.all (fun x => b.coefficients.contains x) &&
+  b.coefficients.all (fun x => a.coefficients.contains x)
+
+def sameRows (a b : List Row) : Bool :=
+  (a.length == b.length) && (List.zipWith sameRow a b).all id
+
 def hasContradiction (rows : List Row) : Bool :=
   rows.any (fun r => r.coefficients.isEmpty && r.rhs)
 
@@ -51,7 +59,9 @@ and independently verified unsatisfiability of the actual original CNF. -/
 def acceptsUnsat
     (n : Nat) (original : CNF) (initial : List Row)
     (steps : List Step) (finalRows : List Row) : Bool :=
-  (replay initial steps == some finalRows) &&
+  (match replay initial steps with
+    | none => false
+    | some actual => sameRows actual finalRows) &&
   hasContradiction finalRows &&
   isUnsat n original
 
