@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .cnf import CNFFormula
+from .lean_cnf_gate import verify_cnf_normalization_with_lean
 from .lean_g5_gate import _serialize_cnf, verify_g5_certificate_with_lean
 from .separator_affine_family_theorem import (
     SEPARATOR_AFFINE_CERTIFICATE_VERIFIED,
@@ -135,6 +136,15 @@ def verify_g14_unsat_cover_with_lean(
         if (native.get("checker_status") != SEPARATOR_AFFINE_CERTIFICATE_VERIFIED
                 or data.get("final_result") != UNSAT_CERTIFIED):
             raise ValueError("G14 native UNSAT-cover check failed")
+        # Source CNF canonicality is mandatory; selected residual branches
+        # receive their own mandatory check through the G5 Lean gate.
+        normalization_check = verify_cnf_normalization_with_lean(
+            formula.to_clause_lists(), formula.to_clause_lists(),
+            timeout_seconds=timeout_seconds, project_root=project_root,
+        )
+        if not normalization_check.get("verified"):
+            return {**failure, "reason": "CNF_NORMALIZATION_REJECTED",
+                    "normalization_check": normalization_check}
         separator = data["separator_variables"]
         if (not isinstance(separator, list)
                 or any(type(v) is not int or v <= 0 for v in separator)
@@ -191,7 +201,8 @@ def verify_g14_unsat_cover_with_lean(
                         "partition_proof_source_sha256": partition_digest,
                         "branches": branches}
         return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED",
-                "input_sha256": digest, "partition_proof_source_sha256": partition_digest,
+                "input_sha256": digest, "normalization_check": normalization_check,
+                "partition_proof_source_sha256": partition_digest,
                 "branches": branches,
                 "claim_boundary": "Lean verifies per-branch partitions and G5 proofs; universal Python refinement unproved"}
     except (ValueError, TypeError, KeyError, IndexError, AttributeError,
