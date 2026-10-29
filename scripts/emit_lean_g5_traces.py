@@ -168,6 +168,12 @@ def main():
             f"{lean_rows(trace[0]['rows'])} {lean_dag_refs(dag_ops)} "
             "= true := by decide"
         )
+        lines.append(
+            "example : Witnora.G5Dag.checkDagContradiction "
+            f"{lean_rows(trace[0]['rows'])} "
+            f"{lean_dag_refs(dag_ops + [(999999, 0)])} "
+            "= false := by decide"
+        )
         snapshots = python_snapshots(trace[0]["rows"], cert.row_operations)
         if not snapshots:
             raise AssertionError(f"{name}: expected nonempty Python row trace")
