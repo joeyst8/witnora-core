@@ -355,3 +355,22 @@ Lean's executable model. It does **not** prove that all Python executions
 are accepted, nor does it establish a universal CPython interpreter
 refinement. The gate is not yet a mandatory step of the existing G5/G14
 certificate production workflow; that integration remains open.
+
+## Mandatory CNF normalization attestation in G5/G14 Lean gates
+
+The production-facing `verify_g5_certificate_with_lean` now calls the
+fail-closed Lean CNF normalization gate on the canonical signed clauses
+supplied to G5 before issuing `LEAN_VERIFIED`. The successful output
+includes its concrete normalization attestation; rejection blocks G5.
+
+The G14 UNSAT-cover path likewise requires a normalization attestation for
+the original CNF before checking any partition, then requires **each**
+selected G5 covering component to return both G5 verification and its own
+successful normalization attestation. Missing or negative attestations
+block the strongest G14 status. CI includes explicit fail-closed tests.
+
+**Scope:** These gates receive already-created `CNFFormula` objects. They
+check their signed-clause canonical representation but cannot reconstruct
+or prove the original raw DIMACS normalization or CPython constructor
+behavior upstream. Universal Python source-refinement and unrestricted
+TC-063 correctness remain unproved.
