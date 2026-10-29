@@ -30,6 +30,18 @@ theorem mem_dedup {α : Type} [DecidableEq α]
         exact h
       · simp [dedup, h, ih]
 
+theorem dedup_nodup {α : Type} [DecidableEq α]
+    (xs : List α) : (dedup xs).Nodup := by
+  induction xs with
+  | nil => exact List.Nodup.nil
+  | cons x xs ih =>
+      by_cases h : x ∈ xs
+      · simpa [dedup, h] using ih
+      · have hx : x ∉ dedup xs := by
+          intro hx
+          exact h ((mem_dedup xs x).mp hx)
+        simpa [dedup, h] using (List.Nodup.cons hx ih)
+
 theorem any_dedup_iff {α : Type} [DecidableEq α]
     (xs : List α) (p : α → Bool) :
     (dedup xs).any p = true ↔ xs.any p = true := by
@@ -155,6 +167,7 @@ example : isTautology [(1, true), (2, true)] = false := by decide
 #print axioms Witnora.CNFCanonical.dropTautologies_correct
 #print axioms Witnora.CNFCanonical.normalize_correct
 
+#print axioms Witnora.CNFCanonical.dedup_nodup
 #print axioms Witnora.CNFCanonical.mem_dedup
 #print axioms Witnora.CNFCanonical.dedupLiterals_correct
 #print axioms Witnora.CNFCanonical.dedupClauses_correct
