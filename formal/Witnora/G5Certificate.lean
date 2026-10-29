@@ -38,6 +38,8 @@ theorem xorRow_holds (bound : Nat) (left right : Row) (a : Nat → Bool)
     (hl : RowHolds bound left a) (hr : RowHolds bound right a) :
     RowHolds bound (xorRow left right) a := by
   unfold RowHolds at *
+  change sparseParity bound (xorCoefficients left.coefficients right.coefficients) a =
+    Bool.xor left.rhs right.rhs
   rw [sparseParity_xor, hl, hr]
   rfl
 
@@ -100,7 +102,7 @@ theorem checkContradiction_unsat (bound : Nat)
       have hrow := derive_sound bound inputs d r hder a (hextract a hcnf)
       have hempty : r.coefficients = [] := by
         cases hcoeff : r.coefficients with
-        | nil => exact hcoeff
+        | nil => rfl
         | cons x xs => simp [hcoeff] at hcheck
       have hrhs : r.rhs = true := by
         simpa [hempty] using hcheck
