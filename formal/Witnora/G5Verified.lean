@@ -42,9 +42,9 @@ theorem checkG5_unsat_of_sparse_bridge
     simp [checkG5] at this
     exact this.2
   apply checkDagContradiction_unsat bound (CNFHolds cnf) rows steps
-  · intro a hcnf row hr
-    unfold AllHold RowHolds
+  · intro a hcnf
     intro r hrmem
+    unfold RowHolds
     rw [hbridge r hrmem a]
     exact checkInitialRows_sound cnf rows hextract a hcnf r hrmem
   · exact hdag
