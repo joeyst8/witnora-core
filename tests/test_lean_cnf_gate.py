@@ -38,6 +38,31 @@ class LeanCNFNormalizationGateTest(unittest.TestCase):
         self.assertTrue(accepted["verified"])
         self.assertTrue(accepted["token_stream_verified"])
 
+    def test_original_ascii_decimal_spelling_checked_by_lean(self):
+        def inspect_run(argv, **kwargs):
+            source = Path(argv[3]).read_text(encoding="utf-8")
+            self.assertIn("Witnora.DIMACSLexemes.checkLexemes", source)
+            self.assertIn("[[49], [48], [45, 50], [48]]", source)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with patch("witnora_core.lean_cnf_gate.subprocess.run", side_effect=inspect_run):
+            result = verify_cnf_normalization_with_lean(
+                [[1], [-2]], source_tokens=[1, 0, -2, 0],
+                source_spellings=["1", "0", "-2", "0"],
+            )
+        self.assertTrue(result["verified"])
+        self.assertTrue(result["decimal_lexemes_verified"])
+
+    def test_unsupported_decimal_spellings_fail_closed(self):
+        for spelling in ("+1", "01", "1_0", "a", "\\u0661"):
+            with self.subTest(spelling=spelling):
+                with patch("witnora_core.lean_cnf_gate.subprocess.run") as runner:
+                    result = verify_cnf_normalization_with_lean(
+                        [[1]], source_tokens=[1, 0],
+                        source_spellings=[spelling, "0"],
+                    )
+                self.assertFalse(result["verified"])
+                runner.assert_not_called()
+
     def test_invalid_token_types_rejected_before_lean(self):
         for tokens in ([1, True, 0], [1, "0"], [1.0, 0]):
             with self.subTest(tokens=tokens):
