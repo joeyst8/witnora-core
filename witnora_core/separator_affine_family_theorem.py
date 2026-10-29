@@ -20,7 +20,7 @@ from typing import Any, Iterable
 import zipfile
 
 from .cnf import CNFFormula, Clause, clause_satisfied, formula_satisfied
-from .dimacs import load_dimacs, load_dimacs_with_text_evidence
+from .dimacs import load_dimacs, load_dimacs_with_document_evidence
 from .obstruction_dual import sha256_file, stable_json
 from .operator_genesis import (
     AFFINE_RESIDUE_CERTIFICATE_VERIFIED,
@@ -941,7 +941,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 def _cmd_check(args: argparse.Namespace) -> int:
     if args.lean:
-        formula, raw_clauses, source_tokens, source_spellings = load_dimacs_with_text_evidence(args.cnf)
+        formula, raw_clauses, source_tokens, source_spellings, source_text = load_dimacs_with_document_evidence(args.cnf)
     else:
         formula = load_dimacs(args.cnf)
     cert = _load_json(args.certificate)
@@ -953,7 +953,7 @@ def _cmd_check(args: argparse.Namespace) -> int:
     formal = verify_g14_unsat_cover_with_lean(
         formula, cert, timeout_seconds=args.lean_timeout,
         raw_clauses=raw_clauses, source_tokens=source_tokens,
-            source_spellings=source_spellings,
+            source_spellings=source_spellings, source_text=source_text,
     )
     print(stable_json({"native_check": result, "lean_cover_check": formal}))
     return 0 if formal["verified"] else 1
