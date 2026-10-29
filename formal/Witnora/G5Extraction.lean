@@ -112,6 +112,24 @@ theorem checkInitialRows_sound (cnf : CNF)
 
 #print axioms Witnora.G5Extraction.checkInitialRows_sound
 
+/-- Reordered signed literals provide the same valid clause evidence. -/
+example :
+    checkClauseCoverage
+      [[(2, false), (1, true)]]
+      [(1, true), (2, false)] = true := by decide
+
+/-- A strictly stronger source unit clause implies the required clause. -/
+example :
+    checkClauseCoverage
+      [[(1, true)]]
+      [(1, true), (2, false)] = true := by decide
+
+/-- A weaker source clause must not be mistaken for a stronger unit clause. -/
+example :
+    checkClauseCoverage
+      [[(1, true), (2, false)]]
+      [(1, true)] = false := by decide
+
 /-- Reject an incomplete 2-variable XOR encoding. -/
 example :
     checkPattern
