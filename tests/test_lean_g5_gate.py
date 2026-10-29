@@ -1,5 +1,8 @@
 """Fail-closed production Lean G5 gate tests."""
 import subprocess
+import json
+import io
+from contextlib import redirect_stdout
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -60,6 +63,39 @@ class G5LeanGateTest(unittest.TestCase):
             result = verify_g5_certificate_with_lean(self.instance.formula, forged)
         self.assertFalse(result["verified"])
         runner.assert_not_called()
+
+
+    def test_cli_lean_mode_fails_closed_and_reports_separate_statuses(self):
+        from witnora_core.operator_genesis import main
+        certificate_json = json.dumps(self.cert.to_dict())
+        with patch("witnora_core.operator_genesis.load_dimacs", return_value=self.instance.formula):
+            with patch("pathlib.Path.read_text", return_value=certificate_json):
+                with patch("witnora_core.lean_g5_gate.verify_g5_certificate_with_lean",
+                           return_value={"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED"}) as gate:
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        code = main(["check-affine-residue-cert", "--cnf", "ignored.cnf",
+                                     "--certificate", "ignored.json", "--lean"])
+        self.assertEqual(code, 1)
+        payload = json.loads(output.getvalue())
+        self.assertEqual(payload["native_check"]["status"], "AFFINE_RESIDUE_CERTIFICATE_VERIFIED")
+        self.assertFalse(payload["lean_check"]["verified"])
+        gate.assert_called_once()
+
+    def test_cli_lean_mode_accepts_only_gate_success(self):
+        from witnora_core.operator_genesis import main
+        certificate_json = json.dumps(self.cert.to_dict())
+        with patch("witnora_core.operator_genesis.load_dimacs", return_value=self.instance.formula):
+            with patch("pathlib.Path.read_text", return_value=certificate_json):
+                with patch("witnora_core.lean_g5_gate.verify_g5_certificate_with_lean",
+                           return_value={"verified": True, "lean_formal_status": "LEAN_VERIFIED"}):
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        code = main(["check-affine-residue-cert", "--cnf", "ignored.cnf",
+                                     "--certificate", "ignored.json", "--lean"])
+        self.assertEqual(code, 0)
+        payload = json.loads(output.getvalue())
+        self.assertTrue(payload["lean_check"]["verified"])
 
 
 if __name__ == "__main__":
