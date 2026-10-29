@@ -63,6 +63,21 @@ class EmptyXorEncodingTest(unittest.TestCase):
                 canonical_xor_cnf_clauses(raw, rhs),
             )
 
+    def test_equation_and_encoder_share_one_pass_toggle_normalization(self):
+        rng = Random(6302026)
+        for _ in range(400):
+            raw = [rng.randrange(1, 35) for _ in range(rng.randrange(25))]
+            rhs = rng.randrange(2)
+            expected = tuple(sorted(
+                v for v in set(raw) if raw.count(v) % 2 == 1
+            ))
+            equation = XorEquation(iter(raw), rhs)
+            self.assertEqual(equation.variables, expected)
+            self.assertEqual(
+                canonical_xor_cnf_clauses(iter(raw), rhs),
+                canonical_xor_cnf_clauses(expected, rhs),
+            )
+
     def test_invalid_variable_ids_are_rejected_even_if_they_cancel(self):
         for variables in ([0], [-1], [0, 0], [-2, -2], [1, -3, -3]):
             for rhs in (0, 1):
