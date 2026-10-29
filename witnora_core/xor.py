@@ -298,9 +298,11 @@ def canonical_xor_cnf_clauses(variables: Iterable[int], rhs: int) -> set[tuple[i
     canonical = tuple(sorted({int(var) for var in variables}))
     if any(var <= 0 for var in canonical):
         raise ValueError("XOR CNF variables must be positive")
-    if not canonical:
-        return set()
     target_rhs = int(rhs) & 1
+    if not canonical:
+        # XOR over no variables is 0: 0=0 is tautological, 0=1 requires
+        # the empty CNF clause (the canonical contradiction).
+        return {()} if target_rhs else set()
     return {
         _clause_for_forbidden_assignment(canonical, bits)
         for bits in itertools.product((0, 1), repeat=len(canonical))
