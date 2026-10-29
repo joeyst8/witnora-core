@@ -84,7 +84,13 @@ theorem allProposals_complete (ids : List Nat) (p : Proposal)
     (hn : p.second.middle ∈ ids) :
     p ∈ allProposals ids := by
   rcases p with ⟨x, z, ⟨m, l, r⟩, ⟨n, l2, r2⟩⟩
-  simp [allProposals, List.mem_flatMap, hx, hz, hm, hn]
+  simp only [allProposals, List.mem_flatMap]
+  refine ⟨x, ?_, z, ?_, m, ?_, n, ?_, ?_⟩
+  · simpa using hx
+  · simpa using hz
+  · simpa using hm
+  · simpa using hn
+  · cases l <;> cases r <;> cases l2 <;> cases r2 <;> simp
 
 def discoverComplete (cnf : Witnora.Concrete.CNF)
     (ids : List Nat) : List Proposal :=
