@@ -43,7 +43,7 @@ theorem parityVars_append (front back : List Nat) (a : Nat → Bool) :
     parityVars (front ++ back) a =
       Bool.xor (parityVars front a) (parityVars back a) := by
   induction front with
-  | nil => rfl
+  | nil => simp [parityVars]
   | cons v rest ih =>
       simp only [List.cons_append, parityVars, ih]
       cases hv : a v <;>
@@ -82,7 +82,7 @@ theorem parityVars_perm {xs ys : List Nat}
   | cons x h ih =>
       simpa only [parityVars] using congrArg (Bool.xor (a x)) ih
   | swap x y rest =>
-      exact parityVars_swap_adjacent x y rest a
+      exact (parityVars_swap_adjacent x y rest a).symm
   | trans h₁ h₂ ih₁ ih₂ =>
       exact ih₁.trans ih₂
 
