@@ -7,6 +7,7 @@ on:
       - 'tests/test_formal_differential.py'
       - 'scripts/benchmark_affine_sat.py'
       - 'scripts/emit_lean_separator_fixtures.py'
+      - 'scripts/emit_lean_g5_traces.py'
       - '.github/workflows/lean-formal.yml'
   push:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'tests/test_formal_differential.py'
       - 'scripts/benchmark_affine_sat.py'
       - 'scripts/emit_lean_separator_fixtures.py'
+      - 'scripts/emit_lean_g5_traces.py'
       - '.github/workflows/lean-formal.yml'
   workflow_dispatch:
 
@@ -40,12 +42,17 @@ jobs:
         run: PYTHONPATH=. python scripts/benchmark_affine_sat.py
       - name: Generate concrete Lean claims from Python G14
         run: PYTHONPATH=. python scripts/emit_lean_separator_fixtures.py
+      - name: Generate concrete Lean G5 trace claims from Python
+        run: PYTHONPATH=. python scripts/emit_lean_g5_traces.py
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: formal
           build: true
           test: false
 
+      - name: Kernel-check actual G5 trace replay claims
+        working-directory: formal
+        run: lake env lean Witnora/G5Generated.lean
       - name: Kernel-check concrete G14 branch claims
         working-directory: formal
         run: lake env lean Witnora/Generated.lean
