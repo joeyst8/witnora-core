@@ -183,45 +183,27 @@ def _check_complete_g14_with_lean(
         definition("certSteps", "List Witnora.G5Dag.XorRef", step_values, "[]"),
     ]
     enumerated = "[" + ", ".join(branch_patterns) + "]"
-    def all_branches_proof(statement: str) -> list[str]:
-        script = [
-            f"have {statement} := by",
-        ]
-        return script
-    # Each universal obligation is reduced only over the exact finite
-    # enumerated branches; no universal function equality is decided.
+    # Each quantified premise is discharged from precisely the generated
+    # finite branch enumeration; no unbounded universal is decided.
     def branch_cases() -> list[str]:
         return [
-            "  intro branch hb",
-            f"  have he : Witnora.SeparatorAssignments.enumerate {sorted_vars} = {enumerated} := by decide",
-            "  rw [he] at hb",
-            "  simp only [List.mem_cons, List.mem_singleton] at hb",
-            "  rcases hb with " + " | ".join(f"h{i}" for i in range(len(branch_patterns))),
+            "    intro branch hb",
+            f"    have he : Witnora.SeparatorAssignments.enumerate {sorted_vars} = {enumerated} := by decide",
+            "    rw [he] at hb",
+            "    simp only [List.mem_cons, List.mem_singleton] at hb",
+            "    rcases hb with " + " | ".join(f"h{i}" for i in range(len(branch_patterns))),
         ] + [
-            f"  · subst branch\n    decide" for _ in branch_patterns
+            "    · subst branch" + "\\n" + "      decide" for _ in branch_patterns
         ]
-    lines += [
+
+    lines.append(
         "example : Witnora.DIMACSDocument.parseDocument "
         f"{source_bytes} = some (Witnora.DIMACSTokens.serialize {raw}) "
         "∧ ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds "
-        f"{raw} a := by",
-        "  apply Witnora.G14ConcreteBridge.checked_ascii_dimacs_g14_canonical_unsat "
-        f"{source_bytes} {token_data} {raw} {canonical} "
-        f"(by decide) (by decide) (by decide) {sorted_vars} "
-        "certComponents",
-        "  ·" if False else "",
-    ]
-    # Supply the three dependent finite-branch premises explicitly.
-    lines = [line for line in lines if line]
-    # The theorem's remaining arguments are implicit proof holes, selected
-    # function, and proof holes. Lean elaborates them from these tactics.
-    lines[-1] += " (by"
-    lines += ["    " + line.lstrip() for line in branch_cases()]
-    # 'by' blocks are easier to render without indentation rewrites:
-    # reconstruct the application with named local premises below.
-    lines = lines[:8]
+        f"{raw} a := by"
+    )
     def proof_for(name: str, goal: str) -> None:
-        lines.append(f"have {name} : {goal} := by")
+        lines.append(f"  have {name} : {goal} := by")
         lines.extend(branch_cases())
     proof_for("hpart",
         f"∀ branch ∈ Witnora.SeparatorAssignments.enumerate {sorted_vars}, "
@@ -238,16 +220,12 @@ def _check_complete_g14_with_lean(
         "Witnora.SparseBridge.checkG5Closed "
         "(certBound branch) (certSelected branch) "
         "(certRows branch) (certSteps branch) = true")
-    lines += [
-        "example : Witnora.DIMACSDocument.parseDocument "
-        f"{source_bytes} = some (Witnora.DIMACSTokens.serialize {raw}) "
-        "∧ ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds "
-        f"{raw} a := by",
+    lines.append(
         "  exact Witnora.G14ConcreteBridge.checked_ascii_dimacs_g14_canonical_unsat "
         f"{source_bytes} {token_data} {raw} {canonical} "
         f"(by decide) (by decide) (by decide) {sorted_vars} "
-        "certComponents hpart certSelected hselected certBound certRows certSteps hcert",
-    ]
+        "certComponents hpart certSelected hselected certBound certRows certSteps hcert"
+    )
     proof_source = "\n".join(lines) + "\n"
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
     formal_dir = root / "formal"
