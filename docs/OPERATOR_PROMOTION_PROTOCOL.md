@@ -55,7 +55,13 @@ advantage. Research claims must preserve both distinctions.
 The general spoke contradiction theorem and a source-bound theorem connecting
 four checked patterns in an arbitrary CNF are built in Lean. The executable
 `SpokeDiscoverySpec.discoverFrom` filter also has universal output-soundness
-and exact filter-membership theorems. The production
+and exact filter-membership theorems. The finite reference enumerator
+`SpokeDiscoverySpec.allProposals` ranges over endpoint IDs, intermediate IDs
+and all Boolean labels, and its coverage proof establishes that any proposal
+within the supplied ID domain is included. `tests/test_spoke_discovery_reference.py`
+compares Python output with an independently written exhaustive enumerator
+on bounded randomized inputs; this is testing evidence, not universal Python
+execution refinement. The production
 gate checks concrete discovered instances with this theorem; **universal
 correctness and completeness of the Python detector's proposal enumeration** remains unproved. Universal Python interpreter
 refinement and independent novelty audit also remain open.
