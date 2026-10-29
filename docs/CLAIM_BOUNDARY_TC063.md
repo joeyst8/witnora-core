@@ -38,3 +38,29 @@ packet. Bibliography hardening and release checklists do not upgrade TC-063:
 the status remains `RESTRICTED_THEOREM_WITH_PROOF_OBLIGATIONS`, polynomiality
 remains only for fixed `c`, and native certificates remain native-only unless
 externally exported and checked.
+
+## Optional runtime G5 Lean gate (research branch)
+
+For a G5 affine residue UNSAT certificate and its original DIMACS CNF:
+
+```bash
+python -m witnora_core.operator_genesis check-affine-residue-cert \
+  --cnf original.cnf --certificate certificate.json --lean
+```
+
+This mode requires a working `lake`/Lean toolchain and the built `formal/`
+project. It reports distinct `native_check` and `lean_check` objects and
+returns a nonzero process status unless the Lean checker accepts a concrete
+`SparseBridge.checkG5Closed = true` proof obligation. A missing toolchain,
+timeout, tampered certificate or rejected obligation is **not Lean verified**.
+The optional `--lean-timeout` and `--max-arity` parameters control the check.
+
+Without `--lean`, the existing command performs the historical native
+certificate check only. The certificate JSON's `lean_formal_status` remains
+`NOT_LEAN_VERIFIED`; the runtime result is a separate, invocation-bound
+attestation and is not a permanently authenticated certificate signature.
+
+This closes a concrete per-certificate runtime verification path for supported
+G5 UNSAT claims. It does **not** prove the universal correctness of arbitrary
+Python execution, provide a formal Python-to-Lean compiler refinement, establish
+TC-063 composition, or prove any P-versus-NP claim.
