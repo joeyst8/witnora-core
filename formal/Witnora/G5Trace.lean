@@ -73,7 +73,8 @@ theorem acceptsUnsat_sound
     cnfTrue bits original = false := by
   have hunsat : isUnsat n original = true := by
     unfold acceptsUnsat at h
-    exact (Bool.and_eq_true.mp h).2
+    simp at h
+    exact h.2
   exact isUnsat_sound_for_all n original hunsat bits hlen
 
 #print axioms Witnora.G5Trace.acceptsUnsat_sound
