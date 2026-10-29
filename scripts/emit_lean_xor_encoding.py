@@ -138,14 +138,18 @@ def main():
         normalized_expr = "[" + ", ".join(map(str, normalized)) + "]"
         clause_expr = lean_int_lists(clauses)
         lines.append(
-            "example : Witnora.FiniteXor.checkPythonEncodingOutput "
-            f"{raw_expr} {normalized_expr} {lean_bool(rhs)} "
+            "example : Witnora.FiniteXor.normalizePositiveVariables "
+            f"{raw_expr} = some {normalized_expr} := by decide"
+        )
+        lines.append(
+            "example : Witnora.FiniteXor.checkSerializedClauses "
+            f"{normalized_expr} {lean_bool(rhs)} "
             f"{clause_expr} = true := by decide"
         )
         if len(clauses) > 0:
             lines.append(
-                "example : Witnora.FiniteXor.checkPythonEncodingOutput "
-                f"{raw_expr} {normalized_expr} {lean_bool(rhs)} "
+                "example : Witnora.FiniteXor.checkSerializedClauses "
+                f"{normalized_expr} {lean_bool(rhs)} "
                 f"{lean_int_lists(clauses[:-1])} = false := by decide"
             )
     lines.extend(["", "end Witnora.XorGenerated", ""])
