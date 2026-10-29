@@ -192,11 +192,13 @@ theorem lexLE_total (xs ys : List Int) :
               subst y
               simpa [sortClauses.lexLE] using ih ys
 
-theorem lexLE_trans (xs ys zs : List Int) :
-    sortClauses.lexLE xs ys = true →
-    sortClauses.lexLE ys zs = true →
-      sortClauses.lexLE xs zs = true := by
-  induction xs generalizing ys zs with
+theorem lexLE_trans :
+    ∀ (xs ys zs : List Int),
+      sortClauses.lexLE xs ys = true →
+      sortClauses.lexLE ys zs = true →
+        sortClauses.lexLE xs zs = true := by
+  intro xs
+  induction xs with
   | nil =>
       intro ys zs _ _
       cases zs <;> rfl
