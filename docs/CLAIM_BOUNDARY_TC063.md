@@ -286,3 +286,19 @@ multiplicity preservation for sorted literals. The corresponding universal
 lexicographic *clause*-order theorem, Python runtime/source refinement,
 and end-to-end TC-063 theorem are still open. None of these results imply
 P=NP.
+
+## Universal lexicographic clause-order proof
+
+The Lean theorems `Witnora.CNFSorted.lexLE_total` and
+`Witnora.CNFSorted.lexLE_trans` establish totality and transitivity of
+our executable lexicographic comparator on arbitrary signed-integer lists.
+The `clauseLE_total` and `clauseLE_trans` theorems lift those results to
+paired signed-literal clauses, and `sortClauses_sorted` proves that
+`sortClauses` produces globally ordered CNF clauses.
+
+Together with `sortClauses_perm`, this proves both global clause order and
+exact multiplicity preservation in Lean. The full `canonicalize` theorem
+therefore has verified literal and clause sorting stages. The remaining
+refinement problem is a general semantics bridge from actual Python
+`sorted` / sets / constructor / DIMACS operations to Lean, beyond the
+current 43 exact-output examples. End-to-end TC-063 remains conditional.
