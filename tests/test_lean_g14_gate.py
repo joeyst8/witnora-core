@@ -138,7 +138,7 @@ class G14LeanCoverGateTest(unittest.TestCase):
         from witnora_core.separator_affine_family_theorem import main
         payload = json.dumps(self.certificate.to_dict())
         with patch("witnora_core.separator_affine_family_theorem.load_dimacs_with_document_evidence",
-                   return_value=(self.instance.formula, [[1, 1, -1], [2, -2]], [1, 1, -1, 0, 2, -2, 0], ["1", "1", "-1", "0", "2", "-2", "0"], "p cnf 2 2\\n1 1 -1 0\\n2 -2 0\\n")):
+                   return_value=(self.instance.formula, [[1, 1, -1], [2, -2]], [1, 1, -1, 0, 2, -2, 0], ["1", "1", "-1", "0", "2", "-2", "0"], "p cnf 2 2\n1 1 -1 0\n2 -2 0\n")):
             with patch("witnora_core.separator_affine_family_theorem._load_json",
                        return_value=json.loads(payload)):
                 with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
