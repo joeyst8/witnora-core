@@ -115,6 +115,7 @@ def verify_g14_unsat_cover_with_lean(
     *,
     timeout_seconds: int = 120,
     project_root: Path | None = None,
+    raw_clauses: object | None = None,
 ) -> dict[str, Any]:
     """Accept only when every recomputed separator branch has a Lean G5 proof."""
     try:
@@ -139,7 +140,8 @@ def verify_g14_unsat_cover_with_lean(
         # Source CNF canonicality is mandatory; selected residual branches
         # receive their own mandatory check through the G5 Lean gate.
         normalization_check = verify_cnf_normalization_with_lean(
-            formula.to_clause_lists(), formula.to_clause_lists(),
+            formula.to_clause_lists() if raw_clauses is None else raw_clauses,
+            formula.to_clause_lists(),
             timeout_seconds=timeout_seconds, project_root=project_root,
         )
         if not normalization_check.get("verified"):
@@ -204,6 +206,7 @@ def verify_g14_unsat_cover_with_lean(
                         "branches": branches}
         return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED",
                 "input_sha256": digest, "normalization_check": normalization_check,
+                "source_normalization_verified": raw_clauses is not None,
                 "partition_proof_source_sha256": partition_digest,
                 "branches": branches,
                 "claim_boundary": "Lean verifies per-branch partitions and G5 proofs; universal Python refinement unproved"}
