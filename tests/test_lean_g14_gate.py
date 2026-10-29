@@ -35,7 +35,8 @@ class G14LeanCoverGateTest(unittest.TestCase):
                 self.instance.formula, self.certificate,
             )
         self.assertTrue(result["verified"])
-        self.assertEqual(result["lean_formal_status"], "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED")\n        self.partition_runner.assert_called_once()
+        self.assertEqual(result["lean_formal_status"], "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED")
+        self.partition_runner.assert_called_once()
         self.assertEqual(gate.call_count, 2)
         self.assertEqual([b["assignment_id"] for b in result["branches"]], ["S1", "S2"])
 
