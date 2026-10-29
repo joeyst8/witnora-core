@@ -43,6 +43,27 @@ theorem mem_sortBy {α : Type} (le : α → α → Bool)
   | cons x rest ih =>
       simp [sortBy, mem_insertBy, ih, eq_comm]
 
+theorem insertBy_perm {α : Type} (le : α → α → Bool)
+    (x : α) (xs : List α) :
+    List.Perm (insertBy le x xs) (x :: xs) := by
+  induction xs with
+  | nil => simp [insertBy]
+  | cons y ys ih =>
+      by_cases h : le x y = true
+      · simp [insertBy, h]
+      · have hf : le x y = false := by
+          cases hv : le x y <;> simp_all
+        simp only [insertBy, hf, Bool.false_eq_true, ↓reduceIte]
+        exact (List.Perm.cons y ih).trans (List.Perm.swap x y ys)
+
+theorem sortBy_perm {α : Type} (le : α → α → Bool)
+    (xs : List α) : List.Perm (sortBy le xs) xs := by
+  induction xs with
+  | nil => exact List.Perm.nil
+  | cons x rest ih =>
+      exact (insertBy_perm le x (sortBy le rest)).trans
+        (List.Perm.cons x ih)
+
 theorem any_sortBy_iff {α : Type} (le : α → α → Bool)
     (xs : List α) (p : α → Bool) :
     (sortBy le xs).any p = true ↔ xs.any p = true := by
@@ -125,6 +146,8 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
     rw [sortLiterals_correct]
     exact hd
 
+#print axioms Witnora.CNFSorted.insertBy_perm
+#print axioms Witnora.CNFSorted.sortBy_perm
 #print axioms Witnora.CNFSorted.mem_sortBy
 #print axioms Witnora.CNFSorted.sortLiterals_correct
 #print axioms Witnora.CNFSorted.canonicalize_correct
