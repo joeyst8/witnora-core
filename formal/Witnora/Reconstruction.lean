@@ -14,9 +14,7 @@ namespace Witnora.Reconstruction
 
 open Witnora.Affine
 
-universe u
-
-variable {A : Type u}
+variable {A : Type}
 
 def Satisfies (rows : List (Equation A)) (a : A) : Prop :=
   ∀ row, row ∈ rows → Holds row a
