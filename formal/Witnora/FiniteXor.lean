@@ -77,13 +77,13 @@ theorem generatedFinite_eq_canonicalFinite
   · intro h
     apply List.all_eq_true.mpr
     intro bad hmem
-    have hbase : bad ∈ allBits n := (List.mem_filter.mp hmem).2
+    have hbase : bad ∈ allBits n := (List.mem_filter.mp hmem).1
     have hpar : parityBits bad ≠ rhs := by
-      have hpred := (List.mem_filter.mp hmem).1
+      have hpred := (List.mem_filter.mp hmem).2
       simpa [generateForbiddenPatterns] using hpred
     have hx := List.all_eq_true.mp h bad hbase
     simp [hpar] at hx
-    exact hx
+    simpa using hx
 
 #print axioms Witnora.FiniteXor.generatedFinite_eq_canonicalFinite
 
