@@ -20,6 +20,7 @@ on:
       - 'scripts/emit_lean_separator_fixtures.py'
       - 'scripts/emit_lean_g5_traces.py'
       - 'scripts/emit_lean_xor_encoding.py'
+      - 'scripts/emit_lean_cnf_canonical.py'
       - '.github/workflows/lean-formal.yml'
   push:
     branches:
@@ -42,6 +43,7 @@ on:
       - 'scripts/emit_lean_separator_fixtures.py'
       - 'scripts/emit_lean_g5_traces.py'
       - 'scripts/emit_lean_xor_encoding.py'
+      - 'scripts/emit_lean_cnf_canonical.py'
       - '.github/workflows/lean-formal.yml'
   workflow_dispatch:
 
@@ -76,6 +78,8 @@ jobs:
         run: PYTHONPATH=. python scripts/emit_lean_separator_fixtures.py
       - name: Generate concrete Lean G5 trace claims from Python
         run: PYTHONPATH=. python scripts/emit_lean_g5_traces.py
+      - name: Generate Python canonical CNF normalization claims
+        run: PYTHONPATH=. python scripts/emit_lean_cnf_canonical.py
       - name: Generate Python canonical XOR encoder claims
         run: PYTHONPATH=. python scripts/emit_lean_xor_encoding.py
       - uses: leanprover/lean-action@v1
@@ -84,6 +88,9 @@ jobs:
           build: true
           test: false
 
+      - name: Kernel-check Python/Lean CNF normalization correspondence
+        working-directory: formal
+        run: lake env lean Witnora/CNFCanonicalGenerated.lean
       - name: Kernel-check canonical XOR encoding claims
         working-directory: formal
         run: lake env lean Witnora/XorGenerated.lean
