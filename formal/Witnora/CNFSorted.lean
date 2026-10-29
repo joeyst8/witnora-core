@@ -11,6 +11,7 @@ namespace Witnora.CNFSorted
 
 open Witnora.Concrete
 open Witnora.G5Extraction
+open Witnora.FiniteXor
 open Witnora.CNFCanonical
 
 def insertBy {α : Type} (le : α → α → Bool) (x : α) : List α → List α
