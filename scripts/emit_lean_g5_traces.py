@@ -103,8 +103,37 @@ def contradiction_derivation(initial_rows, operations, final_rows):
     return expression
 
 
+def dag_refs_from_operations(input_rows, operations):
+    """Compile mutable row indices into append-only checked DAG references.
+
+    SWAP_ROWS changes the reference map; ADD_ROW_XOR appends a fresh node.
+    Every DAG reference points to an original or previously appended row.
+    """
+    references = list(range(len(input_rows)))
+    next_id = len(input_rows)
+    steps = []
+    for op in operations:
+        if op["operation"] == "SWAP_ROWS":
+            a, b = op["row_a"], op["row_b"]
+            references[a], references[b] = references[b], references[a]
+        elif op["operation"] == "ADD_ROW_XOR":
+            target, source = op["target_row"], op["source_row"]
+            if target == source:
+                raise ValueError("self-XOR row operation is invalid")
+            steps.append((references[target], references[source]))
+            references[target] = next_id
+            next_id += 1
+        else:
+            raise ValueError("unsupported G5 operation")
+    return steps
+
+
+def lean_dag_refs(steps):
+    return "[" + ", ".join(f"({left}, {right})" for left, right in steps) + "]"
+
+
 def main():
-    lines = ["import Witnora.G5Trace", "import Witnora.G5Certificate", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
+    lines = ["import Witnora.G5Trace", "import Witnora.G5Certificate", "import Witnora.G5Dag", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
     for name in CASES:
         instance = make_affine_residue_instance(name)
         cert = build_affine_residue_certificate(instance)
@@ -130,6 +159,14 @@ def main():
         lines.append(
             "example : Witnora.G5Certificate.checkContradiction "
             f"{lean_rows(trace[0]['rows'])} {proof_tree} = true := by decide"
+        )
+        dag_ops = dag_refs_from_operations(
+            trace[0]["rows"], cert.row_operations
+        )
+        lines.append(
+            "example : Witnora.G5Dag.checkDagContradiction "
+            f"{lean_rows(trace[0]['rows'])} {lean_dag_refs(dag_ops)} "
+            "= true := by decide"
         )
         snapshots = python_snapshots(trace[0]["rows"], cert.row_operations)
         if not snapshots:
