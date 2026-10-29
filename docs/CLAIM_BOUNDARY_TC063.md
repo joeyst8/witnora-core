@@ -97,3 +97,18 @@ the G14 decomposition bridge. It does not by itself prove that Python's
 the Lean functions, that the Python component partition is complete for
 every input, or that every G14 branch carries a valid Lean-checked G5
 certificate. TC-063 remains conditional on those implementation refinements.
+
+## Lean residual-component partition theorem
+
+`Witnora.ComponentPartition.checkPartition_sound` proves that a checked
+permutation (multiset equality) of the conditioned CNF's clauses into
+residual components preserves satisfaction. The executable check rejects
+missing, extra, and duplicated clauses, while allowing component order to
+differ. `conditioned_partition_correct` composes this with the Lean CNF
+conditioning theorem for any assignment extending the separator.
+
+This proves a universal specification-level partition bridge. The exact
+refinement from Python's component discovery, clause simplification,
+serialized signed-literal encoding, and assignment iteration into this Lean
+checker is **not yet proved**. Nor does this theorem ensure that Python
+generates accepted G5 certificates on every required separator branch.
