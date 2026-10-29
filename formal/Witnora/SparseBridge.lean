@@ -96,6 +96,21 @@ example : checkCanonicalRow 3 ⟨[1, 2], false⟩ = true := by decide
 example : checkCanonicalRow 3 ⟨[2, 1], false⟩ = false := by decide
 example : checkCanonicalRow 3 ⟨[3], true⟩ = false := by decide
 
+/-- Full executable proof: the contradictory unit CNF is UNSAT. -/
+example :
+    checkG5Closed 2
+      [[(1, true)], [(1, false)]]
+      [⟨[1], true⟩, ⟨[1], false⟩]
+      [(0, 1)] = true := by decide
+
+/-- Reject the same claimed contradiction if the negative source clause
+is missing from the original CNF. -/
+example :
+    checkG5Closed 2
+      [[(1, true)]]
+      [⟨[1], true⟩, ⟨[1], false⟩]
+      [(0, 1)] = false := by decide
+
 #print axioms Witnora.SparseBridge.sparseParity_canonicalSupport
 #print axioms Witnora.SparseBridge.checkCanonicalRows_sound
 #print axioms Witnora.SparseBridge.checkG5Closed_unsat
