@@ -8,6 +8,8 @@ on:
       - 'tests/test_xor_empty_encoding.py'
       - 'witnora_core/xor.py'
       - 'witnora_core/lean_g5_gate.py'
+      - 'witnora_core/lean_g14_gate.py'
+      - 'tests/test_lean_g14_gate.py'
       - 'witnora_core/separator_affine_family_theorem.py'
       - 'tests/test_separator_affine_family_*.py'
       - 'tests/test_lean_g5_gate.py'
@@ -25,6 +27,8 @@ on:
       - 'tests/test_xor_empty_encoding.py'
       - 'witnora_core/xor.py'
       - 'witnora_core/lean_g5_gate.py'
+      - 'witnora_core/lean_g14_gate.py'
+      - 'tests/test_lean_g14_gate.py'
       - 'witnora_core/separator_affine_family_theorem.py'
       - 'tests/test_separator_affine_family_*.py'
       - 'tests/test_lean_g5_gate.py'
@@ -52,6 +56,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Test fail-closed production Lean G5 gate
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g5_gate.py'
+      - name: Test fail-closed G14 Lean cover gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g14_gate.py'
       - name: Install independent Glucose3 SAT oracle
         run: python -m pip install 'python-sat==1.8.dev24'
       - name: Randomized differential tests of G5 and G14
@@ -82,3 +88,6 @@ jobs:
       - name: Execute real runtime Lean verification on a G5 UNSAT certificate
         run: |
           PYTHONPATH=. python -c 'from witnora_core.operator_genesis import make_affine_residue_instance, build_affine_residue_certificate; from witnora_core.lean_g5_gate import verify_g5_certificate_with_lean; instance = make_affine_residue_instance("parity_arity_7_unsat"); cert = build_affine_residue_certificate(instance); result = verify_g5_certificate_with_lean(instance.formula, cert); print(result); assert result["verified"], result'
+      - name: Execute real G14 branch-cover Lean verification
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.separator_affine_family_theorem import make_separator_affine_instance,build_separator_affine_certificate; from witnora_core.lean_g14_gate import verify_g14_unsat_cover_with_lean; instance=make_separator_affine_instance("saf_unsat_cover_2"); cert=build_separator_affine_certificate(instance); result=verify_g14_unsat_cover_with_lean(instance.formula,cert); print(result); assert result["verified"],result'
