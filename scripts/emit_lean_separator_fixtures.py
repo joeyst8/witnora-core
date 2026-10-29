@@ -23,10 +23,19 @@ def lean_cnf(formula):
         rows.append("[" + ", ".join(lits) + "]")
     return "[" + ", ".join(rows) + "]"
 
+def lean_partial_assignment(assignment):
+    """Render a closed Lean function, with no Python-controlled Lean syntax."""
+    body = "none"
+    for var in sorted(assignment, reverse=True):
+        body = f"(if v == {var} then some {lean_bool(assignment[var])} else {body})"
+    return "(fun v : Nat => " + body + ")"
+
+
 def main():
     out = [
         "import Witnora.Concrete",
         "import Witnora.Verdict",
+        "import Witnora.ComponentPartition",
         "",
         "/- Actual G14 Python conditioning outputs; independent Lean claims. -/",
         "namespace Witnora.Generated",
@@ -71,6 +80,15 @@ def main():
                 f"example : Witnora.Concrete.checkBranch {n} "
                 f"{lean_cnf(instance.formula)} {fixed} {component_list} = true := by decide"
             )
+            # Independently evaluate the universally proved conditioning and
+            # multiset partition checker on the real Python residual clauses.
+            partition_check = (
+                "Witnora.ComponentPartition.checkPartition "
+                "(Witnora.Conditioning.conditionCNF "
+                f"{lean_partial_assignment(a)} {lean_cnf(instance.formula)}) "
+            )
+            out.append(f"example : {partition_check}{component_list} = true := by decide")
+            out.append(f"example : {partition_check}[] = false := by decide")
             if name == "saf_sat_chain_2" and not any(a.values()):
                 out.append(
                     f"example : Witnora.Concrete.checkBranch {n} "
