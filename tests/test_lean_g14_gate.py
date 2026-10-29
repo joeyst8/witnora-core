@@ -1,6 +1,9 @@
 """Branch coverage and fail-closed tests for the G14-to-G5 Lean gate."""
 
 import unittest
+import io
+import json
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 from witnora_core.lean_g14_gate import verify_g14_unsat_cover_with_lean
@@ -55,6 +58,24 @@ class G14LeanCoverGateTest(unittest.TestCase):
             result = verify_g14_unsat_cover_with_lean(instance.formula, cert)
         self.assertFalse(result["verified"])
         gate.assert_not_called()
+
+
+    def test_cli_lean_rejection_returns_failure(self):
+        from witnora_core.separator_affine_family_theorem import main
+        payload = json.dumps(self.certificate.to_dict())
+        with patch("witnora_core.separator_affine_family_theorem.load_dimacs",
+                   return_value=self.instance.formula):
+            with patch("witnora_core.separator_affine_family_theorem._load_json",
+                       return_value=json.loads(payload)):
+                with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
+                           return_value={"verified": False}) as gate:
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        code = main(["check", "--cnf", "ignored.cnf",
+                                     "--certificate", "ignored.json", "--lean"])
+        self.assertEqual(code, 1)
+        self.assertFalse(json.loads(output.getvalue())["lean_cover_check"]["verified"])
+        gate.assert_called_once()
 
 
 if __name__ == "__main__":
