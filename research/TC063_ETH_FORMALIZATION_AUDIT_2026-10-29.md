@@ -63,6 +63,6 @@ Publish machine-readable raw results, command lines, environment, licenses, and 
 
 ## Current verdict and next executable milestone
 
-The source review supports **a conditional TC-063 theorem plan and a falsifiable bridge hypothesis**, not a fully discharged Lean proof or a completed third-party benchmark. This environment had no `lean` or `lake` command, so no Lean kernel compilation was performed. No independent solver benchmark was executed for this audit.
+The source review supports **a conditional TC-063 theorem plan and a falsifiable bridge hypothesis**, not a fully discharged Lean proof or a completed third-party benchmark. A dependency-free first abstract Lean module is now present at `formal/Witnora/Separator.lean`. Its `sat_iff_components` and `unsat_iff_cover` theorems compile under pinned Lean 4.19.0 in GitHub Actions (commit `edf510b7fda53e01b5f734636704828de938d7ec`; two successful checks). Lean reports `Classical.choice` for SAT lifting, and no `sorryAx` in the successful compile. This verifies only the *abstract consequences of the stated decomposition contract*, not that the Python implementation establishes that contract. No independent solver benchmark was executed for this audit.
 
 Next milestone: create and run a pinned Lean/mathlib project proving Gates A-C, then link its abstract certificate semantics to Witnora's actual G5 and decomposition checker before using the word *verified*. In parallel, run the benchmark protocol with pinned binaries and publish raw results. Every unproved obligation remains open.
