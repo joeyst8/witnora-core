@@ -169,6 +169,81 @@ where
     | x :: xs, y :: ys =>
         if x < y then true else if x == y then lexLE xs ys else false
 
+theorem lexLE_total (xs ys : List Int) :
+    sortClauses.lexLE xs ys = true ∨
+      sortClauses.lexLE ys xs = true := by
+  induction xs generalizing ys with
+  | nil =>
+      left
+      cases ys <;> rfl
+  | cons x xs ih =>
+      cases ys with
+      | nil =>
+          right
+          rfl
+      | cons y ys =>
+          by_cases hxy : x < y
+          · left
+            simp [sortClauses.lexLE, hxy]
+          · by_cases hyx : y < x
+            · right
+              simp [sortClauses.lexLE, hyx]
+            · have heq : x = y := by omega
+              subst y
+              simpa [sortClauses.lexLE] using ih ys
+
+theorem lexLE_trans (xs ys zs : List Int) :
+    sortClauses.lexLE xs ys = true →
+    sortClauses.lexLE ys zs = true →
+      sortClauses.lexLE xs zs = true := by
+  induction xs generalizing ys zs with
+  | nil =>
+      intro ys zs _ _
+      cases zs <;> rfl
+  | cons x xs ih =>
+      intro ys zs hxy hyz
+      cases ys with
+      | nil =>
+          simp [sortClauses.lexLE] at hxy
+      | cons y ys =>
+          cases zs with
+          | nil =>
+              simp [sortClauses.lexLE] at hyz
+          | cons z zs =>
+              by_cases hxylt : x < y
+              · by_cases hyzlt : y < z
+                · have hxz : x < z := Int.lt_trans hxylt hyzlt
+                  simp [sortClauses.lexLE, hxz]
+                · by_cases hyzeq : y = z
+                  · subst z
+                    simp [sortClauses.lexLE, hxylt]
+                  · have hfalse : sortClauses.lexLE (y :: ys) (z :: zs) = false := by
+                      simp [sortClauses.lexLE, show ¬ y < z by omega,
+                        show y ≠ z by omega]
+                    rw [hfalse] at hyz
+                    contradiction
+              · by_cases hxyeq : x = y
+                · subst y
+                  by_cases hyzlt : x < z
+                  · simp [sortClauses.lexLE, hyzlt]
+                  · by_cases hyzeq : x = z
+                    · subst z
+                      have hleft : sortClauses.lexLE xs ys = true := by
+                        simpa [sortClauses.lexLE] using hxy
+                      have hright : sortClauses.lexLE ys zs = true := by
+                        simpa [sortClauses.lexLE] using hyz
+                      have htail := ih ys zs hleft hright
+                      simpa [sortClauses.lexLE] using htail
+                    · have hfalse : sortClauses.lexLE (x :: ys) (z :: zs) = false := by
+                        simp [sortClauses.lexLE, show ¬ x < z by omega,
+                          show x ≠ z by omega]
+                      rw [hfalse] at hyz
+                      contradiction
+                · have hfalse : sortClauses.lexLE (x :: xs) (y :: ys) = false := by
+                    simp [sortClauses.lexLE, hxylt, hxyeq]
+                  rw [hfalse] at hxy
+                  contradiction
+
 theorem sortLiterals_perm (clause : List Literal) :
     List.Perm (sortLiterals clause) clause := by
   exact sortBy_perm literalLE clause
@@ -223,6 +298,8 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
 #print axioms Witnora.CNFSorted.insertBy_perm
 #print axioms Witnora.CNFSorted.sortBy_perm
 #print axioms Witnora.CNFSorted.mem_sortBy
+#print axioms Witnora.CNFSorted.lexLE_total
+#print axioms Witnora.CNFSorted.lexLE_trans
 #print axioms Witnora.CNFSorted.sortLiterals_sorted
 #print axioms Witnora.CNFSorted.sortLiterals_perm
 #print axioms Witnora.CNFSorted.sortClauses_perm
