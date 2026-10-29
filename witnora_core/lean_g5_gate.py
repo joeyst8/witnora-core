@@ -95,6 +95,7 @@ def verify_g5_certificate_with_lean(
     timeout_seconds: int = 120,
     max_arity: int = 10,
     project_root: Path | None = None,
+    raw_clauses: object | None = None,
 ) -> dict[str, Any]:
     """Return LEAN_VERIFIED only after independent Lean execution succeeds.
 
@@ -125,11 +126,12 @@ def verify_g5_certificate_with_lean(
         if native.get("status") != "AFFINE_RESIDUE_CERTIFICATE_VERIFIED":
             raise ValueError("native certificate consistency check failed")
 
-        # The input CNF is already a CNFFormula: check that its serialized
-        # canonical form is accepted by Lean before issuing any G5 status.
-        # This cannot reconstruct raw DIMACS text that was discarded upstream.
+        # With raw DIMACS provenance, Lean checks the actual parsed clauses
+        # against Python's canonical formula. Without it only canonicality
+        # (not source-to-formula fidelity) is established.
         normalization_check = verify_cnf_normalization_with_lean(
-            formula.to_clause_lists(), formula.to_clause_lists(),
+            formula.to_clause_lists() if raw_clauses is None else raw_clauses,
+            formula.to_clause_lists(),
             timeout_seconds=timeout_seconds, project_root=project_root,
         )
         if not normalization_check.get("verified"):
@@ -179,6 +181,7 @@ def verify_g5_certificate_with_lean(
             "verified": True,
             "input_sha256": identity,
             "normalization_check": normalization_check,
+            "source_normalization_verified": raw_clauses is not None,
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
         }
     except (ValueError, TypeError, KeyError, IndexError, OSError,
