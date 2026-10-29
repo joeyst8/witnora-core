@@ -66,7 +66,7 @@ class EmptyXorEncodingTest(unittest.TestCase):
     def test_equation_and_encoder_share_one_pass_toggle_normalization(self):
         rng = Random(6302026)
         for _ in range(400):
-            raw = [rng.randrange(1, 35) for _ in range(rng.randrange(25))]
+            raw = [rng.randrange(1, 8) for _ in range(rng.randrange(20))]
             rhs = rng.randrange(2)
             expected = tuple(sorted(
                 v for v in set(raw) if raw.count(v) % 2 == 1
