@@ -317,3 +317,20 @@ It is still **not** a source-level proof that arbitrary CPython executions
 return that exact output. The 43 generated examples check concrete source
 outputs only. Universal implementation refinement, parser semantics, and
 complete G5/G14 TC-063 composition remain unproved.
+
+## Universal duplicate-freedom of final canonicalization
+
+The Lean theorem `Witnora.CNFCanonical.dedup_nodup` proves that the
+executable duplicate-removal function produces a duplicate-free list
+for arbitrary inputs. `Witnora.CNFSorted.sortBy_nodup` transfers this
+property through any permutation sort. The final results
+`canonicalize_clause_nodup` and `canonicalize_literals_nodup` prove
+that **every** canonicalized formula has no duplicate clauses and each
+remaining clause has no duplicate literals.
+
+These close the duplicate-freedom obligation for the Lean executable
+specification. Combined with the earlier satisfaction-preservation and
+ordering theorems, they provide a precise canonical-output target.
+The universal CPython source-execution correspondence and complete
+TC-063 certificate-theorem remain open; finite Python/Lean examples
+must not be presented as a source-level proof.
