@@ -21,8 +21,15 @@ inductive Step where
   deriving DecidableEq, Repr
 
 def xorCoefficients (left right : List Nat) : List Nat :=
-  (left.filter (fun x => !right.contains x)) ++
-  (right.filter (fun x => !left.contains x))
+  (left.filter (fun x => decide (x ∉ right))) ++
+  (right.filter (fun x => decide (x ∉ left))
+
+/-- The concrete sparse coefficient update has exactly the support of the
+GF(2) symmetric difference (for all indices, not merely tested examples). -/
+theorem mem_xorCoefficients (left right : List Nat) (v : Nat) :
+    v ∈ xorCoefficients left right ↔
+      (v ∈ left ∧ v ∉ right) ∨ (v ∈ right ∧ v ∉ left) := by
+  simp [xorCoefficients]
 
 def xorRow (a b : Row) : Row :=
   ⟨xorCoefficients a.coefficients b.coefficients, Bool.xor a.rhs b.rhs⟩
@@ -86,6 +93,7 @@ theorem acceptsUnsat_sound
     exact h.2
   exact isUnsat_sound_for_all n original hunsat bits hlen
 
+#print axioms Witnora.G5Trace.mem_xorCoefficients
 #print axioms Witnora.G5Trace.acceptsUnsat_sound
 
 end Witnora.G5Trace
