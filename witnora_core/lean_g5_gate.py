@@ -92,6 +92,7 @@ def verify_g5_certificate_with_lean(
     certificate: Any,
     *,
     timeout_seconds: int = 120,
+    max_arity: int = 10,
     project_root: Path | None = None,
 ) -> dict[str, Any]:
     """Return LEAN_VERIFIED only after independent Lean execution succeeds.
@@ -119,7 +120,7 @@ def verify_g5_certificate_with_lean(
         if data.get("status") != "AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED":
             raise ValueError("not an eligible G5 UNSAT certificate")
         from .operator_genesis import check_affine_residue_certificate
-        native = check_affine_residue_certificate(formula, data)
+        native = check_affine_residue_certificate(formula, data, max_arity=max_arity)
         if native.get("status") != "AFFINE_RESIDUE_CERTIFICATE_VERIFIED":
             raise ValueError("native certificate consistency check failed")
 
