@@ -138,6 +138,10 @@ def main():
         normalized_expr = "[" + ", ".join(map(str, normalized)) + "]"
         clause_expr = lean_int_lists(clauses)
         lines.append(
+            "example : Witnora.FiniteXor.normalizeSortedToggle "
+            f"{raw_expr} = {normalized_expr} := by decide"
+        )
+        lines.append(
             "example : Witnora.FiniteXor.normalizePositiveVariables "
             f"{raw_expr} = some {normalized_expr} := by decide"
         )
