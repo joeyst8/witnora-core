@@ -10,11 +10,13 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import subprocess
+from tempfile import TemporaryDirectory
 from pathlib import Path
 from typing import Any
 
 from .cnf import CNFFormula
-from .lean_g5_gate import verify_g5_certificate_with_lean
+from .lean_g5_gate import _serialize_cnf, verify_g5_certificate_with_lean
 from .separator_affine_family_theorem import (
     SEPARATOR_AFFINE_CERTIFICATE_VERIFIED,
     UNSAT_CERTIFIED,
@@ -25,6 +27,58 @@ from .separator_affine_family_theorem import (
     _condition_by_separator,
     check_separator_affine_certificate,
 )
+
+
+
+def _lean_partial_assignment(assignment: dict[int, bool]) -> str:
+    """Emit only numeric fixed-variable tests and Bool constructors."""
+    body = "none"
+    for var in sorted(assignment, reverse=True):
+        if type(var) is not int or var <= 0 or type(assignment[var]) is not bool:
+            raise ValueError("invalid separator assignment")
+        value = "true" if assignment[var] else "false"
+        body = f"(if v == {var} then some {value} else {body})"
+    return "(fun v : Nat => " + body + ")"
+
+
+def _check_partitions_with_lean(
+    original: CNFFormula,
+    branch_partitions: list[tuple[dict[int, bool], list[CNFFormula]]],
+    *,
+    timeout_seconds: int,
+    project_root: Path | None,
+) -> str:
+    """Compile closed Lean propositions for all actual conditioned branches."""
+    lines = [
+        "import Witnora.ComponentPartition",
+        "set_option maxRecDepth 16384",
+        "set_option maxHeartbeats 0",
+    ]
+    source_cnf = _serialize_cnf(original)
+    for assignment, parts in branch_partitions:
+        cnfs = "[" + ", ".join(_serialize_cnf(part) for part in parts) + "]"
+        lines.append(
+            "example : Witnora.ComponentPartition.checkPartition "
+            "(Witnora.Conditioning.conditionCNF "
+            f"{_lean_partial_assignment(assignment)} {source_cnf}) "
+            f"{cnfs} = true := by decide"
+        )
+    source_text = "\n".join(lines) + "\n"
+    root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
+    formal = root / "formal"
+    if not (formal / "lakefile.toml").is_file():
+        raise ValueError("Lean project unavailable")
+    with TemporaryDirectory(prefix="witnora_g14_partitions_") as temp:
+        proof_path = Path(temp) / "G14PartitionCheck.lean"
+        proof_path.write_text(source_text, encoding="utf-8")
+        result = subprocess.run(
+            ["lake", "env", "lean", str(proof_path)],
+            cwd=formal, capture_output=True, text=True,
+            timeout=timeout_seconds, check=False,
+        )
+    if result.returncode != 0:
+        raise ValueError("Lean rejected G14 conditioning or partition")
+    return sha256(source_text.encode("utf-8")).hexdigest()
 
 
 def verify_g14_unsat_cover_with_lean(
@@ -68,7 +122,8 @@ def verify_g14_unsat_cover_with_lean(
         arity = data["family_parameters"]["affine_arity_bound_r"]
         if type(arity) is not int or arity < 0:
             raise ValueError("invalid arity")
-        branches = []
+        branch_jobs = []
+        partition_jobs = []
         for i, assignment in enumerate(_all_assignments(separator), start=1):
             branch_id = f"S{i}"
             record = by_id[branch_id]
@@ -86,8 +141,19 @@ def verify_g14_unsat_cover_with_lean(
             ]
             if len(matching) != 1 or selected not in parts:
                 raise ValueError("missing or duplicated covering component")
+            partition_jobs.append((assignment, [parts[c["component_id"]] for c in components]))
+            branch_jobs.append((branch_id, selected, parts[selected],
+                                matching[0]["affine_certificate"]))
+        if not branch_jobs:
+            raise ValueError("empty separator branch coverage")
+        partition_digest = _check_partitions_with_lean(
+            formula, partition_jobs, timeout_seconds=timeout_seconds,
+            project_root=project_root,
+        )
+        branches = []
+        for branch_id, selected, component_formula, affine_certificate in branch_jobs:
             result = verify_g5_certificate_with_lean(
-                parts[selected], matching[0]["affine_certificate"],
+                component_formula, affine_certificate,
                 timeout_seconds=timeout_seconds, max_arity=arity,
                 project_root=project_root,
             )
@@ -95,11 +161,12 @@ def verify_g14_unsat_cover_with_lean(
                              "lean_check": result})
             if not result.get("verified"):
                 return {**failure, "reason": "BRANCH_G5_LEAN_REJECTED",
+                        "partition_proof_source_sha256": partition_digest,
                         "branches": branches}
-        if not branches:
-            raise ValueError("empty separator branch coverage")
-        return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_VERIFIED",
-                "input_sha256": digest, "branches": branches,
-                "claim_boundary": "G5 proofs verified per G14 branch; Python decomposition refinement unproved"}
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError) as exc:
+        return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED",
+                "input_sha256": digest, "partition_proof_source_sha256": partition_digest,
+                "branches": branches,
+                "claim_boundary": "Lean verifies per-branch partitions and G5 proofs; universal Python refinement unproved"}
+    except (ValueError, TypeError, KeyError, IndexError, AttributeError,
+            OSError, subprocess.TimeoutExpired) as exc:
         return {**failure, "reason": type(exc).__name__}
