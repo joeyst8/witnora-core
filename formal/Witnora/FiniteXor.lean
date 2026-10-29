@@ -100,6 +100,24 @@ theorem normalizeByToggle_parity (raw : List Nat) (a : Nat → Bool) :
 
 #print axioms Witnora.FiniteXor.normalizeByToggle_parity
 
+/-- Validate a concrete normalized output against the proved toggle model.
+A permutation suffices for XOR soundness; a separate canonical-order check
+may be imposed when comparing exact Python serialization. -/
+def checkNormalizedOutput (raw output : List Nat) : Bool :=
+  decide ((normalizeByToggle raw).Perm output)
+
+/-- Any accepted normalized output preserves parity for every assignment,
+regardless of input length or variable numbering. -/
+theorem checkedNormalizedOutput_parity (raw output : List Nat)
+    (a : Nat → Bool) (h : checkNormalizedOutput raw output = true) :
+    Extraction.parityVars output a = Extraction.parityVars raw a := by
+  have hp : (normalizeByToggle raw).Perm output := by
+    simpa [checkNormalizedOutput] using h
+  exact (Extraction.parityVars_perm hp a).symm.trans
+    (normalizeByToggle_parity raw a)
+
+#print axioms Witnora.FiniteXor.checkedNormalizedOutput_parity
+
 /-- Executable normalization model for Python's positive integer-ID domain.
 Reject zero, retain variables with odd occurrence counts and enumerate IDs in
 ascending order. The finite range is a model of the Python dictionary/sort
