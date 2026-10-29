@@ -7,11 +7,12 @@ This file defines a **claim boundary**, not a novelty announcement.
 1. `NO_SUPPORTED_OPERATOR_DISCOVERED`: the proposed family was not found
    in the supplied formula.
 2. `RESEARCH_CANDIDATE_ONLY`: a candidate was found but the exact original
-   source document and G5 certificate were not supplied.
+   source document were not supplied.
 3. `SOURCE_BOUND_LEAN_PROOF_REJECTED`: the independent source-bound Lean
    gate failed or its attestation was incomplete.
 4. `PROOF_VERIFIED_PER_INSTANCE_BENCHMARK_PENDING`: actual Lean execution
-   checked the original document, canonicalization and G5 UNSAT certificate.
+   checked the original document, canonicalization and the discovered spoke
+   contradiction directly (an optional G5 certificate is also checked when provided).
    This proves **only the checked instance**, not the proposed general
    transformation, novelty, or superiority.
 
@@ -40,8 +41,10 @@ advantage. Research claims must preserve both distinctions.
 ## Current implementation
 
 - `witnora_core/spoke_discovery.py`: implied two-variable XOR discovery.
-- `witnora_core/operator_promotion.py`: recomputes discovery and invokes
-  `verify_g5_certificate_with_lean` with original DIMACS text/tokens/clauses.
+- `witnora_core/operator_promotion.py`: recomputes discovery, verifies
+  source/canonical correspondence, then invokes the actual source-bound
+  `verify_discovered_spoke_with_lean` gate; an optionally supplied G5
+  certificate must independently pass its own Lean gate.
 - `tests/test_operator_promotion.py`: missing provenance, fake status and
   fail-closed regression tests.
 - `scripts/benchmark_spoke_collapse.py`: first exploratory comparison,
@@ -49,7 +52,8 @@ advantage. Research claims must preserve both distinctions.
 
 ## Known open work
 
-The current research candidate's *general* spoke UNSAT theorem is checked
-in Lean, but a combined theorem connecting **arbitrary detected CNF patterns**
-to that theorem has not been produced yet. Universal Python interpreter
+The general spoke contradiction theorem and a source-bound theorem connecting
+four checked patterns in an arbitrary CNF are built in Lean. The production
+gate checks concrete discovered instances with this theorem; **universal
+correctness of the Python detector itself** remains unproved. Universal Python interpreter
 refinement and independent novelty audit also remain open.
