@@ -45,6 +45,22 @@ def applyStep (rows : List Row) : Step → Option (List Row)
       let rs ← rows[source]?
       return rows.set target (xorRow rt rs)
 
+/-- Executable indexed SWAP_ROWS matches its specification for every
+list, legal pair of indices and row values. -/
+theorem applyStep_swap_exact (rows : List Row) (a b : Nat) (ra rb : Row)
+    (ha : rows[a]? = some ra) (hb : rows[b]? = some rb) :
+    applyStep rows (.swap a b) = some ((rows.set a rb).set b ra) := by
+  simp [applyStep, ha, hb]
+
+/-- Executable indexed ADD_ROW_XOR matches its specification when the source
+and target indices differ and both rows exist. -/
+theorem applyStep_addXor_exact (rows : List Row) (target source : Nat)
+    (rt rs : Row) (hneq : target ≠ source)
+    (ht : rows[target]? = some rt) (hs : rows[source]? = some rs) :
+    applyStep rows (.addXor target source) =
+      some (rows.set target (xorRow rt rs)) := by
+  simp [applyStep, hneq, ht, hs]
+
 def replay (rows : List Row) : List Step → Option (List Row)
   | [] => some rows
   | op :: rest => do
@@ -104,6 +120,8 @@ theorem acceptsUnsat_sound
     exact h.2
   exact isUnsat_sound_for_all n original hunsat bits hlen
 
+#print axioms Witnora.G5Trace.applyStep_swap_exact
+#print axioms Witnora.G5Trace.applyStep_addXor_exact
 #print axioms Witnora.G5Trace.mem_xorCoefficients
 #print axioms Witnora.G5Trace.acceptsUnsat_sound
 
