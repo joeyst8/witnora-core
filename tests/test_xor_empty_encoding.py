@@ -1,11 +1,30 @@
 """Zero-variable XOR encoding must distinguish tautology from contradiction."""
 import unittest
+from itertools import product
+from random import Random
 
-from witnora_core.cnf import CNFFormula
+from witnora_core.cnf import CNFFormula, formula_satisfied
 from witnora_core.xor import XorEquation, canonical_xor_cnf_clauses
 
 
 class EmptyXorEncodingTest(unittest.TestCase):
+    def test_seeded_noncontiguous_and_repeated_variable_encodings(self):
+        rng = Random(20261029)
+        pool = [1, 3, 5, 8, 11]
+        for _ in range(180):
+            variables = [rng.choice(pool) for _ in range(rng.randrange(0, 11))]
+            rhs = rng.randrange(2)
+            formula = CNFFormula.from_raw_clauses(
+                canonical_xor_cnf_clauses(variables, rhs)
+            )
+            for values in product((False, True), repeat=len(pool)):
+                assignment = dict(zip(pool, values))
+                xor_true = (sum(bool(assignment[v]) for v in variables) % 2) == rhs
+                self.assertEqual(
+                    formula_satisfied(formula, assignment), xor_true,
+                    f"raw_vars={variables} rhs={rhs} assignment={assignment}",
+                )
+
     def test_empty_even_equation_is_tautology(self):
         self.assertEqual(canonical_xor_cnf_clauses([], 0), set())
         self.assertEqual(CNFFormula.from_raw_clauses(
