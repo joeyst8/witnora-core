@@ -199,6 +199,34 @@ def generateSignedClauses (vars : List Nat) (rhs : Bool) :
   (generateForbiddenPatterns vars.length rhs).map (fun bad =>
     signForbiddenClause (List.zip vars bad))
 
+/-- Encode a signed literal as the integer convention of DIMACS/Python:
+positive v denotes the variable; negative -v denotes its negation. -/
+def signedLiteralToInt (lit : Nat × Bool) : Int :=
+  if lit.2 then Int.ofNat lit.1 else -(Int.ofNat lit.1)
+
+/-- Canonical serialized clause list, with Python-compatible sorting inside
+each clause. The outer list retains the generator's enumeration order;
+a Python set must be re-enumerated deterministically before verification. -/
+def serializedSignedClauses (vars : List Nat) (rhs : Bool) :
+    List (List Int) :=
+  (generateSignedClauses vars rhs).map (fun clause =>
+    (clause.map signedLiteralToInt).mergeSort (fun x y => decide (x ≤ y)))
+
+/-- A fully deterministic literal-level check of a supplied Python result.
+The supplied clauses are untrusted; the expected encoding is recomputed in
+Lean and compared, including signs, duplicates, and empty clauses. -/
+def checkSerializedClauses (vars : List Nat) (rhs : Bool)
+    (submitted : List (List Int)) : Bool :=
+  decide (submitted = serializedSignedClauses vars rhs)
+
+theorem checkedSerializedClauses_exact (vars : List Nat) (rhs : Bool)
+    (submitted : List (List Int))
+    (h : checkSerializedClauses vars rhs submitted = true) :
+    submitted = serializedSignedClauses vars rhs := by
+  simpa [checkSerializedClauses] using h
+
+#print axioms Witnora.FiniteXor.checkedSerializedClauses_exact
+
 /-- Evaluate the concrete generated clause family. -/
 def generatedFinite (n : Nat) (rhs : Bool) (actual : List Bool) : Bool :=
   (generateForbiddenPatterns n rhs).all (fun bad => decide (actual ≠ bad))
