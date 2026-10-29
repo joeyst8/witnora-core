@@ -29,7 +29,7 @@ theorem enumerate_complete (variables : List Nat) (a : Nat → Bool) :
       simp only [encode, List.map_cons, enumerate, List.mem_flatMap]
       refine ⟨a v, ?_, ?_⟩
       · cases a v <;> simp
-      · simp [List.mem_map, ih]
+      · simpa only [encode] using ih
 
 example : enumerate [1, 2] =
   [[(1, false), (2, false)], [(1, false), (2, true)],
