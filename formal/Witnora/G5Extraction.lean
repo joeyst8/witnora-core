@@ -20,9 +20,35 @@ open Witnora.Extraction
 def CNFHolds (cnf : CNF) (a : Nat → Bool) : Prop :=
   cnf.all (fun clause => clause.any (signedLitTrue a)) = true
 
+/-- A source clause is sufficient evidence for a forbidden clause if
+every literal in the source appears in the forbidden clause. A satisfying
+source clause then satisfies the forbidden clause, regardless of order. -/
+def clauseSubsumes (source expected : List (Nat × Bool)) : Bool :=
+  source.all (fun lit => decide (lit ∈ expected))
+
+/-- Check that at least one original CNF clause entails the expected clause. -/
+def checkClauseCoverage (cnf : CNF) (expected : List (Nat × Bool)) : Bool :=
+  cnf.any (fun source => clauseSubsumes source expected)
+
+theorem checkClauseCoverage_sound (cnf : CNF)
+    (expected : List (Nat × Bool))
+    (a : Nat → Bool)
+    (hcnf : CNFHolds cnf a)
+    (h : checkClauseCoverage cnf expected = true) :
+    expected.any (signedLitTrue a) = true := by
+  have hsource := List.any_eq_true.mp h
+  rcases hsource with ⟨source, hmem, hsub⟩
+  have hholds := List.all_eq_true.mp hcnf source hmem
+  rcases List.any_eq_true.mp hholds with ⟨lit, hlit, hlitTrue⟩
+  have hcovered := List.all_eq_true.mp hsub lit hlit
+  have hmember : lit ∈ expected := by
+    simpa [clauseSubsumes] using hcovered
+  exact List.any_eq_true.mpr ⟨lit, hmember, hlitTrue⟩
+
 def checkPattern (cnf : CNF) (vars : List Nat) (rhs : Bool) : Bool :=
   (generateForbiddenPatterns vars.length rhs).all (fun bad =>
-    decide (signForbiddenClause (List.zip vars bad) ∈ cnf))
+    checkClauseCoverage cnf
+      (signForbiddenClause (List.zip vars bad)))
 
 theorem parityBits_map (vars : List Nat) (a : Nat → Bool) :
     parityBits (vars.map a) = parityVars vars a := by
@@ -55,11 +81,13 @@ theorem checkPattern_sound (cnf : CNF) (vars : List Nat)
       simpa [bad, parityBits_map] using hright
     have hbad : bad ∈ generateForbiddenPatterns vars.length rhs := by
       simp [generateForbiddenPatterns, hmem, hwrong]
-    have hclause : signForbiddenClause (List.zip vars bad) ∈ cnf := by
+    have hcovered :
+        checkClauseCoverage cnf (signForbiddenClause (List.zip vars bad)) = true := by
       have hrow := List.all_eq_true.mp hcheck bad hbad
       simpa [checkPattern] using hrow
-    have hclauses := List.all_eq_true.mp hcnf
-      (signForbiddenClause (List.zip vars bad)) hclause
+    have hclauses :=
+      checkClauseCoverage_sound cnf
+        (signForbiddenClause (List.zip vars bad)) a hcnf hcovered
     have hfalse :
         (signForbiddenClause (List.zip vars bad)).any (signedLitTrue a) = false := by
       rw [signForbiddenClause_true]
