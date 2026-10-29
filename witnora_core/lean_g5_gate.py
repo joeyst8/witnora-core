@@ -125,6 +125,8 @@ def verify_g5_certificate_with_lean(
 
         trace = data.get("gaussian_elimination_trace")
         if (not isinstance(trace, list) or len(trace) < 2
+                or not isinstance(trace[0], dict)
+                or not isinstance(trace[-1], dict)
                 or trace[0].get("type") != "INITIAL_ROWS"
                 or trace[-1].get("type") != "FINAL_ROWS"):
             raise ValueError("invalid G5 trace envelope")
