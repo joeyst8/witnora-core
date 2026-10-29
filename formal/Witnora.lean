@@ -22,3 +22,4 @@ import Witnora.CNFCanonical
 import Witnora.CNFSorted
 import Witnora.SourceG5
 import Witnora.DIMACSTokens
+import Witnora.DIMACSLexemes
