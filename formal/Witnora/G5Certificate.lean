@@ -41,7 +41,6 @@ theorem xorRow_holds (bound : Nat) (left right : Row) (a : Nat → Bool)
   change sparseParity bound (xorCoefficients left.coefficients right.coefficients) a =
     Bool.xor left.rhs right.rhs
   rw [sparseParity_xor, hl, hr]
-  rfl
 
 theorem derive_sound (bound : Nat) (inputs : List Row)
     (d : Derivation) (r : Row)
