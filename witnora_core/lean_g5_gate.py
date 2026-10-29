@@ -20,7 +20,8 @@ from tempfile import TemporaryDirectory
 from typing import Any
 
 from .cnf import CNFFormula
-from .lean_cnf_gate import verify_cnf_normalization_with_lean
+from .lean_cnf_gate import (_lean_rows, _strict_rows,
+                            verify_cnf_normalization_with_lean)
 
 
 def _strict_nonnegative(value: Any) -> int:
@@ -160,9 +161,21 @@ def verify_g5_certificate_with_lean(
             "set_option maxHeartbeats 0\n"
             "example : Witnora.SignedSerialization.decodeCNF "
             f"{formula.to_clause_lists()} = {cnf} := by decide\n"
-            "example : Witnora.SparseBridge.checkG5Closed "
-            f"{bound} {cnf} {rows} {dag} = true := by decide\n"
         )
+        if raw_clauses is None:
+            lean_source += (
+                "example : Witnora.SparseBridge.checkG5Closed "
+                f"{bound} {cnf} {rows} {dag} = true := by decide\n"
+            )
+        else:
+            # This closed theorem proves UNSAT of the source signed clauses
+            # themselves, using canonicalization plus G5 reconstruction.
+            lean_source = "import Witnora.SourceG5\n" + lean_source
+            lean_source += (
+                "example : Witnora.SourceG5.checkRawG5 "
+                f"{bound} {_lean_rows(_strict_rows(raw_clauses))} "
+                f"{rows} {dag} = true := by decide\n"
+            )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
         if not (formal_dir / "lakefile.toml").is_file():
