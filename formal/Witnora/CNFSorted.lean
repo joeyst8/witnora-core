@@ -246,6 +246,23 @@ theorem lexLE_trans :
                   rw [hfalse] at hxy
                   contradiction
 
+def clauseLE (x y : List Literal) : Bool :=
+  sortClauses.lexLE (x.map Witnora.SignedSerialization.encode)
+    (y.map Witnora.SignedSerialization.encode)
+
+theorem clauseLE_total (x y : List Literal) :
+    clauseLE x y = true ∨ clauseLE y x = true := by
+  exact lexLE_total _ _
+
+theorem clauseLE_trans (x y z : List Literal) :
+    clauseLE x y = true → clauseLE y z = true →
+      clauseLE x z = true := by
+  exact lexLE_trans _ _ _
+
+theorem sortClauses_sorted (cnf : CNF) :
+    SortedAll clauseLE (sortClauses cnf) := by
+  exact sortBy_sorted clauseLE clauseLE_total clauseLE_trans cnf
+
 theorem sortLiterals_perm (clause : List Literal) :
     List.Perm (sortLiterals clause) clause := by
   exact sortBy_perm literalLE clause
@@ -302,6 +319,7 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
 #print axioms Witnora.CNFSorted.mem_sortBy
 #print axioms Witnora.CNFSorted.lexLE_total
 #print axioms Witnora.CNFSorted.lexLE_trans
+#print axioms Witnora.CNFSorted.sortClauses_sorted
 #print axioms Witnora.CNFSorted.sortLiterals_sorted
 #print axioms Witnora.CNFSorted.sortLiterals_perm
 #print axioms Witnora.CNFSorted.sortClauses_perm
