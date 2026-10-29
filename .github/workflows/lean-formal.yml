@@ -16,6 +16,8 @@ on:
       - 'witnora_core/lean_g14_gate.py'
       - 'tests/test_lean_g14_gate.py'
       - 'tests/test_spoke_collapse.py'
+      - 'tests/test_spoke_discovery.py'
+      - 'witnora_core/spoke_discovery.py'
       - 'witnora_core/spoke_collapse.py'
       - 'tests/test_lean_g14_adversarial_real.py'
       - 'witnora_core/separator_affine_family_theorem.py'
@@ -45,6 +47,8 @@ on:
       - 'witnora_core/lean_g14_gate.py'
       - 'tests/test_lean_g14_gate.py'
       - 'tests/test_spoke_collapse.py'
+      - 'tests/test_spoke_discovery.py'
+      - 'witnora_core/spoke_discovery.py'
       - 'witnora_core/spoke_collapse.py'
       - 'tests/test_lean_g14_adversarial_real.py'
       - 'witnora_core/separator_affine_family_theorem.py'
@@ -76,6 +80,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_xor_empty_encoding.py'
       - name: Test parity-spoke structural-collapse candidate
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_collapse.py' -v
+      - name: Adversarial tests for parity-invariant discovery
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_discovery.py' -v
       - name: Run G5 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Test fail-closed Python CNF Lean normalization gate
