@@ -24,6 +24,7 @@ def lean_cnf(clauses):
 def main():
     lines = [
         "import Witnora.Extraction",
+        "import Witnora.FiniteXor",
         "set_option maxRecDepth 8192",
         "set_option maxHeartbeats 0",
         "",
@@ -49,6 +50,11 @@ def main():
             )
             lines.append(
                 f"example : {header}{lean_cnf(clauses)} == ({condition})) "
+                "= true := by decide"
+            )
+            lines.append(
+                f"example : {header}{lean_cnf(clauses)} == "
+                f"(Witnora.FiniteXor.canonicalFinite {arity} {lean_bool(rhs)} bits)) "
                 "= true := by decide"
             )
             if arity == 4 and rhs == 1:
