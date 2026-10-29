@@ -15,6 +15,26 @@ XOR_DETECTION_SIDECAR = "EXPLICIT_SIDECAR"
 XOR_PATTERN_SKIPPED_MAX_K = "XOR_PATTERN_SKIPPED_MAX_K"
 
 
+def _normalize_xor_variables(variables: Iterable[int]) -> tuple[int, ...]:
+    """Canonical GF(2) support: validate, toggle occurrence, then sort.
+
+    This mirrors the verified Lean toggle-and-sort model. Only positive
+    integer-valued IDs are within the intended domain; the existing int()
+    coercion is retained for compatibility and must be treated explicitly
+    in a future Python-language refinement proof.
+    """
+    active: set[int] = set()
+    for raw_var in variables:
+        var = int(raw_var)
+        if var <= 0:
+            raise ValueError(f"XOR variable IDs must be positive: {raw_var!r}")
+        if var in active:
+            active.remove(var)
+        else:
+            active.add(var)
+    return tuple(sorted(active))
+
+
 @dataclass(frozen=True)
 class XorEquation:
     variables: tuple[int, ...]
@@ -42,12 +62,7 @@ class XorEquation:
         exact_full_encoding: bool = False,
         safe_use: bool = True,
     ):
-        counts: dict[int, int] = {}
-        for var in variables:
-            if int(var) <= 0:
-                raise ValueError(f"XOR variable IDs must be positive: {var!r}")
-            counts[int(var)] = counts.get(int(var), 0) ^ 1
-        canonical = tuple(sorted(var for var, parity in counts.items() if parity))
+        canonical = _normalize_xor_variables(variables)
         object.__setattr__(self, "variables", canonical)
         object.__setattr__(self, "rhs", int(rhs) & 1)
         object.__setattr__(self, "source", source)
@@ -295,16 +310,7 @@ def _clause_for_forbidden_assignment(variables: tuple[int, ...], bits: tuple[int
 def canonical_xor_cnf_clauses(variables: Iterable[int], rhs: int) -> set[tuple[int, ...]]:
     """Return the exact full CNF encoding of a positive-variable XOR equation."""
 
-    counts: dict[int, int] = {}
-    for raw_var in variables:
-        var = int(raw_var)
-        if var <= 0:
-            raise ValueError("XOR CNF variables must be positive")
-        counts[var] = counts.get(var, 0) ^ 1
-    # Repeated occurrences cancel over GF(2), as in XorEquation.__init__.
-    canonical = tuple(sorted(var for var, odd in counts.items() if odd))
-    if any(var <= 0 for var in canonical):
-        raise ValueError("XOR CNF variables must be positive")
+    canonical = _normalize_xor_variables(variables)
     target_rhs = int(rhs) & 1
     if not canonical:
         # XOR over no variables is 0: 0=0 is tautological, 0=1 requires
