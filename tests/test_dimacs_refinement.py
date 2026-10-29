@@ -22,6 +22,15 @@ class DIMACSRefinementTest(unittest.TestCase):
                 with self.assertRaises(CNFError):
                     Clause([literal])
 
+    def test_tautological_clause_still_validates_every_literal(self):
+        for malformed in (0, True, False, "invalid", None, 1.0):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(CNFError):
+                    Clause.from_literals([1, -1, malformed])
+                with self.assertRaises(CNFError):
+                    CNFFormula.from_raw_clauses([[1, -1, malformed]])
+        self.assertIsNone(Clause.from_literals([1, -1, 2]))
+
     def test_randomized_canonicalization_preserves_semantics_and_roundtrip(self):
         rng = random.Random(6397)
         for _ in range(160):
