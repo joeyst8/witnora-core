@@ -51,10 +51,27 @@ def _check_partitions_with_lean(
     """Compile closed Lean propositions for all actual conditioned branches."""
     lines = [
         "import Witnora.ComponentPartition",
+        "import Witnora.SeparatorAssignments",
         "set_option maxRecDepth 16384",
         "set_option maxHeartbeats 0",
     ]
     source_cnf = _serialize_cnf(original)
+    # The same Lean proof checks that Python supplied every branch in
+    # the specified order, not merely that supplied branches are valid.
+    variables = sorted(branch_partitions[0][0]) if branch_partitions else []
+    patterns = []
+    for assignment, _ in branch_partitions:
+        if sorted(assignment) != variables:
+            raise ValueError("inconsistent separator assignments")
+        literals = ", ".join(
+            f"({v}, {'true' if assignment[v] else 'false'})"
+            for v in variables
+        )
+        patterns.append("[" + literals + "]")
+    lines.append(
+        "example : Witnora.SeparatorAssignments.enumerate "
+        f"{variables} = [" + ", ".join(patterns) + "] := by decide"
+    )
     for assignment, parts in branch_partitions:
         cnfs = "[" + ", ".join(_serialize_cnf(part) for part in parts) + "]"
         lines.append(
