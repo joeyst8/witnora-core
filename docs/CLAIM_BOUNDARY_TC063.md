@@ -437,3 +437,19 @@ missing or altered terminators. **This is not a proof of UTF-8 decoding,
 Python `str.split`/`int` tokenization, header/line parsing, or CPython execution
 for all possible input texts.** The universal Python-to-Lean refinement and
 unconditional TC-063 theorem remain open.
+
+### ASCII decimal lexeme refinement checkpoint
+
+`Witnora.DIMACSLexemes.parseSigned` is an executable Lean arithmetic
+parser for the ASCII decimal codes of a signed literal. The universal
+`checkLexemes_sound` theorem ensures that any accepted list of token
+spellings decodes to exactly the claimed signed integer list. The G5/G14
+CLI now preserves the integer spellings, and the fail-closed normalization
+gate checks the spelling-to-integer relation in Lean before certificate
+acceptance. The formal gate deliberately rejects unsupported forms such as
+leading zeroes, `+` prefixes, underscores, and non-ASCII digits, even if
+Python's generic `int()` accepts some of them. Thus the supported
+source-verified subset is narrower than the native parser's input set.
+**Whitespace splitting, comment/header recognition, source byte decoding,
+and Python execution are still not universally verified.** Likewise the
+conditional G14 decomposition bridge and TC-063 remain open.
