@@ -53,6 +53,7 @@ def verify_cnf_normalization_with_lean(
     *,
     timeout_seconds: int = 120,
     project_root: Path | None = None,
+    source_tokens: object | None = None,
 ) -> dict[str, object]:
     """Check exact ordered normalization through Lean, fail closed on error.
 
@@ -68,8 +69,15 @@ def verify_cnf_normalization_with_lean(
             actual = CNFFormula.from_raw_clauses(raw).to_clause_lists()
         else:
             actual = _strict_rows(proposed_clauses)
+        tokens = None
+        if source_tokens is not None:
+            if type(source_tokens) not in (list, tuple) or len(source_tokens) > MAX_LITERALS + MAX_CLAUSES:
+                raise ValueError("invalid DIMACS integer token stream")
+            if any(type(token) is not int for token in source_tokens):
+                raise ValueError("tokens must be signed integers")
+            tokens = list(source_tokens)
         digest = sha256(json.dumps(
-            {"raw": raw, "normalized": actual},
+            {"raw": raw, "normalized": actual, "source_tokens": tokens},
             sort_keys=True, separators=(",", ":"),
         ).encode("utf-8")).hexdigest()
         lean_source = (
@@ -83,6 +91,12 @@ def verify_cnf_normalization_with_lean(
             "(Witnora.SignedSerialization.decodeCNF "
             f"{_lean_rows(actual)}) := by decide\n"
         )
+        if tokens is not None:
+            lean_source = "import Witnora.DIMACSTokens\n" + lean_source
+            lean_source += (
+                "example : Witnora.DIMACSTokens.checkStream "
+                f"{str(tokens)} {_lean_rows(raw)} = true := by decide\n"
+            )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
         if not (formal_dir / "lakefile.toml").is_file():
@@ -102,6 +116,7 @@ def verify_cnf_normalization_with_lean(
             "lean_formal_status": "LEAN_CNF_NORMALIZATION_VERIFIED",
             "input_sha256": digest,
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
+            "token_stream_verified": tokens is not None,
         }
     except (ValueError, TypeError, OSError, subprocess.TimeoutExpired) as exc:
         return {**failure, "reason": type(exc).__name__}
