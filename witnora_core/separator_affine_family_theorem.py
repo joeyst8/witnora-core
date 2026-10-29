@@ -941,7 +941,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 def _cmd_check(args: argparse.Namespace) -> int:
     if args.lean:
-        formula, raw_clauses, source_tokens = load_dimacs_with_evidence(args.cnf)
+        formula, raw_clauses, source_tokens, source_spellings = load_dimacs_with_text_evidence(args.cnf)
     else:
         formula = load_dimacs(args.cnf)
     cert = _load_json(args.certificate)
