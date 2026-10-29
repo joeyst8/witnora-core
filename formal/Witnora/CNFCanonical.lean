@@ -82,6 +82,65 @@ theorem dedupClauses_correct (cnf : CNF) (a : Nat → Bool) :
     cnf.all (fun clause => clause.any (signedLitTrue a)) = true
   exact all_dedup_iff cnf (fun clause => clause.any (signedLitTrue a))
 
+def complementary (lit : Literal) : Literal := (lit.1, !lit.2)
+
+def isTautology (clause : List Literal) : Bool :=
+  clause.any (fun lit => decide (complementary lit ∈ clause))
+
+theorem complementary_satisfied (lit : Literal) (a : Nat → Bool) :
+    signedLitTrue a lit = true ∨
+      signedLitTrue a (complementary lit) = true := by
+  cases lit with
+  | mk v polarity =>
+      cases polarity <;> cases a v <;>
+        simp [signedLitTrue, complementary]
+
+theorem tautology_is_true (clause : List Literal) (a : Nat → Bool)
+    (h : isTautology clause = true) :
+    clause.any (signedLitTrue a) = true := by
+  obtain ⟨lit, hlit, hcomp⟩ := List.any_eq_true.mp h
+  have hc : complementary lit ∈ clause := by
+    simpa [isTautology] using hcomp
+  rcases complementary_satisfied lit a with hp | hn
+  · exact List.any_eq_true.mpr ⟨lit, hlit, hp⟩
+  · exact List.any_eq_true.mpr ⟨complementary lit, hc, hn⟩
+
+def dropTautologies (cnf : CNF) : CNF :=
+  cnf.filter (fun clause => !isTautology clause)
+
+theorem dropTautologies_bool (cnf : CNF) (a : Nat → Bool) :
+    (dropTautologies cnf).all (fun clause => clause.any (signedLitTrue a)) =
+      cnf.all (fun clause => clause.any (signedLitTrue a)) := by
+  induction cnf with
+  | nil => rfl
+  | cons clause rest ih =>
+      by_cases ht : isTautology clause = true
+      · have htrue := tautology_is_true clause a ht
+        simp [dropTautologies, ht, List.all_cons, htrue, ih]
+      · have hf : isTautology clause = false := by
+          cases hbit : isTautology clause <;> simp_all
+        simp [dropTautologies, hf, List.all_cons, ih]
+
+theorem dropTautologies_correct (cnf : CNF) (a : Nat → Bool) :
+    CNFHolds (dropTautologies cnf) a ↔ CNFHolds cnf a := by
+  unfold CNFHolds
+  rw [dropTautologies_bool cnf a]
+
+def normalize (cnf : CNF) : CNF :=
+  dedupClauses (dropTautologies (dedupLiterals cnf))
+
+theorem normalize_correct (cnf : CNF) (a : Nat → Bool) :
+    CNFHolds (normalize cnf) a ↔ CNFHolds cnf a := by
+  unfold normalize
+  rw [dedupClauses_correct, dropTautologies_correct, dedupLiterals_correct]
+
+example : isTautology [(1, true), (2, true), (1, false)] = true := by decide
+example : isTautology [(1, true), (2, true)] = false := by decide
+
+#print axioms Witnora.CNFCanonical.tautology_is_true
+#print axioms Witnora.CNFCanonical.dropTautologies_correct
+#print axioms Witnora.CNFCanonical.normalize_correct
+
 #print axioms Witnora.CNFCanonical.mem_dedup
 #print axioms Witnora.CNFCanonical.dedupLiterals_correct
 #print axioms Witnora.CNFCanonical.dedupClauses_correct
