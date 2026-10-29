@@ -18,7 +18,7 @@ open Witnora.Concrete
 open Witnora.FiniteXor
 open Witnora.G5Extraction
 
-def extends (fixed : Nat → Option Bool) (a : Nat → Bool) : Prop :=
+def agreesWith (fixed : Nat → Option Bool) (a : Nat → Bool) : Prop :=
   ∀ v b, fixed v = some b → a v = b
 
 def conditionClause (fixed : Nat → Option Bool) :
@@ -41,7 +41,7 @@ def conditionedClauseTrue (a : Nat → Bool) :
 
 theorem conditionClause_correct
     (fixed : Nat → Option Bool) (a : Nat → Bool)
-    (h : extends fixed a) (clause : List Literal) :
+    (h : agreesWith fixed a) (clause : List Literal) :
     conditionedClauseTrue a (conditionClause fixed clause) =
       clause.any (signedLitTrue a) := by
   induction clause with
@@ -68,7 +68,7 @@ theorem conditionClause_correct
 
 theorem conditionCNF_correct
     (fixed : Nat → Option Bool) (a : Nat → Bool)
-    (h : extends fixed a) (cnf : CNF) :
+    (h : agreesWith fixed a) (cnf : CNF) :
     CNFHolds (conditionCNF fixed cnf) a ↔ CNFHolds cnf a := by
   induction cnf with
   | nil => simp [CNFHolds, conditionCNF]
