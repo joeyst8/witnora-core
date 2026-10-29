@@ -52,6 +52,32 @@ class LeanCNFNormalizationGateTest(unittest.TestCase):
         self.assertTrue(result["verified"])
         self.assertTrue(result["decimal_lexemes_verified"])
 
+    def test_complete_source_document_is_checked_in_lean(self):
+        document = "c source comment\\r\\np cnf 2 2\\r\\n1 0\\r\\n-2 0\\r\\n"
+        def inspect_run(argv, **kwargs):
+            source = Path(argv[3]).read_text(encoding="utf-8")
+            self.assertIn("import Witnora.DIMACSDocument", source)
+            self.assertIn("Witnora.DIMACSDocument.checkDocument", source)
+            self.assertIn("[99, 32, 115, 111, 117", source)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with patch("witnora_core.lean_cnf_gate.subprocess.run", side_effect=inspect_run):
+            result = verify_cnf_normalization_with_lean(
+                [[1], [-2]], source_tokens=[1, 0, -2, 0],
+                source_spellings=["1", "0", "-2", "0"],
+                source_text=document,
+            )
+        self.assertTrue(result["verified"])
+        self.assertTrue(result["source_document_verified"])
+
+    def test_non_ascii_document_rejected_before_launch(self):
+        with patch("witnora_core.lean_cnf_gate.subprocess.run") as runner:
+            result = verify_cnf_normalization_with_lean(
+                [[1]], source_tokens=[1, 0], source_spellings=["1", "0"],
+                source_text="p cnf 1 1\\n1 0\\n\\u00e9",
+            )
+        self.assertFalse(result["verified"])
+        runner.assert_not_called()
+
     def test_unsupported_decimal_spellings_fail_closed(self):
         for spelling in ("+1", "01", "1_0", "a", "\\u0661"):
             with self.subTest(spelling=spelling):
