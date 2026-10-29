@@ -515,3 +515,23 @@ unconditional result for every CNF or a formal semantics of every Python run.
 The actual G14 runtime checker still needs to emit/instantiate this
 combined theorem in one closed kernel check before its strongest status can
 be equated with this end-to-end conclusion.
+
+### Production G14 combined theorem attestation
+
+For source-backed G14 `--lean` invocations, the gate now generates an
+independent Lean program from the exact same-read ASCII document, the raw
+and normalized signed clauses, the finite separator patterns, every
+recomputed residual partition, the selected component in each branch,
+and the actual initial sparse rows / indexed G5 XOR references. It
+invokes `checked_ascii_dimacs_g14_canonical_unsat`, including a
+kernel-checked raw-to-canonical equality. The stronger status
+`LEAN_END_TO_END_G14_UNSAT_VERIFIED` is issued **only if this one
+combined theorem instance is accepted by Lean**, in addition to the
+existing per-branch gates. A failed, unavailable, or timed-out combined
+proof must fail closed.
+
+Calls without original source text continue to use the explicitly weaker
+`LEAN_G5_COVER_AND_PARTITIONS_VERIFIED` status. The stronger status
+proves soundness for the accepted concrete input/certificate, not that
+all Python programs always emit certificates, nor any general complexity
+claim. Full CPython semantics and unconditional TC-063 remain unproved.
