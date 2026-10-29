@@ -33,14 +33,11 @@ theorem mem_dedup {α : Type} [DecidableEq α]
 theorem dedup_nodup {α : Type} [DecidableEq α]
     (xs : List α) : (dedup xs).Nodup := by
   induction xs with
-  | nil => exact List.Nodup.nil
+  | nil => simp [dedup]
   | cons x xs ih =>
       by_cases h : x ∈ xs
       · simpa [dedup, h] using ih
-      · have hx : x ∉ dedup xs := by
-          intro hx
-          exact h ((mem_dedup xs x).mp hx)
-        simpa [dedup, h] using (List.Nodup.cons hx ih)
+      · simp [dedup, h, ih, mem_dedup]
 
 theorem any_dedup_iff {α : Type} [DecidableEq α]
     (xs : List α) (p : α → Bool) :
