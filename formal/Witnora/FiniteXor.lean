@@ -121,7 +121,7 @@ theorem insertSortedVar_perm (v : Nat) (xs : List Nat) :
       by_cases h : v ≤ x
       · simp [insertSortedVar, h]
       · simp only [insertSortedVar, h, ite_false]
-        exact (List.Perm.cons x ih).trans (List.Perm.swap x v rest)
+        exact (List.Perm.cons x ih).trans (List.Perm.swap x v rest).symm
 
 /-- Sorting preserves the multiset of every input list. -/
 theorem sortVariables_perm (xs : List Nat) :
