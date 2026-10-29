@@ -196,7 +196,9 @@ def verify_g14_unsat_cover_with_lean(
             )
             branches.append({"assignment_id": branch_id, "component_id": selected,
                              "lean_check": result})
-            if not result.get("verified"):
+            if (not result.get("verified")
+                    or not isinstance(result.get("normalization_check"), dict)
+                    or not result["normalization_check"].get("verified")):
                 return {**failure, "reason": "BRANCH_G5_LEAN_REJECTED",
                         "partition_proof_source_sha256": partition_digest,
                         "branches": branches}
