@@ -31,3 +31,5 @@ import Witnora.G5IndexedBridge
 import Witnora.SpokeCollapse
 
 import Witnora.SpokeSourceBridge
+
+import Witnora.SpokeDiscoverySpec
