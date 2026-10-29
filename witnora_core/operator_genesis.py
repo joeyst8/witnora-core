@@ -3288,7 +3288,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "check-affine-residue-cert":
         if args.lean:
-            formula, raw_clauses = load_dimacs_with_raw(args.cnf)
+            formula, raw_clauses, source_tokens = load_dimacs_with_evidence(args.cnf)
         else:
             formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
