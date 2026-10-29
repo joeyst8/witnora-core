@@ -245,10 +245,10 @@ theorem checkedPythonEncodingOutput_sound
       submitted = serializedSignedClauses normalized rhs := by
   have hnorm : checkNormalizedOutput raw normalized = true := by
     simp [checkPythonEncodingOutput] at h
-    exact h.2.1
+    exact h.1.2
   have hclauses : checkSerializedClauses normalized rhs submitted = true := by
     simp [checkPythonEncodingOutput] at h
-    exact h.2.2
+    exact h.2
   exact ⟨checkedNormalizedOutput_parity raw normalized a hnorm,
     checkedSerializedClauses_exact normalized rhs submitted hclauses⟩
 
