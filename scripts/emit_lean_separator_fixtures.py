@@ -7,7 +7,8 @@ This bounded regression test is not a proof about every Python execution.
 from pathlib import Path
 from witnora_core.separator_affine_family_theorem import (
     _all_assignments, _component_dicts, _condition_by_separator,
-    make_separator_affine_instance,
+    make_separator_affine_instance, build_separator_affine_certificate,
+    check_separator_affine_certificate, SAT_CERTIFIED, UNSAT_CERTIFIED,
 )
 
 CASES = ("saf_sat_chain_2", "saf_unsat_cover_2", "saf_balanced_sat_2")
@@ -35,6 +36,20 @@ def main():
         n = max(instance.formula.variables, default=0)
         if n > 10:
             raise RuntimeError("bounded fixture too large")
+        cert = build_separator_affine_certificate(instance)
+        check = check_separator_affine_certificate(instance.formula, cert)
+        if check["checker_status"] != "SEPARATOR_AFFINE_CERTIFICATE_VERIFIED":
+            raise RuntimeError(f"{name}: Python certificate rejected")
+        if cert.final_result == SAT_CERTIFIED:
+            predicate = "isSat"
+        elif cert.final_result == UNSAT_CERTIFIED:
+            predicate = "isUnsat"
+        else:
+            raise RuntimeError(f"{name}: no certified result")
+        out.append(
+            f"example : Witnora.Concrete.{predicate} {n} "
+            f"{lean_cnf(instance.formula)} = true := by decide"
+        )
         comps = _component_dicts(instance.formula, instance.separator_variables)
         for a in _all_assignments(instance.separator_variables):
             _, parts, errors = _condition_by_separator(instance.formula, a, comps)
