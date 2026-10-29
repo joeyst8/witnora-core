@@ -89,6 +89,29 @@ def _compile_dag(rows: list[dict[str, Any]], ops: Any) -> str:
     return "[" + ", ".join(compiled) + "]"
 
 
+
+def _serialize_indexed_operations(ops: Any) -> str:
+    """Encode the *original* indexed trace for independent Lean compilation."""
+    if not isinstance(ops, list):
+        raise ValueError("G5 operations must be a list")
+    encoded = []
+    for op in ops:
+        if not isinstance(op, dict):
+            raise ValueError("malformed G5 operation")
+        kind = op.get("operation")
+        if kind == "SWAP_ROWS":
+            left = _strict_nonnegative(op.get("row_a"))
+            right = _strict_nonnegative(op.get("row_b"))
+            encoded.append(f"(Witnora.G5IndexedBridge.Operation.swapRows {left} {right})")
+        elif kind == "ADD_ROW_XOR":
+            target = _strict_nonnegative(op.get("target_row"))
+            source = _strict_nonnegative(op.get("source_row"))
+            encoded.append(f"(Witnora.G5IndexedBridge.Operation.addRowXor {target} {source})")
+        else:
+            raise ValueError("unsupported G5 operation")
+    return "[" + ", ".join(encoded) + "]"
+
+
 def verify_g5_certificate_with_lean(
     formula: CNFFormula,
     certificate: Any,
@@ -165,14 +188,18 @@ def verify_g5_certificate_with_lean(
         cnf = _serialize_cnf(formula)
         rows = _serialize_rows(initial_rows)
         dag = _compile_dag(initial_rows, data.get("row_operations"))
+        indexed_ops = _serialize_indexed_operations(data.get("row_operations"))
         bound = _strict_nonnegative(formula.max_var) + 1
         lean_source = (
             "import Witnora.SparseBridge\n"
+            "import Witnora.G5IndexedBridge\n"
             "import Witnora.SignedSerialization\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
             "example : Witnora.SignedSerialization.decodeCNF "
             f"{formula.to_clause_lists()} = {cnf} := by decide\n"
+            "example : Witnora.G5IndexedBridge.compile "
+            f"{len(initial_rows)} {indexed_ops} = some {dag} := by decide\n"
         )
         if raw_clauses is None:
             lean_source += (
