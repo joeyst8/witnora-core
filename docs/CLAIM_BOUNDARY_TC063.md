@@ -127,3 +127,26 @@ This establishes checked correspondence for emitted fixtures only. A
 universal proof that Python's reduction, component graph discovery, and
 serialization implement Lean's specification remains open; per-branch G5
 proof acceptance still needs integration into one G14 trusted gate.
+
+## Runtime G14 UNSAT-cover gate
+
+Run the optional `--lean` mode of the G14 certificate checker:
+
+```bash
+python -m witnora_core.separator_affine_family_theorem check \
+  --cnf original.cnf --certificate g14_certificate.json --lean
+```
+
+This mode reruns the native G14 checker, independently reconstructs every
+separator assignment and conditioned component, checks the exact residual
+clause partition, and requires a successful runtime G5 Lean check for the
+selected UNSAT component of **every** branch. The CLI fails closed if one
+branch is missing, invalid, or not accepted by Lean. A concrete two-branch
+G14 UNSAT-cover certificate is checked end to end in CI.
+
+The response uses `LEAN_G5_COVER_VERIFIED`, **not** an unrestricted
+`TC063_PROVED` claim. Python's component discovery and conditioning have
+not been universally refined into Lean, and there is not yet one
+kernel-checked theorem applying the combined Python gate to arbitrary G14
+certificate input. Neither TC-063 completeness nor arbitrary-SAT
+polynomiality follows from this runtime gate.
