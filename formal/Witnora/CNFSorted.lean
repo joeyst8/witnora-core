@@ -84,8 +84,10 @@ theorem insertBy_sorted {α : Type} (le : α → α → Bool)
       · simp only [insertBy, h, ↓reduceIte, SortedAll]
         constructor
         · intro z hz
-          rcases hz with rfl | hz
-          · exact h
+          simp only [List.mem_cons] at hz
+          rcases hz with hzy | hz
+          · subst z
+            exact h
           · exact htrans x y z h (hhead z hz)
         · exact ⟨hhead, htail⟩
       · have hf : le x y = false := by
@@ -94,7 +96,7 @@ theorem insertBy_sorted {α : Type} (le : α → α → Bool)
         simp only [insertBy, hf, Bool.false_eq_true, ↓reduceIte, SortedAll]
         constructor
         · intro z hz
-          have hz' := (mem_insertBy le x ys z).mp hz
+          have hz' := (mem_insertBy le x z ys).mp hz
           rcases hz' with rfl | hz''
           · exact hyx
           · exact hhead z hz''
