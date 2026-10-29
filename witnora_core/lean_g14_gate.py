@@ -118,6 +118,7 @@ def verify_g14_unsat_cover_with_lean(
     raw_clauses: object | None = None,
     source_tokens: object | None = None,
     source_spellings: object | None = None,
+    source_text: object | None = None,
 ) -> dict[str, Any]:
     """Accept only when every recomputed separator branch has a Lean G5 proof."""
     try:
@@ -127,7 +128,7 @@ def verify_g14_unsat_cover_with_lean(
         digest = sha256(json.dumps(
             {"cnf": formula.to_clause_lists(), "certificate": data,
              "raw_clauses": raw_clauses, "source_tokens": source_tokens,
-         "source_spellings": source_spellings},
+         "source_spellings": source_spellings, "source_text": source_text},
             sort_keys=True, separators=(",", ":"), allow_nan=False,
         ).encode("utf-8")).hexdigest()
     except (ValueError, TypeError, AttributeError):
@@ -137,6 +138,8 @@ def verify_g14_unsat_cover_with_lean(
     failure = {"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED",
                "input_sha256": digest}
     try:
+        if source_text is not None and source_spellings is None:
+            raise ValueError("source text requires original decimal spellings")
         if source_spellings is not None and source_tokens is None:
             raise ValueError("lexemes require original integer token stream")
         if source_tokens is not None and raw_clauses is None:
@@ -156,6 +159,7 @@ def verify_g14_unsat_cover_with_lean(
             formula.to_clause_lists(),
             timeout_seconds=timeout_seconds, project_root=project_root,
             source_tokens=source_tokens, source_spellings=source_spellings,
+            source_text=source_text,
         )
         if not normalization_check.get("verified"):
             return {**failure, "reason": "CNF_NORMALIZATION_REJECTED",
@@ -223,6 +227,7 @@ def verify_g14_unsat_cover_with_lean(
                 "source_normalization_verified": raw_clauses is not None,
                 "source_tokens_verified": source_tokens is not None,
                 "source_lexemes_verified": source_spellings is not None,
+            "source_document_verified": source_text is not None,
                 "source_formula_hash": formula.formula_hash,
                 "partition_proof_source_sha256": partition_digest,
                 "branches": branches,
