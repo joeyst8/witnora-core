@@ -112,6 +112,11 @@ theorem sortBy_sorted {α : Type} (le : α → α → Bool)
   | cons x ys ih =>
       exact insertBy_sorted le htotal htrans x (sortBy le ys) ih
 
+theorem sortBy_nodup {α : Type} (le : α → α → Bool)
+    (xs : List α) (h : xs.Nodup) :
+    (sortBy le xs).Nodup := by
+  exact (sortBy_perm le xs).nodup_iff.mpr h
+
 theorem any_sortBy_iff {α : Type} (le : α → α → Bool)
     (xs : List α) (p : α → Bool) :
     (sortBy le xs).any p = true ↔ xs.any p = true := by
@@ -334,6 +339,7 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
 #print axioms Witnora.CNFSorted.insertBy_sorted
 #print axioms Witnora.CNFSorted.sortBy_sorted
 #print axioms Witnora.CNFSorted.insertBy_perm
+#print axioms Witnora.CNFSorted.sortBy_nodup
 #print axioms Witnora.CNFSorted.sortBy_perm
 #print axioms Witnora.CNFSorted.mem_sortBy
 #print axioms Witnora.CNFSorted.lexLE_total
