@@ -17,6 +17,7 @@ on:
       - 'tests/test_lean_g14_gate.py'
       - 'tests/test_spoke_collapse.py'
       - 'tests/test_spoke_discovery.py'
+      - 'tests/test_spoke_discovery_reference.py'
       - 'witnora_core/spoke_discovery.py'
       - 'witnora_core/operator_promotion.py'
       - 'tests/test_operator_promotion.py'
@@ -52,6 +53,7 @@ on:
       - 'tests/test_lean_g14_gate.py'
       - 'tests/test_spoke_collapse.py'
       - 'tests/test_spoke_discovery.py'
+      - 'tests/test_spoke_discovery_reference.py'
       - 'witnora_core/spoke_discovery.py'
       - 'witnora_core/operator_promotion.py'
       - 'tests/test_operator_promotion.py'
@@ -94,6 +96,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_operator_promotion.py' -v
       - name: Test fail-closed source-bound spoke Lean gate
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_spoke_gate.py' -v
+      - name: Compare discovered proposals with exhaustive independent reference
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_discovery_reference.py' -v
       - name: Run G5 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Test fail-closed Python CNF Lean normalization gate
