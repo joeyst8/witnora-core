@@ -204,13 +204,26 @@ positive v denotes the variable; negative -v denotes its negation. -/
 def signedLiteralToInt (lit : Nat × Bool) : Int :=
   if lit.2 then Int.ofNat lit.1 else -(Int.ofNat lit.1)
 
+/-- Transparent insertion-sort kernel implementation for signed integers.
+Unlike an optimized runtime sort, this definition reduces under Lean's
+kernel-level `decide` when checking concrete Python fixtures. -/
+def insertSignedInt (x : Int) : List Int → List Int
+  | [] => [x]
+  | y :: rest =>
+      if decide (x ≤ y) then x :: y :: rest
+      else y :: insertSignedInt x rest
+
+def sortSignedClause : List Int → List Int
+  | [] => []
+  | x :: rest => insertSignedInt x (sortSignedClause rest)
+
 /-- Canonical serialized clause list, with Python-compatible sorting inside
 each clause. The outer list retains the generator's enumeration order;
 a Python set must be re-enumerated deterministically before verification. -/
 def serializedSignedClauses (vars : List Nat) (rhs : Bool) :
     List (List Int) :=
   (generateSignedClauses vars rhs).map (fun clause =>
-    (clause.map signedLiteralToInt).mergeSort (fun x y => decide (x ≤ y)))
+    sortSignedClause (clause.map signedLiteralToInt))
 
 /-- A fully deterministic literal-level check of a supplied Python result.
 The supplied clauses are untrusted; the expected encoding is recomputed in
