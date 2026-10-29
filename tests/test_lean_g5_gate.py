@@ -132,6 +132,17 @@ class G5LeanGateTest(unittest.TestCase):
         self.assertEqual(self.normalization_gate.call_args.args[1],
                          self.instance.formula.to_clause_lists())
 
+    def test_attestation_digest_binds_raw_source(self):
+        with patch("witnora_core.lean_g5_gate.subprocess.run",
+                   return_value=subprocess.CompletedProcess([], 0, "", "")):
+            a = verify_g5_certificate_with_lean(
+                self.instance.formula, self.cert, raw_clauses=[[1]])
+            b = verify_g5_certificate_with_lean(
+                self.instance.formula, self.cert, raw_clauses=[[2]])
+        self.assertTrue(a["verified"])
+        self.assertEqual(a["source_formula_hash"], self.instance.formula.formula_hash)
+        self.assertNotEqual(a["input_sha256"], b["input_sha256"])
+
     def test_bad_raw_provenance_fails_closed(self):
         self.normalization_gate.return_value = {"verified": False}
         with patch("witnora_core.lean_g5_gate.subprocess.run") as runner:
