@@ -33,6 +33,7 @@ def applyStep (rows : List Row) : Step → Option (List Row)
       let rb ← rows[b]?
       return (rows.set a rb).set b ra
   | .addXor target source => do
+      if target == source then none else pure ()
       let rt ← rows[target]?
       let rs ← rows[source]?
       return rows.set target (xorRow rt rs)
@@ -43,8 +44,14 @@ def replay (rows : List Row) : List Step → Option (List Row)
       let next ← applyStep rows op
       replay next rest
 
+def wellFormedRow (n : Nat) (r : Row) : Bool :=
+  (r.coefficients.length == r.coefficients.eraseDups.length) &&
+  r.coefficients.all (fun v => decide (0 < v) && decide (v ≤ n))
+
 def sameRow (a b : Row) : Bool :=
   (a.rhs == b.rhs) && (a.coefficients.length == b.coefficients.length) &&
+  (a.coefficients.length == a.coefficients.eraseDups.length) &&
+  (b.coefficients.length == b.coefficients.eraseDups.length) &&
   a.coefficients.all (fun x => b.coefficients.contains x) &&
   b.coefficients.all (fun x => a.coefficients.contains x)
 
@@ -59,6 +66,8 @@ and independently verified unsatisfiability of the actual original CNF. -/
 def acceptsUnsat
     (n : Nat) (original : CNF) (initial : List Row)
     (steps : List Step) (finalRows : List Row) : Bool :=
+  initial.all (wellFormedRow n) &&
+  finalRows.all (wellFormedRow n) &&
   (match replay initial steps with
     | none => false
     | some actual => sameRows actual finalRows) &&
