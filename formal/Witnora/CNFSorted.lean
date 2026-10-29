@@ -64,6 +64,52 @@ theorem sortBy_perm {α : Type} (le : α → α → Bool)
       exact (insertBy_perm le x (sortBy le rest)).trans
         (List.Perm.cons x ih)
 
+/-- Every element after the head is at least the head; recursively sorted. -/
+def SortedAll {α : Type} (le : α → α → Bool) : List α → Prop
+  | [] => True
+  | x :: xs => (∀ y, y ∈ xs → le x y = true) ∧ SortedAll le xs
+
+theorem insertBy_sorted {α : Type} (le : α → α → Bool)
+    (htotal : ∀ x y, le x y = true ∨ le y x = true)
+    (htrans : ∀ x y z, le x y = true → le y z = true →
+      le x z = true)
+    (x : α) (xs : List α) (hs : SortedAll le xs) :
+    SortedAll le (insertBy le x xs) := by
+  induction xs with
+  | nil =>
+      simp [insertBy, SortedAll]
+  | cons y ys ih =>
+      obtain ⟨hhead, htail⟩ := hs
+      by_cases h : le x y = true
+      · simp only [insertBy, h, ↓reduceIte, SortedAll]
+        constructor
+        · intro z hz
+          rcases hz with rfl | hz
+          · exact h
+          · exact htrans x y z h (hhead z hz)
+        · exact ⟨hhead, htail⟩
+      · have hf : le x y = false := by
+          cases hh : le x y <;> simp_all
+        have hyx : le y x = true := (htotal x y).resolve_left h
+        simp only [insertBy, hf, Bool.false_eq_true, ↓reduceIte, SortedAll]
+        constructor
+        · intro z hz
+          have hz' := (mem_insertBy le x ys z).mp hz
+          rcases hz' with rfl | hz''
+          · exact hyx
+          · exact hhead z hz''
+        · exact ih htail
+
+theorem sortBy_sorted {α : Type} (le : α → α → Bool)
+    (htotal : ∀ x y, le x y = true ∨ le y x = true)
+    (htrans : ∀ x y z, le x y = true → le y z = true →
+      le x z = true)
+    (xs : List α) : SortedAll le (sortBy le xs) := by
+  induction xs with
+  | nil => trivial
+  | cons x ys ih =>
+      exact insertBy_sorted le htotal htrans x (sortBy le ys) ih
+
 theorem any_sortBy_iff {α : Type} (le : α → α → Bool)
     (xs : List α) (p : α → Bool) :
     (sortBy le xs).any p = true ↔ xs.any p = true := by
@@ -154,6 +200,8 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
     rw [sortLiterals_correct]
     exact hd
 
+#print axioms Witnora.CNFSorted.insertBy_sorted
+#print axioms Witnora.CNFSorted.sortBy_sorted
 #print axioms Witnora.CNFSorted.insertBy_perm
 #print axioms Witnora.CNFSorted.sortBy_perm
 #print axioms Witnora.CNFSorted.mem_sortBy
