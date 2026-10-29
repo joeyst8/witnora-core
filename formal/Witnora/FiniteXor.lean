@@ -48,6 +48,43 @@ theorem canonicalFinite_iff (n : Nat) (rhs : Bool)
         exact hbad hright
       simp [hneq]
 
+/-- Executable normalization model for Python's positive integer-ID domain.
+Reject zero, retain variables with odd occurrence counts and enumerate IDs in
+ascending order. The finite range is a model of the Python dictionary/sort
+result; a full representation-refinement theorem is separate. -/
+def normalizePositiveVariables (raw : List Nat) : Option (List Nat) :=
+  if raw.all (fun v => decide (0 < v)) then
+    some ((List.range (raw.foldl max 0 + 1)).filter
+      (fun v => raw.count v % 2 == 1))
+  else none
+
+/-- The executable normalizer rejects exactly the raw lists containing
+a nonpositive (zero in Nat) variable. -/
+theorem normalizePositiveVariables_valid_iff (raw : List Nat) :
+    (normalizePositiveVariables raw).isSome = true ↔
+      ∀ v ∈ raw, 0 < v := by
+  unfold normalizePositiveVariables
+  by_cases h : raw.all (fun v => decide (0 < v)) = true
+  · simp [h]
+    constructor
+    · intro _ v hv
+      have hval := List.all_eq_true.mp h v hv
+      simpa using hval
+    · intro _
+      trivial
+  · simp [h]
+    intro hvalid
+    apply h
+    apply List.all_eq_true.mpr
+    intro v hv
+    simpa using hvalid v hv
+
+/-- Concrete regression examples of the canonical ordering and GF(2)
+cancellation behavior, including the empty case. -/
+example : normalizePositiveVariables [3, 1, 3, 2, 1, 5] = some [2, 5] := by decide
+example : normalizePositiveVariables [1, 1] = some [] := by decide
+example : normalizePositiveVariables [0, 0] = none := by decide
+
 /-- Executable generator: enumerate all n-bit assignments and retain exactly
 those with parity opposite rhs. Each retained bit vector represents the
 literal clause that forbids precisely that assignment. -/
