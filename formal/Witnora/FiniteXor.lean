@@ -164,6 +164,21 @@ theorem sortVariables_perm (xs : List Nat) :
         (insertSortedVar_perm v (sortVariables rest)).trans
           (List.Perm.cons v ih)
 
+/-- Full executable forward-toggle-and-sort normalization, corresponding
+to the new shared Python helper at the level of mathematical operations. -/
+def normalizeForwardSorted (raw : List Nat) : List Nat :=
+  sortVariables (normalizeByForwardToggle raw)
+
+theorem normalizeForwardSorted_parity (raw : List Nat)
+    (a : Nat → Bool) :
+    Extraction.parityVars (normalizeForwardSorted raw) a =
+      Extraction.parityVars raw a :=
+  (Extraction.parityVars_perm
+    (sortVariables_perm (normalizeByForwardToggle raw)) a).trans
+    (normalizeByForwardToggle_parity raw a)
+
+#print axioms Witnora.FiniteXor.normalizeForwardSorted_parity
+
 /-- The canonically sorted output of the verified toggle normalizer. -/
 def normalizeSortedToggle (raw : List Nat) : List Nat :=
   sortVariables (normalizeByToggle raw)
