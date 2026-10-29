@@ -27,3 +27,5 @@ import Witnora.DIMACSDocument
 import Witnora.G14ConcreteBridge
 
 import Witnora.G5IndexedBridge
+
+import Witnora.SpokeCollapse
