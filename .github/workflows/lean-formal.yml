@@ -11,6 +11,8 @@ on:
       - 'witnora_core/dimacs.py'
       - 'tests/test_dimacs_refinement.py'
       - 'witnora_core/lean_g5_gate.py'
+      - 'witnora_core/lean_cnf_gate.py'
+      - 'tests/test_lean_cnf_gate.py'
       - 'witnora_core/lean_g14_gate.py'
       - 'tests/test_lean_g14_gate.py'
       - 'witnora_core/separator_affine_family_theorem.py'
@@ -34,6 +36,8 @@ on:
       - 'witnora_core/dimacs.py'
       - 'tests/test_dimacs_refinement.py'
       - 'witnora_core/lean_g5_gate.py'
+      - 'witnora_core/lean_cnf_gate.py'
+      - 'tests/test_lean_cnf_gate.py'
       - 'witnora_core/lean_g14_gate.py'
       - 'tests/test_lean_g14_gate.py'
       - 'witnora_core/separator_affine_family_theorem.py'
@@ -64,6 +68,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_xor_empty_encoding.py'
       - name: Run G5 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
+      - name: Test fail-closed Python CNF Lean normalization gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_cnf_gate.py'
       - name: Test fail-closed production Lean G5 gate
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g5_gate.py'
       - name: Test fail-closed G14 Lean cover gate
@@ -100,6 +106,9 @@ jobs:
       - name: Kernel-check concrete G14 branch claims
         working-directory: formal
         run: lake env lean Witnora/Generated.lean
+      - name: Execute real runtime Lean verification of Python-normalized CNF
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1,1,-2],[1,-1],[1,1,-2],[],[4,-4,3]]); print(r); assert r["verified"],r'
       - name: Execute real runtime Lean verification on a G5 UNSAT certificate
         run: |
           PYTHONPATH=. python -c 'from witnora_core.operator_genesis import make_affine_residue_instance, build_affine_residue_certificate; from witnora_core.lean_g5_gate import verify_g5_certificate_with_lean; instance = make_affine_residue_instance("parity_arity_7_unsat"); cert = build_affine_residue_certificate(instance); result = verify_g5_certificate_with_lean(instance.formula, cert); print(result); assert result["verified"], result'
