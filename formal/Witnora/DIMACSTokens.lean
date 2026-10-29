@@ -31,15 +31,17 @@ theorem checkStream_sound (tokens : List Int) (clauses : List (List Int))
       ∀ clause ∈ clauses, ∀ lit ∈ clause, lit ≠ 0 := by
   have hparts : decide (tokens = serialize clauses) = true ∧
       validClauses clauses = true := by
-    exact Bool.and_eq_true.mp h
+    cases h0 : decide (tokens = serialize clauses) <;>
+      cases h1 : validClauses clauses <;>
+      simp [checkStream, h0, h1] at h ⊢
   constructor
-  · exact of_decide_true hparts.1
+  · simpa using hparts.1
   · intro clause hc lit hl
     have hc' : clause.all validSigned = true :=
       List.all_eq_true.mp hparts.2 clause hc
     have hl' : validSigned lit = true :=
       List.all_eq_true.mp hc' lit hl
-    exact of_decide_true hl'
+    simpa [validSigned] using hl'
 
 example : checkStream [2, 1, 0, -1, 0, 0]
     [[2, 1], [-1], []] = true := by decide
