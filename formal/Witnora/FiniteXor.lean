@@ -48,6 +48,45 @@ theorem canonicalFinite_iff (n : Nat) (rhs : Bool)
         exact hbad hright
       simp [hneq]
 
+/-- Executable generator: enumerate all n-bit assignments and retain exactly
+those with parity opposite rhs. Each retained bit vector represents the
+literal clause that forbids precisely that assignment. -/
+def generateForbiddenPatterns (n : Nat) (rhs : Bool) : List (List Bool) :=
+  (allBits n).filter (fun bad => decide (parityBits bad ≠ rhs))
+
+/-- Evaluate the concrete generated clause family. -/
+def generatedFinite (n : Nat) (rhs : Bool) (actual : List Bool) : Bool :=
+  (generateForbiddenPatterns n rhs).all (fun bad => decide (actual ≠ bad))
+
+/-- The executable finite generator agrees exactly with the declarative
+canonical XOR-CNF specification for every arity, rhs, and actual pattern. -/
+theorem generatedFinite_eq_canonicalFinite
+    (n : Nat) (rhs : Bool) (actual : List Bool) :
+    generatedFinite n rhs actual = canonicalFinite n rhs actual := by
+  apply Bool.eq_iff_iff.mpr
+  constructor
+  · intro h
+    apply List.all_eq_true.mpr
+    intro bad hmem
+    by_cases hpar : parityBits bad = rhs
+    · simp [hpar]
+    · have hbad : bad ∈ generateForbiddenPatterns n rhs := by
+        simp [generateForbiddenPatterns, hmem, hpar]
+      have hx := List.all_eq_true.mp h bad hbad
+      simp [hpar, hx]
+  · intro h
+    apply List.all_eq_true.mpr
+    intro bad hmem
+    have hbase : bad ∈ allBits n := (List.mem_filter.mp hmem).2
+    have hpar : parityBits bad ≠ rhs := by
+      have hpred := (List.mem_filter.mp hmem).1
+      simpa [generateForbiddenPatterns] using hpred
+    have hx := List.all_eq_true.mp h bad hbase
+    simp [hpar] at hx
+    exact hx
+
+#print axioms Witnora.FiniteXor.generatedFinite_eq_canonicalFinite
+
 #print axioms Witnora.FiniteXor.canonicalFinite_iff
 
 end Witnora.FiniteXor
