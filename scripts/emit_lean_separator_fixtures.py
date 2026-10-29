@@ -26,6 +26,7 @@ def lean_cnf(formula):
 def main():
     out = [
         "import Witnora.Concrete",
+        "import Witnora.Verdict",
         "",
         "/- Actual G14 Python conditioning outputs; independent Lean claims. -/",
         "namespace Witnora.Generated",
@@ -49,6 +50,11 @@ def main():
         out.append(
             f"example : Witnora.Concrete.{predicate} {n} "
             f"{lean_cnf(instance.formula)} = true := by decide"
+        )
+        claimed_sat = lean_bool(cert.final_result == SAT_CERTIFIED)
+        out.append(
+            f"example : Witnora.Verdict.accepts {n} "
+            f"{lean_cnf(instance.formula)} {claimed_sat} = true := by decide"
         )
         comps = _component_dicts(instance.formula, instance.separator_variables)
         for a in _all_assignments(instance.separator_variables):
