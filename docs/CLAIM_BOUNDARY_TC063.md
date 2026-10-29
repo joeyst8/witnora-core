@@ -388,3 +388,16 @@ without `raw_clauses` retain canonicality checking, but carry
 This is a concrete runtime correspondence check, not a universal CPython
 parser/execution proof; the parser, its input file reading, and the certificate
 binding to the caller-selected file remain in the trusted integration boundary.
+
+### Source/certificate substitution resistance
+
+G5 and G14 runtime Lean attestations now hash the exact supplied raw clause
+list together with the canonical CNF and certificate payload (when the source
+list is available); the successful response also exposes the canonical
+`source_formula_hash`. G14 rejects an injected `lean_formal_status` in the
+untrusted certificate and requires every selected G5 branch to report the
+exact `LEAN_VERIFIED` status plus a verified normalization check. Existing
+formula-hash and independently reconstructed branch checks remain mandatory.
+The hashes are binding identifiers, **not** signed attestations or a proof of
+correctness of arbitrary Python execution; a trusted caller still must pair
+an attestation with the same input bytes and verified invocation.
