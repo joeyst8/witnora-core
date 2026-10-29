@@ -256,3 +256,18 @@ Those closed concrete checks do not prove that every CPython call to
 the arbitrary-input Python interpreter semantics and a universal ordering
 correspondence are still open; neither the P=NP question nor complete TC-063
 has been resolved.
+
+## Sorting multiset preservation
+
+The universal Lean theorems `Witnora.CNFSorted.insertBy_perm` and
+`sortBy_perm` prove the executable insertion sorting algorithm returns a
+permutation of its input for **every** element type, Boolean comparator,
+and list. Their specialized corollaries `sortLiterals_perm` and
+`sortClauses_perm` preserve the full multiplicity of each list element.
+These are stronger than earlier membership-only results and cannot conceal
+sorting-related duplication or loss of clauses or literals.
+
+These theorems do **not** yet establish that each output list is monotonically
+ordered according to a total comparator, or that arbitrary CPython execution
+refines the Lean implementation. The Python output equality claims are still
+finite tests; universal source-level refinement remains open.
