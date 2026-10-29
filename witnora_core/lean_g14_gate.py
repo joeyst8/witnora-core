@@ -379,4 +379,4 @@ def verify_g14_unsat_cover_with_lean(
                 "claim_boundary": "Full-source status requires one combined kernel-checked G14 theorem; universal Python refinement unproved"}
     except (ValueError, TypeError, KeyError, IndexError, AttributeError,
             OSError, subprocess.TimeoutExpired) as exc:
-        return {**failure, "reason": type(exc).__name__}
+        return {**failure, "reason": type(exc).__name__, "detail": str(exc)[-1600:]}
