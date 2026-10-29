@@ -40,4 +40,21 @@ def checkBranch
       cnfTrue bits original == components.all (cnfTrue bits)
     else true)
 
+/-- Soundness of the executable checker for every enumerated assignment.
+This theorem is general in n and in the supplied CNFs; no assumption about
+Python's reported result is used. -/
+theorem checkBranch_sound
+    (n : Nat) (original : CNF)
+    (fixed : List (Nat × Bool)) (components : List CNF)
+    (h : checkBranch n original fixed components = true)
+    (bits : List Bool) (hbits : bits ∈ allBits n)
+    (hag : agrees bits fixed = true) :
+    cnfTrue bits original = components.all (cnfTrue bits) := by
+  unfold checkBranch at h
+  have hrow := List.all_eq_true.mp h bits hbits
+  simp [hag] at hrow
+  exact eq_of_beq hrow
+
+#print axioms Witnora.Concrete.checkBranch_sound
+
 end Witnora.Concrete
