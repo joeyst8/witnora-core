@@ -33,6 +33,62 @@ theorem forbidClause_true (bits : List Bool) (fixed : List (Nat × Bool)) :
       cases ht : tail.all (fun p => readVar bits p.1 == p.2) <;>
       simp [litTrue, hb, hv, ht]
 
+/-- XOR of the values of an arbitrary finite variable support. -/
+def parityVars : List Nat → (Nat → Bool) → Bool
+  | [], _ => false
+  | v :: rest, a => Bool.xor (a v) (parityVars rest a)
+
+/-- Parity depends only on values on the specified finite support. -/
+theorem parityVars_congr (vars : List Nat) (a b : Nat → Bool)
+    (hagrees : ∀ v, v ∈ vars → a v = b v) :
+    parityVars vars a = parityVars vars b := by
+  induction vars with
+  | nil => rfl
+  | cons v rest ih =>
+      simp only [parityVars]
+      rw [hagrees v (by simp)]
+      congr 1
+      apply ih
+      intro w hw
+      exact hagrees w (by simp [hw])
+
+/-- A canonical forbidden-assignment clause is satisfied when at least one
+variable in the constraint differs from its forbidden value. -/
+def forbiddenHolds (vars : List Nat) (bad actual : Nat → Bool) : Prop :=
+  ∃ v, v ∈ vars ∧ actual v ≠ bad v
+
+/-- Semantic form of the *complete* canonical XOR-CNF: one forbidden clause
+for every assignment having parity opposite the required right-hand side. -/
+def canonicalXorCNFHolds (vars : List Nat) (rhs : Bool)
+    (actual : Nat → Bool) : Prop :=
+  ∀ bad, parityVars vars bad ≠ rhs → forbiddenHolds vars bad actual
+
+/-- Full semantic XOR-CNF equivalence for every finite list of variables,
+every Boolean assignment, and either parity bit. No assignments are
+enumerated by this proof. The finite Python encoder still needs its own
+completeness/serialization refinement theorem. -/
+theorem canonicalXorCNF_iff (vars : List Nat) (rhs : Bool)
+    (actual : Nat → Bool) :
+    canonicalXorCNFHolds vars rhs actual ↔ parityVars vars actual = rhs := by
+  classical
+  constructor
+  · intro h
+    by_contra hwrong
+    obtain ⟨v, _, hv⟩ := h actual hwrong
+    exact hv rfl
+  · intro hright bad hwrong
+    by_contra hnone
+    have hagrees : ∀ v, v ∈ vars → actual v = bad v := by
+      intro v hv
+      by_contra hdiff
+      exact hnone ⟨v, hv, hdiff⟩
+    have hbadRight : parityVars vars bad = rhs :=
+      (parityVars_congr vars actual bad hagrees).symm.trans hright
+    exact hwrong hbadRight
+
+#print axioms Witnora.Extraction.parityVars_congr
+#print axioms Witnora.Extraction.canonicalXorCNF_iff
+
 #print axioms Witnora.Extraction.forbidClause_true
 
 end Witnora.Extraction
