@@ -121,7 +121,9 @@ theorem canonicalize_correct (cnf : CNF) (a : Nat → Bool) :
     intro clause hc
     have hd := (any_dedup_iff clause (signedLitTrue a)).mpr
       (List.all_eq_true.mp h clause hc)
-    simpa only [sortLiterals_correct] using hd
+    change (sortLiterals (dedup clause)).any (signedLitTrue a) = true
+    rw [sortLiterals_correct]
+    exact hd
 
 #print axioms Witnora.CNFSorted.mem_sortBy
 #print axioms Witnora.CNFSorted.sortLiterals_correct
