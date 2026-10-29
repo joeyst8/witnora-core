@@ -100,6 +100,58 @@ theorem normalizeByToggle_parity (raw : List Nat) (a : Nat → Bool) :
 
 #print axioms Witnora.FiniteXor.normalizeByToggle_parity
 
+/-- Transparent insertion into ascending natural-number order. -/
+def insertSortedVar (v : Nat) : List Nat → List Nat
+  | [] => [v]
+  | x :: rest =>
+      if v ≤ x then v :: x :: rest
+      else x :: insertSortedVar v rest
+
+/-- Executable deterministic variable sort. -/
+def sortVariables : List Nat → List Nat
+  | [] => []
+  | v :: rest => insertSortedVar v (sortVariables rest)
+
+/-- Insertion does not change the underlying multiset. -/
+theorem insertSortedVar_perm (v : Nat) (xs : List Nat) :
+    (insertSortedVar v xs).Perm (v :: xs) := by
+  induction xs with
+  | nil => rfl
+  | cons x rest ih =>
+      by_cases h : v ≤ x
+      · simp [insertSortedVar, h]
+      · simp only [insertSortedVar, h, ite_false]
+        exact (List.Perm.cons x ih).trans (List.Perm.swap x v rest)
+
+/-- Sorting preserves the multiset of every input list. -/
+theorem sortVariables_perm (xs : List Nat) :
+    (sortVariables xs).Perm xs := by
+  induction xs with
+  | nil => rfl
+  | cons v rest ih =>
+      simpa only [sortVariables] using
+        (insertSortedVar_perm v (sortVariables rest)).trans
+          (List.Perm.cons v ih)
+
+/-- The canonically sorted output of the verified toggle normalizer. -/
+def normalizeSortedToggle (raw : List Nat) : List Nat :=
+  sortVariables (normalizeByToggle raw)
+
+/-- Universal equality of the normalized multisets. -/
+theorem normalizeSortedToggle_perm (raw : List Nat) :
+    (normalizeSortedToggle raw).Perm (normalizeByToggle raw) :=
+  sortVariables_perm (normalizeByToggle raw)
+
+/-- Universal XOR semantic preservation even after deterministic sorting. -/
+theorem normalizeSortedToggle_parity (raw : List Nat) (a : Nat → Bool) :
+    Extraction.parityVars (normalizeSortedToggle raw) a =
+      Extraction.parityVars raw a :=
+  (Extraction.parityVars_perm (normalizeSortedToggle_perm raw) a).trans
+    (normalizeByToggle_parity raw a)
+
+#print axioms Witnora.FiniteXor.normalizeSortedToggle_perm
+#print axioms Witnora.FiniteXor.normalizeSortedToggle_parity
+
 /-- Validate a concrete normalized output against the proved toggle model.
 A permutation suffices for XOR soundness; a separate canonical-order check
 may be imposed when comparing exact Python serialization. -/
