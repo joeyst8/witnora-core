@@ -60,12 +60,14 @@ theorem unsat_iff_cover
   classical
   constructor
   · intro hunsat s
-    by_contra hcover
+    apply Classical.byContradiction
+    intro hcover
     apply hunsat
     apply (sat_iff_components F C decomposes).mpr
     refine ⟨s, ?_⟩
     intro i
-    by_contra hcomponent
+    apply Classical.byContradiction
+    intro hcomponent
     apply hcover
     refine ⟨i, ?_⟩
     intro x hx
