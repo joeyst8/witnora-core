@@ -29,11 +29,19 @@ G5_CASES = (
     "parity_arity_7_unsat",
     "parity_arity_8_sat",
     "parity_arity_8_unsat",
+    "parity_arity_9_sat",
+    "parity_arity_9_unsat",
 )
 G14_CASES = (
     "saf_sat_chain_2",
     "saf_unsat_cover_2",
     "saf_balanced_sat_2",
+    "saf_sat_chain_4",
+    "saf_unsat_cover_4",
+    "saf_balanced_sat_8",
+    "saf_unsat_cover_8",
+    "saf_sat_chain_16",
+    "saf_unsat_cover_16",
 )
 
 
