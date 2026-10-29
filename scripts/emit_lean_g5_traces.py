@@ -70,8 +70,41 @@ def lean_steps(operations):
     return "[" + ", ".join(chunks) + "]"
 
 
+def lean_single_row(row):
+    return ("{ coefficients := [" + ", ".join(map(str, row["coefficients"])) +
+            "], rhs := " + lean_bool(bool(row["rhs"])) + " }")
+
+
+def contradiction_derivation(initial_rows, operations, final_rows):
+    """Compile indexed Python operations into independently checked XOR trees."""
+    expressions = [f"(.input {lean_single_row(row)})" for row in initial_rows]
+    for op in operations:
+        if op["operation"] == "SWAP_ROWS":
+            a, b = op["row_a"], op["row_b"]
+            expressions[a], expressions[b] = expressions[b], expressions[a]
+        elif op["operation"] == "ADD_ROW_XOR":
+            target, source = op["target_row"], op["source_row"]
+            if target == source:
+                raise ValueError("self-XOR operation")
+            expressions[target] = (
+                f"(.xor {expressions[target]} {expressions[source]})"
+            )
+        else:
+            raise ValueError("unrecognized G5 operation")
+    candidates = [
+        i for i, row in enumerate(final_rows)
+        if row["coefficients"] == [] and bool(row["rhs"])
+    ]
+    if not candidates:
+        raise ValueError("G5 trace has no contradiction row")
+    expression = expressions[candidates[0]]
+    if len(expression) > 120000:
+        raise ValueError("G5 derivation tree too large; DAG format needed")
+    return expression
+
+
 def main():
-    lines = ["import Witnora.G5Trace", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
+    lines = ["import Witnora.G5Trace", "import Witnora.G5Certificate", "set_option maxRecDepth 16384", "set_option maxHeartbeats 0", "", "namespace Witnora.G5Generated"]
     for name in CASES:
         instance = make_affine_residue_instance(name)
         cert = build_affine_residue_certificate(instance)
@@ -91,6 +124,13 @@ def main():
             f"{lean_steps(cert.row_operations)} "
         )
         lines.append(f"example : {prefix}{lean_rows(trace[-1]['rows'])} = true := by decide")
+        proof_tree = contradiction_derivation(
+            trace[0]["rows"], cert.row_operations, trace[-1]["rows"]
+        )
+        lines.append(
+            "example : Witnora.G5Certificate.checkContradiction "
+            f"{lean_rows(trace[0]['rows'])} {proof_tree} = true := by decide"
+        )
         snapshots = python_snapshots(trace[0]["rows"], cert.row_operations)
         if not snapshots:
             raise AssertionError(f"{name}: expected nonempty Python row trace")
