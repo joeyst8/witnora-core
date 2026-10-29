@@ -20,3 +20,4 @@ import Witnora.SeparatorAssignments
 import Witnora.SignedSerialization
 import Witnora.CNFCanonical
 import Witnora.CNFSorted
+import Witnora.SourceG5
