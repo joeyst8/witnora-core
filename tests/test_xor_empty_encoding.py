@@ -12,6 +12,12 @@ class EmptyXorEncodingTest(unittest.TestCase):
             canonical_xor_cnf_clauses([], 0)).num_clauses, 0)
         self.assertTrue(XorEquation([], 0).is_tautology)
 
+    def test_repeated_xor_variables_cancel_mod_two(self):
+        self.assertEqual(canonical_xor_cnf_clauses([1, 1], 0), set())
+        self.assertEqual(canonical_xor_cnf_clauses([1, 1], 1), {()})
+        self.assertEqual(canonical_xor_cnf_clauses([1, 1, 2], 1), {(2,)})
+        self.assertEqual(canonical_xor_cnf_clauses([1, 2, 1], 0), {(-2,)})
+
     def test_empty_odd_equation_is_contradiction(self):
         self.assertEqual(canonical_xor_cnf_clauses([], 1), {()})
         formula = CNFFormula.from_raw_clauses(canonical_xor_cnf_clauses([], 1))
