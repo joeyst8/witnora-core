@@ -38,6 +38,29 @@ def parityVars : List Nat → (Nat → Bool) → Bool
   | [], _ => false
   | v :: rest, a => Bool.xor (a v) (parityVars rest a)
 
+/-- Splitting a raw XOR-variable list preserves its parity algebra. -/
+theorem parityVars_append (front back : List Nat) (a : Nat → Bool) :
+    parityVars (front ++ back) a =
+      Bool.xor (parityVars front a) (parityVars back a) := by
+  induction front with
+  | nil => rfl
+  | cons v rest ih =>
+      simp only [List.cons_append, parityVars, ih]
+      cases hv : a v <;>
+        cases hr : parityVars rest a <;>
+        cases hb : parityVars back a <;>
+        decide
+
+/-- Repeated occurrences of the same variable cancel in GF(2), regardless
+of the remaining variables. -/
+theorem parityVars_cancel_adjacent (v : Nat) (rest : List Nat)
+    (a : Nat → Bool) :
+    parityVars (v :: v :: rest) a = parityVars rest a := by
+  simp only [parityVars]
+  cases hv : a v <;>
+    cases hr : parityVars rest a <;>
+    decide
+
 /-- Parity depends only on values on the specified finite support. -/
 theorem parityVars_congr (vars : List Nat) (a b : Nat → Bool)
     (hagrees : ∀ v, v ∈ vars → a v = b v) :
@@ -102,6 +125,8 @@ theorem original_entails_extracted_xor
 
 #print axioms Witnora.Extraction.original_entails_extracted_xor
 
+#print axioms Witnora.Extraction.parityVars_append
+#print axioms Witnora.Extraction.parityVars_cancel_adjacent
 #print axioms Witnora.Extraction.parityVars_congr
 #print axioms Witnora.Extraction.canonicalXorCNF_iff
 
