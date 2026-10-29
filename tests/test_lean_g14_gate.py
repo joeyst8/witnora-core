@@ -49,6 +49,50 @@ class G14LeanCoverGateTest(unittest.TestCase):
         self.assertEqual(gate.call_count, 2)
         self.assertEqual([b["assignment_id"] for b in result["branches"]], ["S1", "S2"])
 
+
+    def test_full_source_requires_one_combined_lean_theorem(self):
+        accepted = {"verified": True, "lean_formal_status": "LEAN_VERIFIED",
+                    "normalization_check": {"verified": True}}
+        raw = self.instance.formula.to_clause_lists()
+        source = self.instance.formula.canonical_dimacs()
+        tokens = [item for clause in raw for item in (*clause, 0)]
+        spellings = [str(item) for item in tokens]
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
+                   return_value=accepted):
+            result = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate,
+                raw_clauses=raw, source_tokens=tokens,
+                source_spellings=spellings, source_text=source,
+            )
+        self.assertTrue(result["verified"], result)
+        self.assertEqual(result["lean_formal_status"],
+                         "LEAN_END_TO_END_G14_UNSAT_VERIFIED")
+        self.assertEqual(self.partition_runner.call_count, 2)
+        generated = self.partition_runner.call_args.args[0][3]
+        self.assertIn("G14CompleteSourceProof.lean", generated)
+        self.assertEqual(len(result["complete_proof_source_sha256"]), 64)
+
+    def test_full_source_combined_lean_rejection_fails_closed(self):
+        accepted = {"verified": True, "lean_formal_status": "LEAN_VERIFIED",
+                    "normalization_check": {"verified": True}}
+        raw = self.instance.formula.to_clause_lists()
+        source = self.instance.formula.canonical_dimacs()
+        tokens = [item for clause in raw for item in (*clause, 0)]
+        spellings = [str(item) for item in tokens]
+        self.partition_runner.side_effect = [
+            subprocess.CompletedProcess([], 0, "", ""),
+            subprocess.CompletedProcess([], 1, "", "rejected"),
+        ]
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
+                   return_value=accepted):
+            result = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate,
+                raw_clauses=raw, source_tokens=tokens,
+                source_spellings=spellings, source_text=source,
+            )
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["lean_formal_status"], "NOT_LEAN_VERIFIED")
+
     def test_normalization_rejection_blocks_g14_before_partitions(self):
         self.normalization_gate.return_value = {
             "verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED",
