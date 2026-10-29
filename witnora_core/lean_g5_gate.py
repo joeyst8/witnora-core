@@ -171,10 +171,16 @@ def verify_g5_certificate_with_lean(
             # This closed theorem proves UNSAT of the source signed clauses
             # themselves, using canonicalization plus G5 reconstruction.
             lean_source = "import Witnora.SourceG5\n" + lean_source
+            raw_lean = _lean_rows(_strict_rows(raw_clauses))
             lean_source += (
                 "example : Witnora.SourceG5.checkRawG5 "
-                f"{bound} {_lean_rows(_strict_rows(raw_clauses))} "
-                f"{rows} {dag} = true := by decide\n"
+                f"{bound} {raw_lean} {rows} {dag} = true := by\n"
+                "  unfold Witnora.SourceG5.checkRawG5\n"
+                "  have hcanonical : Witnora.CNFSorted.canonicalize "
+                f"(Witnora.SignedSerialization.decodeCNF {raw_lean}) = {cnf} "
+                ":= by decide\n"
+                "  rw [hcanonical]\n"
+                "  decide\n"
             )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
