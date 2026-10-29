@@ -1,6 +1,7 @@
 """Branch coverage and fail-closed tests for the G14-to-G5 Lean gate."""
 
 import unittest
+import subprocess
 import io
 import json
 from contextlib import redirect_stdout
@@ -13,6 +14,14 @@ from witnora_core.separator_affine_family_theorem import (
 
 
 class G14LeanCoverGateTest(unittest.TestCase):
+    def setUp(self):
+        patcher = patch(
+            "witnora_core.lean_g14_gate.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, "", ""),
+        )
+        self.partition_runner = patcher.start()
+        self.addCleanup(patcher.stop)
+
     @classmethod
     def setUpClass(cls):
         cls.instance = make_separator_affine_instance("saf_unsat_cover_2")
@@ -26,9 +35,18 @@ class G14LeanCoverGateTest(unittest.TestCase):
                 self.instance.formula, self.certificate,
             )
         self.assertTrue(result["verified"])
-        self.assertEqual(result["lean_formal_status"], "LEAN_G5_COVER_VERIFIED")
+        self.assertEqual(result["lean_formal_status"], "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED")\n        self.partition_runner.assert_called_once()
         self.assertEqual(gate.call_count, 2)
         self.assertEqual([b["assignment_id"] for b in result["branches"]], ["S1", "S2"])
+
+    def test_lean_partition_rejection_stops_before_g5(self):
+        self.partition_runner.return_value = subprocess.CompletedProcess([], 1, "", "error")
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean") as g5:
+            result = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate,
+            )
+        self.assertFalse(result["verified"])
+        g5.assert_not_called()
 
     def test_single_failed_branch_rejects_cover(self):
         with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
