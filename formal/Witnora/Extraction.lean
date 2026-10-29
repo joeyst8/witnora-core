@@ -89,6 +89,19 @@ theorem canonicalXorCNF_iff (vars : List Nat) (rhs : Bool)
       (parityVars_congr vars actual bad hagrees).symm.trans hright
     exact hwrong hbadRight
 
+/-- If a CNF guarantees every canonical forbidden clause for an XOR
+equation, it entails that equation. The CNF may contain additional clauses.
+This is the soundness condition required by G5 UNSAT proof reconstruction. -/
+theorem original_entails_extracted_xor
+    (vars : List Nat) (rhs : Bool)
+    (originalHolds : (Nat → Bool) → Prop)
+    (hcomplete : ∀ a, originalHolds a → canonicalXorCNFHolds vars rhs a)
+    (a : Nat → Bool) (hmodel : originalHolds a) :
+    parityVars vars a = rhs :=
+  (canonicalXorCNF_iff vars rhs a).mp (hcomplete a hmodel)
+
+#print axioms Witnora.Extraction.original_entails_extracted_xor
+
 #print axioms Witnora.Extraction.parityVars_congr
 #print axioms Witnora.Extraction.canonicalXorCNF_iff
 
