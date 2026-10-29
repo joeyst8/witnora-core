@@ -271,3 +271,18 @@ These theorems do **not** yet establish that each output list is monotonically
 ordered according to a total comparator, or that arbitrary CPython execution
 refines the Lean implementation. The Python output equality claims are still
 finite tests; universal source-level refinement remains open.
+
+## Universal insertion-sort orderedness
+
+`Witnora.CNFSorted.sortBy_sorted` proves that the executable insertion
+sort returns a list whose head is no greater than every later element,
+recursively, provided the comparator is total and transitive.
+`literalLE_total` and `literalLE_trans` discharge those conditions for
+signed-integer literal ordering, so `sortLiterals_sorted` proves the
+literal-order property for arbitrary Lean input clauses.
+
+Together with the earlier permutation theorem, Lean proves both order and
+multiplicity preservation for sorted literals. The corresponding universal
+lexicographic *clause*-order theorem, Python runtime/source refinement,
+and end-to-end TC-063 theorem are still open. None of these results imply
+P=NP.
