@@ -190,7 +190,7 @@ def _check_complete_g14_with_lean(
             "    intro branch hb",
             f"    have he : Witnora.SeparatorAssignments.enumerate {sorted_vars} = {enumerated} := by decide",
             "    rw [he] at hb",
-            "    simp only [List.mem_cons, List.mem_singleton] at hb",
+            "    simp at hb",
             "    rcases hb with " + " | ".join(f"h{i}" for i in range(len(branch_patterns))),
         ] + [
             "    · subst branch" + "\n" + "      decide" for _ in branch_patterns
