@@ -79,6 +79,7 @@ theorem conditionCNF_bool
       | none =>
           have ht : clause.any (signedLitTrue a) = true := by
             simpa [conditionedClauseTrue, hc] using heq.symm
+          simp only [conditionCNF, List.filterMap_cons, hc, List.all_cons]
           change (conditionCNF fixed rest).all
               (fun clause => clause.any (signedLitTrue a)) =
             (clause.any (signedLitTrue a) &&
@@ -89,6 +90,7 @@ theorem conditionCNF_bool
           have hred : reduced.any (signedLitTrue a) =
               clause.any (signedLitTrue a) := by
             simpa [conditionedClauseTrue, hc] using heq
+          simp only [conditionCNF, List.filterMap_cons, hc, List.all_cons]
           change (reduced.any (signedLitTrue a) &&
               (conditionCNF fixed rest).all
                 (fun clause => clause.any (signedLitTrue a))) =
