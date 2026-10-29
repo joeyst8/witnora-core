@@ -1,4 +1,5 @@
 import Witnora.FiniteXor
+import Witnora.G5Trace
 
 /-!
 # Proof-producing CNF-to-XOR pattern extraction
@@ -65,6 +66,23 @@ theorem checkPattern_sound (cnf : CNF) (vars : List Nat)
       simp [bad, zip_map_agrees]
     rw [hfalse] at hclauses
     cases hclauses
+
+/-- Check every proposed initial G5 row using the original CNF clauses. -/
+def checkInitialRows (cnf : CNF) (rows : List Witnora.G5Trace.Row) : Bool :=
+  rows.all (fun row => checkPattern cnf row.coefficients row.rhs)
+
+/-- A successful multirow extraction certificate entails every initial
+equation in list-parity semantics for every original CNF model. -/
+theorem checkInitialRows_sound (cnf : CNF)
+    (rows : List Witnora.G5Trace.Row)
+    (hcheck : checkInitialRows cnf rows = true)
+    (a : Nat → Bool) (hcnf : CNFHolds cnf a)
+    (row : Witnora.G5Trace.Row) (hmem : row ∈ rows) :
+    parityVars row.coefficients a = row.rhs := by
+  have hrow := List.all_eq_true.mp hcheck row hmem
+  exact checkPattern_sound cnf row.coefficients row.rhs hrow a hcnf
+
+#print axioms Witnora.G5Extraction.checkInitialRows_sound
 
 /-- Reject an incomplete 2-variable XOR encoding. -/
 example :
