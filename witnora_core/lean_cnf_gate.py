@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import re
 from pathlib import Path
 import subprocess
 from tempfile import TemporaryDirectory
@@ -54,6 +55,7 @@ def verify_cnf_normalization_with_lean(
     timeout_seconds: int = 120,
     project_root: Path | None = None,
     source_tokens: object | None = None,
+    source_spellings: object | None = None,
 ) -> dict[str, object]:
     """Check exact ordered normalization through Lean, fail closed on error.
 
@@ -76,8 +78,19 @@ def verify_cnf_normalization_with_lean(
             if any(type(token) is not int for token in source_tokens):
                 raise ValueError("tokens must be signed integers")
             tokens = list(source_tokens)
+        spellings = None
+        if source_spellings is not None:
+            if tokens is None or type(source_spellings) not in (list, tuple):
+                raise ValueError("lexemes require DIMACS token stream")
+            if len(source_spellings) != len(tokens):
+                raise ValueError("DIMACS lexeme count mismatch")
+            if any(type(s) is not str or re.fullmatch(r"-?(?:0|[1-9][0-9]*)", s) is None
+                   for s in source_spellings):
+                raise ValueError("unsupported or malformed DIMACS decimal lexeme")
+            spellings = list(source_spellings)
         digest = sha256(json.dumps(
-            {"raw": raw, "normalized": actual, "source_tokens": tokens},
+            {"raw": raw, "normalized": actual, "source_tokens": tokens,
+             "source_spellings": spellings},
             sort_keys=True, separators=(",", ":"),
         ).encode("utf-8")).hexdigest()
         lean_source = (
@@ -96,6 +109,12 @@ def verify_cnf_normalization_with_lean(
             lean_source += (
                 "example : Witnora.DIMACSTokens.checkStream "
                 f"{str(tokens)} {_lean_rows(raw)} = true := by decide\n"
+            )
+        if spellings is not None:
+            lean_source = "import Witnora.DIMACSLexemes\n" + lean_source
+            lean_source += (
+                "example : Witnora.DIMACSLexemes.checkLexemes "
+                f"{json.dumps(spellings)} {str(tokens)} = true := by decide\n"
             )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
@@ -117,6 +136,7 @@ def verify_cnf_normalization_with_lean(
             "input_sha256": digest,
             "proof_source_sha256": sha256(lean_source.encode("utf-8")).hexdigest(),
             "token_stream_verified": tokens is not None,
+            "decimal_lexemes_verified": spellings is not None,
         }
     except (ValueError, TypeError, OSError, subprocess.TimeoutExpired) as exc:
         return {**failure, "reason": type(exc).__name__}
