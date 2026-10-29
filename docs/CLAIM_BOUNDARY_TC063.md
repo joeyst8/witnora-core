@@ -81,3 +81,19 @@ The theorem requires no exponential original-CNF UNSAT enumeration and
 does not trust a Python UNSAT verdict. The three premises are substantial:
 this composition theorem alone is not an end-to-end proof of Python G14
 branch production, TC-063, or its stated runtime bounds.
+
+## Lean CNF-conditioning theorem
+
+`Witnora.Conditioning.conditionCNF_correct` proves, for any CNF,
+partial separator assignment and total assignment extending it, that the
+executable Lean conditioning function preserves CNF satisfaction exactly.
+Satisfied clauses are removed; false assigned literals are removed; empty
+residual clauses are retained. The proof is universal in the CNF size and
+uses no exhaustive UNSAT enumeration.
+
+This discharges the **Lean-specification conditioning semantics** part of
+the G14 decomposition bridge. It does not by itself prove that Python's
+`_reduce_clause` and `_condition_by_separator` are extensionally equal to
+the Lean functions, that the Python component partition is complete for
+every input, or that every G14 branch carries a valid Lean-checked G5
+certificate. TC-063 remains conditional on those implementation refinements.
