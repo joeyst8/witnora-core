@@ -27,10 +27,10 @@ structure Proposal where
   deriving DecidableEq, Repr
 
 def valid (cnf : Witnora.Concrete.CNF) (p : Proposal) : Bool :=
-  decide (0 < p.x && 0 < p.z && p.x ≠ p.z &&
-    p.first.middle ≠ p.second.middle &&
-    p.first.middle ≠ p.x && p.first.middle ≠ p.z &&
-    p.second.middle ≠ p.x && p.second.middle ≠ p.z) &&
+  decide (0 < p.x ∧ 0 < p.z ∧ p.x ≠ p.z ∧
+    p.first.middle ≠ p.second.middle ∧
+    p.first.middle ≠ p.x ∧ p.first.middle ≠ p.z ∧
+    p.second.middle ≠ p.x ∧ p.second.middle ≠ p.z) &&
   checkSpokeConflict cnf p.x p.z p.first p.second
 
 /-- Executable discovery specification relative to a complete finite
