@@ -334,3 +334,24 @@ ordering theorems, they provide a precise canonical-output target.
 The universal CPython source-execution correspondence and complete
 TC-063 certificate-theorem remain open; finite Python/Lean examples
 must not be presented as a source-level proof.
+
+## Fail-closed per-invocation Python CNF normalization gate
+
+`witnora_core.lean_cnf_gate.verify_cnf_normalization_with_lean`
+now accepts strictly validated raw signed-integer clause lists, calls the
+actual Python CNF constructor (or checks a caller-supplied candidate),
+and emits a fixed, closed Lean proposition asserting **exact equality**
+with `Witnora.CNFSorted.canonicalize`. It returns a positive verification
+status only if Lean successfully checks that proposition and binds the
+attestation to hashes of both original and normalized CNF data.
+
+All malformed literal values, unsupported shapes, oversized inputs,
+missing Lean toolchains, timeouts, and Lean rejections fail closed.
+The CI workflow runs unit tests including deliberately altered output,
+plus a real unmocked Lean invocation for Python-normalized CNF.
+
+This is a per-invocation checker: accepted output is sound relative to
+Lean's executable model. It does **not** prove that all Python executions
+are accepted, nor does it establish a universal CPython interpreter
+refinement. The gate is not yet a mandatory step of the existing G5/G14
+certificate production workflow; that integration remains open.
