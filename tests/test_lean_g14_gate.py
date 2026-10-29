@@ -35,7 +35,8 @@ class G14LeanCoverGateTest(unittest.TestCase):
         cls.certificate = build_separator_affine_certificate(cls.instance)
 
     def test_every_separator_branch_requires_lean_g5(self):
-        accepted = {"verified": True, "lean_formal_status": "LEAN_VERIFIED"}
+        accepted = {"verified": True, "lean_formal_status": "LEAN_VERIFIED",
+                    "normalization_check": {"verified": True}}
         with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
                    return_value=accepted) as gate:
             result = verify_g14_unsat_cover_with_lean(
@@ -61,6 +62,16 @@ class G14LeanCoverGateTest(unittest.TestCase):
         self.partition_runner.assert_not_called()
         g5.assert_not_called()
 
+    def test_missing_branch_normalization_attestation_rejects_cover(self):
+        with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
+                   return_value={"verified": True, "lean_formal_status": "LEAN_VERIFIED"}) as g5:
+            result = verify_g14_unsat_cover_with_lean(
+                self.instance.formula, self.certificate,
+            )
+        self.assertFalse(result["verified"])
+        self.assertEqual(result["reason"], "BRANCH_G5_LEAN_REJECTED")
+        self.assertEqual(g5.call_count, 1)
+
     def test_lean_partition_rejection_stops_before_g5(self):
         self.partition_runner.return_value = subprocess.CompletedProcess([], 1, "", "error")
         with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean") as g5:
@@ -73,7 +84,7 @@ class G14LeanCoverGateTest(unittest.TestCase):
     def test_single_failed_branch_rejects_cover(self):
         with patch("witnora_core.lean_g14_gate.verify_g5_certificate_with_lean",
                    side_effect=[
-                       {"verified": True},
+                       {"verified": True, "normalization_check": {"verified": True}},
                        {"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED"},
                    ]) as gate:
             result = verify_g14_unsat_cover_with_lean(
