@@ -8,6 +8,7 @@ on:
       - 'scripts/benchmark_affine_sat.py'
       - 'scripts/emit_lean_separator_fixtures.py'
       - 'scripts/emit_lean_g5_traces.py'
+      - 'scripts/emit_lean_xor_encoding.py'
       - '.github/workflows/lean-formal.yml'
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - 'scripts/benchmark_affine_sat.py'
       - 'scripts/emit_lean_separator_fixtures.py'
       - 'scripts/emit_lean_g5_traces.py'
+      - 'scripts/emit_lean_xor_encoding.py'
       - '.github/workflows/lean-formal.yml'
   workflow_dispatch:
 
@@ -44,12 +46,17 @@ jobs:
         run: PYTHONPATH=. python scripts/emit_lean_separator_fixtures.py
       - name: Generate concrete Lean G5 trace claims from Python
         run: PYTHONPATH=. python scripts/emit_lean_g5_traces.py
+      - name: Generate Python canonical XOR encoder claims
+        run: PYTHONPATH=. python scripts/emit_lean_xor_encoding.py
       - uses: leanprover/lean-action@v1
         with:
           lake-package-directory: formal
           build: true
           test: false
 
+      - name: Kernel-check canonical XOR encoding claims
+        working-directory: formal
+        run: lake env lean Witnora/XorGenerated.lean
       - name: Kernel-check actual G5 trace replay claims
         working-directory: formal
         run: lake env lean Witnora/G5Generated.lean
