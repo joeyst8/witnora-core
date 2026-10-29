@@ -66,8 +66,9 @@ theorem normalizePositiveVariables_valid_iff (raw : List Nat) :
   constructor
   · intro hsome
     have hall : raw.all (fun v => decide (0 < v)) = true := by
-      by_contra hn
-      simp [normalizePositiveVariables, hn] at hsome
+      by_cases hh : raw.all (fun v => decide (0 < v)) = true
+      · exact hh
+      · simp [normalizePositiveVariables, hh] at hsome
     intro v hv
     have ht := List.all_eq_true.mp hall v hv
     simpa using ht
