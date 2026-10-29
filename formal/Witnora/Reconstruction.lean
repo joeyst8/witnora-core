@@ -61,27 +61,27 @@ theorem step_sound {before after : List (Equation A)}
   | keep x h ih =>
       simpa only [sat_cons] using and_congr_right (fun _ => ih)
 
-/-- Lift a verified operation across an arbitrary list prefix. This allows
+/-- Lift a verified operation across an arbitrary list front. This allows
 adjacent indexed operations at any position, not just row zero. -/
-theorem step_under_prefix (prefix : List (Equation A))
+theorem step_under_front (front : List (Equation A))
     {before after : List (Equation A)} (h : Step before after) :
-    Step (prefix ++ before) (prefix ++ after) := by
-  induction prefix with
+    Step (front ++ before) (front ++ after) := by
+  induction front with
   | nil => simpa using h
   | cons x xs ih =>
       simpa using Step.keep x ih
 
-theorem adjacent_swap_sound (prefix suffix : List (Equation A))
+theorem adjacent_swap_sound (front suffix : List (Equation A))
     (x y : Equation A) (assignment : A) :
-    Satisfies (prefix ++ x :: y :: suffix) assignment ↔
-      Satisfies (prefix ++ y :: x :: suffix) assignment := by
-  exact step_sound (step_under_prefix prefix (Step.swap x y suffix)) assignment
+    Satisfies (front ++ x :: y :: suffix) assignment ↔
+      Satisfies (front ++ y :: x :: suffix) assignment := by
+  exact step_sound (step_under_front front (Step.swap x y suffix)) assignment
 
-theorem adjacent_xor_sound (prefix suffix : List (Equation A))
+theorem adjacent_xor_sound (front suffix : List (Equation A))
     (x y : Equation A) (assignment : A) :
-    Satisfies (prefix ++ x :: y :: suffix) assignment ↔
-      Satisfies (prefix ++ x :: xorEquation x y :: suffix) assignment := by
-  exact step_sound (step_under_prefix prefix (Step.addXor x y suffix)) assignment
+    Satisfies (front ++ x :: y :: suffix) assignment ↔
+      Satisfies (front ++ x :: xorEquation x y :: suffix) assignment := by
+  exact step_sound (step_under_front front (Step.addXor x y suffix)) assignment
 
 /-- A finite sequence of certified local steps. -/
 inductive Steps : List (Equation A) → List (Equation A) → Prop where
