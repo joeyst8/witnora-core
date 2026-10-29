@@ -7,7 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from witnora_core.lean_g5_gate import verify_g5_certificate_with_lean
+from witnora_core.lean_g5_gate import (verify_g5_certificate_with_lean,
+                                       _compile_dag, _serialize_indexed_operations)
 from witnora_core.operator_genesis import (
     build_affine_residue_certificate,
     make_affine_residue_instance,
@@ -34,6 +35,7 @@ class G5LeanGateTest(unittest.TestCase):
             self.assertEqual(argv[:3], ["lake", "env", "lean"])
             source = Path(argv[3]).read_text(encoding="utf-8")
             self.assertIn("Witnora.SparseBridge.checkG5Closed", source)
+            self.assertIn("Witnora.G5IndexedBridge.compile", source)
             self.assertIn("= true := by decide", source)
             self.assertNotIn("isUnsat", source)
             self.assertNotIn("sorry", source)
@@ -45,6 +47,20 @@ class G5LeanGateTest(unittest.TestCase):
         self.assertEqual(result["lean_formal_status"], "LEAN_VERIFIED")
         self.assertTrue(result["normalization_check"]["verified"])
         self.assertEqual(len(result["input_sha256"]), 64)
+
+    def test_indexed_swap_and_xor_references_are_independently_serialized(self):
+        ops = [
+            {"operation": "SWAP_ROWS", "row_a": 0, "row_b": 1},
+            {"operation": "ADD_ROW_XOR", "target_row": 0, "source_row": 1},
+            {"operation": "SWAP_ROWS", "row_a": 0, "row_b": 1},
+            {"operation": "ADD_ROW_XOR", "target_row": 0, "source_row": 1},
+        ]
+        self.assertEqual(_compile_dag([{}, {}], ops), "[(1, 0), (0, 2)]")
+        indexed = _serialize_indexed_operations(ops)
+        self.assertIn("Operation.swapRows 0 1", indexed)
+        self.assertIn("Operation.addRowXor 0 1", indexed)
+        self.assertEqual(indexed.count("Operation.swapRows"), 2)
+        self.assertEqual(indexed.count("Operation.addRowXor"), 2)
 
     def test_normalization_rejection_blocks_g5_proof(self):
         self.normalization_gate.return_value = {
