@@ -140,8 +140,11 @@ def verify_g5_certificate_with_lean(
         bound = _strict_nonnegative(formula.max_var) + 1
         lean_source = (
             "import Witnora.SparseBridge\n"
+            "import Witnora.SignedSerialization\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
+            "example : Witnora.SignedSerialization.decodeCNF "
+            f"{formula.to_clause_lists()} = {cnf} := by decide\n"
             "example : Witnora.SparseBridge.checkG5Closed "
             f"{bound} {cnf} {rows} {dag} = true := by decide\n"
         )
