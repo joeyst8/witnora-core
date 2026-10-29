@@ -61,6 +61,41 @@ theorem discoverFrom_unsat
     hvalid.2
   exact checkSpokeConflict_unsat cnf p.x p.z p.first p.second hpattern
 
+/-- A finite, directly executable reference universe for *all* endpoint,
+    intermediate-variable and parity-bit choices within a supplied ID list.
+    The implementation is intentionally explicit to expose the enumeration
+    contract needed for eventual Python refinement. -/
+def allProposals (ids : List Nat) : List Proposal :=
+  ids.flatMap (fun x =>
+    ids.flatMap (fun z =>
+      ids.flatMap (fun m =>
+        ids.flatMap (fun n =>
+          ([false, true] : List Bool).flatMap (fun l =>
+            ([false, true] : List Bool).flatMap (fun r =>
+              ([false, true] : List Bool).flatMap (fun l2 =>
+                ([false, true] : List Bool).map (fun r2 =>
+                  ⟨x, z, ⟨m, l, r⟩, ⟨n, l2, r2⟩⟩))))))))
+
+def discoverComplete (cnf : Witnora.Concrete.CNF)
+    (ids : List Nat) : List Proposal :=
+  discoverFrom cnf (allProposals ids)
+
+/-- The complete finite specification retains *exactly* those proposals
+    in its explicit variable-and-bit universe that pass all checks. -/
+theorem mem_discoverComplete_iff
+    (cnf : Witnora.Concrete.CNF) (ids : List Nat)
+    (p : Proposal) :
+    p ∈ discoverComplete cnf ids ↔
+      p ∈ allProposals ids ∧ valid cnf p = true := by
+  exact mem_discoverFrom_iff cnf (allProposals ids) p
+
+/-- Every result from the full finite enumerator is a valid UNSAT proof. -/
+theorem discoverComplete_unsat
+    (cnf : Witnora.Concrete.CNF) (ids : List Nat)
+    (p : Proposal) (hp : p ∈ discoverComplete cnf ids) :
+    ¬ ∃ a, CNFHolds cnf a :=
+  discoverFrom_unsat cnf (allProposals ids) p hp
+
 #print axioms Witnora.SpokeDiscoverySpec.discoverFrom_unsat
 
 end Witnora.SpokeDiscoverySpec
