@@ -1,4 +1,5 @@
 import Witnora.G5Trace
+import Witnora.Affine
 
 /-!
 # Sparse GF(2) row parity semantics
