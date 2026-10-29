@@ -18,3 +18,4 @@ import Witnora.Conditioning
 import Witnora.ComponentPartition
 import Witnora.SeparatorAssignments
 import Witnora.SignedSerialization
+import Witnora.CNFCanonical
