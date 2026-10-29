@@ -22,7 +22,7 @@ inductive Step where
 
 def xorCoefficients (left right : List Nat) : List Nat :=
   (left.filter (fun x => decide (x ∉ right))) ++
-  (right.filter (fun x => decide (x ∉ left))
+  (right.filter (fun x => decide (x ∉ left)))
 
 /-- The concrete sparse coefficient update has exactly the support of the
 GF(2) symmetric difference (for all indices, not merely tested examples). -/
