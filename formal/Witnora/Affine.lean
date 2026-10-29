@@ -70,7 +70,7 @@ def contradictionRow (Assignment : Type) : Equation Assignment where
 
 theorem contradictionRow_unsat {Assignment : Type} (a : Assignment) :
     ¬ Holds (contradictionRow Assignment) a := by
-  decide
+  simp [Holds, contradictionRow]
 
 #print axioms Witnora.Affine.xorEquation_sound
 #print axioms Witnora.Affine.addRowXor_iff
