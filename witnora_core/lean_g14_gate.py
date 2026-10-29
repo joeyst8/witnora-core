@@ -356,7 +356,17 @@ def verify_g14_unsat_cover_with_lean(
                 return {**failure, "reason": "BRANCH_G5_LEAN_REJECTED",
                         "partition_proof_source_sha256": partition_digest,
                         "branches": branches}
-        return {"verified": True, "lean_formal_status": "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED",
+        complete_proof_digest = None
+        if source_text is not None:
+            complete_proof_digest = _check_complete_g14_with_lean(
+                formula, raw_clauses, source_tokens, source_text,
+                separator, partition_jobs, branch_jobs,
+                timeout_seconds=timeout_seconds, project_root=project_root,
+            )
+        return {"verified": True, "lean_formal_status": (
+                    "LEAN_END_TO_END_G14_UNSAT_VERIFIED"
+                    if complete_proof_digest is not None
+                    else "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED"),
                 "input_sha256": digest, "normalization_check": normalization_check,
                 "source_normalization_verified": raw_clauses is not None,
                 "source_tokens_verified": source_tokens is not None,
@@ -364,8 +374,9 @@ def verify_g14_unsat_cover_with_lean(
             "source_document_verified": source_text is not None,
                 "source_formula_hash": formula.formula_hash,
                 "partition_proof_source_sha256": partition_digest,
+                "complete_proof_source_sha256": complete_proof_digest,
                 "branches": branches,
-                "claim_boundary": "Lean verifies per-branch partitions and G5 proofs; universal Python refinement unproved"}
+                "claim_boundary": "Full-source status requires one combined kernel-checked G14 theorem; universal Python refinement unproved"}
     except (ValueError, TypeError, KeyError, IndexError, AttributeError,
             OSError, subprocess.TimeoutExpired) as exc:
         return {**failure, "reason": type(exc).__name__}
