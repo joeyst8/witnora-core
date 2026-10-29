@@ -73,14 +73,17 @@ theorem canonicalXorCNF_iff (vars : List Nat) (rhs : Bool)
   classical
   constructor
   · intro h
-    by_contra hwrong
+    apply Classical.byContradiction
+    intro hwrong
     obtain ⟨v, _, hv⟩ := h actual hwrong
     exact hv rfl
   · intro hright bad hwrong
-    by_contra hnone
+    apply Classical.byContradiction
+    intro hnone
     have hagrees : ∀ v, v ∈ vars → actual v = bad v := by
       intro v hv
-      by_contra hdiff
+      apply Classical.byContradiction
+      intro hdiff
       exact hnone ⟨v, hv, hdiff⟩
     have hbadRight : parityVars vars bad = rhs :=
       (parityVars_congr vars actual bad hagrees).symm.trans hright
