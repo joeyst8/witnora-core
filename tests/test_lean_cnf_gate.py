@@ -1,0 +1,62 @@
+"""Fail-closed tests for actual Python-to-Lean CNF normalization checks."""
+import subprocess
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean
+
+
+class LeanCNFNormalizationGateTest(unittest.TestCase):
+    def test_emits_fixed_exact_equality_and_binds_input_hash(self):
+        def inspect_run(argv, **kwargs):
+            self.assertEqual(argv[:3], ["lake", "env", "lean"])
+            source = Path(argv[3]).read_text(encoding="utf-8")
+            self.assertIn("Witnora.CNFSorted.canonicalize", source)
+            self.assertIn("Witnora.SignedSerialization.decodeCNF", source)
+            self.assertIn(":= by decide", source)
+            self.assertNotIn("sorry", source)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+
+        raw = [[1, 1, -2], [1, -1], [1, 1, -2], []]
+        with patch("witnora_core.lean_cnf_gate.subprocess.run", side_effect=inspect_run):
+            result = verify_cnf_normalization_with_lean(raw)
+        self.assertTrue(result["verified"])
+        self.assertEqual(result["lean_formal_status"], "LEAN_CNF_NORMALIZATION_VERIFIED")
+        self.assertEqual(len(result["input_sha256"]), 64)
+
+    def test_lean_rejects_altered_output(self):
+        with patch(
+            "witnora_core.lean_cnf_gate.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 1, "", "error"),
+        ):
+            result = verify_cnf_normalization_with_lean([[1]], [[-1]])
+        self.assertFalse(result["verified"])
+
+    def test_missing_lean_fails_closed(self):
+        with patch("witnora_core.lean_cnf_gate.subprocess.run", side_effect=FileNotFoundError):
+            result = verify_cnf_normalization_with_lean([[1]])
+        self.assertFalse(result["verified"])
+
+    def test_malformed_literals_fail_before_launch(self):
+        for input_rows in ([[1, -1, True]], [[1, -1, 0]],
+                           [[1, -1, "invalid"]], [[1, -1, 2.0]]):
+            with self.subTest(input_rows=input_rows):
+                with patch("witnora_core.lean_cnf_gate.subprocess.run") as runner:
+                    result = verify_cnf_normalization_with_lean(input_rows)
+                self.assertFalse(result["verified"])
+                runner.assert_not_called()
+
+    def test_malformed_proposed_output_fails_before_launch(self):
+        with patch("witnora_core.lean_cnf_gate.subprocess.run") as runner:
+            result = verify_cnf_normalization_with_lean([[1]], [[True]])
+        self.assertFalse(result["verified"])
+        runner.assert_not_called()
+
+    def test_missing_project_fails_closed(self):
+        result = verify_cnf_normalization_with_lean([[1]], project_root=Path("/nonexistent_witnora"))
+        self.assertFalse(result["verified"])
+
+
+if __name__ == "__main__":
+    unittest.main()
