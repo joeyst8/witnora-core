@@ -413,3 +413,14 @@ proposition when `raw_clauses` is supplied; the separate normalization check
 must also accept. Neither this theorem nor the runtime gate proves that the
 original DIMACS text was lexed into `raw` correctly, that every UNSAT formula
 has a G5 proof, or that all G14 certificates are covered by G5.
+
+### Signed-source G14 composition boundary
+
+`G5G14Composition.signed_source_unsat_of_checked_g5_branch_cover`
+proves UNSAT of an original signed-clause CNF, assuming (i) a valid G14
+decomposition model, (ii) a source-model-to-decomposition bridge,
+(iii) residual-component-model transfer, and (iv) closed G5 certificates
+for selected components of every branch. These hypotheses are displayed
+in the theorem statement; the Python G14 decomposition/refinement bridge
+has **not** been universally proved. This theorem must not be presented
+as unconditional TC-063 or a P-versus-NP solution.
