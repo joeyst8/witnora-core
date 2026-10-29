@@ -374,3 +374,17 @@ check their signed-clause canonical representation but cannot reconstruct
 or prove the original raw DIMACS normalization or CPython constructor
 behavior upstream. Universal Python source-refinement and unrestricted
 TC-063 correctness remain unproved.
+
+### Raw DIMACS provenance checkpoint (G5/G14 CLI)
+
+The `--lean` certificate-checking CLI now reads the DIMACS source once through
+`load_dimacs_with_raw`, retaining parsed clauses **before** duplicate deletion,
+tautology elimination and sorting. Both G5 and G14 pass that raw clause list
+and the independently constructed canonical formula to the fail-closed Lean
+normalization gate. A disagreement blocks formal acceptance, and successful
+results carry `source_normalization_verified: true`. Programmatic gate calls
+without `raw_clauses` retain canonicality checking, but carry
+`source_normalization_verified: false` and **do not prove source provenance**.
+This is a concrete runtime correspondence check, not a universal CPython
+parser/execution proof; the parser, its input file reading, and the certificate
+binding to the caller-selected file remain in the trusted integration boundary.
