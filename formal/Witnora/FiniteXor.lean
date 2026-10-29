@@ -100,6 +100,37 @@ theorem normalizeByToggle_parity (raw : List Nat) (a : Nat → Bool) :
 
 #print axioms Witnora.FiniteXor.normalizeByToggle_parity
 
+/-- Left-to-right toggle accumulation, matching Python's iteration order. -/
+def normalizeByForwardToggle (raw : List Nat) : List Nat :=
+  raw.foldl (fun support v => toggleVar v support) []
+
+/-- Every forward accumulator preserves the XOR of the prefix and input. -/
+theorem forwardToggle_acc_parity (raw acc : List Nat)
+    (a : Nat → Bool) :
+    Extraction.parityVars
+      (raw.foldl (fun support v => toggleVar v support) acc) a =
+    Bool.xor (Extraction.parityVars raw a)
+      (Extraction.parityVars acc a) := by
+  induction raw generalizing acc with
+  | nil =>
+      simp [Extraction.parityVars]
+  | cons v rest ih =>
+      simp only [List.foldl_cons, Extraction.parityVars]
+      rw [ih, parity_toggleVar]
+      cases hv : a v <;>
+        cases hr : Extraction.parityVars rest a <;>
+        cases ha : Extraction.parityVars acc a <;>
+        decide
+
+theorem normalizeByForwardToggle_parity (raw : List Nat)
+    (a : Nat → Bool) :
+    Extraction.parityVars (normalizeByForwardToggle raw) a =
+      Extraction.parityVars raw a := by
+  simpa [normalizeByForwardToggle, Extraction.parityVars]
+    using forwardToggle_acc_parity raw [] a
+
+#print axioms Witnora.FiniteXor.normalizeByForwardToggle_parity
+
 /-- Transparent insertion into ascending natural-number order. -/
 def insertSortedVar (v : Nat) : List Nat → List Nat
   | [] => [v]
