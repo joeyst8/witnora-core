@@ -24,14 +24,17 @@ def canonical_literal_tuple(literals: Iterable[Literal]) -> tuple[Literal, ...] 
     """Return a sorted duplicate-free tuple, or None for a tautology."""
 
     seen: set[int] = set()
+    tautological = False
     for lit in literals:
         if type(lit) is not int:
             raise CNFError(f"literal is not an integer: {lit!r}")
         if lit == 0:
             raise CNFError("literal 0 is reserved as a DIMACS clause terminator")
         if -lit in seen:
-            return None
+            tautological = True
         seen.add(lit)
+    if tautological:
+        return None
     return tuple(sorted(seen))
 
 
