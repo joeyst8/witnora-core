@@ -25,3 +25,5 @@ import Witnora.DIMACSTokens
 import Witnora.DIMACSLexemes
 import Witnora.DIMACSDocument
 import Witnora.G14ConcreteBridge
+
+import Witnora.G5IndexedBridge
