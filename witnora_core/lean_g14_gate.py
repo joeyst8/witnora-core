@@ -17,7 +17,9 @@ from typing import Any
 
 from .cnf import CNFFormula
 from .lean_cnf_gate import verify_cnf_normalization_with_lean
-from .lean_g5_gate import _serialize_cnf, verify_g5_certificate_with_lean
+from .lean_g5_gate import (_serialize_cnf, _serialize_rows, _compile_dag,
+                            verify_g5_certificate_with_lean)
+from .lean_cnf_gate import _lean_rows, _strict_rows
 from .separator_affine_family_theorem import (
     SEPARATOR_AFFINE_CERTIFICATE_VERIFIED,
     UNSAT_CERTIFIED,
@@ -107,6 +109,160 @@ def _check_partitions_with_lean(
     if result.returncode != 0:
         raise ValueError("Lean rejected G14 conditioning or partition")
     return sha256(source_text.encode("utf-8")).hexdigest()
+
+
+
+def _check_complete_g14_with_lean(
+    formula: CNFFormula,
+    raw_clauses: object,
+    source_tokens: object,
+    source_text: object,
+    separator: list[int],
+    partitions: list[tuple[dict[int, bool], list[CNFFormula]]],
+    branch_jobs: list[tuple[str, str, CNFFormula, Any]],
+    *,
+    timeout_seconds: int,
+    project_root: Path | None,
+) -> str:
+    """Kernel-check one closed source -> canonical -> G14 -> G5 theorem."""
+    if type(source_text) is not str or not source_text.isascii() or len(source_text) > 65536:
+        raise ValueError("unsupported full-document source")
+    if type(source_tokens) not in (list, tuple) or any(type(x) is not int for x in source_tokens):
+        raise ValueError("invalid source integer stream")
+    raw = _lean_rows(_strict_rows(raw_clauses))
+    canonical = _lean_rows(formula.to_clause_lists())
+    source_bytes = [ord(c) for c in source_text]
+    token_data = list(source_tokens)
+    if len(partitions) != len(branch_jobs) or not partitions:
+        raise ValueError("incomplete G14 branch certificates")
+    sorted_vars = sorted(separator)
+    branch_patterns = []
+    component_values = []
+    chosen_values = []
+    bound_values = []
+    row_values = []
+    step_values = []
+    for (assignment, parts), (_branch_id, _selected_id, chosen, certificate) in zip(
+            partitions, branch_jobs):
+        if sorted(assignment) != sorted_vars:
+            raise ValueError("malformed branch")
+        pattern = "[" + ", ".join(
+            f"({v}, {'true' if assignment[v] else 'false'})" for v in sorted_vars
+        ) + "]"
+        branch_patterns.append(pattern)
+        component_values.append("[" + ", ".join(_serialize_cnf(part) for part in parts) + "]")
+        chosen_values.append(_serialize_cnf(chosen))
+        payload = certificate.to_dict() if hasattr(certificate, "to_dict") else certificate
+        if not isinstance(payload, dict):
+            raise ValueError("invalid branch proof")
+        trace = payload.get("gaussian_elimination_trace")
+        if (not isinstance(trace, list) or not trace
+                or not isinstance(trace[0], dict) or trace[0].get("type") != "INITIAL_ROWS"):
+            raise ValueError("invalid branch rows")
+        initial = trace[0].get("rows")
+        row_values.append(_serialize_rows(initial))
+        step_values.append(_compile_dag(initial, payload.get("row_operations")))
+        bound_values.append(str(chosen.max_var + 1))
+
+    if len(set(branch_patterns)) != len(branch_patterns):
+        raise ValueError("duplicate separator branches")
+    def definition(name: str, result_type: str, values: list[str], default: str) -> str:
+        expression = default
+        for pattern, value in reversed(list(zip(branch_patterns, values))):
+            expression = f"(if branch == {pattern} then {value} else {expression})"
+        return f"def {name} (branch : List (Nat × Bool)) : {result_type} := {expression}"
+
+    lines = [
+        "import Witnora.G14ConcreteBridge",
+        "set_option maxRecDepth 16384",
+        "set_option maxHeartbeats 0",
+        definition("certComponents", "List Witnora.Concrete.CNF", component_values, "[]"),
+        definition("certSelected", "Witnora.Concrete.CNF", chosen_values, "[]"),
+        definition("certBound", "Nat", bound_values, "0"),
+        definition("certRows", "List Witnora.G5Trace.Row", row_values, "[]"),
+        definition("certSteps", "List Witnora.G5Dag.XorRef", step_values, "[]"),
+    ]
+    enumerated = "[" + ", ".join(branch_patterns) + "]"
+    def all_branches_proof(statement: str) -> list[str]:
+        script = [
+            f"have {statement} := by",
+        ]
+        return script
+    # Each universal obligation is reduced only over the exact finite
+    # enumerated branches; no universal function equality is decided.
+    def branch_cases() -> list[str]:
+        return [
+            "  intro branch hb",
+            f"  have he : Witnora.SeparatorAssignments.enumerate {sorted_vars} = {enumerated} := by decide",
+            "  rw [he] at hb",
+            "  simp only [List.mem_cons, List.mem_singleton] at hb",
+            "  rcases hb with " + " | ".join(f"h{i}" for i in range(len(branch_patterns))),
+        ] + [
+            f"  · subst branch\n    decide" for _ in branch_patterns
+        ]
+    lines += [
+        "example : Witnora.DIMACSDocument.parseDocument "
+        f"{source_bytes} = some (Witnora.DIMACSTokens.serialize {raw}) "
+        "∧ ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds "
+        f"{raw} a := by",
+        "  apply Witnora.G14ConcreteBridge.checked_ascii_dimacs_g14_canonical_unsat "
+        f"{source_bytes} {token_data} {raw} {canonical} "
+        f"(by decide) (by decide) (by decide) {sorted_vars} "
+        "certComponents",
+        "  ·" if False else "",
+    ]
+    # Supply the three dependent finite-branch premises explicitly.
+    lines = [line for line in lines if line]
+    # The theorem's remaining arguments are implicit proof holes, selected
+    # function, and proof holes. Lean elaborates them from these tactics.
+    lines[-1] += " (by"
+    lines += ["    " + line.lstrip() for line in branch_cases()]
+    # 'by' blocks are easier to render without indentation rewrites:
+    # reconstruct the application with named local premises below.
+    lines = lines[:8]
+    def proof_for(name: str, goal: str) -> None:
+        lines.append(f"have {name} : {goal} := by")
+        lines.extend(branch_cases())
+    proof_for("hpart",
+        f"∀ branch ∈ Witnora.SeparatorAssignments.enumerate {sorted_vars}, "
+        "Witnora.ComponentPartition.checkPartition "
+        "(Witnora.Conditioning.conditionCNF "
+        "(Witnora.SeparatorAssignments.fixedOf branch) "
+        f"(Witnora.SignedSerialization.decodeCNF {canonical})) "
+        "(certComponents branch) = true")
+    proof_for("hselected",
+        f"∀ branch ∈ Witnora.SeparatorAssignments.enumerate {sorted_vars}, "
+        "certSelected branch ∈ certComponents branch")
+    proof_for("hcert",
+        f"∀ branch ∈ Witnora.SeparatorAssignments.enumerate {sorted_vars}, "
+        "Witnora.SparseBridge.checkG5Closed "
+        "(certBound branch) (certSelected branch) "
+        "(certRows branch) (certSteps branch) = true")
+    lines += [
+        "example : Witnora.DIMACSDocument.parseDocument "
+        f"{source_bytes} = some (Witnora.DIMACSTokens.serialize {raw}) "
+        "∧ ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds "
+        f"{raw} a := by",
+        "  exact Witnora.G14ConcreteBridge.checked_ascii_dimacs_g14_canonical_unsat "
+        f"{source_bytes} {token_data} {raw} {canonical} "
+        f"(by decide) (by decide) (by decide) {sorted_vars} "
+        "certComponents hpart certSelected hselected certBound certRows certSteps hcert",
+    ]
+    proof_source = "\n".join(lines) + "\n"
+    root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
+    formal_dir = root / "formal"
+    if not (formal_dir / "lakefile.toml").is_file():
+        raise ValueError("Lean project unavailable")
+    with TemporaryDirectory(prefix="witnora_g14_complete_") as temp:
+        path = Path(temp) / "G14CompleteSourceProof.lean"
+        path.write_text(proof_source, encoding="utf-8")
+        result = subprocess.run(
+            ["lake", "env", "lean", str(path)], cwd=formal_dir,
+            capture_output=True, text=True, timeout=timeout_seconds, check=False)
+    if result.returncode != 0:
+        raise ValueError("Lean rejected complete G14 theorem: " +
+                         (result.stdout + result.stderr)[-1200:])
+    return sha256(proof_source.encode("utf-8")).hexdigest()
 
 
 def verify_g14_unsat_cover_with_lean(
