@@ -6,3 +6,4 @@ import Witnora.G5Trace
 import Witnora.Reconstruction
 import Witnora.SparseParity
 import Witnora.Extraction
+import Witnora.FiniteXor
