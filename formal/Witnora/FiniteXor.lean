@@ -163,7 +163,7 @@ theorem signForbiddenClause_true
       cases hv : a v <;>
         cases hb : bad <;>
         cases ht : rest.all (fun p => a p.1 == p.2) <;>
-        decide
+        simp [signedLitTrue, hv, hb, ht]
 
 #print axioms Witnora.FiniteXor.signForbiddenClause_true
 
