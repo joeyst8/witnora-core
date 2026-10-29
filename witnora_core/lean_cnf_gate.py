@@ -126,10 +126,10 @@ def verify_cnf_normalization_with_lean(
                 f"{str(tokens)} = true := by decide\n"
             )
         if document is not None:
-            lean_source = "import Witnora.DIMACSDocument\\n" + lean_source
+            lean_source = "import Witnora.DIMACSDocument\n" + lean_source
             lean_source += (
                 "example : Witnora.DIMACSDocument.checkDocument "
-                f"{str(document)} {str(tokens)} = true := by decide\\n"
+                f"{str(document)} {str(tokens)} = true := by decide\n"
             )
         root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
         formal_dir = root / "formal"
