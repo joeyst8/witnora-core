@@ -122,6 +122,26 @@ theorem steps_sound {before after : List (Equation A)}
 def ExactExtraction (cnfTrue : A → Prop) (rows : List (Equation A)) : Prop :=
   ∀ a, cnfTrue a ↔ Satisfies rows a
 
+/-- For UNSAT soundness, it suffices that the original CNF *implies*
+all extracted equations. Extra clauses in the original are allowed. -/
+def SoundExtraction (cnfTrue : A → Prop)
+    (rows : List (Equation A)) : Prop :=
+  ∀ a, cnfTrue a → Satisfies rows a
+
+/-- General certificate reconstruction needs only a sound extraction,
+not an exact equivalence of every clause in the original formula. -/
+theorem reconstructed_unsat_sound_extraction
+    (cnfTrue : A → Prop)
+    (initial finalRows : List (Equation A))
+    (hsound : SoundExtraction cnfTrue initial)
+    (htrace : Steps initial finalRows)
+    (hcontradiction : contradictionRow A ∈ finalRows) :
+    ¬ ∃ a, cnfTrue a := by
+  rintro ⟨a, hmodel⟩
+  have hin : Satisfies initial a := hsound a hmodel
+  have hout : Satisfies finalRows a := (steps_sound htrace a).mp hin
+  exact contradictionRow_unsat a (hout (contradictionRow A) hcontradiction)
+
 /-- If the extracted equations are equivalent to the CNF and the trace
 ends with a contradiction, the original CNF is UNSAT. No search over all
 assignments is performed. -/
@@ -137,6 +157,7 @@ theorem reconstructed_unsat
   have hout : Satisfies finalRows a := (steps_sound htrace a).mp hin
   exact contradictionRow_unsat a (hout (contradictionRow A) hcontradiction)
 
+#print axioms Witnora.Reconstruction.reconstructed_unsat_sound_extraction
 #print axioms Witnora.Reconstruction.reconstructed_unsat
 #print axioms Witnora.Reconstruction.steps_sound
 #print axioms Witnora.Reconstruction.adjacent_swap_sound
