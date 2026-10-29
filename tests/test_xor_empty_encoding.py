@@ -25,6 +25,51 @@ class EmptyXorEncodingTest(unittest.TestCase):
                     f"raw_vars={variables} rhs={rhs} assignment={assignment}",
                 )
 
+    def test_exact_canonical_clause_family_for_all_small_distinct_supports(self):
+        # Independent mask-based specification, including literal signs and
+        # the exact clause family (stronger than truth-table equivalence).
+        for size in range(7):
+            support = tuple(2 * i + 1 for i in range(size))
+            for rhs in (0, 1):
+                expected = set()
+                for mask in range(1 << size):
+                    if mask.bit_count() % 2 == rhs:
+                        continue
+                    clause = tuple(sorted(
+                        -var if (mask >> position) & 1 else var
+                        for position, var in enumerate(support)
+                    ))
+                    expected.add(clause)
+                self.assertEqual(
+                    canonical_xor_cnf_clauses(reversed(support), rhs),
+                    expected,
+                    f"support={support} rhs={rhs}",
+                )
+
+    def test_repeated_ids_normalize_exactly_and_stably(self):
+        rng = Random(630063)
+        for _ in range(350):
+            raw = [rng.randrange(1, 13) for _ in range(rng.randrange(20))]
+            parity_support = tuple(
+                var for var in range(1, 13) if raw.count(var) % 2
+            )
+            rhs = rng.randrange(2)
+            self.assertEqual(
+                canonical_xor_cnf_clauses(raw, rhs),
+                canonical_xor_cnf_clauses(parity_support, rhs),
+            )
+            self.assertEqual(
+                canonical_xor_cnf_clauses(tuple(reversed(raw)), rhs),
+                canonical_xor_cnf_clauses(raw, rhs),
+            )
+
+    def test_invalid_variable_ids_are_rejected_even_if_they_cancel(self):
+        for variables in ([0], [-1], [0, 0], [-2, -2], [1, -3, -3]):
+            for rhs in (0, 1):
+                with self.subTest(variables=variables, rhs=rhs):
+                    with self.assertRaises(ValueError):
+                        canonical_xor_cnf_clauses(variables, rhs)
+
     def test_empty_even_equation_is_tautology(self):
         self.assertEqual(canonical_xor_cnf_clauses([], 0), set())
         self.assertEqual(CNFFormula.from_raw_clauses(
