@@ -185,3 +185,19 @@ per-certificate proof obligations: a Python generator that omits or
 reorders a branch cannot pass this Lean equality. Universal CPython
 execution correctness and signed-literal serialization refinement remain
 separate unproved obligations.
+
+## Signed-literal representation theorem and runtime checks
+
+`Witnora.SignedSerialization.encode_decode` proves that every nonzero
+signed integer decodes to a Lean pair (positive variable ID, polarity)
+and encodes back to the same integer. `decode_encode` proves the reverse
+for all positive variable IDs and both polarities.
+`signedCNFHolds_iff` establishes CNF satisfaction equivalence for the
+paired representation; zero is explicitly an invalid signed literal.
+
+Both the G5 and G14 runtime gates now emit closed Lean claims comparing
+the **actual signed integer CNF data** with the paired clauses supplied
+to the proof checker. G14 fixture CI also checks signed original and
+component CNFs. This closes a universal mathematical representation
+lemma and concrete per-certificate serialization equality checks; it
+is not a universal proof of Python execution or parsing correctness.
