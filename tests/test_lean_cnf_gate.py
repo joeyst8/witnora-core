@@ -25,6 +25,29 @@ class LeanCNFNormalizationGateTest(unittest.TestCase):
         self.assertEqual(result["lean_formal_status"], "LEAN_CNF_NORMALIZATION_VERIFIED")
         self.assertEqual(len(result["input_sha256"]), 64)
 
+    def test_token_stream_lean_contract_is_mandatory_when_present(self):
+        def inspect_run(argv, **kwargs):
+            source = Path(argv[3]).read_text(encoding="utf-8")
+            self.assertIn("import Witnora.DIMACSTokens", source)
+            self.assertIn("Witnora.DIMACSTokens.checkStream", source)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+        with patch("witnora_core.lean_cnf_gate.subprocess.run", side_effect=inspect_run):
+            accepted = verify_cnf_normalization_with_lean(
+                [[1, 1], [-2], []], source_tokens=[1, 1, 0, -2, 0, 0],
+            )
+        self.assertTrue(accepted["verified"])
+        self.assertTrue(accepted["token_stream_verified"])
+
+    def test_invalid_token_types_rejected_before_lean(self):
+        for tokens in ([1, True, 0], [1, "0"], [1.0, 0]):
+            with self.subTest(tokens=tokens):
+                with patch("witnora_core.lean_cnf_gate.subprocess.run") as runner:
+                    result = verify_cnf_normalization_with_lean(
+                        [[1]], source_tokens=tokens,
+                    )
+                self.assertFalse(result["verified"])
+                runner.assert_not_called()
+
     def test_lean_rejects_altered_output(self):
         with patch(
             "witnora_core.lean_cnf_gate.subprocess.run",
