@@ -72,6 +72,20 @@ theorem parityVars_cancel_adjacent (v : Nat) (rest : List Nat)
     cases hr : parityVars rest a <;>
     decide
 
+/-- Every permutation (including sorting) of the variable list has
+identical XOR semantics. -/
+theorem parityVars_perm {xs ys : List Nat}
+    (hperm : xs.Perm ys) (a : Nat → Bool) :
+    parityVars xs a = parityVars ys a := by
+  induction hperm with
+  | nil => rfl
+  | cons x h ih =>
+      simpa only [parityVars] using congrArg (Bool.xor (a x)) ih
+  | swap x y rest =>
+      exact parityVars_swap_adjacent x y rest a
+  | trans h₁ h₂ ih₁ ih₂ =>
+      exact ih₁.trans ih₂
+
 /-- Parity depends only on values on the specified finite support. -/
 theorem parityVars_congr (vars : List Nat) (a b : Nat → Bool)
     (hagrees : ∀ v, v ∈ vars → a v = b v) :
@@ -137,6 +151,7 @@ theorem original_entails_extracted_xor
 #print axioms Witnora.Extraction.original_entails_extracted_xor
 
 #print axioms Witnora.Extraction.parityVars_append
+#print axioms Witnora.Extraction.parityVars_perm
 #print axioms Witnora.Extraction.parityVars_swap_adjacent
 #print axioms Witnora.Extraction.parityVars_cancel_adjacent
 #print axioms Witnora.Extraction.parityVars_congr
