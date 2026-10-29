@@ -53,7 +53,7 @@ theorem checkBranch_sound
   unfold checkBranch at h
   have hrow := List.all_eq_true.mp h bits hbits
   simp [hag] at hrow
-  exact eq_of_beq hrow
+  exact hrow
 
 #print axioms Witnora.Concrete.checkBranch_sound
 
