@@ -1,0 +1,29 @@
+name: Witnora Lean formal proof gate
+
+on:
+  pull_request:
+    paths:
+      - 'formal/**'
+      - '.github/workflows/lean-formal.yml'
+  push:
+    branches:
+      - 'research/tc063-eth-audit-20261029'
+    paths:
+      - 'formal/**'
+      - '.github/workflows/lean-formal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: true
+          test: false
