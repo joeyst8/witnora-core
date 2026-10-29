@@ -40,6 +40,16 @@ def checkBranch
       cnfTrue bits original == components.all (cnfTrue bits)
     else true)
 
+/-- The finite Boolean enumeration includes every bit vector of the
+corresponding length. -/
+theorem allBits_complete (bits : List Bool) :
+    bits ∈ allBits bits.length := by
+  induction bits with
+  | nil => simp [allBits]
+  | cons b bs ih =>
+    simp only [List.length_cons, allBits, List.mem_flatMap]
+    exact ⟨bs, ih, by cases b <;> simp⟩
+
 /-- Soundness of the executable checker for every enumerated assignment.
 This theorem is general in n and in the supplied CNFs; no assumption about
 Python's reported result is used. -/
@@ -55,6 +65,21 @@ theorem checkBranch_sound
   simp [hag] at hrow
   exact hrow
 
+/-- The checker's result covers every bit vector of the indicated size,
+not merely a hand-selected subset of assignments. -/
+theorem checkBranch_sound_for_all
+    (n : Nat) (original : CNF)
+    (fixed : List (Nat × Bool)) (components : List CNF)
+    (h : checkBranch n original fixed components = true)
+    (bits : List Bool) (hlen : bits.length = n)
+    (hag : agrees bits fixed = true) :
+    cnfTrue bits original = components.all (cnfTrue bits) := by
+  apply checkBranch_sound n original fixed components h bits
+  · simpa [hlen] using allBits_complete bits
+  · exact hag
+
 #print axioms Witnora.Concrete.checkBranch_sound
+#print axioms Witnora.Concrete.allBits_complete
+#print axioms Witnora.Concrete.checkBranch_sound_for_all
 
 end Witnora.Concrete
