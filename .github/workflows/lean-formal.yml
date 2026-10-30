@@ -20,6 +20,8 @@ on:
       - 'tests/test_spoke_discovery_reference.py'
       - 'tests/test_cycle_discovery.py'
       - 'tests/test_cycle_benchmark.py'
+      - 'tests/test_parity_compression.py'
+      - 'witnora_core/parity_compression.py'
       - 'scripts/benchmark_cycle_discovery.py'
       - 'witnora_core/cycle_discovery.py'
       - 'witnora_core/lean_cycle_gate.py'
@@ -62,6 +64,8 @@ on:
       - 'tests/test_spoke_discovery_reference.py'
       - 'tests/test_cycle_discovery.py'
       - 'tests/test_cycle_benchmark.py'
+      - 'tests/test_parity_compression.py'
+      - 'witnora_core/parity_compression.py'
       - 'scripts/benchmark_cycle_discovery.py'
       - 'witnora_core/cycle_discovery.py'
       - 'witnora_core/lean_cycle_gate.py'
@@ -114,6 +118,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_cycle_discovery.py' -v
       - name: Test independent parity benchmarks against exhaustive oracle
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_cycle_benchmark.py' -v
+      - name: Check root-offset compression on randomized graphs
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_parity_compression.py' -v
       - name: Run G5 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Test fail-closed Python CNF Lean normalization gate
