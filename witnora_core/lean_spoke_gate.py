@@ -16,7 +16,7 @@ from typing import Any
 from .cnf import CNFFormula
 from .lean_cnf_gate import _lean_rows, _strict_rows
 from .spoke_discovery import (discover_parity_spoke_conflicts,
-                              extract_binary_xor_equations)
+                              extract_binary_xor_equations, extract_spoke_paths)
 
 
 def _spoke_literal(path: dict[str, Any], x: int, z: int) -> str:
@@ -68,11 +68,20 @@ def verify_discovered_spoke_with_lean(
         ids = sorted(formula.variables)
         if len(ids) > 24:
             raise ValueError("full binary-extraction equality exceeds the supported variable cap")
+        if len(ids) > 6:
+            raise ValueError("full spoke-path equality exceeds the supported variable cap")
         proposed_equations = extract_binary_xor_equations(formula)
         emitted_equations = "[" + ", ".join(
             "{ u := " + str(u) + ", v := " + str(v) +
             ", rhs := " + ("true" if rhs else "false") + " }"
             for u, v, rhs in proposed_equations
+        ) + "]"
+        emitted_paths = "[" + ", ".join(
+            "{ x := " + str(x) + ", z := " + str(z) +
+            ", middle := " + str(m) +
+            ", left := " + ("true" if l else "false") +
+            ", right := " + ("true" if r else "false") + " }"
+            for x, z, m, l, r in extract_spoke_paths(formula)
         ) + "]"
         # This example has *no assumed correctness of Python's discovery*.
         # The kernel checks each complete pattern against raw source clauses.
@@ -83,7 +92,7 @@ def verify_discovered_spoke_with_lean(
             "example : Witnora.BinaryXorDiscovery.extract "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
             f"= {emitted_equations} := by decide\n"
-            "example : Witnora.SpokeDiscoverySpec.discoverFrom "
+            "example : Witnora.SpokePathDiscovery.extract "\n            f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "\n            f"= {emitted_paths} := by decide\n"\n            "example : Witnora.SpokeDiscoverySpec.discoverFrom "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) "
             f"[{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
             f"= [{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
@@ -113,6 +122,7 @@ def verify_discovered_spoke_with_lean(
                              (result.stdout + result.stderr)[-1000:])
         return {
             "binary_extraction_exact_checked": True,
+            "spoke_path_extraction_exact_checked": True,
             "verified": True,
             "lean_formal_status": "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",
             "proof_source_sha256": sha256(proof.encode("utf-8")).hexdigest(),
