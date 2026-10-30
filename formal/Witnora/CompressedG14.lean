@@ -24,13 +24,16 @@ theorem residual_g14_implies_original_unsat
     (hpaths : ValidSourcePaths cnf rootOf offset paths)
     (residualRaw : List (List Int))
     (hrewrite : substituteCNF rootOf offset cnf = decodeCNF residualRaw)
+    (canonical : List (List Int))
+    (hcanonical : Witnora.CNFSorted.canonicalize (decodeCNF residualRaw) =
+      decodeCNF canonical)
     (separator : List Nat)
     (components : List (Nat × Bool) → List CNF)
     (hpart : ∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
       Witnora.ComponentPartition.checkPartition
         (Witnora.Conditioning.conditionCNF
           (Witnora.SeparatorAssignments.fixedOf branch)
-          (decodeCNF residualRaw))
+          (decodeCNF canonical))
         (components branch) = true)
     (selected : List (Nat × Bool) → CNF)
     (hselected : ∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
@@ -48,9 +51,14 @@ theorem residual_g14_implies_original_unsat
   rw [hrewrite] at hr
   have hraw : signedCNFHolds residualRaw roots :=
     (signedCNFHolds_iff residualRaw roots).mpr hr
+  have hcan : signedCNFHolds canonical roots := by
+    apply (signedCNFHolds_iff canonical roots).mpr
+    rw [← hcanonical]
+    apply (Witnora.CNFSorted.canonicalize_correct (decodeCNF residualRaw) roots).mpr
+    exact (signedCNFHolds_iff residualRaw roots).mp hraw
   exact (Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
-    residualRaw separator components hpart selected hselected bound rows steps)
-      ⟨roots, hraw⟩
+    canonical separator components hpart selected hselected bound rows steps)
+      ⟨roots, hcan⟩
 
 #print axioms Witnora.CompressedG14.residual_g14_implies_original_unsat
 
