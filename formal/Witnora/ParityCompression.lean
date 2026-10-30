@@ -42,8 +42,8 @@ theorem reconstruct_edge (rootOf : Nat → Nat) (offset : Nat → Bool)
     EdgeHolds (reconstruct rootOf offset rootValue) e := by
   unfold EdgeHolds reconstruct
   rw [← hsame]
-  have hx : (rootValue (rootOf e.u) != offset e.u) !=
-      (rootValue (rootOf e.u) != offset e.v) =
+  have hx : ((rootValue (rootOf e.u) != offset e.u) !=
+      (rootValue (rootOf e.u) != offset e.v)) =
       (offset e.u != offset e.v) := by
     cases rootValue (rootOf e.u) <;>
       cases offset e.u <;> cases offset e.v <;> decide
