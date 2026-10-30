@@ -30,6 +30,7 @@ class SourceSpokeGateTest(unittest.TestCase):
             proof = Path(argv[3]).read_text(encoding="utf-8")
             self.assertIn("checked_ascii_dimacs_spoke_unsat", proof)
             self.assertIn("SpokeDiscoverySpec.discoverFrom", proof)
+            self.assertIn("BinaryXorDiscovery.extract", proof)
             self.assertIn("signedCNFHolds", proof)
             self.assertNotIn("sorry", proof)
             self.assertNotIn("axiom", proof)
