@@ -57,7 +57,7 @@ theorem residual_g14_implies_original_unsat
     apply (Witnora.CNFSorted.canonicalize_correct (decodeCNF residualRaw) roots).mpr
     exact (signedCNFHolds_iff residualRaw roots).mp hraw
   have hun := Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
-    canonical separator components hpart selected hselected bound rows steps
+    canonical separator components hpart selected hselected bound rows steps hcert
   exact hun ⟨roots, hcan⟩
 
 #print axioms Witnora.CompressedG14.residual_g14_implies_original_unsat
