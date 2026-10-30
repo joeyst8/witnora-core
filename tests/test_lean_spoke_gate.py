@@ -31,7 +31,7 @@ class SourceSpokeGateTest(unittest.TestCase):
             self.assertIn("checked_ascii_dimacs_spoke_unsat", proof)
             self.assertIn("SpokeDiscoverySpec.discoverFrom", proof)
             self.assertIn("BinaryXorIndexed.checkExact", proof)
-            self.assertIn("SpokePathIndexed.checkExact", proof)
+            self.assertIn("SpokePathSorted.checkSorted", proof)
             self.assertIn("signedCNFHolds", proof)
             self.assertNotIn("sorry", proof)
             self.assertNotIn("axiom", proof)
@@ -40,6 +40,7 @@ class SourceSpokeGateTest(unittest.TestCase):
             result = self.check()
         self.assertTrue(result["verified"])
         self.assertTrue(result["spoke_path_indexed_exact_checked"])
+        self.assertTrue(result["spoke_path_sorted_exact_checked"])
         self.assertTrue(result["binary_extraction_indexed_exact_checked"])
         self.assertEqual(result["lean_formal_status"], "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED")
 
