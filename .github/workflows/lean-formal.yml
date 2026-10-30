@@ -132,6 +132,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_parity_compression.py' -v
       - name: Check fail-closed parity residual certificate gate
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_parity_compression_gate.py' -v
+      - name: Check compressed G14 fail-closed certificate behavior
+        run: PYTHONPATH=. python -m unittest tests.test_lean_compressed_g14_gate
       - name: Test opt-in Lean-gated compression SAT path
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
