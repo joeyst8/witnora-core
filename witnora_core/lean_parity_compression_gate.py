@@ -33,7 +33,7 @@ def _paths_proof(vertices: list[int]) -> str:
     def rec(i: int, indent: str, negative: list[str]) -> str:
         if i == len(vertices):
             conds = ", ".join(negative)
-            return indent + "simp [rootOf, parityOffset, sourcePath, " + conds + "]\n"
+            return indent + "simp [rootOf, parityOffset, sourcePath, " + conds + ", " + "Witnora.CycleParity.checkSteps, Witnora.CycleParity.lastVertex, " + "Witnora.CycleParity.rhsParity]\n"
         v = vertices[i]
         h = f"h{i}"
         return (
