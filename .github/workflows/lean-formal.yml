@@ -146,6 +146,15 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g14_gate.py'
       - name: Install independent Glucose3 SAT oracle
         run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Adversarial compression versus Glucose3 Minisat22 and exhaustive truth
+        run: PYTHONPATH=. python scripts/adversarial_compression_validation.py --sizes 6 10 --seeds 7 13 29 --output adversarial-compression.csv
+      - name: Publish adversarial compression measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adversarial-compression-${{ github.sha }}
+          path: adversarial-compression.csv
+          if-no-files-found: ignore
       - name: Benchmark cycle discovery against parity DSU, Gaussian GF2 and Glucose3
         run: PYTHONPATH=. python scripts/benchmark_cycle_discovery.py --sizes 8 24 64 --repeats 3 --output cycle-benchmark.csv
       - name: Publish cycle benchmark raw measurements
