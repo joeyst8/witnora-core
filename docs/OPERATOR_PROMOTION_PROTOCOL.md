@@ -233,3 +233,28 @@ the exact Python-output path mapping and post-substitution normalization
 are not yet fed into a complete source-bound Lean certificate checker.
 Nothing here authorizes full-G5/G14 trusted replacement until that gate
 is in place. No general algorithmic advantage is claimed.
+
+## First full source-bound parity-residual certificate (2026-10-30)
+
+`verify_parity_compression_with_lean` now independently recomputes and
+checks the complete certificate for supported ASCII DIMACS inputs:
+
+1. The original text, signed token stream, decimal spellings, raw clauses,
+   and canonical Python CNF must pass the existing normalization Lean gate.
+2. Python emits component roots, offsets, all root-to-vertex paths, and
+   a literal-rewritten residual formula.
+3. The generated Lean proof checks **every** emitted path against source-CNF
+   binary XOR patterns, verifies exact path endpoints and parity offsets,
+   invokes `ParityResidual.source_iff_rewritten_residual`, and checks
+   exact equality of the unnormalized rewritten CNF to Lean's substitution.
+4. A separate normalization Lean gate checks the final canonical Python
+   residual. The result is fail-closed on any rejection or timeout.
+
+A real GitHub Actions check succeeded for a graph with two consistent XOR
+edges and an additional non-XOR residual clause; a malformed original
+DIMACS header was rejected. This grants the narrow
+`LEAN_SOURCE_PARITY_RESIDUAL_EQUIVALENT` status for that instance only.
+The production G5/G14 solvers still use their existing approved paths:
+this new compression is **not** automatically substituted into them.
+Full CPython execution refinement, scalability on larger proof witnesses,
+and a competitive performance advantage remain unproved.
