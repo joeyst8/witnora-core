@@ -328,3 +328,30 @@ refinement, a G14 composition result for compressed inputs, or evidence that
 compression is faster than existing specialized SAT solvers. The normal
 Glucose-only compressed solve path still refuses to label a bare UNSAT report
 as kernel-verified.
+
+## Original-source UNSAT via compressed residual G14 (2026-10-30)
+
+`CompressedG14.residual_g14_implies_original_unsat` composes
+source-backed parity-root model correspondence, exact raw residual
+substitution, verified residual canonicalization, exhaustive separator
+assignment enumeration, checked residual component partitions, selected
+UNSAT components, and per-branch G5 contradictions. This theorem derives
+UNSAT of the **original** CNF, not merely of a selected residual.
+
+The opt-in `verify_compressed_g14_with_lean` first runs the existing
+original-source parity-compression and residual G14 certificate gates, then
+emits a **single** additional Lean proof with the actual original ASCII DIMACS
+source, component paths and offsets, exact residual rewrite, canonical
+residual, all G14 branch assignments and partitions, selected components,
+and concrete G5 rows/DAGs. Every finite branch premise is rechecked in
+that proof; only successful Lean execution returns
+`LEAN_ORIGINAL_SOURCE_COMPRESSED_G14_UNSAT_VERIFIED` with
+`original_unsat_kernel_verified = True`.
+
+A real CI test using an independent consistent binary-XOR component and the
+bounded `saf_unsat_cover_2` G14 family passed the combined kernel proof
+([run 41137357473](https://github.com/joeyst8/witnora-core/actions/runs/41137357473)).
+Source text and normalization remain mandatory, and invalid or absent
+certificates fail closed. This is a supported-instance correctness milestone:
+it does not prove universal refinement of arbitrary Python execution,
+establish a runtime speedup, or make G14 complete for arbitrary CNF.
