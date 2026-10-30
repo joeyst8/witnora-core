@@ -183,3 +183,27 @@ union-find and GF(2) solvers to exhaustive assignments on random small
 graphs. Publication-quality comparison still requires repeated independent
 runners, memory measurements, larger adversarial cases, certificate
 generation/check time, and state-of-the-art specialized solvers.
+
+## Parity-component structural compression: first formal milestone
+
+`ParityCompression.reconstruct_preserves_edges` is a universally quantified
+Lean theorem. Given a verified root label and Boolean parity offset for each
+vertex, if every represented binary-XOR edge connects the same root and its
+offset parity matches the edge constraint, **every choice of Boolean root
+values reconstructs a valuation satisfying all represented edges**.
+
+`witnora_core/parity_compression.py` produces a deterministic, explicitly
+**unverified** component/root/offset candidate from exact binary XOR-CNF
+patterns. It rejects inconsistent graphs; property tests enumerate *every*
+root assignment on randomized small consistent graphs. Components can encode
+`n` represented vertices by `k` root choices (with `n-k` derived variables)
+but no general formula compression or runtime speedup is established.
+
+**Important mathematical boundary:** the theorem proves one-directional
+soundness of the reconstructed assignment for the *extracted XOR edges*. It
+does not yet establish the reverse mapping of every original CNF model to
+root values, equivalence of arbitrary residual CNF clauses after substitution,
+or a source-bound per-instance Lean check of the Python offset map. Those
+are the next proof obligations before any replacement of production G5/G14
+formula handling. This is classical parity-component substitution, not
+independently novel mathematics.
