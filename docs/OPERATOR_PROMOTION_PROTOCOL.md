@@ -94,3 +94,16 @@ The GitHub Actions artifact from commit `29cd28f` records actual Lean process ti
 | 25 | 27 | 100 | 625 | 45.055 s | **no: 45-second timeout** |
 
 Artifact: [CI run 41116642578](https://github.com/joeyst8/witnora-core/actions/runs/41116642578). The test harness intentionally recorded the 27-variable rejection as a measurement instead of awarding verification. Deduplicating indexed edge joins is an experimental optimization after this baseline, **not yet validated by this table**. Any later table must include its own commit, run ID, timeout, and pass/fail.
+
+## Indexed path deduplication follow-up (2026-10-30)
+
+The `a712c6e` CI benchmark compares the same real source-bound proof process against baseline `29cd28f`. This is a single-run comparison on Azure-hosted Linux, not a variance-controlled speed claim.
+
+| Variables | Baseline | Deduplicated join check | Change | Lean verified |
+|---:|---:|---:|---:|:---:|
+| 5 | 1.362s | 0.660s | ~2.1× faster | yes |
+| 7 | 2.803s | 1.318s | ~2.1× faster | yes |
+| 11 | 11.929s | 6.505s | ~1.8× faster | yes |
+| 27 | 45s timeout | 45s timeout | not established | **no** |
+
+Evidence: [optimized CI run 41117541879](https://github.com/joeyst8/witnora-core/actions/runs/41117541879). The kernel-checked set-membership theorem is now phrased against `uniqueJoins` (all indexed joins with duplicates removed). No unsafe assumptions were introduced. The remaining bottleneck is the quadratic-or-worse Lean reduction of candidate-set membership, plus possible certificate size effects. A scalable indexed lookup/normalized sorted-vector checker with a proved set-equivalence lemma is the next meaningful improvement. Until then, large source-bound spoke certificates may time out and **must not** receive verified status.
