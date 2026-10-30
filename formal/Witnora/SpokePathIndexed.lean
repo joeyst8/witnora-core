@@ -51,6 +51,29 @@ theorem checkExact_mem_iff (edges : List Equation) (reported : List Path)
     have hs := List.all_eq_true.mp h.1.2 p hp
     simpa using hs
 
+
+/-- An exact single joined path is accepted. -/
+example :
+    checkExact
+      [⟨1, 2, false⟩, ⟨2, 3, true⟩]
+      [⟨1, 3, 2, false, true⟩] = true := by decide
+
+/-- A missing path cannot pass an exact certificate. -/
+example :
+    checkExact [⟨1, 2, false⟩, ⟨2, 3, true⟩] [] = false := by decide
+
+/-- A fabricated endpoint syndrome cannot pass. -/
+example :
+    checkExact
+      [⟨1, 2, false⟩, ⟨2, 3, true⟩]
+      [⟨1, 3, 2, true, true⟩] = false := by decide
+
+/-- Repeated path claims are rejected even if their content is valid. -/
+example :
+    checkExact
+      [⟨1, 2, false⟩, ⟨2, 3, true⟩]
+      [⟨1, 3, 2, false, true⟩, ⟨1, 3, 2, false, true⟩] = false := by decide
+
 #print axioms Witnora.SpokePathIndexed.checkExact_mem_iff
 
 end Witnora.SpokePathIndexed
