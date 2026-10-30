@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from witnora_core.cnf import CNFFormula
 from witnora_core.lean_compressed_g14_gate import verify_compressed_g14_with_lean
+from witnora_core.parity_compression import compress_binary_xor_components, substitute_residual_formula
 
 
 class CompressedG14GateTests(unittest.TestCase):
@@ -40,7 +41,9 @@ class CompressedG14GateTests(unittest.TestCase):
     def test_g14_rejection_does_not_promote_unsat(self):
         candidate = {
             "verified": True,
-            "residual_formula_sha256": self.formula.formula_hash,
+            "residual_formula_sha256": substitute_residual_formula(
+                self.formula, compress_binary_xor_components(self.formula)
+            ).formula_hash,
         }
         with patch(
             "witnora_core.lean_compressed_g14_gate.verify_parity_compression_with_lean",
