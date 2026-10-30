@@ -1,0 +1,33 @@
+name: Finite graph conjecture laboratory
+
+on:
+  push:
+    branches:
+      - 'research/graph-conjecture-lab-v13'
+  pull_request:
+    paths:
+      - 'witnora_core/graph_conjecture_lab.py'
+      - 'tests/test_graph_conjecture_lab.py'
+      - 'scripts/experiment_graph_conjectures.py'
+      - '.github/workflows/graph-conjecture-lab.yml'
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check graph invariants and fail-closed claims
+        run: PYTHONPATH=. python -m unittest tests.test_graph_conjecture_lab -v
+      - name: Generate and falsify finite graph conjectures
+        run: PYTHONPATH=. python scripts/experiment_graph_conjectures.py
+      - name: Archive all survivors and counterexample graphs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-conjectures-${{ github.sha }}
+          path: graph-conjecture-ledger.json
+          if-no-files-found: ignore
