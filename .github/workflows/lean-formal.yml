@@ -19,6 +19,8 @@ on:
       - 'tests/test_spoke_discovery.py'
       - 'tests/test_spoke_discovery_reference.py'
       - 'tests/test_cycle_discovery.py'
+      - 'tests/test_cycle_benchmark.py'
+      - 'scripts/benchmark_cycle_discovery.py'
       - 'witnora_core/cycle_discovery.py'
       - 'witnora_core/lean_cycle_gate.py'
       - 'witnora_core/spoke_discovery.py'
@@ -59,6 +61,8 @@ on:
       - 'tests/test_spoke_discovery.py'
       - 'tests/test_spoke_discovery_reference.py'
       - 'tests/test_cycle_discovery.py'
+      - 'tests/test_cycle_benchmark.py'
+      - 'scripts/benchmark_cycle_discovery.py'
       - 'witnora_core/cycle_discovery.py'
       - 'witnora_core/lean_cycle_gate.py'
       - 'witnora_core/spoke_discovery.py'
@@ -108,6 +112,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_discovery_reference.py' -v
       - name: Cross-check arbitrary XOR cycles with independent assignment oracle
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_cycle_discovery.py' -v
+      - name: Test independent parity benchmarks against exhaustive oracle
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_cycle_benchmark.py' -v
       - name: Run G5 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Test fail-closed Python CNF Lean normalization gate
@@ -118,6 +124,15 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g14_gate.py'
       - name: Install independent Glucose3 SAT oracle
         run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Benchmark cycle discovery against parity DSU, Gaussian GF2 and Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_cycle_discovery.py --sizes 8 24 64 --repeats 3 --output cycle-benchmark.csv
+      - name: Publish cycle benchmark raw measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cycle-benchmark-${{ github.sha }}
+          path: cycle-benchmark.csv
+          if-no-files-found: ignore
       - name: Randomized differential tests of G5 and G14
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_formal_differential.py'
       - name: Cross-check G5 and G14 certificates against Glucose3
