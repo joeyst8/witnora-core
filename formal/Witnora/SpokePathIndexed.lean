@@ -28,10 +28,15 @@ def join (e f : Equation) : List Path :=
 def allJoins (edges : List Equation) : List Path :=
   edges.flatMap (fun e => edges.flatMap (fun f => join e f))
 
+/-- Deduplicate repeated orientations of the same edge join once. -/
+def uniqueJoins (edges : List Equation) : List Path :=
+  (allJoins edges).eraseDups
+
 /-- Reject omissions, fabricated paths, and duplicate reported paths. -/
 def checkExact (edges : List Equation) (reported : List Path) : Bool :=
-  (reported.all (fun p => decide (p ∈ allJoins edges))) &&
-  ((allJoins edges).all (fun p => decide (p ∈ reported))) &&
+  let expected := uniqueJoins edges
+  (reported.all (fun p => decide (p ∈ expected))) &&
+  (expected.all (fun p => decide (p ∈ reported))) &&
   decide reported.Nodup
 
 theorem checkExact_mem_iff (edges : List Equation) (reported : List Path)
@@ -41,7 +46,7 @@ theorem checkExact_mem_iff (edges : List Equation) (reported : List Path)
   constructor
   · intro hp
     have hs := List.all_eq_true.mp h.1.1 p hp
-    simpa using hs
+    simpa [uniqueJoins] using hs
   · intro hp
     have hs := List.all_eq_true.mp h.1.2 p hp
     simpa using hs
