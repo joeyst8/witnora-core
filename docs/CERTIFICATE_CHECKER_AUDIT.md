@@ -46,6 +46,8 @@ source at the trust boundary:
    the binary-XOR root substitution.
 2. Replaces the **selected residual component** with an empty CNF, which
    cannot be the certified UNSAT component.
+3. Erases the **G5 initial rows** from all branch certificates, removing
+   the algebraic evidence needed for the claimed contradiction.
 
 Each mutation is executed through the genuine Lean executable. The gate must
 return `verified = False` and never set
@@ -77,3 +79,27 @@ are **proof-overhead accounting, not a solver-speedup claim**.
 5. **Scientific claims:** increase sample sizes, independent random seeds,
    hard crafted counterexamples, modern SAT baselines, repeated timings,
    memory and proof-size measurements before asserting novelty or advantage.
+
+## Adversarial scientific validation — first bounded corpus
+
+`scripts/adversarial_compression_validation.py` constructs 30
+deterministically seeded cases (two sizes, three seeds, five families):
+consistent binary parity with non-XOR 3-CNF; deliberately contradictory XOR
+cycles; half-encoded XOR pairs that must not be inferred as equations;
+ordinary unit contradictions missed by XOR-only reasoning; and random
+satisfiable 3-CNF with no binary parity evidence.
+
+It compares every original CNF against **Glucose3, Minisat22 and an
+independent exhaustive assignment enumeration** (at most ten variables
+in the current CI). For consistent compression it also compares the
+residual SAT verdict and validates every reconstructed SAT witness against
+the original CNF. Inconsistent binary XOR structure must be rejected,
+not silently compressed. Every case records a deterministic seed, source
+SHA-256, operator status, result, and timing; `lean_checked = 0` clearly
+separates this differential benchmark from the real-Lean certificate tests.
+
+The first CI run passed all 30 cases. These are still small generated
+fixtures, not industrial hard-SAT benchmarks or proof of an advantage.
+Next: more independent generators, larger structured instances, mutation
+coverage of the actual G5 DAG, memory use, modern SAT competition, and
+repeated measurements across machines.
