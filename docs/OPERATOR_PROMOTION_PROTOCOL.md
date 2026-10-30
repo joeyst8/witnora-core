@@ -322,7 +322,7 @@ fail-closed result does not grant the stronger status.
 The real CI case contains a consistent 2-variable XOR component plus
 contradictory 3-variable XOR constraints. The compressed residual has a native
 G5 UNSAT certificate, and the generated combined source-bound Lean proof
-passed in [the corrected GitHub Actions run](https://github.com/joeyst8/witnora-core/actions/runs/41136547272).
+passed in [the corrected GitHub Actions run](https://github.com/joeyst8/witnora-core/actions/runs/41136465940).
 This is an end-to-end **supported-instance** proof, not a universal CPython
 refinement, a G14 composition result for compressed inputs, or evidence that
 compression is faster than existing specialized SAT solvers. The normal
