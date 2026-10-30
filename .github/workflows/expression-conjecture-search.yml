@@ -1,0 +1,30 @@
+name: Expression conjecture research gate
+
+on:
+  push:
+    branches:
+      - 'research/expression-conjecture-search-v15'
+  pull_request:
+    paths:
+      - 'witnora_core/expression_conjecture_search.py'
+      - 'tests/test_expression_conjecture_search.py'
+      - 'scripts/experiment_expression_conjectures.py'
+      - '.github/workflows/expression-conjecture-search.yml'
+
+jobs:
+  expressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test expression semantics and claim boundaries
+        run: PYTHONPATH=. python -m unittest tests.test_expression_conjecture_search -v
+      - name: Discover and falsify generated expressions
+        run: PYTHONPATH=. python scripts/experiment_expression_conjectures.py
+      - name: Archive candidates survivors and counterexample graphs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expression-conjectures-${{ github.sha }}
+          path: expression-conjectures.json
+          if-no-files-found: ignore
