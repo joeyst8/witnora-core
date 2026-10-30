@@ -23,13 +23,13 @@ from witnora_core.spoke_discovery import (
 from witnora_core.lean_spoke_gate import verify_discovered_spoke_with_lean
 
 
-def benchmark(sizes: list[int], timeout: int):
-    writer = csv.DictWriter(sys.stdout, fieldnames=[
+def benchmark(sizes: list[int], timeout: int, stream=sys.stdout):
+    writer = csv.DictWriter(stream, fieldnames=[
         "spokes", "variables", "clauses", "binary_equations", "paths",
         "proposals", "discovery_seconds", "lean_gate_seconds",
         "verified", "status", "reason", "proof_source_sha256",
     ])
-    print("# " + platform.platform(), flush=True)
+    print("# " + platform.platform(), file=stream, flush=True)
     writer.writeheader()
     results = []
     for count in sizes:
@@ -63,7 +63,7 @@ def benchmark(sizes: list[int], timeout: int):
         )
         results.append(row)
         writer.writerow(row)
-        sys.stdout.flush()
+        stream.flush()
     return results
 
 
@@ -72,10 +72,20 @@ def main():
     parser.add_argument("--sizes", nargs="+", type=int, default=[3, 5, 9, 25])
     parser.add_argument("--timeout", type=int, default=45)
     parser.add_argument("--require-small-pass", action="store_true")
+    parser.add_argument("--require-all-pass", action="store_true")
+    parser.add_argument("--output", help="write a durable CSV report")
     args = parser.parse_args()
     if args.timeout <= 0 or any(n < 2 for n in args.sizes):
         parser.error("positive timeout and at least two spokes required")
-    rows = benchmark(args.sizes, args.timeout)
+    if args.output:
+        with open(args.output, "w", encoding="utf-8", newline="") as stream:
+            rows = benchmark(args.sizes, args.timeout, stream)
+        with open(args.output, encoding="utf-8") as stream:
+            print(stream.read(), end="")
+    else:
+        rows = benchmark(args.sizes, args.timeout)
+    if args.require_all_pass and not all(row["verified"] for row in rows):
+        raise SystemExit("at least one real Lean size failed; inspect CSV")
     if args.require_small_pass and not rows[0]["verified"]:
         raise SystemExit("small-instance Lean gate failed")
 
