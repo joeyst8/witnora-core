@@ -42,7 +42,6 @@ def discover_parity_spoke_conflicts(formula: CNFFormula) -> list[dict[str, Any]]
     The routine checks both forbidden assignment clauses for each binary
     equation, and never infers an XOR from a single suggestive CNF clause.
     """
-    clause_set = {tuple(clause) for clause in formula.to_clause_lists()}
     edges: dict[int, list[tuple[int, int, tuple[tuple[int, ...], ...]]]] = defaultdict(list)
     for u, v, rhs in extract_binary_xor_equations(formula):
         witness = tuple(sorted(canonical_xor_cnf_clauses((u, v), rhs)))
