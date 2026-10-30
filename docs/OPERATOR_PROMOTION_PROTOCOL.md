@@ -69,3 +69,7 @@ not universal CPython execution refinement. The production
 gate checks concrete discovered instances with this theorem; **universal
 correctness and completeness of the Python detector's proposal enumeration** remains unproved. Universal Python interpreter
 refinement and independent novelty audit also remain open.
+
+## Complete path-refinement checkpoint
+
+`SpokePathDiscovery.extract` enumerates every three-variable path and pair of parity labels from the finite domain. Lean proves exact filter membership and that each accepted path's two binary equations hold in all source-CNF models. The production spoke proof gate compares the complete Python `extract_spoke_paths` result against this executable Lean specification with a closed `by decide` obligation. The strongest spoke status now fails closed when the formula contains more than **6** distinct variables (the finite path enumeration has cubic variable growth) or Lean rejects any equality. The previous 24-variable binary-extraction limit is therefore superseded for this combined status. The independent test oracle covers randomized complete-path membership, but a universal proof about CPython execution and the entire graph-to-conflict selection remains open. This stage does **not** establish novelty, speed, or formal Python-language semantics.
