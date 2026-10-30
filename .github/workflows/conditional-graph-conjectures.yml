@@ -1,0 +1,33 @@
+name: Conditional graph conjecture research gate
+
+on:
+  push:
+    branches:
+      - 'research/conditional-graph-conjectures-v14'
+  pull_request:
+    paths:
+      - 'witnora_core/conditional_graph_conjectures.py'
+      - 'tests/test_conditional_graph_conjectures.py'
+      - 'scripts/experiment_conditional_graph_conjectures.py'
+      - '.github/workflows/conditional-graph-conjectures.yml'
+
+jobs:
+  conditional:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test condition and transformation semantics
+        run: PYTHONPATH=. python -m unittest tests.test_conditional_graph_conjectures -v
+      - name: Falsify conditional conjectures on larger graphs
+        run: PYTHONPATH=. python scripts/experiment_conditional_graph_conjectures.py
+      - name: Preserve full conjecture and counterexample ledger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conditional-graph-${{ github.sha }}
+          path: conditional-graph-ledger.json
+          if-no-files-found: ignore
