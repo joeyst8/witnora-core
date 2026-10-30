@@ -9,7 +9,8 @@ import random
 import unittest
 
 from witnora_core.cnf import CNFFormula
-from witnora_core.spoke_discovery import discover_parity_spoke_conflicts
+from witnora_core.spoke_discovery import (discover_parity_spoke_conflicts,
+                                         extract_binary_xor_equations)
 from witnora_core.xor import canonical_xor_cnf_clauses
 
 
@@ -50,6 +51,16 @@ def detected(formula):
     return output
 
 
+def binary_reference(formula):
+    clauses = set(map(tuple, formula.to_clause_lists()))
+    return [
+        (u, v, rhs)
+        for u, v in combinations(sorted(formula.variables), 2)
+        for rhs in (0, 1)
+        if canonical_xor_cnf_clauses((u, v), rhs).issubset(clauses)
+    ]
+
+
 class SpokeDiscoveryReferenceTest(unittest.TestCase):
     def test_randomized_complete_enumeration(self):
         rng = random.Random(100901)
@@ -63,6 +74,7 @@ class SpokeDiscoveryReferenceTest(unittest.TestCase):
                     clauses.add((u, v, -u))
             formula = CNFFormula.from_raw_clauses(clauses)
             self.assertEqual(detected(formula), reference(formula))
+            self.assertEqual(extract_binary_xor_equations(formula), binary_reference(formula))
 
     def test_handbuilt_conflict_and_missing_clause(self):
         clauses = set()
