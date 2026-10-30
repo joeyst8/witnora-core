@@ -1,0 +1,33 @@
+name: Parity separator fingerprint research gate
+
+on:
+  push:
+    branches:
+      - 'research/parity-separator-fingerprint-v5'
+  pull_request:
+    paths:
+      - 'witnora_core/parity_separator_fingerprint.py'
+      - 'tests/test_parity_separator_fingerprint.py'
+      - 'scripts/benchmark_parity_separator_fingerprint.py'
+      - '.github/workflows/parity-separator-fingerprint.yml'
+
+jobs:
+  fingerprint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test exact and near-miss parity fingerprints
+        run: PYTHONPATH=. python -m unittest tests.test_parity_separator_fingerprint -v
+      - name: Test on held-out structural families
+        run: PYTHONPATH=. python scripts/benchmark_parity_separator_fingerprint.py
+      - name: Archive all fingerprints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-separator-${{ github.sha }}
+          path: parity-separator-fingerprint.csv
+          if-no-files-found: ignore
