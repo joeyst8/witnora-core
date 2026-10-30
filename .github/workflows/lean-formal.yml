@@ -140,6 +140,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest tests.test_structural_operator_invention
       - name: Exhaustively validate out-of-distribution SAT family generators
         run: PYTHONPATH=. python -m unittest tests.test_ood_sat_families
+      - name: Test unseen-family candidate screen is fail-closed
+        run: PYTHONPATH=. python -m unittest tests.test_ood_candidate_screen
       - name: Test opt-in Lean-gated compression SAT path
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
@@ -187,6 +189,15 @@ jobs:
         with:
           name: ood-operator-study-${{ github.sha }}
           path: ood-operator-study.csv
+          if-no-files-found: ignore
+      - name: Screen unseen-family results without promoting unverified claims
+        run: PYTHONPATH=. python scripts/screen_ood_candidates.py --input ood-operator-study.csv --output ood-candidate-screen.json
+      - name: Publish unseen-family followup screen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ood-candidate-screen-${{ github.sha }}
+          path: ood-candidate-screen.json
           if-no-files-found: ignore
       - name: Benchmark cycle discovery against parity DSU, Gaussian GF2 and Glucose3
         run: PYTHONPATH=. python scripts/benchmark_cycle_discovery.py --sizes 8 24 64 --repeats 3 --output cycle-benchmark.csv
