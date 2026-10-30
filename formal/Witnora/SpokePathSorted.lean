@@ -41,8 +41,8 @@ theorem mem_insertSorted (p q : Path) (xs : List Path) :
   induction xs with
   | nil => simp [insertSorted]
   | cons x xs ih =>
-      simp only [insertSorted]
-      split_ifs <;> simp [ih, or_assoc, or_left_comm, or_comm]
+      cases hqx : pathLe q x <;>
+        simp [insertSorted, hqx, ih, or_assoc, or_left_comm, or_comm]
 
 theorem mem_normalize (p : Path) (xs : List Path) :
     p ∈ normalize xs ↔ p ∈ xs := by
@@ -60,8 +60,10 @@ theorem checkSorted_mem_iff
     (h : checkSorted edges reported = true) (p : Path) :
     p ∈ reported ↔ p ∈ uniqueJoins edges := by
   have heq : normalize (uniqueJoins edges) = normalize reported := by
-    have hh := (Bool.and_eq_true.mp h).1
-    simpa [checkSorted] using hh
+    have hh : decide (normalize (uniqueJoins edges) = normalize reported) = true ∧
+        decide reported.Nodup = true := by
+      simpa only [checkSorted, Bool.and_eq_true] using h
+    simpa using hh.1
   constructor
   · intro hp
     have hm : p ∈ normalize reported :=
@@ -80,8 +82,10 @@ theorem checkSorted_implies_exact
     (h : checkSorted edges reported = true) :
     checkExact edges reported = true := by
   have hnodup : reported.Nodup := by
-    have hh := (Bool.and_eq_true.mp h).2
-    simpa [checkSorted] using hh
+    have hh : decide (normalize (uniqueJoins edges) = normalize reported) = true ∧
+        decide reported.Nodup = true := by
+      simpa only [checkSorted, Bool.and_eq_true] using h
+    simpa using hh.2
   simp only [checkExact, Bool.and_eq_true]
   constructor
   · constructor
