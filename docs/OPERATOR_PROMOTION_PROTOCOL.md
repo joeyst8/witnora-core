@@ -81,3 +81,16 @@ The source-bound spoke gate now uses the universal `SpokePathIndexed.checkExact_
 ## Source-indexed binary extraction checkpoint
 
 `BinaryXorIndexed` derives candidate pairs from length-two source clauses and verifies exact opposite-polarity clause patterns for each right-hand side. The Lean `checkExact_mem_iff` theorem makes the accepted Python equation set complete relative to these source-derived candidates; `checkExact_sound` proves each accepted equation holds in every source CNF model. The production gate requires this closed Lean check along with exact indexed path joins and original-document UNSAT. The old 24-variable all-pairs limit has been removed; resource exhaustion or a Lean rejection still fails closed. This is for the *exact two-clause* binary XOR extraction contract: it is deliberately narrower than arbitrary logical implication or G5 clause-subsumption extraction. These results do not constitute a universal proof of CPython interpreter semantics.
+
+## First real kernel-gate scaling baseline (2026-10-30)
+
+The GitHub Actions artifact from commit `29cd28f` records actual Lean process timings, including source parsing, indexed binary and path checks, and the original-document UNSAT theorem. Environment: Linux Azure x86_64 GitHub runner. This is **one run per size**, not a statistically robust performance comparison.
+
+| Spokes | Variables | Clauses | Paths | Gate time | Verified |
+|---:|---:|---:|---:|---:|:---:|
+| 3 | 5 | 12 | 9 | 1.362 s | yes |
+| 5 | 7 | 20 | 25 | 2.803 s | yes |
+| 9 | 11 | 36 | 81 | 11.929 s | yes |
+| 25 | 27 | 100 | 625 | 45.055 s | **no: 45-second timeout** |
+
+Artifact: [CI run 41116642578](https://github.com/joeyst8/witnora-core/actions/runs/41116642578). The test harness intentionally recorded the 27-variable rejection as a measurement instead of awarding verification. Deduplicating indexed edge joins is an experimental optimization after this baseline, **not yet validated by this table**. Any later table must include its own commit, run ID, timeout, and pass/fail.
