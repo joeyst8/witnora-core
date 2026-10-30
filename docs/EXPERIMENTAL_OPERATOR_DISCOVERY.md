@@ -101,3 +101,43 @@ generators; this is not an independently sampled distribution shift.
 The next genuinely scientific test should use unfamiliar families, larger
 benchmarks and ablations that separate heuristic value from the underlying
 resolution algorithm.
+
+## Out-of-distribution scientific challenge round
+
+A new generator module, `witnora_core/ood_sat_families.py`, introduces five
+families that were **not** used by the original synthetic binary-XOR training
+loop:
+
+1. Pigeonhole instances (including known contradictions).
+2. Graph coloring (including K4/3-color and odd-cycle/2-color contradictions).
+3. Degree-three K4 Tseitin parity, encoded as full three-variable XOR CNF.
+4. N-Queens satisfiable and unsatisfiable boards.
+5. Planted satisfying random 3-CNF.
+
+The smaller generator truths are also checked by independent exhaustive
+assignment tests. `scripts/benchmark_operator_ood.py` applies the frozen
+sequences from the earlier training ledger **without refitting them** and
+separately evaluates newly invented graph-invariant heuristics as exploratory
+comparisons. For each input and transformed CNF, Glucose3 and Minisat22 must
+agree on SAT/UNSAT, and Glucose3's SAT models must satisfy their own formula.
+
+The experiment records original/transformed SHA-256, counts, structural
+interaction gain versus the strongest single operator, repeated exploratory
+Glucose3 timing, and explicit `lean_checked = 0`, `promoted = 0` fields.
+Timing is necessarily noisy on small instances and must not be marketed as a
+competitive speed improvement.
+
+`scripts/screen_ood_candidates.py` predeclares an intentionally demanding
+screen for **further investigation only**: positive *median* interaction gain
+on at least three unseen families and a majority of all evaluated cases.
+Every failure is retained and reported. An accepted follow-up would still
+have `novelty_verified = False`, `lean_verified = False` and
+`performance_advantage_verified = False`.
+
+The OOD generator tests, independent-solver benchmark, and follow-up screen
+all passed their initial CI steps. This is materially stronger than unseen
+seeds from the same original generator, but these remain small human-designed
+families. Industrial or competition SAT data, larger distributions, repeated
+machines, independent operator novelty review, and rigorous performance
+comparisons are the next requirements before any scientific breakthrough
+claim.
