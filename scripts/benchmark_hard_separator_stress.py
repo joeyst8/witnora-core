@@ -111,6 +111,12 @@ def main():
     print({"cases": len(rows),
            "total_runtime_wins": sum(r["conditioned_faster"] for r in rows),
            "max_clauses": max(r["clauses"] for r in rows),
+           "median_direct_ms": round(median(r["direct_median_ms"] for r in rows), 4),
+           "median_detection_ms": round(median(r["detection_median_ms"] for r in rows), 4),
+           "median_component_solver_ms": round(median(r["component_solver_median_ms"] for r in rows), 4),
+           "median_other_overhead_ms": round(median(r["other_overhead_median_ms"] for r in rows), 4),
+           "median_conditioned_total_ms": round(median(r["conditioned_total_median_ms"] for r in rows), 4),
+           "component_solver_only_wins": sum(r["component_solver_median_ms"] < r["direct_median_ms"] for r in rows),
            "all_truths_agree": True, "trusted": False})
     return 0
 
