@@ -58,6 +58,11 @@ def main():
             r"(?m)^def certSelected .*$",
             "def certSelected (branch : List (Nat × Bool)) : Witnora.Concrete.CNF := []",
         ),
+        (
+            "g5_initial_rows_erasure",
+            r"(?m)^def certRows .*$",
+            "def certRows (branch : List (Nat × Bool)) : List Witnora.G5Trace.Row := []",
+        ),
     )
     for name, pattern, replacement in attacks:
         observed = {"intercepted": False}
