@@ -238,6 +238,15 @@ jobs:
           PYTHONPATH=. python -c 'from dataclasses import replace; from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.parity_compression import compress_binary_xor_components,substitute_residual_formula; from witnora_core.separator_affine_family_theorem import make_separator_affine_instance,build_separator_affine_certificate; from witnora_core.lean_compressed_g14_gate import verify_compressed_g14_with_lean; base=make_separator_affine_instance("saf_unsat_cover_2"); f=CNFFormula.from_raw_clauses(base.formula.to_clause_lists()+list(canonical_xor_cnf_clauses((100,101),0))); residual=substitute_residual_formula(f,compress_binary_xor_components(f)); cert=build_separator_affine_certificate(replace(base,formula=residual,instance_id="compressed_g14_unsat")); raw=f.to_clause_lists(); tokens=[v for clause in raw for v in (*clause,0)]; result=verify_compressed_g14_with_lean(f,cert,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=180); print(result); assert result["verified"] and result["original_unsat_kernel_verified"],result'
       - name: Adversarially mutate compressed G14 proof witnesses under real Lean
         run: PYTHONPATH=. python scripts/audit_compressed_g14_proof.py
+      - name: Measure full compressed G14 proof cost versus Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_compressed_g14_cost.py --sizes 2 --timeout 180 --output compressed-g14-cost.csv
+      - name: Publish compressed G14 complete-proof measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compressed-g14-cost-${{ github.sha }}
+          path: compressed-g14-cost.csv
+          if-no-files-found: ignore
       - name: Benchmark complete verified compression versus original SAT solve
         run: PYTHONPATH=. python scripts/benchmark_verified_compression.py --sizes 3 5 --repeats 3 --timeout 30 --output verified-compression-benchmark.csv --require-small-pass
       - name: Publish full verified compression timings
