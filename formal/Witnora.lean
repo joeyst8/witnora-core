@@ -33,3 +33,5 @@ import Witnora.SpokeCollapse
 import Witnora.SpokeSourceBridge
 
 import Witnora.SpokeDiscoverySpec
+
+import Witnora.BinaryXorDiscovery
