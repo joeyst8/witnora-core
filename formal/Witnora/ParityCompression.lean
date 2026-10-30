@@ -58,6 +58,57 @@ theorem reconstruct_preserves_edges
   intro e he
   exact reconstruct_edge rootOf offset rootValue e (hvalid e he).1 (hvalid e he).2
 
+
+/-- A supplied source-backed path from each component root to each variable. -/
+def ValidSourcePaths (cnf : Witnora.Concrete.CNF)
+    (rootOf : Nat → Nat) (offset : Nat → Bool)
+    (paths : Nat → List (Nat × Bool)) : Prop :=
+  ∀ v,
+    CycleParity.checkSteps cnf (rootOf v) (paths v) = true ∧
+    CycleParity.lastVertex (rootOf v) (paths v) = v ∧
+    CycleParity.rhsParity (paths v) = offset v
+
+/-- Any source model agrees with its reconstruction from root values. -/
+theorem source_model_reconstructs
+    (cnf : Witnora.Concrete.CNF)
+    (rootOf : Nat → Nat) (offset : Nat → Bool)
+    (paths : Nat → List (Nat × Bool))
+    (hpaths : ValidSourcePaths cnf rootOf offset paths)
+    (a : Nat → Bool) (ha : G5Extraction.CNFHolds cnf a)
+    (v : Nat) :
+    a v = reconstruct rootOf offset a v := by
+  obtain ⟨hcheck, hend, hparity⟩ := hpaths v
+  have hw := CycleParity.checkSteps_sound cnf a ha
+    (rootOf v) (paths v) hcheck
+  have hp := CycleParity.walk_endpoint a (rootOf v) (paths v) hw
+  rw [hend, hparity] at hp
+  unfold reconstruct
+  cases hr : a (rootOf v) <;>
+    cases hv : a v <;>
+    cases ho : offset v <;> simp_all
+
+/-- Source satisfiability is equivalent to satisfiability after semantic
+root substitution, assuming checked root-to-vertex source paths. -/
+theorem source_iff_root_residual
+    (cnf : Witnora.Concrete.CNF)
+    (rootOf : Nat → Nat) (offset : Nat → Bool)
+    (paths : Nat → List (Nat × Bool))
+    (hpaths : ValidSourcePaths cnf rootOf offset paths) :
+    (∃ a, G5Extraction.CNFHolds cnf a) ↔
+    (∃ roots, G5Extraction.CNFHolds cnf
+      (reconstruct rootOf offset roots)) := by
+  constructor
+  · rintro ⟨a, ha⟩
+    refine ⟨a, ?_⟩
+    have heq : reconstruct rootOf offset a = a := by
+      funext v
+      exact (source_model_reconstructs cnf rootOf offset paths
+        hpaths a ha v).symm
+    simpa [heq] using ha
+  · rintro ⟨roots, hroots⟩
+    exact ⟨reconstruct rootOf offset roots, hroots⟩
+
 #print axioms Witnora.ParityCompression.reconstruct_preserves_edges
+#print axioms Witnora.ParityCompression.source_iff_root_residual
 
 end Witnora.ParityCompression
