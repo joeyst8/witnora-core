@@ -20,7 +20,7 @@ from typing import Any, Iterable
 import zipfile
 
 from .cnf import CNFFormula, Clause, formula_satisfied, resolvent
-from .dimacs import load_dimacs
+from .dimacs import load_dimacs, load_dimacs_with_document_evidence
 from .xor import canonical_xor_cnf_clauses
 
 GENESIS_VERSION = "2.7"
@@ -1919,6 +1919,10 @@ class AffineResidueCertificate:
     g5_delta_status: str
     claim_boundary: str
     notes: str
+    # A native Python certificate check is NOT a Lean formal verification.
+    # This status remains fail-closed until a trusted external Lean attestation
+    # is integrated into the production certificate lifecycle.
+    lean_formal_status: str = "NOT_LEAN_VERIFIED"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -2253,6 +2257,8 @@ def check_affine_residue_certificate(
         errors.append("FORMULA_HASH_MISMATCH")
     if data.get("drat_claim") != MODULAR_RESIDUE_DRAT_NOT_CLAIMED:
         errors.append("FAKE_DRAT_CLAIM")
+    if data.get("lean_formal_status", "NOT_LEAN_VERIFIED") != "NOT_LEAN_VERIFIED":
+        errors.append("UNTRUSTED_LEAN_FORMAL_CERTIFICATION_CLAIM")
     if data.get("extraction_mode") not in {"EXACT_FULL_CNF_ENCODING", "HASH_BOUND_SIDECAR_WITH_FULL_CNF_CHECK"}:
         errors.append("UNSUPPORTED_EXTRACTION_MODE")
     if any(op.get("operation") not in {"SWAP_ROWS", "ADD_ROW_XOR"} for op in data.get("row_operations", [])):
@@ -3176,6 +3182,8 @@ def main(argv: list[str] | None = None) -> int:
     check_affine_parser.add_argument("--cnf", required=True)
     check_affine_parser.add_argument("--certificate", required=True)
     check_affine_parser.add_argument("--max-arity", type=int, default=10)
+    check_affine_parser.add_argument("--lean", action="store_true", help="require a genuine Lean G5 UNSAT proof before acceptance")
+    check_affine_parser.add_argument("--lean-timeout", type=int, default=120)
     motif_parser = sub.add_parser("run-proof-motif-lab")
     motif_parser.add_argument(
         "--instances",
@@ -3279,10 +3287,23 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     if args.command == "check-affine-residue-cert":
-        formula = load_dimacs(args.cnf)
+        if args.lean:
+            formula, raw_clauses, source_tokens, source_spellings, source_text = load_dimacs_with_document_evidence(args.cnf)
+        else:
+            formula = load_dimacs(args.cnf)
         data = json.loads(Path(args.certificate).read_text(encoding="utf-8"))
-        print(stable_json(check_affine_residue_certificate(formula, data, max_arity=args.max_arity)))
-        return 0
+        native = check_affine_residue_certificate(formula, data, max_arity=args.max_arity)
+        if not args.lean:
+            print(stable_json(native))
+            return 0
+        from .lean_g5_gate import verify_g5_certificate_with_lean
+        formal = verify_g5_certificate_with_lean(
+            formula, data, timeout_seconds=args.lean_timeout, max_arity=args.max_arity,
+            raw_clauses=raw_clauses, source_tokens=source_tokens,
+            source_spellings=source_spellings, source_text=source_text,
+        )
+        print(stable_json({"native_check": native, "lean_check": formal}))
+        return 0 if formal["verified"] else 1
     if args.command == "run-proof-motif-lab":
         result = run_proof_motif_lab(
             instances=args.instances,

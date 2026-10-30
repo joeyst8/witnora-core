@@ -58,6 +58,20 @@ class AffineResidueCertificateTest(unittest.TestCase):
         self.assertEqual(sat.public_category, SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED)
         self.assertEqual(sat.checker_status, AFFINE_RESIDUE_CERTIFICATE_VERIFIED)
 
+    def test_lean_formal_status_is_fail_closed(self):
+        instance = make_affine_residue_instance("parity_arity_7_unsat")
+        cert = build_affine_residue_certificate(instance)
+        self.assertEqual(cert.lean_formal_status, "NOT_LEAN_VERIFIED")
+        self.assertEqual(cert.to_dict()["lean_formal_status"], "NOT_LEAN_VERIFIED")
+
+        forged = cert.to_dict()
+        forged["lean_formal_status"] = "LEAN_VERIFIED"
+        result = check_affine_residue_certificate(instance.formula, forged)
+        self.assertNotEqual(result["status"], AFFINE_RESIDUE_CERTIFICATE_VERIFIED)
+        self.assertIn(
+            "UNTRUSTED_LEAN_FORMAL_CERTIFICATION_CLAIM", result["errors"]
+        )
+
     def test_modular_residue_no_fake_drat(self):
         cert = build_affine_residue_certificate(make_affine_residue_instance("parity_arity_7_unsat"))
         self.assertEqual(cert.drat_claim, MODULAR_RESIDUE_DRAT_NOT_CLAIMED)

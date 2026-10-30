@@ -1,0 +1,351 @@
+name: Witnora Lean formal proof gate
+
+on:
+  pull_request:
+    paths:
+      - 'formal/**'
+      - 'tests/test_formal_differential.py'
+      - 'tests/test_xor_empty_encoding.py'
+      - 'witnora_core/xor.py'
+      - 'witnora_core/cnf.py'
+      - 'witnora_core/dimacs.py'
+      - 'tests/test_dimacs_refinement.py'
+      - 'witnora_core/lean_g5_gate.py'
+      - 'witnora_core/lean_cnf_gate.py'
+      - 'tests/test_lean_cnf_gate.py'
+      - 'witnora_core/lean_g14_gate.py'
+      - 'tests/test_lean_g14_gate.py'
+      - 'tests/test_spoke_collapse.py'
+      - 'tests/test_spoke_discovery.py'
+      - 'tests/test_spoke_discovery_reference.py'
+      - 'tests/test_cycle_discovery.py'
+      - 'tests/test_cycle_benchmark.py'
+      - 'tests/test_parity_compression.py'
+      - 'tests/test_lean_parity_compression_gate.py'
+      - 'witnora_core/lean_parity_compression_gate.py'
+      - 'witnora_core/verified_compression_pipeline.py'
+      - 'tests/test_verified_compression_pipeline.py'
+      - 'scripts/benchmark_verified_compression.py'
+      - 'witnora_core/parity_compression.py'
+      - 'scripts/benchmark_cycle_discovery.py'
+      - 'witnora_core/cycle_discovery.py'
+      - 'witnora_core/lean_cycle_gate.py'
+      - 'witnora_core/spoke_discovery.py'
+      - 'witnora_core/operator_promotion.py'
+      - 'tests/test_operator_promotion.py'
+      - 'witnora_core/lean_spoke_gate.py'
+      - 'tests/test_lean_spoke_gate.py'
+      - 'witnora_core/spoke_collapse.py'
+      - 'tests/test_lean_g14_adversarial_real.py'
+      - 'witnora_core/separator_affine_family_theorem.py'
+      - 'tests/test_separator_affine_family_*.py'
+      - 'tests/test_lean_g5_gate.py'
+      - 'scripts/benchmark_affine_sat.py'
+      - 'scripts/benchmark_spoke_collapse.py'
+      - 'scripts/benchmark_spoke_lean_gate.py'
+      - 'scripts/emit_lean_separator_fixtures.py'
+      - 'scripts/emit_lean_g5_traces.py'
+      - 'scripts/emit_lean_xor_encoding.py'
+      - 'scripts/emit_lean_cnf_canonical.py'
+      - '.github/workflows/lean-formal.yml'
+  push:
+    branches:
+      - 'research/tc063-eth-audit-20261029'
+    paths:
+      - 'formal/**'
+      - 'tests/test_formal_differential.py'
+      - 'tests/test_xor_empty_encoding.py'
+      - 'witnora_core/xor.py'
+      - 'witnora_core/cnf.py'
+      - 'witnora_core/dimacs.py'
+      - 'tests/test_dimacs_refinement.py'
+      - 'witnora_core/lean_g5_gate.py'
+      - 'witnora_core/lean_cnf_gate.py'
+      - 'tests/test_lean_cnf_gate.py'
+      - 'witnora_core/lean_g14_gate.py'
+      - 'tests/test_lean_g14_gate.py'
+      - 'tests/test_spoke_collapse.py'
+      - 'tests/test_spoke_discovery.py'
+      - 'tests/test_spoke_discovery_reference.py'
+      - 'tests/test_cycle_discovery.py'
+      - 'tests/test_cycle_benchmark.py'
+      - 'tests/test_parity_compression.py'
+      - 'tests/test_lean_parity_compression_gate.py'
+      - 'witnora_core/lean_parity_compression_gate.py'
+      - 'witnora_core/verified_compression_pipeline.py'
+      - 'tests/test_verified_compression_pipeline.py'
+      - 'scripts/benchmark_verified_compression.py'
+      - 'witnora_core/parity_compression.py'
+      - 'scripts/benchmark_cycle_discovery.py'
+      - 'witnora_core/cycle_discovery.py'
+      - 'witnora_core/lean_cycle_gate.py'
+      - 'witnora_core/spoke_discovery.py'
+      - 'witnora_core/operator_promotion.py'
+      - 'tests/test_operator_promotion.py'
+      - 'witnora_core/lean_spoke_gate.py'
+      - 'tests/test_lean_spoke_gate.py'
+      - 'witnora_core/spoke_collapse.py'
+      - 'tests/test_lean_g14_adversarial_real.py'
+      - 'witnora_core/separator_affine_family_theorem.py'
+      - 'tests/test_separator_affine_family_*.py'
+      - 'tests/test_lean_g5_gate.py'
+      - 'scripts/benchmark_affine_sat.py'
+      - 'scripts/benchmark_spoke_collapse.py'
+      - 'scripts/benchmark_spoke_lean_gate.py'
+      - 'scripts/emit_lean_separator_fixtures.py'
+      - 'scripts/emit_lean_g5_traces.py'
+      - 'scripts/emit_lean_xor_encoding.py'
+      - 'scripts/emit_lean_cnf_canonical.py'
+      - '.github/workflows/lean-formal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run G14 Python regression suite
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_separator_affine_family_*.py'
+      - name: Test DIMACS parse/canonicalization refinement
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_dimacs_refinement.py'
+      - name: Run zero-variable XOR regression tests
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_xor_empty_encoding.py'
+      - name: Test parity-spoke structural-collapse candidate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_collapse.py' -v
+      - name: Adversarial tests for parity-invariant discovery
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_discovery.py' -v
+      - name: Test fail-closed operator-promotion policy
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_operator_promotion.py' -v
+      - name: Test fail-closed source-bound spoke Lean gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_spoke_gate.py' -v
+      - name: Compare discovered proposals with exhaustive independent reference
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_spoke_discovery_reference.py' -v
+      - name: Cross-check arbitrary XOR cycles with independent assignment oracle
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_cycle_discovery.py' -v
+      - name: Test independent parity benchmarks against exhaustive oracle
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_cycle_benchmark.py' -v
+      - name: Check root-offset compression on randomized graphs
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_parity_compression.py' -v
+      - name: Check fail-closed parity residual certificate gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_parity_compression_gate.py' -v
+      - name: Check compressed G14 fail-closed certificate behavior
+        run: PYTHONPATH=. python -m unittest tests.test_lean_compressed_g14_gate
+      - name: Exhaustively test experimental operator compositions
+        run: PYTHONPATH=. python -m unittest tests.test_experimental_operator_search
+      - name: Exhaustively test invariant-guided operators and counterexample shrinking
+        run: PYTHONPATH=. python -m unittest tests.test_structural_operator_invention
+      - name: Exhaustively validate out-of-distribution SAT family generators
+        run: PYTHONPATH=. python -m unittest tests.test_ood_sat_families
+      - name: Test unseen-family candidate screen is fail-closed
+        run: PYTHONPATH=. python -m unittest tests.test_ood_candidate_screen
+      - name: Test larger unfamiliar-family stress cases
+        run: PYTHONPATH=. python -m unittest tests.test_ood_larger
+      - name: Exhaustively check two-ply pivot SAT equivalence
+        run: PYTHONPATH=. python -m unittest tests.test_lookahead_pivot_prototype
+      - name: Check lookahead failure analysis is fail-closed
+        run: PYTHONPATH=. python -m unittest tests.test_lookahead_failure_analysis
+      - name: Test opt-in Lean-gated compression SAT path
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
+      - name: Run G5 Python regression suite
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
+      - name: Test fail-closed Python CNF Lean normalization gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_cnf_gate.py'
+      - name: Test fail-closed production Lean G5 gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g5_gate.py'
+      - name: Test fail-closed G14 Lean cover gate
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g14_gate.py'
+      - name: Install independent Glucose3 SAT oracle
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Adversarial compression versus Glucose3 Minisat22 and exhaustive truth
+        run: PYTHONPATH=. python scripts/adversarial_compression_validation.py --sizes 6 10 --seeds 7 13 29 --output adversarial-compression.csv
+      - name: Publish adversarial compression measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adversarial-compression-${{ github.sha }}
+          path: adversarial-compression.csv
+          if-no-files-found: ignore
+      - name: Discover and validate operator sequences on held-out SAT instances
+        run: PYTHONPATH=. python scripts/experiment_operator_discovery.py --sizes 6 10 --train-seeds 7 13 --holdout-seeds 29 37 --output operator-discovery-ledger.csv
+      - name: Publish operator discovery ledger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operator-discovery-ledger-${{ github.sha }}
+          path: operator-discovery-ledger.csv
+          if-no-files-found: ignore
+      - name: Minimize counterexamples to operator interaction hypotheses
+        run: PYTHONPATH=. python scripts/find_operator_counterexamples.py --output operator-counterexamples.json
+      - name: Publish minimized operator counterexamples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operator-counterexamples-${{ github.sha }}
+          path: operator-counterexamples.json
+          if-no-files-found: ignore
+      - name: Test frozen operators on independent SAT families
+        run: PYTHONPATH=. python scripts/benchmark_operator_ood.py --seeds 101 211 307 --repeats 3 --output ood-operator-study.csv
+      - name: Publish out-of-distribution operator results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ood-operator-study-${{ github.sha }}
+          path: ood-operator-study.csv
+          if-no-files-found: ignore
+      - name: Screen unseen-family results without promoting unverified claims
+        run: PYTHONPATH=. python scripts/screen_ood_candidates.py --input ood-operator-study.csv --output ood-candidate-screen.json
+      - name: Stress-test screened candidates on larger unfamiliar instances
+        run: PYTHONPATH=. python scripts/benchmark_ood_larger.py --screen ood-candidate-screen.json --seeds 401 509 --repeats 3 --output ood-larger-stress.csv
+      - name: Publish larger unfamiliar-instance stress results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ood-larger-stress-${{ github.sha }}
+          path: ood-larger-stress.csv
+          if-no-files-found: ignore
+      - name: Falsify lookahead pivots against greedy on fresh seeds
+        run: PYTHONPATH=. python scripts/prototype_lookahead_pivot.py --seeds 613 719 --repeats 3 --output lookahead-pivot-study.csv
+      - name: Rank lookahead failures without a novelty claim
+        run: PYTHONPATH=. python scripts/analyze_lookahead_failures.py --input lookahead-pivot-study.csv --output lookahead-failure-report.json
+      - name: Publish lookahead failure ranking
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lookahead-failure-report-${{ github.sha }}
+          path: lookahead-failure-report.json
+          if-no-files-found: ignore
+      - name: Publish fresh-seed lookahead pivot measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lookahead-pivot-study-${{ github.sha }}
+          path: lookahead-pivot-study.csv
+          if-no-files-found: ignore
+      - name: Publish unseen-family followup screen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ood-candidate-screen-${{ github.sha }}
+          path: ood-candidate-screen.json
+          if-no-files-found: ignore
+      - name: Benchmark cycle discovery against parity DSU, Gaussian GF2 and Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_cycle_discovery.py --sizes 8 24 64 --repeats 3 --output cycle-benchmark.csv
+      - name: Publish cycle benchmark raw measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cycle-benchmark-${{ github.sha }}
+          path: cycle-benchmark.csv
+          if-no-files-found: ignore
+      - name: Randomized differential tests of G5 and G14
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_formal_differential.py'
+      - name: Cross-check G5 and G14 certificates against Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_affine_sat.py
+      - name: Benchmark experimental spoke collapse against Gaussian and Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_spoke_collapse.py
+      - name: Generate concrete Lean claims from Python G14
+        run: PYTHONPATH=. python scripts/emit_lean_separator_fixtures.py
+      - name: Generate concrete Lean G5 trace claims from Python
+        run: PYTHONPATH=. python scripts/emit_lean_g5_traces.py
+      - name: Generate Python canonical CNF normalization claims
+        run: PYTHONPATH=. python scripts/emit_lean_cnf_canonical.py
+      - name: Generate Python canonical XOR encoder claims
+        run: PYTHONPATH=. python scripts/emit_lean_xor_encoding.py
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: true
+          test: false
+
+      - name: Kernel-check Python/Lean CNF normalization correspondence
+        working-directory: formal
+        run: lake env lean Witnora/CNFCanonicalGenerated.lean
+      - name: Kernel-check canonical XOR encoding claims
+        working-directory: formal
+        run: lake env lean Witnora/XorGenerated.lean
+      - name: Kernel-check actual G5 trace replay claims
+        working-directory: formal
+        run: lake env lean Witnora/G5Generated.lean
+      - name: Kernel-check concrete G14 branch claims
+        working-directory: formal
+        run: lake env lean Witnora/Generated.lean
+      - name: Execute real runtime Lean verification of Python-normalized CNF
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1,1,-2],[1,-1],[1,1,-2],[],[4,-4,3]]); print(r); assert r["verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1]], [[-1]]); print(r); assert not r["verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1],[-2],[]], source_tokens=[1,0,-2,0,0]); print(r); assert r["verified"] and r["token_stream_verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1],[-2],[]], source_tokens=[1,0,-2,0]); print(r); assert not r["verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1],[-2]], source_tokens=[1,0,-2,0], source_spellings=["1","0","-2","0"]); print(r); assert r["verified"] and r["decimal_lexemes_verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; r=verify_cnf_normalization_with_lean([[1],[-2]], source_tokens=[1,0,-2,0], source_spellings=["2","0","-2","0"]); print(r); assert not r["verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; s="c comment\np cnf 2 2\n1 0\n-2 0\n"; r=verify_cnf_normalization_with_lean([[1],[-2]], source_tokens=[1,0,-2,0], source_spellings=["1","0","-2","0"], source_text=s); print(r); assert r["verified"] and r["source_document_verified"],r'
+          PYTHONPATH=. python -c 'from witnora_core.lean_cnf_gate import verify_cnf_normalization_with_lean; s="p cnf 2 2\n1 0\n-1 0\n"; r=verify_cnf_normalization_with_lean([[1],[-2]], source_tokens=[1,0,-2,0], source_spellings=["1","0","-2","0"], source_text=s); print(r); assert not r["verified"],r'
+      - name: Execute real G14 branch-cover Lean verification
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.separator_affine_family_theorem import make_separator_affine_instance,build_separator_affine_certificate; from witnora_core.lean_g14_gate import verify_g14_unsat_cover_with_lean; instance=make_separator_affine_instance("saf_unsat_cover_2"); cert=build_separator_affine_certificate(instance); result=verify_g14_unsat_cover_with_lean(instance.formula,cert); print(result); assert result["verified"],result'
+          PYTHONPATH=. python -c 'from witnora_core.separator_affine_family_theorem import make_separator_affine_instance,build_separator_affine_certificate; from witnora_core.lean_g14_gate import verify_g14_unsat_cover_with_lean; inst=make_separator_affine_instance("saf_unsat_cover_2"); cert=build_separator_affine_certificate(inst); raw=inst.formula.to_clause_lists(); tokens=[n for row in raw for n in (*row,0)]; src=inst.formula.canonical_dimacs(); result=verify_g14_unsat_cover_with_lean(inst.formula,cert,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=src,timeout_seconds=240); print(result); assert result["verified"] and result["lean_formal_status"]=="LEAN_END_TO_END_G14_UNSAT_VERIFIED",result'
+      - name: Adversarial real-Lean source and G5-row integrity checks
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_g14_adversarial_real.py' -v
+      - name: Kernel-check discovered spoke UNSAT against original DIMACS document
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.lean_spoke_gate import verify_discovered_spoke_with_lean; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=verify_discovered_spoke_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_text=f.canonical_dimacs(),timeout_seconds=240); print(r); assert r["verified"] and r["lean_formal_status"]=="LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",r'
+          PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.lean_spoke_gate import verify_discovered_spoke_with_lean; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=verify_discovered_spoke_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_text=f.canonical_dimacs().replace("p cnf","p cna",1),timeout_seconds=240); print(r); assert not r["verified"],r'
+      - name: Record real Lean spoke-gate scaling and timeout behavior
+        run: PYTHONPATH=. python scripts/benchmark_spoke_lean_gate.py --sizes 3 5 9 25 --timeout 45 --output spoke-lean-scaling.csv --require-small-pass
+      - name: Publish source-bound Lean scaling measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spoke-lean-scaling-${{ github.sha }}
+          path: spoke-lean-scaling.csv
+          if-no-files-found: ignore
+      - name: Kernel-check odd XOR triangle UNSAT against original DIMACS
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.cnf import CNFFormula; from witnora_core.lean_cycle_gate import verify_odd_cycle_with_lean; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,0),(1,3,1)]]; f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for c in raw for v in (*c,0)]; proof=verify_odd_cycle_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_text=f.canonical_dimacs(),timeout_seconds=120); print(proof); assert proof["verified"],proof'
+      - name: Reject cycle whose source clause evidence is missing
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.cnf import CNFFormula; from witnora_core.lean_cycle_gate import verify_odd_cycle_with_lean; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,0),(1,3,1)]]; f=CNFFormula.from_raw_clauses(clauses); reduced=f.to_clause_lists()[:-1]; source=CNFFormula.from_raw_clauses(reduced).canonical_dimacs(); tokens=[v for c in reduced for v in (*c,0)]; proof=verify_odd_cycle_with_lean(f,raw_clauses=reduced,source_tokens=tokens,source_text=source,timeout_seconds=120); print(proof); assert not proof["verified"],proof'
+      - name: Exercise full cycle operator assessment with real Lean
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.operator_promotion import assess_odd_cycle_operator, PROOF_VERIFIED; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,0),(1,3,1)]]; f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for c in raw for v in (*c,0)]; result=assess_odd_cycle_operator(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=120); print(result); assert result["status"]==PROOF_VERIFIED and result["cycle_length"]==3 and not result["promoted"],result'
+          PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.operator_promotion import assess_odd_cycle_operator, PROOF_REJECTED; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,0),(1,3,1)]]; f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for c in raw for v in (*c,0)]; result=assess_odd_cycle_operator(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs().replace("p cnf","p cna",1),timeout_seconds=120); print(result); assert result["status"]==PROOF_REJECTED and not result["promoted"],result'
+      - name: Kernel-check exact source-bound parity residual model correspondence
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.lean_parity_compression_gate import verify_parity_compression_with_lean; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,1)]]; clauses.add((3,4,-5)); f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; result=verify_parity_compression_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=120); print(result); assert result["verified"] and result["lean_formal_status"]=="LEAN_SOURCE_PARITY_RESIDUAL_EQUIVALENT",result'
+          PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.lean_parity_compression_gate import verify_parity_compression_with_lean; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,1)]]; clauses.add((3,4,-5)); f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; result=verify_parity_compression_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs().replace("p cnf","p cna",1),timeout_seconds=120); print(result); assert not result["verified"],result'
+      - name: Kernel-check compressed residual G5 UNSAT against original DIMACS
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.parity_compression import compress_binary_xor_components,substitute_residual_formula; from witnora_core.operator_genesis import AffineResidueInstance,build_affine_residue_certificate; from witnora_core.lean_parity_compression_gate import verify_parity_compression_with_lean; clauses=set(canonical_xor_cnf_clauses((1,2),0)); [clauses.update(canonical_xor_cnf_clauses((3,4,5),rhs)) for rhs in (0,1)]; f=CNFFormula.from_raw_clauses(clauses); residual=substitute_residual_formula(f,compress_binary_xor_components(f)); cert=build_affine_residue_certificate(AffineResidueInstance(instance_id="compressed_g5_unsat",equations=(),formula=residual)); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; result=verify_parity_compression_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),residual_g5_certificate=cert,timeout_seconds=180); print(result,cert.status,cert.checker_status); assert result["verified"] and result["original_unsat_kernel_verified"],result'
+      - name: Kernel-check compressed residual G14 cover against original DIMACS
+        run: |
+          PYTHONPATH=. python -c 'from dataclasses import replace; from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.parity_compression import compress_binary_xor_components,substitute_residual_formula; from witnora_core.separator_affine_family_theorem import make_separator_affine_instance,build_separator_affine_certificate; from witnora_core.lean_compressed_g14_gate import verify_compressed_g14_with_lean; base=make_separator_affine_instance("saf_unsat_cover_2"); f=CNFFormula.from_raw_clauses(base.formula.to_clause_lists()+list(canonical_xor_cnf_clauses((100,101),0))); residual=substitute_residual_formula(f,compress_binary_xor_components(f)); cert=build_separator_affine_certificate(replace(base,formula=residual,instance_id="compressed_g14_unsat")); raw=f.to_clause_lists(); tokens=[v for clause in raw for v in (*clause,0)]; result=verify_compressed_g14_with_lean(f,cert,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=180); print(result); assert result["verified"] and result["original_unsat_kernel_verified"],result'
+      - name: Adversarially mutate compressed G14 proof witnesses under real Lean
+        run: PYTHONPATH=. python scripts/audit_compressed_g14_proof.py
+      - name: Measure full compressed G14 proof cost versus Glucose3
+        run: PYTHONPATH=. python scripts/benchmark_compressed_g14_cost.py --sizes 2 --timeout 180 --output compressed-g14-cost.csv
+      - name: Publish compressed G14 complete-proof measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compressed-g14-cost-${{ github.sha }}
+          path: compressed-g14-cost.csv
+          if-no-files-found: ignore
+      - name: Benchmark complete verified compression versus original SAT solve
+        run: PYTHONPATH=. python scripts/benchmark_verified_compression.py --sizes 3 5 --repeats 3 --timeout 30 --output verified-compression-benchmark.csv --require-small-pass
+      - name: Publish full verified compression timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-compression-benchmark-${{ github.sha }}
+          path: verified-compression-benchmark.csv
+          if-no-files-found: ignore
+      - name: Exercise actual source-bound operator promotion gate
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.operator_promotion import assess_parity_spoke_operator,PROOF_VERIFIED; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=assess_parity_spoke_operator(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=240); print(r); assert r["status"]==PROOF_VERIFIED and not r["promoted"],r'
+      - name: Execute real runtime Lean verification on a G5 UNSAT certificate
+        run: |
+          PYTHONPATH=. python -c 'from witnora_core.operator_genesis import make_affine_residue_instance, build_affine_residue_certificate; from witnora_core.lean_g5_gate import verify_g5_certificate_with_lean; instance = make_affine_residue_instance("parity_arity_7_unsat"); cert = build_affine_residue_certificate(instance); result = verify_g5_certificate_with_lean(instance.formula, cert); print(result); assert result["verified"], result'
+          PYTHONPATH=. python -c 'from witnora_core.operator_genesis import make_affine_residue_instance, build_affine_residue_certificate; from witnora_core.lean_g5_gate import verify_g5_certificate_with_lean; instance = make_affine_residue_instance("parity_arity_7_unsat"); cert = build_affine_residue_certificate(instance); raw = instance.formula.to_clause_lists(); result = verify_g5_certificate_with_lean(instance.formula, cert, raw_clauses=raw); print(result); assert result["verified"] and result["source_normalization_verified"], result'
