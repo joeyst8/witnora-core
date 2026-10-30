@@ -95,6 +95,11 @@ def benchmark(sizes, seeds):
                 candidate = compress_binary_xor_components(formula)
                 compression_seconds = perf_counter() - start
                 inconsistent = candidate["status"] == "INCONSISTENT_XOR_EQUATIONS"
+                if family == "partial_xor_encoding" and any(
+                    {u, v} == {size - 1, size}
+                    for u, v, _ in candidate.get("equations", [])
+                ):
+                    raise AssertionError("incomplete XOR clause pair was falsely recognized")
                 if inconsistent != (family == "contradictory_xor_cycle"):
                     raise AssertionError(f"wrong structural conflict status: {family} {candidate}")
                 residual = None
