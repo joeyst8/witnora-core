@@ -163,7 +163,14 @@ jobs:
           PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.lean_spoke_gate import verify_discovered_spoke_with_lean; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=verify_discovered_spoke_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_text=f.canonical_dimacs(),timeout_seconds=240); print(r); assert r["verified"] and r["lean_formal_status"]=="LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",r'
           PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.lean_spoke_gate import verify_discovered_spoke_with_lean; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=verify_discovered_spoke_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_text=f.canonical_dimacs().replace("p cnf","p cna",1),timeout_seconds=240); print(r); assert not r["verified"],r'
       - name: Record real Lean spoke-gate scaling and timeout behavior
-        run: PYTHONPATH=. python scripts/benchmark_spoke_lean_gate.py --sizes 3 5 9 25 --timeout 45
+        run: PYTHONPATH=. python scripts/benchmark_spoke_lean_gate.py --sizes 3 5 9 25 --timeout 45 --output spoke-lean-scaling.csv --require-small-pass
+      - name: Publish source-bound Lean scaling measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spoke-lean-scaling-${{ github.sha }}
+          path: spoke-lean-scaling.csv
+          if-no-files-found: ignore
       - name: Exercise actual source-bound operator promotion gate
         run: |
           PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.operator_promotion import assess_parity_spoke_operator,PROOF_VERIFIED; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=assess_parity_spoke_operator(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=240); print(r); assert r["status"]==PROOF_VERIFIED and not r["promoted"],r'
