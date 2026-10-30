@@ -82,14 +82,14 @@ def verify_discovered_spoke_with_lean(
         # The kernel checks each complete pattern against raw source clauses.
         proof = (
             "import Witnora.SpokeDiscoverySpec\n"
-            "import Witnora.SpokePathSorted\n"
+            "import Witnora.SpokePathIndexed\n"
             "import Witnora.BinaryXorIndexed\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
             "example : Witnora.BinaryXorIndexed.checkExact "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) "
             f"{emitted_equations} = true := by decide\n"
-            "example : Witnora.SpokePathSorted.checkSorted "
+            "example : Witnora.SpokePathIndexed.checkExact "
             f"{emitted_equations} {emitted_paths} = true := by decide\n"
             "example : Witnora.SpokeDiscoverySpec.discoverFrom "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) "
@@ -122,7 +122,6 @@ def verify_discovered_spoke_with_lean(
         return {
             "binary_extraction_indexed_exact_checked": True,
             "spoke_path_indexed_exact_checked": True,
-            "spoke_path_sorted_exact_checked": True,
             "verified": True,
             "lean_formal_status": "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",
             "proof_source_sha256": sha256(proof.encode("utf-8")).hexdigest(),
