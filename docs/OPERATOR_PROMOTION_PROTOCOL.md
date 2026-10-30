@@ -147,3 +147,39 @@ This does not prove universal CPython refinement, or superiority to
 parity union-find / Gaussian elimination. Scientific benchmarking,
 coverage of difficult non-XOR instances, and independently confirmed
 novelty remain outstanding.
+
+## First cycle-discovery comparative benchmark protocol
+
+The reproducible exploratory harness `scripts/benchmark_cycle_discovery.py`
+compares four algorithms on the **same generated CNF instances**:
+
+- Witnora's Python exact-pattern extraction plus graph-walk contradiction detector.
+- A separate parity union-find implementation on the generating XOR edges.
+- An independent GF(2) bit-mask Gaussian elimination on those edges.
+- Glucose3 through pinned `python-sat==1.8.dev24` on the complete CNF.
+
+Families include consistent and inconsistent XOR cycles, denser graphs, and
+a deliberately non-XOR UNSAT instance containing contradictory unit clauses.
+The last family is a designed *coverage failure* for the XOR-only algorithms,
+not a bug to disguise. GF(2) baselines receive the generating equation list,
+while Witnora must extract those equations from CNF, so direct timings
+include different preprocessing and should not be marketed as equivalent
+end-to-end solves.
+
+The CI emits per-case records with seed, SHA-256 of the canonical DIMACS
+source, counts, algorithm, median milliseconds over three runs, and actual
+SAT oracle truth. The benchmark reports `lean_checked = 0`: these timings
+**exclude** the per-instance Lean source-proof gate, which is verified by
+separate real-Lean CI tests. They are single-run, uncalibrated Python/Glucose
+measurements, not evidence of a competitive performance advantage.
+Reproduction command:
+
+```sh
+PYTHONPATH=. python scripts/benchmark_cycle_discovery.py --sizes 8 24 64 --repeats 3 --seed 63063 --output cycle-benchmark.csv
+```
+
+The independent test `tests/test_cycle_benchmark.py` compares the parity
+union-find and GF(2) solvers to exhaustive assignments on random small
+graphs. Publication-quality comparison still requires repeated independent
+runners, memory measurements, larger adversarial cases, certificate
+generation/check time, and state-of-the-art specialized solvers.
