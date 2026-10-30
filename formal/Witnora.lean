@@ -37,3 +37,5 @@ import Witnora.SpokeDiscoverySpec
 import Witnora.BinaryXorDiscovery
 
 import Witnora.SpokePathDiscovery
+
+import Witnora.SpokePathIndexed
