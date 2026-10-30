@@ -109,3 +109,33 @@ def out_of_distribution_cases(seed: int) -> list[tuple[str, str, CNFFormula, boo
         ("n_queens", "n_queens_4", n_queens(4), True),
         ("planted_3cnf", f"planted_{seed}", random_planted_3cnf(10, 42, seed), True),
     ]
+
+
+def tseitin_complete_graph(vertices: int, *, contradictory: bool) -> CNFFormula:
+    if vertices < 3 or vertices > 7:
+        raise ValueError("bounded complete-graph XOR family requires 3..7 vertices")
+    edges = list(combinations(range(1, vertices + 1), 2))
+    clauses = []
+    for vertex in range(1, vertices + 1):
+        incident = [i + 1 for i, (u, v) in enumerate(edges)
+                    if vertex in (u, v)]
+        rhs = int(contradictory and vertex == 1)
+        clauses.extend(canonical_xor_cnf_clauses(incident, rhs))
+    return CNFFormula.from_raw_clauses(clauses)
+
+
+def larger_unseen_cases(seed: int) -> list[tuple[str, str, CNFFormula, bool | None]]:
+    k5 = list(combinations(range(1, 6), 2))
+    return [
+        ("pigeonhole", "php_5_into_4", pigeonhole(5, 4), False),
+        ("pigeonhole", "php_6_into_5", pigeonhole(6, 5), False),
+        ("graph_coloring", "k5_4color", graph_coloring(5, k5, 4), False),
+        ("tseitin_higher_arity", "k6_inconsistent",
+         tseitin_complete_graph(6, contradictory=True), False),
+        ("tseitin_higher_arity", "k6_consistent",
+         tseitin_complete_graph(6, contradictory=False), True),
+        ("n_queens", "n_queens_5", n_queens(5), True),
+        ("n_queens", "n_queens_6", n_queens(6), True),
+        ("planted_3cnf", f"planted_30_{seed}",
+         random_planted_3cnf(30, 130, seed), True),
+    ]
