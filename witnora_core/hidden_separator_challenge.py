@@ -17,12 +17,8 @@ def make_hidden_separator(seed: int, *, width: int = 2,
         raise ValueError("separator width must be 2 or 3")
     rng = random.Random(seed)
     boundary = tuple(range(3, 3 + width))
-    left = (1, 2, 20)
-    right = (10, 11, 21)
     clauses = set(canonical_xor_cnf_clauses((1, 2, *boundary), 0))
     clauses.update(canonical_xor_cnf_clauses((*boundary, 10, 11), 1))
-    clauses.update(canonical_xor_cnf_clauses(left, 0))
-    clauses.update(canonical_xor_cnf_clauses(right, 1))
     clauses.add(tuple(sorted((1, 20, 30))))
     clauses.add(tuple(sorted((10, 21, -31))))
     if cross_noise:
