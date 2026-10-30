@@ -1,0 +1,35 @@
+name: Incremental separator research gate
+
+on:
+  push:
+    branches:
+      - 'research/incremental-separator-v11'
+  pull_request:
+    paths:
+      - 'witnora_core/incremental_separator.py'
+      - 'tests/test_incremental_separator.py'
+      - 'scripts/benchmark_incremental_separator.py'
+      - '.github/workflows/incremental-separator.yml'
+
+jobs:
+  incremental:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Check cache correctness and screen
+        run: PYTHONPATH=. python -m unittest tests.test_incremental_separator -v
+      - name: Compare cold warm and direct SAT
+        run: PYTHONPATH=. python scripts/benchmark_incremental_separator.py
+      - name: Preserve full measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: incremental-separator-${{ github.sha }}
+          path: incremental-separator.csv
+          if-no-files-found: ignore
