@@ -107,3 +107,18 @@ The `a712c6e` CI benchmark compares the same real source-bound proof process aga
 | 27 | 45s timeout | 45s timeout | not established | **no** |
 
 Evidence: [optimized CI run 41117541879](https://github.com/joeyst8/witnora-core/actions/runs/41117541879). The kernel-checked set-membership theorem is now phrased against `uniqueJoins` (all indexed joins with duplicates removed). No unsafe assumptions were introduced. The remaining bottleneck is the quadratic-or-worse Lean reduction of candidate-set membership, plus possible certificate size effects. A scalable indexed lookup/normalized sorted-vector checker with a proved set-equivalence lemma is the next meaningful improvement. Until then, large source-bound spoke certificates may time out and **must not** receive verified status.
+
+## Sorted-certificate research result (2026-10-30)
+
+The new `SpokePathSorted.checkSorted` uses structurally recursive, kernel-evaluable sorted normalization. Lean proves `checkSorted_implies_exact`: any accepted sorted certificate necessarily passes the prior exact-set checker. The converse (full equivalence) is **not proved**. Direct finite adversarial examples are kernel-checked.
+
+A real source-bound runtime benchmark on commit `bf4ad54` showed a regression relative to the deduplicated indexed baseline:
+
+| Variables | Indexed default | Experimental sorted | Verified? |
+|---:|---:|---:|:---:|
+| 5 | 0.660s | 1.312s | yes |
+| 7 | 1.318s | 2.603s | yes |
+| 11 | 6.505s | 9.137s | yes |
+| 27 | 45s timeout | 45s timeout | no |
+
+Evidence: [sorted-checker CI run 41119320261](https://github.com/joeyst8/witnora-core/actions/runs/41119320261). Consequently the **production gate stays on** `SpokePathIndexed.checkExact` with deduplicated joins. The sorted variant is retained only as formally proved experimental code. It is not advertised as a performance improvement. A different indexed lookup representation and a true full equivalence theorem are required before promoting a replacement.
