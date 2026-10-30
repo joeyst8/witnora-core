@@ -68,8 +68,6 @@ def verify_discovered_spoke_with_lean(
         ids = sorted(formula.variables)
         if len(ids) > 24:
             raise ValueError("full binary-extraction equality exceeds the supported variable cap")
-        if len(ids) > 6:
-            raise ValueError("full spoke-path equality exceeds the supported variable cap")
         proposed_equations = extract_binary_xor_equations(formula)
         emitted_equations = "[" + ", ".join(
             "{ u := " + str(u) + ", v := " + str(v) +
@@ -87,15 +85,14 @@ def verify_discovered_spoke_with_lean(
         # The kernel checks each complete pattern against raw source clauses.
         proof = (
             "import Witnora.SpokeDiscoverySpec\n"
-            "import Witnora.SpokePathDiscovery\n"
+            "import Witnora.SpokePathIndexed\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
             "example : Witnora.BinaryXorDiscovery.extract "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
             f"= {emitted_equations} := by decide\n"
-            "example : Witnora.SpokePathDiscovery.extract "
-            f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
-            f"= {emitted_paths} := by decide\n"
+            "example : Witnora.SpokePathIndexed.checkExact "
+            f"{emitted_equations} {emitted_paths} = true := by decide\n"
             "example : Witnora.SpokeDiscoverySpec.discoverFrom "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) "
             f"[{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
@@ -126,7 +123,7 @@ def verify_discovered_spoke_with_lean(
                              (result.stdout + result.stderr)[-1000:])
         return {
             "binary_extraction_exact_checked": True,
-            "spoke_path_extraction_exact_checked": True,
+            "spoke_path_indexed_exact_checked": True,
             "verified": True,
             "lean_formal_status": "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",
             "proof_source_sha256": sha256(proof.encode("utf-8")).hexdigest(),
