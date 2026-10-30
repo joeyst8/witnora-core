@@ -87,12 +87,16 @@ def verify_discovered_spoke_with_lean(
         # The kernel checks each complete pattern against raw source clauses.
         proof = (
             "import Witnora.SpokeDiscoverySpec\n"
+            "import Witnora.SpokePathDiscovery\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
             "example : Witnora.BinaryXorDiscovery.extract "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
             f"= {emitted_equations} := by decide\n"
-            "example : Witnora.SpokePathDiscovery.extract "\n            f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "\n            f"= {emitted_paths} := by decide\n"\n            "example : Witnora.SpokeDiscoverySpec.discoverFrom "
+            "example : Witnora.SpokePathDiscovery.extract "
+            f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
+            f"= {emitted_paths} := by decide\n"
+            "example : Witnora.SpokeDiscoverySpec.discoverFrom "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) "
             f"[{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
             f"= [{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
