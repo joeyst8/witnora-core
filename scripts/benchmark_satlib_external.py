@@ -19,6 +19,18 @@ SOURCE_BASE = "https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/"
 SUITES = (("uf125-538", True), ("uuf125-538", False))
 
 
+def normalize_satlib_legacy_eof(text: str) -> tuple[str, bool]:
+    """Permit only the SATLIB legacy % trailer, never alter clause tokens."""
+    lines = text.splitlines()
+    markers = [i for i, line in enumerate(lines) if line.strip() == "%"]
+    if not markers:
+        return text, False
+    first = markers[0]
+    if any(line.strip() not in ("", "%", "0") for line in lines[first + 1:]):
+        raise ValueError("unexpected tokens after SATLIB % trailer")
+    return "\\n".join(lines[:first]) + "\\n", True
+
+
 def fetch_cases(suite: str, *, limit: int = 6):
     url = SOURCE_BASE + suite + ".tar.gz"
     with urlopen(url, timeout=30) as response:
@@ -38,8 +50,9 @@ def fetch_cases(suite: str, *, limit: int = 6):
             if stream is None:
                 raise ValueError("missing member bytes")
             data = stream.read()
-            formula = parse_dimacs(data.decode("utf-8"))
-            cases.append((member.name, sha256(data).hexdigest(), formula))
+            normalized, legacy_eof = normalize_satlib_legacy_eof(data.decode("utf-8"))
+            formula = parse_dimacs(normalized)
+            cases.append((member.name, sha256(data).hexdigest(), formula, legacy_eof))
     if len(cases) < limit:
         raise ValueError("external benchmark missing requested instances")
     return url, archive_hash, cases
@@ -58,7 +71,7 @@ def main():
     rows = []
     for suite, expected_truth in SUITES:
         url, archive_sha, cases = fetch_cases(suite)
-        for path, member_sha, formula in cases:
+        for path, member_sha, formula, legacy_eof in cases:
             structural = fingerprint(formula)
             before = perf_counter()
             direct_truth = direct(formula)
@@ -73,7 +86,7 @@ def main():
             rows.append({
                 "source_suite": suite, "archive_url": url,
                 "archive_sha256": archive_sha, "member_path": path,
-                "member_sha256": member_sha, **structural,
+                "member_sha256": member_sha, "legacy_eof_normalized": legacy_eof, **structural,
                 "expected_satisfiable": expected_truth,
                 "candidate_mode": candidate["mode"],
                 "direct_glucose_ms": round(direct_ms, 6),
