@@ -41,12 +41,12 @@ def checkExact (edges : List Equation) (reported : List Path) : Bool :=
 
 theorem checkExact_mem_iff (edges : List Equation) (reported : List Path)
     (h : checkExact edges reported = true) (p : Path) :
-    p ∈ reported ↔ p ∈ allJoins edges := by
+    p ∈ reported ↔ p ∈ uniqueJoins edges := by
   simp only [checkExact, Bool.and_eq_true] at h
   constructor
   · intro hp
     have hs := List.all_eq_true.mp h.1.1 p hp
-    simpa [uniqueJoins] using hs
+    simpa using hs
   · intro hp
     have hs := List.all_eq_true.mp h.1.2 p hp
     simpa using hs
