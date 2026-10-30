@@ -142,6 +142,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest tests.test_ood_sat_families
       - name: Test unseen-family candidate screen is fail-closed
         run: PYTHONPATH=. python -m unittest tests.test_ood_candidate_screen
+      - name: Test larger unfamiliar-family stress cases
+        run: PYTHONPATH=. python -m unittest tests.test_ood_larger
       - name: Test opt-in Lean-gated compression SAT path
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
@@ -192,6 +194,15 @@ jobs:
           if-no-files-found: ignore
       - name: Screen unseen-family results without promoting unverified claims
         run: PYTHONPATH=. python scripts/screen_ood_candidates.py --input ood-operator-study.csv --output ood-candidate-screen.json
+      - name: Stress-test screened candidates on larger unfamiliar instances
+        run: PYTHONPATH=. python scripts/benchmark_ood_larger.py --screen ood-candidate-screen.json --seeds 401 509 --repeats 3 --output ood-larger-stress.csv
+      - name: Publish larger unfamiliar-instance stress results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ood-larger-stress-${{ github.sha }}
+          path: ood-larger-stress.csv
+          if-no-files-found: ignore
       - name: Publish unseen-family followup screen
         if: always()
         uses: actions/upload-artifact@v4
