@@ -1,0 +1,35 @@
+name: Hard separator stress research gate
+
+on:
+  push:
+    branches:
+      - 'research/hard-separator-stress-v10'
+  pull_request:
+    paths:
+      - 'witnora_core/hard_separator_families.py'
+      - 'tests/test_hard_separator_families.py'
+      - 'scripts/benchmark_hard_separator_stress.py'
+      - '.github/workflows/hard-separator-stress.yml'
+
+jobs:
+  stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Check planted witnesses and full separators
+        run: PYTHONPATH=. python -m unittest tests.test_hard_separator_families -v
+      - name: Measure complete stress cost breakdown
+        run: PYTHONPATH=. python scripts/benchmark_hard_separator_stress.py
+      - name: Archive per-configuration measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hard-separator-stress-${{ github.sha }}
+          path: hard-separator-stress.csv
+          if-no-files-found: ignore
