@@ -9,6 +9,7 @@ language refinement or an operator-performance claim.
 from __future__ import annotations
 
 from hashlib import sha256
+import json
 from pathlib import Path
 import subprocess
 from tempfile import TemporaryDirectory
@@ -159,6 +160,8 @@ def verify_parity_compression_with_lean(
             "component_count": candidate["component_count"],
             "root_variables_saved": candidate["root_variables_saved"],
             "residual_clauses": residual.num_clauses,
+            "residual_formula_sha256": residual.formula_hash,
+            "component_certificate_sha256": sha256(json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
             "claim_boundary": "source-backed per-instance CNF SAT equivalence; speed and novelty unproved",
         }
     except (ValueError, TypeError, KeyError, IndexError, AttributeError,
