@@ -64,3 +64,40 @@ symmetry schemas), then run larger unseen benchmarks, train/holdout
 ablation studies, automatic counterexample minimization, and independent
 novelty review. Only the most compelling survivors should be formalized in
 Lean and considered for the verified production gate.
+
+## Structure-guided invention and falsification round
+
+The second experimental loop adds
+`witnora_core/structural_operator_invention.py`:
+
+- **Minimum fill:** prefer eliminating a variable whose clause graph would
+  introduce the fewest missing neighbor connections.
+- **XOR boundary:** prefer eliminating variables outside the detected exact
+  binary-parity backbone.
+- **Maximum clause release:** choose the bounded resolution elimination with
+  the greatest immediate clause-count reduction.
+
+These are **proposed elimination-order heuristics**, not new logical rules.
+All use ordinary Davis–Putnam resolution; their hypotheses concern which
+order produces useful structural simplifications.
+
+`tests/test_structural_operator_invention.py` compares all three policies
+against exhaustive SAT truth on 100 seeded random small formulas. The general
+multi-operator search and its disjoint-seed held-out experiment also include
+these strategies.
+
+`witnora_core/operator_counterexamples.py` and
+`scripts/find_operator_counterexamples.py` detect cases where a two-step
+operator sequence provides no positive advantage over the best single
+operator. They greedily delete clauses while preserving that negative
+interaction signal, then independently check SAT truth on the minimized
+original and transformed CNFs. The CI publishes complete minimized DIMACS
+examples and SHA-256 hashes so future generators can target the failures.
+
+**Current evidence:** The invariant-policy unit tests, updated train/holdout
+ledger, and minimized-negative-example job pass in GitHub Actions. These
+experiments are small, and held-out seeds come from the same problem
+generators; this is not an independently sampled distribution shift.
+The next genuinely scientific test should use unfamiliar families, larger
+benchmarks and ablations that separate heuristic value from the underlying
+resolution algorithm.
