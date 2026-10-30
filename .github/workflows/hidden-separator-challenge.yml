@@ -1,0 +1,33 @@
+name: Hidden separator challenge research gate
+
+on:
+  push:
+    branches:
+      - 'research/hidden-separator-challenge-v7'
+  pull_request:
+    paths:
+      - 'witnora_core/hidden_separator_challenge.py'
+      - 'tests/test_hidden_separator_challenge.py'
+      - 'scripts/benchmark_hidden_separator_challenge.py'
+      - '.github/workflows/hidden-separator-challenge.yml'
+
+jobs:
+  challenge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent oracle and cross-noise tests
+        run: PYTHONPATH=. python -m unittest tests.test_hidden_separator_challenge -v
+      - name: Challenge shuffled hidden boundaries
+        run: PYTHONPATH=. python scripts/benchmark_hidden_separator_challenge.py
+      - name: Archive all planted and negative cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hidden-separator-${{ github.sha }}
+          path: hidden-separator-challenge.csv
+          if-no-files-found: ignore
