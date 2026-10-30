@@ -15,7 +15,7 @@ open Witnora.G5Extraction
 open Witnora.Extraction
 open Witnora.BinaryXorDiscovery
 
-def pairsOfClause : Witnora.Concrete.Clause → List (Nat × Nat)
+def pairsOfClause : List Witnora.Concrete.Literal → List (Nat × Nat)
   | [a, b] =>
       if decide (0 < a.1 ∧ a.1 < b.1) then [(a.1, b.1)]
       else if decide (0 < b.1 ∧ b.1 < a.1) then [(b.1, a.1)]
