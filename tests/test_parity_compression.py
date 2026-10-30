@@ -3,9 +3,10 @@ from itertools import combinations, product
 import random
 import unittest
 
-from witnora_core.cnf import CNFFormula
+from witnora_core.cnf import CNFFormula, formula_satisfied
 from witnora_core.parity_compression import (
     compress_binary_xor_components, reconstruct_values,
+    substitute_residual_formula,
 )
 from witnora_core.xor import canonical_xor_cnf_clauses
 
@@ -52,6 +53,48 @@ class ParityCompressionTest(unittest.TestCase):
         self.assertEqual(cert["claim_boundary"],
                          "only extracted binary XOR constraints; arbitrary CNF residual is untouched")
 
+
+
+    def test_residual_clause_rewrite_matches_reconstructed_assignments(self):
+        rng = random.Random(71717)
+        for n in range(3, 8):
+            for _ in range(20):
+                truth = {v: rng.randrange(2) for v in range(1, n + 1)}
+                edges = [(u, v, truth[u] ^ truth[v])
+                         for u, v in combinations(range(1, n + 1), 2)
+                         if rng.random() < 0.45]
+                base = formula_from_edges(edges)
+                extras = [
+                    [((1 if rng.randrange(2) else -1) * rng.randint(1, n))
+                     for _ in range(rng.randint(1, 4))]
+                    for _ in range(3)
+                ]
+                formula = CNFFormula.from_raw_clauses(
+                    base.to_clause_lists() + extras)
+                cert = compress_binary_xor_components(formula)
+                self.assertEqual(cert["status"], "UNVERIFIED_STRUCTURAL_CANDIDATE")
+                residual = substitute_residual_formula(formula, cert)
+                root_ids = sorted(set(dict(cert["roots"]).values()))
+                other_ids = sorted(set(formula.variables) - set(dict(cert["roots"])))
+                choices = sorted(set(root_ids) | set(other_ids))
+                for bits in product((0, 1), repeat=len(choices)):
+                    roots = dict(zip(choices, bits))
+                    lifted = reconstruct_values(cert, roots)
+                    lifted.update({v: roots[v] for v in other_ids})
+                    self.assertEqual(formula_satisfied(formula, lifted),
+                                     formula_satisfied(residual, roots))
+
+    def test_residual_preserves_sat_and_unsat_with_nonxor_units(self):
+        for clause in ([1], [-1]):
+            graph = formula_from_edges([(1, 2, 0), (2, 3, 1)])
+            formula = CNFFormula.from_raw_clauses(
+                graph.to_clause_lists() + [clause, [-clause[0]]])
+            cert = compress_binary_xor_components(formula)
+            residual = substitute_residual_formula(formula, cert)
+            self.assertTrue(residual.contains_empty_clause or
+                            not any(formula_satisfied(
+                                residual, dict(zip(residual.variables, bits)))
+                                for bits in product((0, 1), repeat=len(residual.variables))))
 
 if __name__ == "__main__":
     unittest.main()
