@@ -16,6 +16,26 @@ from .cnf import CNFFormula
 from .xor import canonical_xor_cnf_clauses
 
 
+def extract_binary_xor_equations(formula: CNFFormula) -> list[tuple[int, int, int]]:
+    """Deterministic exact width-two XOR extraction, with u < v.
+
+    The candidate pair scan is an optimization; Lean independently enumerates
+    all u/v/rhs possibilities and checks the full pattern for each.
+    """
+    clauses = {tuple(clause) for clause in formula.to_clause_lists()}
+    pairs = {
+        tuple(sorted((abs(clause[0]), abs(clause[1]))))
+        for clause in clauses
+        if len(clause) == 2 and abs(clause[0]) != abs(clause[1])
+    }
+    return [
+        (u, v, rhs)
+        for u, v in sorted(pairs)
+        for rhs in (0, 1)
+        if canonical_xor_cnf_clauses((u, v), rhs).issubset(clauses)
+    ]
+
+
 def discover_parity_spoke_conflicts(formula: CNFFormula) -> list[dict[str, Any]]:
     """Return candidate contradictions with exact source-clause witnesses.
 
@@ -23,20 +43,11 @@ def discover_parity_spoke_conflicts(formula: CNFFormula) -> list[dict[str, Any]]
     equation, and never infers an XOR from a single suggestive CNF clause.
     """
     clause_set = {tuple(clause) for clause in formula.to_clause_lists()}
-    pair_candidates: set[tuple[int, int]] = set()
-    for clause in clause_set:
-        if len(clause) == 2 and abs(clause[0]) != abs(clause[1]):
-            pair_candidates.add(tuple(sorted((abs(clause[0]), abs(clause[1])))))
-
     edges: dict[int, list[tuple[int, int, tuple[tuple[int, ...], ...]]]] = defaultdict(list)
-    for u, v in sorted(pair_candidates):
-        for rhs in (0, 1):
-            pattern = canonical_xor_cnf_clauses((u, v), rhs)
-            if not pattern.issubset(clause_set):
-                continue
-            witness = tuple(sorted(pattern))
-            edges[u].append((v, rhs, witness))
-            edges[v].append((u, rhs, witness))
+    for u, v, rhs in extract_binary_xor_equations(formula):
+        witness = tuple(sorted(canonical_xor_cnf_clauses((u, v), rhs)))
+        edges[u].append((v, rhs, witness))
+        edges[v].append((u, rhs, witness))
 
     by_endpoints: dict[tuple[int, int], list[dict[str, Any]]] = defaultdict(list)
     for middle in sorted(edges):
