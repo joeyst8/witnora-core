@@ -51,3 +51,5 @@ import Witnora.ParityCompression
 import Witnora.ParityResidual
 
 import Witnora.CompressedG5
+
+import Witnora.CompressedG14
