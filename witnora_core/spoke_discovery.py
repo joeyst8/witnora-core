@@ -36,6 +36,27 @@ def extract_binary_xor_equations(formula: CNFFormula) -> list[tuple[int, int, in
     ]
 
 
+
+def extract_spoke_paths(formula: CNFFormula) -> list[tuple[int, int, int, int, int]]:
+    """Enumerate every complete (x, z, middle, left, right), x < z.
+
+    The result is sorted in Lean's variable-and-parity enumeration order.
+    """
+    edges: dict[int, list[tuple[int, int]]] = defaultdict(list)
+    for u, v, rhs in extract_binary_xor_equations(formula):
+        edges[u].append((v, rhs))
+        edges[v].append((u, rhs))
+    paths = set()
+    for middle, neighbors in edges.items():
+        for (u, urhs), (v, vrhs) in combinations(neighbors, 2):
+            if u == v:
+                continue
+            x, z = sorted((u, v))
+            left, right = (urhs, vrhs) if u == x else (vrhs, urhs)
+            paths.add((x, z, middle, left, right))
+    return sorted(paths)
+
+
 def discover_parity_spoke_conflicts(formula: CNFFormula) -> list[dict[str, Any]]:
     """Return candidate contradictions with exact source-clause witnesses.
 
