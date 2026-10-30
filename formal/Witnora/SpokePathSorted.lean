@@ -1,5 +1,4 @@
 import Witnora.SpokePathIndexed
-import Init.Data.List.Sort.Lemmas
 
 /-!
 # Sorted-vector certificate for indexed spoke paths
@@ -25,8 +24,32 @@ def pathLe (a b : Path) : Bool :=
         (a.middle = b.middle ∧ (bit a.left < bit b.left ∨
           (bit a.left = bit b.left ∧ bit a.right ≤ bit b.right))))))))
 
-def normalize (paths : List Path) : List Path :=
-  paths.mergeSort pathLe
+/-- Structurally recursive insertion avoids well-founded merge-sort
+    reductions getting stuck in closed kernel computations. -/
+def insertSorted (p : Path) : List Path → List Path
+  | [] => [p]
+  | q :: qs =>
+      if pathLe p q then p :: q :: qs
+      else q :: insertSorted p qs
+
+def normalize : List Path → List Path
+  | [] => []
+  | p :: ps => insertSorted p (normalize ps)
+
+theorem mem_insertSorted (p q : Path) (xs : List Path) :
+    p ∈ insertSorted q xs ↔ p = q ∨ p ∈ xs := by
+  induction xs with
+  | nil => simp [insertSorted]
+  | cons x xs ih =>
+      simp only [insertSorted]
+      split_ifs <;> simp [ih, or_assoc, or_left_comm, or_comm]
+
+theorem mem_normalize (p : Path) (xs : List Path) :
+    p ∈ normalize xs ↔ p ∈ xs := by
+  induction xs with
+  | nil => simp [normalize]
+  | cons x xs ih =>
+      simp [normalize, mem_insertSorted, ih, or_assoc, or_left_comm, or_comm]
 
 def checkSorted (edges : List Equation) (reported : List Path) : Bool :=
   decide (normalize (uniqueJoins edges) = normalize reported) &&
@@ -41,15 +64,15 @@ theorem checkSorted_mem_iff
     simpa [checkSorted] using hh
   constructor
   · intro hp
-    have hm : p ∈ normalize reported := by
-      simpa [normalize] using hp
+    have hm : p ∈ normalize reported :=
+      (mem_normalize p reported).mpr hp
     rw [← heq] at hm
-    simpa [normalize] using hm
+    exact (mem_normalize p (uniqueJoins edges)).mp hm
   · intro hp
-    have hm : p ∈ normalize (uniqueJoins edges) := by
-      simpa [normalize] using hp
+    have hm : p ∈ normalize (uniqueJoins edges) :=
+      (mem_normalize p (uniqueJoins edges)).mpr hp
     rw [heq] at hm
-    simpa [normalize] using hm
+    exact (mem_normalize p reported).mp hm
 
 /-- The fast sorted checker implies the original complete indexed check. -/
 theorem checkSorted_implies_exact
