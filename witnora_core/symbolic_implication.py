@@ -46,9 +46,11 @@ def normalize(expression) -> tuple[str, list[str]]:
         return expression.a, []
     op, a, b = expression.op, expression.a, expression.b
     if op == "+" and frozenset((a, b)) == frozenset(("alpha", "tau")):
-        return KNOWN_IDENTITIES[("+", frozenset(("alpha", "tau")))]
+        value, rule = KNOWN_IDENTITIES[("+", frozenset(("alpha", "tau")))]
+        return value, [rule]
     if (op, (a, b)) in KNOWN_IDENTITIES:
-        return KNOWN_IDENTITIES[(op, (a, b))]
+        value, rule = KNOWN_IDENTITIES[(op, (a, b))]
+        return value, [rule]
     if op in ("min", "max"):
         path = bound_path(a, b)
         if path is not None:
