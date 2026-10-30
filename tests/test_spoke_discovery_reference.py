@@ -10,7 +10,7 @@ import unittest
 
 from witnora_core.cnf import CNFFormula
 from witnora_core.spoke_discovery import (discover_parity_spoke_conflicts,
-                                         extract_binary_xor_equations)
+                                         extract_binary_xor_equations, extract_spoke_paths)
 from witnora_core.xor import canonical_xor_cnf_clauses
 
 
@@ -61,6 +61,21 @@ def binary_reference(formula):
     ]
 
 
+
+def path_reference(formula):
+    clauses = set(map(tuple, formula.to_clause_lists()))
+    ids = sorted(formula.variables)
+    return [
+        (x, z, middle, left, right)
+        for x, z in combinations(ids, 2)
+        for middle in ids
+        if middle not in (x, z)
+        for left, right in product((0, 1), repeat=2)
+        if canonical_xor_cnf_clauses((x, middle), left).issubset(clauses)
+        and canonical_xor_cnf_clauses((middle, z), right).issubset(clauses)
+    ]
+
+
 class SpokeDiscoveryReferenceTest(unittest.TestCase):
     def test_randomized_complete_enumeration(self):
         rng = random.Random(100901)
@@ -75,6 +90,7 @@ class SpokeDiscoveryReferenceTest(unittest.TestCase):
             formula = CNFFormula.from_raw_clauses(clauses)
             self.assertEqual(detected(formula), reference(formula))
             self.assertEqual(extract_binary_xor_equations(formula), binary_reference(formula))
+            self.assertEqual(extract_spoke_paths(formula), path_reference(formula))
 
     def test_handbuilt_conflict_and_missing_clause(self):
         clauses = set()
@@ -86,6 +102,7 @@ class SpokeDiscoveryReferenceTest(unittest.TestCase):
         for missing in sorted(clauses):
             smaller = CNFFormula.from_raw_clauses(clauses - {missing})
             self.assertEqual(detected(smaller), reference(smaller))
+            self.assertEqual(extract_spoke_paths(smaller), path_reference(smaller))
 
 
 if __name__ == "__main__":
