@@ -1,0 +1,35 @@
+name: External SATLIB fingerprints research gate
+
+on:
+  push:
+    branches:
+      - 'research/satlib-ood-fingerprints-v12'
+  pull_request:
+    paths:
+      - 'witnora_core/satlib_fingerprint.py'
+      - 'tests/test_satlib_fingerprint.py'
+      - 'scripts/benchmark_satlib_external.py'
+      - '.github/workflows/satlib-external-fingerprints.yml'
+
+jobs:
+  satlib:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Check deterministic structural fingerprint
+        run: PYTHONPATH=. python -m unittest tests.test_satlib_fingerprint -v
+      - name: Download and challenge official SATLIB 125-variable SAT and UNSAT instances
+        run: PYTHONPATH=. python scripts/benchmark_satlib_external.py
+      - name: Archive real-source hashes and per-instance results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: satlib-external-${{ github.sha }}
+          path: satlib-external-study.csv
+          if-no-files-found: ignore
