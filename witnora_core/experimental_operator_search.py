@@ -169,11 +169,17 @@ def assess_hypothesis(original: CNFFormula, hypothesis: Hypothesis) -> dict:
     reference = independent_sat(original)
     comparison = independent_sat(hypothesis.formula)
     agreement = reference == comparison
+    best_single = max(structural_score(original, TRANSFORMS[name](original))
+                      for name in OPERATORS)
+    interaction_gain = hypothesis.score - best_single
     return {
         **hypothesis.record(original),
         "original_satisfiable": reference["glucose3"],
         "candidate_satisfiable": comparison["glucose3"],
         "oracle_agreement": agreement,
+        "structural_improvement": hypothesis.score > 0,
+        "interaction_gain_over_best_single": round(interaction_gain, 6),
+        "operator_interaction_candidate": len(hypothesis.sequence) > 1 and interaction_gain > 0,
         "eligible_for_promotion": False,
         "validation": "ORACLE_AGREEMENT_EXPERIMENTAL" if agreement
                       else "REJECTED_SAT_MISMATCH",
