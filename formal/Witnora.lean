@@ -41,3 +41,5 @@ import Witnora.SpokePathDiscovery
 import Witnora.SpokePathIndexed
 
 import Witnora.BinaryXorIndexed
+
+import Witnora.SpokePathSorted
