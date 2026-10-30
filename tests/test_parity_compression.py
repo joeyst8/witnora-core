@@ -65,8 +65,8 @@ class ParityCompressionTest(unittest.TestCase):
                          if rng.random() < 0.45]
                 base = formula_from_edges(edges)
                 extras = [
-                    [((1 if rng.randrange(2) else -1) * rng.randint(1, n))
-                     for _ in range(rng.randint(1, 4))]
+                    [v if rng.randrange(2) else -v
+                     for v in rng.sample(range(1, n + 1), 3)]
                     for _ in range(3)
                 ]
                 formula = CNFFormula.from_raw_clauses(
