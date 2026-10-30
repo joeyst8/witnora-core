@@ -5,6 +5,7 @@ import csv
 from pathlib import Path
 from time import perf_counter
 
+from pysat.solvers import Glucose3
 from witnora_core.experimental_operator_search import independent_sat
 from witnora_core.hidden_separator_challenge import make_hidden_separator
 from witnora_core.ood_sat_families import larger_unseen_cases
@@ -28,8 +29,12 @@ def main():
     rows = []
     for family, case_id, formula in cases:
         start = perf_counter()
-        baseline = independent_sat(formula)
+        with Glucose3(bootstrap_with=formula.to_clause_lists()) as solver:
+            direct_truth = bool(solver.solve())
         direct_ms = (perf_counter() - start) * 1000
+        baseline = independent_sat(formula)
+        if direct_truth != baseline["glucose3"]:
+            raise AssertionError("direct solver disagrees with independent oracle")
         start = perf_counter()
         result = solve_conditioned(formula)
         conditioned_ms = (perf_counter() - start) * 1000
@@ -41,7 +46,7 @@ def main():
             "mode": result["mode"], "cut_size": len(result["cut"]),
             "assignments_examined": result["assignments_examined"],
             "component_calls": result["component_calls"],
-            "direct_independent_oracles_ms": round(direct_ms, 6),
+            "direct_glucose_ms": round(direct_ms, 6),
             "conditioned_ms": round(conditioned_ms, 6),
             "truth_agrees": True,
             "lean_verified": False, "promoted": False,
@@ -51,7 +56,7 @@ def main():
         writer.writeheader()
         writer.writerows(rows)
     print({"cases": len(rows), "conditioned_cases": sum(r["mode"] == "conditioned" for r in rows),
-           "runtime_wins_vs_two_oracles": sum(r["conditioned_ms"] < r["direct_independent_oracles_ms"] for r in rows),
+           "runtime_wins_vs_direct_glucose": sum(r["conditioned_ms"] < r["direct_glucose_ms"] for r in rows),
            "all_truths_agree": True, "trusted": False})
     return 0
 
