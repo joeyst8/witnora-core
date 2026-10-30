@@ -1,0 +1,35 @@
+name: Selective lookahead research gate
+
+on:
+  push:
+    branches:
+      - 'research/selective-lookahead-cost-gate'
+  pull_request:
+    paths:
+      - 'witnora_core/selective_lookahead_prototype.py'
+      - 'tests/test_selective_lookahead_prototype.py'
+      - 'scripts/benchmark_selective_lookahead.py'
+      - '.github/workflows/selective-lookahead.yml'
+
+jobs:
+  selective:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Check finite SAT truth and gate determinism
+        run: PYTHONPATH=. python -m unittest tests.test_selective_lookahead_prototype -v
+      - name: Challenge selective search against three baselines
+        run: PYTHONPATH=. python scripts/benchmark_selective_lookahead.py --output selective-lookahead.csv
+      - name: Archive all comparison cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selective-lookahead-${{ github.sha }}
+          path: selective-lookahead.csv
+          if-no-files-found: ignore
