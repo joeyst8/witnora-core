@@ -52,6 +52,8 @@ def expression_pool():
     compound = []
     for op in OPS:
         for a, b in combinations(ATOMS, 2):
+            if a in ("0", "1", "2") or b in ("0", "1", "2"):
+                continue  # exclude constant-only algebraic simplifications
             compound.append(Expr(op, a, b))
             if op == "-":
                 compound.append(Expr(op, b, a))
