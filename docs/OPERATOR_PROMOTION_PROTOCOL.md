@@ -128,3 +128,22 @@ Evidence: [sorted-checker CI run 41119320261](https://github.com/joeyst8/witnora
 `witnora_core/cycle_discovery.py` now proposes arbitrary closed XOR-walk contradictions using a deterministic graph search over exact source binary patterns. It detects an inconsistent **three-edge triangle**, a case requiring only three variables and outside the current four-edge, two-middle spoke grammar. This is a genuinely broader *implemented detector scope*, **not** a new mathematical theory: parity-inconsistent cycles are a classical GF(2) graph-consistency technique.
 
 `formal/Witnora/CycleParity.lean` contains the universal `closedWalk_unsat` theorem: every step backed by a complete source-CNF pattern, together with return to the start and odd edge parity, makes the original CNF UNSAT. `witnora_core/lean_cycle_gate.py` generates a closed source-bound ASCII DIMACS claim and grants `LEAN_SOURCE_CYCLE_UNSAT_VERIFIED` only after an actual Lean process accepts it. The runtime CI includes both a positive odd triangle and a clause-removal rejection case. Randomized tests compare discovery against a separate exhaustive Boolean oracle. **This operator is experimental, not automatically promoted**, and its performance/novelty versus standard parity union-find or Gaussian elimination has not been established.
+
+## Cycle source-bound assessment integration
+
+`assess_odd_cycle_operator` is now a distinct public research assessment
+entry point, with the same fail-closed provenance policy as the spoke gate.
+It recomputes the discovered odd walk from the supplied formula, validates
+the original ASCII DIMACS source against the formula's normalized clauses
+(including exact tokens and decimal spellings), and checks the odd-walk
+UNSAT theorem in a fresh Lean process. An optional G5 certificate must
+also pass source-bound Lean verification when supplied. Success returns
+`PROOF_VERIFIED_PER_INSTANCE_BENCHMARK_PENDING`, with proof-source digests,
+and **never** `promoted: true`.
+
+The CI exercises this whole entry point against a three-edge contradiction
+and an altered source-document header. The negative case must be rejected.
+This does not prove universal CPython refinement, or superiority to
+parity union-find / Gaussian elimination. Scientific benchmarking,
+coverage of difficult non-XOR instances, and independently confirmed
+novelty remain outstanding.
