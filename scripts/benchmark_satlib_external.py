@@ -28,7 +28,7 @@ def normalize_satlib_legacy_eof(text: str) -> tuple[str, bool]:
     first = markers[0]
     if any(line.strip() not in ("", "%", "0") for line in lines[first + 1:]):
         raise ValueError("unexpected tokens after SATLIB % trailer")
-    return "\\n".join(lines[:first]) + "\\n", True
+    return "\n".join(lines[:first]) + "\n", True
 
 
 def fetch_cases(suite: str, *, limit: int = 6):
