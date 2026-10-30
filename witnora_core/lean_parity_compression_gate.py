@@ -15,6 +15,8 @@ import subprocess
 from tempfile import TemporaryDirectory
 
 from .cnf import CNFFormula
+from .lean_g5_gate import (_compile_dag, _serialize_rows, _serialize_cnf,
+                           verify_g5_certificate_with_lean)
 from .lean_cnf_gate import (
     _lean_rows, _strict_rows, verify_cnf_normalization_with_lean,
 )
@@ -55,6 +57,7 @@ def verify_parity_compression_with_lean(
     source_text: object,
     timeout_seconds: int = 120,
     project_root: Path | None = None,
+    residual_g5_certificate: object | None = None,
 ) -> dict:
     failure = {"verified": False, "lean_formal_status": "NOT_LEAN_VERIFIED"}
     try:
@@ -136,6 +139,57 @@ def verify_parity_compression_with_lean(
             "    · decide\n"
             "end WitnoraCompressionCheck\n"
         )
+        g5_proof_digest = None
+        if residual_g5_certificate is not None:
+            g5check = verify_g5_certificate_with_lean(
+                residual, residual_g5_certificate,
+                raw_clauses=rewritten,
+                timeout_seconds=timeout_seconds,
+                project_root=root,
+            )
+            if (g5check.get("verified") is not True
+                    or g5check.get("lean_formal_status") != "LEAN_VERIFIED"
+                    or g5check.get("source_normalization_verified") is not True):
+                raise ValueError("G5 residual certificate rejected")
+            data = (residual_g5_certificate.to_dict()
+                    if hasattr(residual_g5_certificate, "to_dict")
+                    else residual_g5_certificate)
+            trace = data.get("gaussian_elimination_trace")
+            if not isinstance(trace, list) or not trace or not isinstance(trace[0], dict):
+                raise ValueError("G5 initial trace unavailable")
+            initial = trace[0].get("rows")
+            if not isinstance(initial, list):
+                raise ValueError("G5 initial rows unavailable")
+            bound = residual.max_var + 1
+            rows_expr = _serialize_rows(initial)
+            dag_expr = _compile_dag(initial, data.get("row_operations"))
+            raw_rewrite = _lean_rows(rewritten)
+            canonical_expr = _serialize_cnf(residual)
+            composed = (
+                "example : ¬ ∃ a, Witnora.G5Extraction.CNFHolds "
+                f"{cnf} a := by\\n"
+                "  have hpaths : Witnora.ParityCompression.ValidSourcePaths "
+                f"{cnf} rootOf parityOffset sourcePath := by\\n"
+                "    intro v\\n"
+                + _paths_proof(vertices)
+                + "  have hrewrite : Witnora.ParityResidual.substituteCNF "
+                f"rootOf parityOffset {cnf} = "
+                f"Witnora.SignedSerialization.decodeCNF {raw_rewrite} := by decide\\n"
+                + "  have hg5 : Witnora.SourceG5.checkRawG5 "
+                f"{bound} {raw_rewrite} {rows_expr} {dag_expr} = true := by\\n"
+                "    unfold Witnora.SourceG5.checkRawG5\\n"
+                "    have hcanonical : Witnora.CNFSorted.canonicalize "
+                f"(Witnora.SignedSerialization.decodeCNF {raw_rewrite}) = "
+                f"{canonical_expr} := by decide\\n"
+                "    rw [hcanonical]\\n"
+                "    decide\\n"
+                "  exact Witnora.CompressedG5.residual_g5_implies_original_unsat "
+                f"{cnf} rootOf parityOffset sourcePath hpaths {raw_rewrite} "
+                f"hrewrite {bound} {rows_expr} {dag_expr} hg5\\n"
+            )
+            proof = "import Witnora.CompressedG5\\n" + proof.replace(
+                "end WitnoraCompressionCheck\\n", composed + "end WitnoraCompressionCheck\\n")
+            g5_proof_digest = g5check.get("proof_source_sha256")
         formal = root / "formal"
         if not (formal / "lakefile.toml").is_file():
             raise ValueError("Lean project unavailable")
@@ -162,7 +216,9 @@ def verify_parity_compression_with_lean(
             "residual_clauses": residual.num_clauses,
             "residual_formula_sha256": residual.formula_hash,
             "component_certificate_sha256": sha256(json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
-            "claim_boundary": "source-backed per-instance CNF SAT equivalence; speed and novelty unproved",
+            "residual_g5_proof_source_sha256": g5_proof_digest,
+            "original_unsat_kernel_verified": g5_proof_digest is not None,
+            "claim_boundary": "source-backed SAT equivalence plus original UNSAT only if G5 residual composition was accepted",
         }
     except (ValueError, TypeError, KeyError, IndexError, AttributeError,
             OSError, subprocess.TimeoutExpired) as exc:
