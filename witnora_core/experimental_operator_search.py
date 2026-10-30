@@ -13,9 +13,13 @@ from typing import Callable
 
 from .cnf import CNFFormula, Clause, resolvent
 from .parity_compression import compress_binary_xor_components, substitute_residual_formula
+from .structural_operator_invention import (
+    min_fill_elimination, xor_boundary_elimination, max_release_elimination,
+)
 
 RESEARCH_STATUS = "UNVERIFIED_DISCOVERY_CANDIDATE"
-OPERATORS = ("parity_root", "unit_propagation", "subsumption", "bounded_elimination")
+OPERATORS = ("parity_root", "unit_propagation", "subsumption", "bounded_elimination",
+             "invariant_min_fill", "invariant_xor_boundary", "invariant_max_release")
 
 
 @dataclass(frozen=True)
@@ -113,6 +117,9 @@ TRANSFORMS: dict[str, Callable[[CNFFormula], CNFFormula]] = {
     "unit_propagation": unit_propagation,
     "subsumption": remove_subsumed,
     "bounded_elimination": bounded_elimination,
+    "invariant_min_fill": min_fill_elimination,
+    "invariant_xor_boundary": xor_boundary_elimination,
+    "invariant_max_release": max_release_elimination,
 }
 
 
