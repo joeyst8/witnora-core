@@ -159,3 +159,20 @@ and solution times. All candidates remain experimental (`lean_verified=false`,
 `novelty_verified=false`, `promoted=false`). This gate is not a proof of
 satisfiability preservation for arbitrary formulas, speedup, or mathematical
 novelty. Its purpose is to try to falsify promising structural claims.
+
+## Two-ply pivot lookahead (independent prototype)
+
+`witnora_core/lookahead_pivot_prototype.py` enumerates bounded exact
+Davis–Putnam variable eliminations, permits up to two clauses of temporary
+growth, and searches two elimination steps with a bounded beam. The hypothesis
+is that a locally unattractive pivot can open a better second pivot. It is a
+**new scheduling heuristic prototype, not a novel inference rule**.
+
+`tests/test_lookahead_pivot_prototype.py` exhaustively checks SAT equivalence
+on 80 seeded small CNFs and validates deterministic bounded behavior.
+`scripts/prototype_lookahead_pivot.py` compares it with two greedy elimination
+steps on fresh larger-family seeds 613 and 719. It reports structural-score
+wins separately from noisy end-to-end runtime wins, records input/output hashes,
+and independently checks Glucose3 and Minisat22. CI archives the raw CSV even
+if the prototype produces no improvement. All outputs remain unproved and
+unpromoted until more extensive evidence and a Lean proof are available.
