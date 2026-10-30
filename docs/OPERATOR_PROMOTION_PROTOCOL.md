@@ -350,7 +350,7 @@ that proof; only successful Lean execution returns
 
 A real CI test using an independent consistent binary-XOR component and the
 bounded `saf_unsat_cover_2` G14 family passed the combined kernel proof
-([run 41137357473](https://github.com/joeyst8/witnora-core/actions/runs/41137357473)).
+([run 41137348534](https://github.com/joeyst8/witnora-core/actions/runs/41137348534)).
 Source text and normalization remain mandatory, and invalid or absent
 certificates fail closed. This is a supported-instance correctness milestone:
 it does not prove universal refinement of arbitrary Python execution,
