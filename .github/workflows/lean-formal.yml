@@ -136,6 +136,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest tests.test_lean_compressed_g14_gate
       - name: Exhaustively test experimental operator compositions
         run: PYTHONPATH=. python -m unittest tests.test_experimental_operator_search
+      - name: Exhaustively test invariant-guided operators and counterexample shrinking
+        run: PYTHONPATH=. python -m unittest tests.test_structural_operator_invention
       - name: Test opt-in Lean-gated compression SAT path
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
@@ -165,6 +167,15 @@ jobs:
         with:
           name: operator-discovery-ledger-${{ github.sha }}
           path: operator-discovery-ledger.csv
+          if-no-files-found: ignore
+      - name: Minimize counterexamples to operator interaction hypotheses
+        run: PYTHONPATH=. python scripts/find_operator_counterexamples.py --output operator-counterexamples.json
+      - name: Publish minimized operator counterexamples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operator-counterexamples-${{ github.sha }}
+          path: operator-counterexamples.json
           if-no-files-found: ignore
       - name: Benchmark cycle discovery against parity DSU, Gaussian GF2 and Glucose3
         run: PYTHONPATH=. python scripts/benchmark_cycle_discovery.py --sizes 8 24 64 --repeats 3 --output cycle-benchmark.csv
