@@ -9,12 +9,17 @@ class SatlibFingerprintTests(unittest.TestCase):
     def test_legacy_eof_normalization(self):
         from scripts.benchmark_satlib_external import normalize_satlib_legacy_eof
         from witnora_core.dimacs import parse_dimacs
-        source = "c fixture\\np cnf 1 1\\n1 0\\n%\\n0\\n"
+        source = """c fixture
+p cnf 1 1
+1 0
+%
+0
+"""
         cleaned, changed = normalize_satlib_legacy_eof(source)
         self.assertTrue(changed)
         self.assertTrue(parse_dimacs(cleaned).num_clauses == 1)
         with self.assertRaises(ValueError):
-            normalize_satlib_legacy_eof(source + "1 0\\n")
+            normalize_satlib_legacy_eof(source + "1 0" + chr(10))
 
     def test_observational_only(self):
         source = CNFFormula.from_raw_clauses([[1, 2, 3], [-1, 2], [-2, 4]])
