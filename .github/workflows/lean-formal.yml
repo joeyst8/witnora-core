@@ -23,6 +23,9 @@ on:
       - 'tests/test_parity_compression.py'
       - 'tests/test_lean_parity_compression_gate.py'
       - 'witnora_core/lean_parity_compression_gate.py'
+      - 'witnora_core/verified_compression_pipeline.py'
+      - 'tests/test_verified_compression_pipeline.py'
+      - 'scripts/benchmark_verified_compression.py'
       - 'witnora_core/parity_compression.py'
       - 'scripts/benchmark_cycle_discovery.py'
       - 'witnora_core/cycle_discovery.py'
@@ -69,6 +72,9 @@ on:
       - 'tests/test_parity_compression.py'
       - 'tests/test_lean_parity_compression_gate.py'
       - 'witnora_core/lean_parity_compression_gate.py'
+      - 'witnora_core/verified_compression_pipeline.py'
+      - 'tests/test_verified_compression_pipeline.py'
+      - 'scripts/benchmark_verified_compression.py'
       - 'witnora_core/parity_compression.py'
       - 'scripts/benchmark_cycle_discovery.py'
       - 'witnora_core/cycle_discovery.py'
@@ -126,6 +132,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_parity_compression.py' -v
       - name: Check fail-closed parity residual certificate gate
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_lean_parity_compression_gate.py' -v
+      - name: Test opt-in Lean-gated compression SAT path
+        run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_affine_residue_*.py'
       - name: Test fail-closed Python CNF Lean normalization gate
@@ -220,6 +228,15 @@ jobs:
         run: |
           PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.lean_parity_compression_gate import verify_parity_compression_with_lean; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,1)]]; clauses.add((3,4,-5)); f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; result=verify_parity_compression_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=120); print(result); assert result["verified"] and result["lean_formal_status"]=="LEAN_SOURCE_PARITY_RESIDUAL_EQUIVALENT",result'
           PYTHONPATH=. python -c 'from witnora_core.cnf import CNFFormula; from witnora_core.xor import canonical_xor_cnf_clauses; from witnora_core.lean_parity_compression_gate import verify_parity_compression_with_lean; clauses=set(); [clauses.update(canonical_xor_cnf_clauses((u,v),r)) for u,v,r in [(1,2,0),(2,3,1)]]; clauses.add((3,4,-5)); f=CNFFormula.from_raw_clauses(clauses); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; result=verify_parity_compression_with_lean(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs().replace("p cnf","p cna",1),timeout_seconds=120); print(result); assert not result["verified"],result'
+      - name: Benchmark complete verified compression versus original SAT solve
+        run: PYTHONPATH=. python scripts/benchmark_verified_compression.py --sizes 3 5 --repeats 3 --timeout 30 --output verified-compression-benchmark.csv --require-small-pass
+      - name: Publish full verified compression timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-compression-benchmark-${{ github.sha }}
+          path: verified-compression-benchmark.csv
+          if-no-files-found: ignore
       - name: Exercise actual source-bound operator promotion gate
         run: |
           PYTHONPATH=. python -c 'from witnora_core.spoke_collapse import make_spoke_family; from witnora_core.operator_promotion import assess_parity_spoke_operator,PROOF_VERIFIED; f,_=make_spoke_family(3,contradictory=True); raw=f.to_clause_lists(); tokens=[v for row in raw for v in (*row,0)]; r=assess_parity_spoke_operator(f,raw_clauses=raw,source_tokens=tokens,source_spellings=list(map(str,tokens)),source_text=f.canonical_dimacs(),timeout_seconds=240); print(r); assert r["status"]==PROOF_VERIFIED and not r["promoted"],r'
