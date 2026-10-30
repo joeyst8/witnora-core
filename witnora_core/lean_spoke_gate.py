@@ -65,9 +65,6 @@ def verify_discovered_spoke_with_lean(
         first, second = candidate["paths"]
         s, t = _spoke_literal(first, x, z), _spoke_literal(second, x, z)
         source_bytes = [ord(c) for c in source_text]
-        ids = sorted(formula.variables)
-        if len(ids) > 24:
-            raise ValueError("full binary-extraction equality exceeds the supported variable cap")
         proposed_equations = extract_binary_xor_equations(formula)
         emitted_equations = "[" + ", ".join(
             "{ u := " + str(u) + ", v := " + str(v) +
@@ -86,11 +83,12 @@ def verify_discovered_spoke_with_lean(
         proof = (
             "import Witnora.SpokeDiscoverySpec\n"
             "import Witnora.SpokePathIndexed\n"
+            "import Witnora.BinaryXorIndexed\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
-            "example : Witnora.BinaryXorDiscovery.extract "
-            f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
-            f"= {emitted_equations} := by decide\n"
+            "example : Witnora.BinaryXorIndexed.checkExact "
+            f"(Witnora.SignedSerialization.decodeCNF {raw}) "
+            f"{emitted_equations} = true := by decide\n"
             "example : Witnora.SpokePathIndexed.checkExact "
             f"{emitted_equations} {emitted_paths} = true := by decide\n"
             "example : Witnora.SpokeDiscoverySpec.discoverFrom "
@@ -122,7 +120,7 @@ def verify_discovered_spoke_with_lean(
             raise ValueError("Lean rejected source-bound spoke proof: " +
                              (result.stdout + result.stderr)[-1000:])
         return {
-            "binary_extraction_exact_checked": True,
+            "binary_extraction_indexed_exact_checked": True,
             "spoke_path_indexed_exact_checked": True,
             "verified": True,
             "lean_formal_status": "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",
