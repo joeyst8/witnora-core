@@ -140,7 +140,7 @@ def verify_compressed_g14_with_lean(
             f"{original_cnf} rootOf parityOffset sourcePath := by",
             "      intro v",
         ]
-        lines[-1] += "\n" + _paths_proof(vertices).rstrip("\n")
+        lines[-1] += "\n" + "\n".join("  " + line for line in _paths_proof(vertices).rstrip("\n").splitlines())
         lines.extend([
             "    have hrewrite : Witnora.ParityResidual.substituteCNF "
             f"rootOf parityOffset {original_cnf} = "
