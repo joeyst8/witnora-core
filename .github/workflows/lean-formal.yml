@@ -146,6 +146,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest tests.test_ood_larger
       - name: Exhaustively check two-ply pivot SAT equivalence
         run: PYTHONPATH=. python -m unittest tests.test_lookahead_pivot_prototype
+      - name: Check lookahead failure analysis is fail-closed
+        run: PYTHONPATH=. python -m unittest tests.test_lookahead_failure_analysis
       - name: Test opt-in Lean-gated compression SAT path
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
@@ -207,6 +209,15 @@ jobs:
           if-no-files-found: ignore
       - name: Falsify lookahead pivots against greedy on fresh seeds
         run: PYTHONPATH=. python scripts/prototype_lookahead_pivot.py --seeds 613 719 --repeats 3 --output lookahead-pivot-study.csv
+      - name: Rank lookahead failures without a novelty claim
+        run: PYTHONPATH=. python scripts/analyze_lookahead_failures.py --input lookahead-pivot-study.csv --output lookahead-failure-report.json
+      - name: Publish lookahead failure ranking
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lookahead-failure-report-${{ github.sha }}
+          path: lookahead-failure-report.json
+          if-no-files-found: ignore
       - name: Publish fresh-seed lookahead pivot measurements
         if: always()
         uses: actions/upload-artifact@v4
