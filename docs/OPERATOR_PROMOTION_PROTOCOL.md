@@ -258,3 +258,30 @@ The production G5/G14 solvers still use their existing approved paths:
 this new compression is **not** automatically substituted into them.
 Full CPython execution refinement, scalability on larger proof witnesses,
 and a competitive performance advantage remain unproved.
+
+## Opt-in verified compression solve path and cost accounting
+
+`witnora_core/verified_compression_pipeline.py` provides an explicit
+opt-in SAT path. The source-bound Lean normalization/residual gate runs
+before the compressed CNF may reach Glucose3. The pipeline recomputes the
+Python candidate and residual and compares their SHA-256 digests against
+the exact Lean-accepted outputs. On gate rejection or any mismatch it solves
+the **original** formula instead. A SAT model from the residual solver is
+lifted to the original variable space and directly checked against the
+original CNF.
+
+**Crucial status distinction:** A Lean proof that the source and residual
+are equisatisfiable is not a Lean UNSAT certificate. Glucose3's UNSAT result
+is returned as `UNSAT_SOLVER_REPORTED` with
+`unsat_kernel_verified = False`. The strong UNSAT status still requires
+an independently kernel-accepted G5/G14 or other valid UNSAT proof. The
+new preprocessing does not alter existing production G5/G14 paths.
+
+The exploratory script `scripts/benchmark_verified_compression.py`
+records original Glucose3 solve time, complete original-source/residual
+Lean gate time, compressed Glucose3 time and total wall time for small
+connected-XOR families with non-XOR residual clauses. The CI attaches
+raw CSV data. Given that Lean checking costs orders of magnitude more than
+these tiny SAT instances, no end-to-end speedup should be inferred without
+actual measurements. Larger experiments, timing variance and trusted
+composition of residual UNSAT certificates remain future work.
