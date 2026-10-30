@@ -15,7 +15,8 @@ from typing import Any
 
 from .cnf import CNFFormula
 from .lean_cnf_gate import _lean_rows, _strict_rows
-from .spoke_discovery import discover_parity_spoke_conflicts
+from .spoke_discovery import (discover_parity_spoke_conflicts,
+                              extract_binary_xor_equations)
 
 
 def _spoke_literal(path: dict[str, Any], x: int, z: int) -> str:
@@ -64,12 +65,24 @@ def verify_discovered_spoke_with_lean(
         first, second = candidate["paths"]
         s, t = _spoke_literal(first, x, z), _spoke_literal(second, x, z)
         source_bytes = [ord(c) for c in source_text]
+        ids = sorted(formula.variables)
+        if len(ids) > 24:
+            raise ValueError("full binary-extraction equality exceeds the supported variable cap")
+        proposed_equations = extract_binary_xor_equations(formula)
+        emitted_equations = "[" + ", ".join(
+            "{ u := " + str(u) + ", v := " + str(v) +
+            ", rhs := " + ("true" if rhs else "false") + " }"
+            for u, v, rhs in proposed_equations
+        ) + "]"
         # This example has *no assumed correctness of Python's discovery*.
         # The kernel checks each complete pattern against raw source clauses.
         proof = (
             "import Witnora.SpokeDiscoverySpec\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
+            "example : Witnora.BinaryXorDiscovery.extract "
+            f"(Witnora.SignedSerialization.decodeCNF {raw}) {ids} "
+            f"= {emitted_equations} := by decide\n"
             "example : Witnora.SpokeDiscoverySpec.discoverFrom "
             f"(Witnora.SignedSerialization.decodeCNF {raw}) "
             f"[{{ x := {x}, z := {z}, first := {s}, second := {t} }}] "
@@ -99,6 +112,7 @@ def verify_discovered_spoke_with_lean(
             raise ValueError("Lean rejected source-bound spoke proof: " +
                              (result.stdout + result.stderr)[-1000:])
         return {
+            "binary_extraction_exact_checked": True,
             "verified": True,
             "lean_formal_status": "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED",
             "proof_source_sha256": sha256(proof.encode("utf-8")).hexdigest(),
