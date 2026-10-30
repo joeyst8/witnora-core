@@ -35,3 +35,5 @@ import Witnora.SpokeSourceBridge
 import Witnora.SpokeDiscoverySpec
 
 import Witnora.BinaryXorDiscovery
+
+import Witnora.SpokePathDiscovery
