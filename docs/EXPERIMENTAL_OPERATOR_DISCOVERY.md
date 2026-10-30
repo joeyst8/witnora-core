@@ -141,3 +141,21 @@ families. Industrial or competition SAT data, larger distributions, repeated
 machines, independent operator novelty review, and rigorous performance
 comparisons are the next requirements before any scientific breakthrough
 claim.
+
+## Larger unfamiliar-instance stress gate
+
+The second preregistered stage, `scripts/benchmark_ood_larger.py`, reads
+`ood-candidate-screen.json` generated from the frozen independent-family screen.
+It tests at most two top-ranked surviving candidate sequences on larger unseen
+instances: 5-into-4 and 6-into-5 pigeonhole, K5 coloring, six-vertex complete
+graph high-arity Tseitin parity (consistent and inconsistent), 5/6 queens,
+and seeded planted 30-variable 3-CNF. The fresh seeds are 401 and 509.
+
+If no candidate clears the first screen, the next stage **still runs** but
+labels every record `NO_SURVIVOR_NEGATIVE_CONTROL` instead of promoting an
+operator. Each record includes input/residual hashes, independent Glucose3 and
+Minisat22 agreement, structural interaction gain, and measured preprocessing
+and solution times. All candidates remain experimental (`lean_verified=false`,
+`novelty_verified=false`, `promoted=false`). This gate is not a proof of
+satisfiability preservation for arbitrary formulas, speedup, or mathematical
+novelty. Its purpose is to try to falsify promising structural claims.
