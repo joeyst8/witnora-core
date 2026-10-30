@@ -300,3 +300,31 @@ The artifact records original solver time, Lean-gate time, residual solver
 time and total guarded time. These are not yet repeated across machines,
 and no production speed advantage is claimed. **No trusted UNSAT status is
 issued from the Glucose3 verdict alone.**
+
+## Original-source UNSAT via compressed residual G5 (2026-10-30)
+
+`CompressedG5.residual_g5_implies_original_unsat` composes the universal
+source/residual correspondence theorem with `SourceG5.checkRawG5_unsat`.
+For an arbitrary source CNF, the theorem proves that a genuine G5 contradiction
+for the **exact** root-substituted residual implies UNSAT of the **original** CNF,
+provided the source paths and exact rewritten clauses are verified.
+
+The opt-in `verify_parity_compression_with_lean(...,
+residual_g5_certificate=certificate)` now constructs **one combined Lean
+proof** from the original ASCII DIMACS document, its signed clauses, all
+component roots/offsets/source paths, the exact unnormalized rewritten
+clauses, and the residual G5 initial rows and elimination DAG. It separately
+checks source and residual normalization, rejects untrusted or mismatched G5
+certificates, and emits `original_unsat_kernel_verified = True` **only**
+when Lean accepts that final original-source UNSAT proposition. Otherwise the
+fail-closed result does not grant the stronger status.
+
+The real CI case contains a consistent 2-variable XOR component plus
+contradictory 3-variable XOR constraints. The compressed residual has a native
+G5 UNSAT certificate, and the generated combined source-bound Lean proof
+passed in [the corrected GitHub Actions run](https://github.com/joeyst8/witnora-core/actions/runs/41136547272).
+This is an end-to-end **supported-instance** proof, not a universal CPython
+refinement, a G14 composition result for compressed inputs, or evidence that
+compression is faster than existing specialized SAT solvers. The normal
+Glucose-only compressed solve path still refuses to label a bare UNSAT report
+as kernel-verified.
