@@ -167,28 +167,28 @@ def verify_parity_compression_with_lean(
             canonical_expr = _serialize_cnf(residual)
             composed = (
                 "example : ¬ ∃ a, Witnora.G5Extraction.CNFHolds "
-                f"{cnf} a := by\\n"
+                f"{cnf} a := by\n"
                 "  have hpaths : Witnora.ParityCompression.ValidSourcePaths "
-                f"{cnf} rootOf parityOffset sourcePath := by\\n"
-                "    intro v\\n"
+                f"{cnf} rootOf parityOffset sourcePath := by\n"
+                "    intro v\n"
                 + _paths_proof(vertices)
                 + "  have hrewrite : Witnora.ParityResidual.substituteCNF "
                 f"rootOf parityOffset {cnf} = "
-                f"Witnora.SignedSerialization.decodeCNF {raw_rewrite} := by decide\\n"
+                f"Witnora.SignedSerialization.decodeCNF {raw_rewrite} := by decide\n"
                 + "  have hg5 : Witnora.SourceG5.checkRawG5 "
-                f"{bound} {raw_rewrite} {rows_expr} {dag_expr} = true := by\\n"
-                "    unfold Witnora.SourceG5.checkRawG5\\n"
+                f"{bound} {raw_rewrite} {rows_expr} {dag_expr} = true := by\n"
+                "    unfold Witnora.SourceG5.checkRawG5\n"
                 "    have hcanonical : Witnora.CNFSorted.canonicalize "
                 f"(Witnora.SignedSerialization.decodeCNF {raw_rewrite}) = "
-                f"{canonical_expr} := by decide\\n"
-                "    rw [hcanonical]\\n"
-                "    decide\\n"
+                f"{canonical_expr} := by decide\n"
+                "    rw [hcanonical]\n"
+                "    decide\n"
                 "  exact Witnora.CompressedG5.residual_g5_implies_original_unsat "
                 f"{cnf} rootOf parityOffset sourcePath hpaths {raw_rewrite} "
-                f"hrewrite {bound} {rows_expr} {dag_expr} hg5\\n"
+                f"hrewrite {bound} {rows_expr} {dag_expr} hg5\n"
             )
-            proof = "import Witnora.CompressedG5\\n" + proof.replace(
-                "end WitnoraCompressionCheck\\n", composed + "end WitnoraCompressionCheck\\n")
+            proof = "import Witnora.CompressedG5\n" + proof.replace(
+                "end WitnoraCompressionCheck\n", composed + "end WitnoraCompressionCheck\n")
             g5_proof_digest = g5check.get("proof_source_sha256")
         formal = root / "formal"
         if not (formal / "lakefile.toml").is_file():
