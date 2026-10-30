@@ -207,3 +207,29 @@ or a source-bound per-instance Lean check of the Python offset map. Those
 are the next proof obligations before any replacement of production G5/G14
 formula handling. This is classical parity-component substitution, not
 independently novel mathematics.
+
+## Bidirectional parity-root residual correspondence
+
+The next formal bridge is now in Lean:
+
+- `ParityCompression.source_model_reconstructs` obtains each original
+  variable from its chosen component root and parity offset, **provided**
+  that a supplied root-to-variable path is checked against the original
+  source CNF and has the asserted endpoint and parity.
+- `ParityCompression.source_iff_root_residual` establishes equivalence of
+  source satisfiability and satisfiability under root-substituted
+  assignments, under these same source-backed path hypotheses.
+- `ParityResidual.residual_semantics` proves exact literal-by-literal
+  semantics for an arbitrary CNF, including non-XOR residual clauses.
+- `ParityResidual.source_iff_rewritten_residual` composes the two results
+  into an equisatisfiability theorem for the complete rewritten CNF.
+
+Python `compress_binary_xor_components` now emits root-path witnesses.
+`substitute_residual_formula` constructs a canonicalized root-substituted
+residual and independent randomized tests compare all root assignments to
+their reconstructed original assignments. The derivation is **experimental**:
+the Lean theorem is universal **conditional on verified source paths**, but
+the exact Python-output path mapping and post-substitution normalization
+are not yet fed into a complete source-bound Lean certificate checker.
+Nothing here authorizes full-G5/G14 trusted replacement until that gate
+is in place. No general algorithmic advantage is claimed.
