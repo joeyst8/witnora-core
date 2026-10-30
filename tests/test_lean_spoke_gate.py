@@ -31,6 +31,7 @@ class SourceSpokeGateTest(unittest.TestCase):
             self.assertIn("checked_ascii_dimacs_spoke_unsat", proof)
             self.assertIn("SpokeDiscoverySpec.discoverFrom", proof)
             self.assertIn("BinaryXorDiscovery.extract", proof)
+            self.assertIn("SpokePathDiscovery.extract", proof)
             self.assertIn("signedCNFHolds", proof)
             self.assertNotIn("sorry", proof)
             self.assertNotIn("axiom", proof)
@@ -38,6 +39,7 @@ class SourceSpokeGateTest(unittest.TestCase):
         with patch("witnora_core.lean_spoke_gate.subprocess.run", side_effect=inspect):
             result = self.check()
         self.assertTrue(result["verified"])
+        self.assertTrue(result["spoke_path_extraction_exact_checked"])
         self.assertEqual(result["lean_formal_status"], "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED")
 
     def test_lean_rejection_fails_closed(self):
