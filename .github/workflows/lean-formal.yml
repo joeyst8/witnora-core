@@ -144,6 +144,8 @@ jobs:
         run: PYTHONPATH=. python -m unittest tests.test_ood_candidate_screen
       - name: Test larger unfamiliar-family stress cases
         run: PYTHONPATH=. python -m unittest tests.test_ood_larger
+      - name: Exhaustively check two-ply pivot SAT equivalence
+        run: PYTHONPATH=. python -m unittest tests.test_lookahead_pivot_prototype
       - name: Test opt-in Lean-gated compression SAT path
         run: PYTHONPATH=. python -m unittest discover -s tests -p 'test_verified_compression_pipeline.py' -v
       - name: Run G5 Python regression suite
@@ -202,6 +204,15 @@ jobs:
         with:
           name: ood-larger-stress-${{ github.sha }}
           path: ood-larger-stress.csv
+          if-no-files-found: ignore
+      - name: Falsify lookahead pivots against greedy on fresh seeds
+        run: PYTHONPATH=. python scripts/prototype_lookahead_pivot.py --seeds 613 719 --repeats 3 --output lookahead-pivot-study.csv
+      - name: Publish fresh-seed lookahead pivot measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lookahead-pivot-study-${{ github.sha }}
+          path: lookahead-pivot-study.csv
           if-no-files-found: ignore
       - name: Publish unseen-family followup screen
         if: always()
