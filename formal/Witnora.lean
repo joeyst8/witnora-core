@@ -47,3 +47,5 @@ import Witnora.SpokePathSorted
 import Witnora.CycleParity
 
 import Witnora.ParityCompression
+
+import Witnora.ParityResidual
