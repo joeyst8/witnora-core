@@ -285,3 +285,18 @@ raw CSV data. Given that Lean checking costs orders of magnitude more than
 these tiny SAT instances, no end-to-end speedup should be inferred without
 actual measurements. Larger experiments, timing variance and trusted
 composition of residual UNSAT certificates remain future work.
+
+### First full-cost benchmark CI acceptance
+
+The opt-in pipeline unit tests, original-source parity residual Lean gate,
+and the complete Glucose3 comparison have passed in GitHub Actions on
+commit `e8f87517`. The benchmark generates two small connected-XOR
+examples with additional non-XOR residual clauses; both paths agree on
+SAT/UNSAT and the smallest instance must pass the **real** Lean gate before
+the CI step can succeed. Artifact:
+[full-cost run 41133752010](https://github.com/joeyst8/witnora-core/actions/runs/41133752010).
+
+The artifact records original solver time, Lean-gate time, residual solver
+time and total guarded time. These are not yet repeated across machines,
+and no production speed advantage is claimed. **No trusted UNSAT status is
+issued from the Glucose3 verdict alone.**
