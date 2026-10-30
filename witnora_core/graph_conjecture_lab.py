@@ -12,7 +12,7 @@ METRICS = ("n", "m", "alpha", "tau", "omega", "chi", "nu", "delta")
 
 
 def graph_metrics(n: int, edges: tuple[tuple[int, int], ...]) -> dict[str, int]:
-    if not 0 <= n <= 8 or any(not 0 <= u < v < n for u, v in edges):
+    if not 0 <= n <= 11 or any(not 0 <= u < v < n for u, v in edges):
         raise ValueError("invalid bounded simple graph")
     neighbors = [0] * n
     for u, v in edges:
