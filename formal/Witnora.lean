@@ -45,3 +45,5 @@ import Witnora.BinaryXorIndexed
 import Witnora.SpokePathSorted
 
 import Witnora.CycleParity
+
+import Witnora.ParityCompression
