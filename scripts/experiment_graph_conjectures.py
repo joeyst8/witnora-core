@@ -22,6 +22,8 @@ def main():
            "falsified_on_holdout": len(report["falsified_on_holdout"]),
            "known_identity_survived": "alpha + tau = n" in report["holdout_survivors"],
            "new_theorem_proven": False})
+    print("SURVIVORS", report["holdout_survivors"])
+    print("FALSIFIED", [row["conjecture"] for row in report["falsified_on_holdout"]])
     return 0
 
 
