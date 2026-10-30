@@ -1,0 +1,35 @@
+name: Separator-conditioned solver research gate
+
+on:
+  push:
+    branches:
+      - 'research/separator-conditioned-solve-v8'
+  pull_request:
+    paths:
+      - 'witnora_core/separator_conditioned_solve.py'
+      - 'tests/test_separator_conditioned_solve.py'
+      - 'scripts/benchmark_separator_conditioned_solve.py'
+      - '.github/workflows/separator-conditioned-solve.yml'
+
+jobs:
+  conditioned:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Exact finite SAT and cut-audit tests
+        run: PYTHONPATH=. python -m unittest tests.test_separator_conditioned_solve -v
+      - name: Evaluate conditioned solving and direct baseline
+        run: PYTHONPATH=. python scripts/benchmark_separator_conditioned_solve.py
+      - name: Archive original and component results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: separator-conditioned-${{ github.sha }}
+          path: separator-conditioned-study.csv
+          if-no-files-found: ignore
