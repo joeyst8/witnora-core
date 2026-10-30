@@ -8,8 +8,9 @@ Lean kernel accepting the generated proposition.
 ## Trusted base and claim
 
 - Trusted: the Lean kernel and imported, compiled formal definitions, plus
-  ordinary file/process integrity during verification. The CI checks Lean's
-  `#print axioms` output for the composition theorems.
+  ordinary file/process integrity during verification. The Lean build prints the
+  `#print axioms` output for the composition theorems; automated rejection
+  of an unexpected axiom set remains future audit work.
 - Untrusted: DIMACS input text; Python parsers and canonicalizers;
   component/root/offset/path discovery; G14 separator selection, branch
   enumeration, conditioning, component selection and G5 certificates;
