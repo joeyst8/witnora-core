@@ -49,3 +49,5 @@ import Witnora.CycleParity
 import Witnora.ParityCompression
 
 import Witnora.ParityResidual
+
+import Witnora.CompressedG5
