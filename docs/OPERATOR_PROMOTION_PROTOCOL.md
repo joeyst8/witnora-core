@@ -60,8 +60,12 @@ and exact filter-membership theorems. The finite reference enumerator
 and all Boolean labels, and its coverage proof establishes that any proposal
 within the supplied ID domain is included. `tests/test_spoke_discovery_reference.py`
 compares Python output with an independently written exhaustive enumerator
-on bounded randomized inputs; this is testing evidence, not universal Python
-execution refinement. The production
+on bounded randomized inputs. The production spoke gate additionally checks
+exact Python binary-equation extraction against the executable Lean
+`BinaryXorDiscovery.extract` specification for inputs with at most 24
+variables. Lean proves this binary specification's complete pair/RHS
+coverage and source-CNF soundness. These are checked-output guarantees,
+not universal CPython execution refinement. The production
 gate checks concrete discovered instances with this theorem; **universal
 correctness and completeness of the Python detector's proposal enumeration** remains unproved. Universal Python interpreter
 refinement and independent novelty audit also remain open.
