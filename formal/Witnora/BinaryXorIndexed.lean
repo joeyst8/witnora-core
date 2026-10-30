@@ -17,8 +17,8 @@ open Witnora.BinaryXorDiscovery
 
 def pairsOfClause : Witnora.Concrete.Clause → List (Nat × Nat)
   | [a, b] =>
-      if 0 < a.1 && a.1 < b.1 then [(a.1, b.1)]
-      else if 0 < b.1 && b.1 < a.1 then [(b.1, a.1)]
+      if decide (0 < a.1 ∧ a.1 < b.1) then [(a.1, b.1)]
+      else if decide (0 < b.1 ∧ b.1 < a.1) then [(b.1, a.1)]
       else []
   | _ => []
 
@@ -74,7 +74,9 @@ theorem checkExact_sound (cnf : Witnora.Concrete.CNF)
     parityVars [eq.u, eq.v] a = eq.rhs := by
   have hv : valid cnf eq = true := by
     have happ := (checkExact_mem_iff cnf reported h eq).mp he
-    simpa [approved] using happ |>.2
+    have hfilter : eq ∈ candidates cnf ∧ valid cnf eq = true := by
+      simpa [approved] using happ
+    exact hfilter.2
   simp only [valid, Bool.and_eq_true] at hv
   exact checkPattern_sound cnf [eq.u, eq.v] eq.rhs hv.2 a ha
 
