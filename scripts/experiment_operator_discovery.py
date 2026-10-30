@@ -97,6 +97,14 @@ def main():
             if any(row["split"] == "holdout" for row in records) else None
         ),
         "all_oracles_agree": all(row["oracle_agreement"] for row in records),
+        "holdout_positive_reduction_count": sum(
+            row["split"] == "holdout" and row["structural_improvement"]
+            for row in records
+        ),
+        "holdout_positive_interaction_count": sum(
+            row["split"] == "holdout" and row["operator_interaction_candidate"]
+            for row in records
+        ),
         "lean_verified": False,
         "novelty_verified": False,
         "output": str(output),
