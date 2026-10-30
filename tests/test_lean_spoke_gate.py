@@ -42,6 +42,19 @@ class SourceSpokeGateTest(unittest.TestCase):
         self.assertTrue(result["spoke_path_indexed_exact_checked"])
         self.assertEqual(result["lean_formal_status"], "LEAN_SOURCE_SPOKE_UNSAT_VERIFIED")
 
+    def test_seven_variable_instance_reaches_indexed_checker(self):
+        formula, _ = make_spoke_family(5, contradictory=True)
+        with patch("witnora_core.lean_spoke_gate.subprocess.run",
+                   return_value=subprocess.CompletedProcess([], 0, "", "")) as runner:
+            result = verify_discovered_spoke_with_lean(
+                formula, raw_clauses=formula.to_clause_lists(),
+                source_tokens=[v for c in formula.to_clause_lists() for v in (*c, 0)],
+                source_text=formula.canonical_dimacs(),
+            )
+        self.assertTrue(result["verified"])
+        self.assertTrue(result["spoke_path_indexed_exact_checked"])
+        runner.assert_called_once()
+
     def test_lean_rejection_fails_closed(self):
         with patch("witnora_core.lean_spoke_gate.subprocess.run",
                    return_value=subprocess.CompletedProcess([], 1, "", "rejected")):
