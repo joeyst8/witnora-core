@@ -75,5 +75,21 @@ class CompressionGateTest(unittest.TestCase):
         self.assertFalse(result["verified"])
 
 
+
+    def test_optional_g5_requires_accepted_residual_certificate(self):
+        normalization = {
+            "verified": True, "source_document_verified": True,
+            "token_stream_verified": True, "decimal_lexemes_verified": True,
+        }
+        with patch("witnora_core.lean_parity_compression_gate.verify_cnf_normalization_with_lean",
+                   return_value=normalization), patch(
+                       "witnora_core.lean_parity_compression_gate.verify_g5_certificate_with_lean",
+                       return_value={"verified": False}) as g5:
+            result = verify_parity_compression_with_lean(
+                self.formula, residual_g5_certificate={"fake": "certificate"},
+                **self.data)
+        self.assertFalse(result["verified"])
+        g5.assert_called_once()
+
 if __name__ == "__main__":
     unittest.main()
