@@ -159,4 +159,43 @@ theorem glue_pairwise_components (parts : List CNF) :
 
 #print axioms Witnora.TC063ModelGluing.glue_pairwise_components
 
+/-- A canonical total assignment extending any partial fixed assignment. -/
+def baseOfFixed (fixed : Nat → Option Bool) : Nat → Bool :=
+  fun v => (fixed v).getD false
+
+theorem baseOfFixed_agrees (fixed : Nat → Option Bool) :
+    Witnora.Conditioning.agreesWith fixed (baseOfFixed fixed) := by
+  intro v b hv
+  simp [baseOfFixed, hv]
+
+/-- Pairwise independence plus absence of fixed variables in all residual
+    components guarantees a simultaneously satisfying separator-consistent
+    model. This uses actual list-level gluing, not an assumed constructor. -/
+theorem glue_independent_unfixed_components
+    (fixed : Nat → Option Bool) (parts : List CNF)
+    (hi : Independent parts)
+    (hunfixed : ∀ component ∈ parts,
+      ∀ v ∈ variableSupport component, fixed v = none)
+    (hmodels : ∀ component ∈ parts,
+      ∃ a : Nat → Bool, CNFHolds component a) :
+    ∃ a : Nat → Bool,
+      Witnora.Conditioning.agreesWith fixed a ∧
+      ∀ component ∈ parts, CNFHolds component a := by
+  obtain ⟨a, hall, houtside⟩ :=
+    glue_pairwise_components parts hi hmodels (baseOfFixed fixed)
+  refine ⟨a, ?_, hall⟩
+  intro v b hv
+  have hnot : v ∉ (parts.map variableSupport).flatten := by
+    intro hmem
+    obtain ⟨support, hsupport, hvar⟩ := List.mem_flatten.mp hmem
+    obtain ⟨component, hcomponent, heq⟩ := List.mem_map.mp hsupport
+    subst support
+    have hn := hunfixed component hcomponent v hvar
+    rw [hv] at hn
+    cases hn
+  rw [houtside v hnot]
+  exact baseOfFixed_agrees fixed v b hv
+
+#print axioms Witnora.TC063ModelGluing.glue_independent_unfixed_components
+
 end Witnora.TC063ModelGluing
