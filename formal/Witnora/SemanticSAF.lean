@@ -41,7 +41,7 @@ theorem checked_implies_semantic_affine
   refine ⟨rows, ?_, ?_⟩
   · unfold checkSemanticExactAffine at h
     simp at h
-    exact h.1.1
+    exact List.all_eq_true.mpr h.1.1
   · intro a
     exact checkSemanticExactAffine_sound r cnf rows h a
 
@@ -92,10 +92,10 @@ theorem family_partition_model_transfer
         ∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
           ∀ a : Nat → Bool,
             agreesWith (Witnora.SeparatorAssignments.fixedOf branch) a →
-            CNFHolds (decodeCNF raw) a ↔
-              (components branch).all (fun component =>
-                component.all (fun clause =>
-                  clause.any (Witnora.FiniteXor.signedLitTrue a))) = true := by
+              (CNFHolds (decodeCNF raw) a ↔
+                (components branch).all (fun component =>
+                  component.all (fun clause =>
+                    clause.any (Witnora.FiniteXor.signedLitTrue a))) = true) := by
   obtain ⟨separator, _, hsize, components, hbranches⟩ := hfamily
   refine ⟨separator, hsize, components, ?_⟩
   intro branch hb a hag
