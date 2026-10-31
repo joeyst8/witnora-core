@@ -37,12 +37,12 @@ theorem optionToFin_injective (n : Nat)
     | none =>
       have hv := congrArg Fin.val h
       simp [optionToFin] at hv
-      omega
     | some j =>
       have hv := congrArg Fin.val h
       have hij : i = j := by
         apply Fin.ext
         simp [optionToFin] at hv
+        exact hv
       exact congrArg Option.some hij
 
 theorem cover_color_or_larger_clique
