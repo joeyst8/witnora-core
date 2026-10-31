@@ -1,5 +1,6 @@
 """Source-clause-bound Lean G14 verification of zero-separator contradiction."""
 from witnora_core.cnf import CNFFormula
+from witnora_core.dimacs import parse_dimacs_with_text_evidence
 from witnora_core.separator_affine_family_theorem import (
     SeparatorAffineFamilyInstance,
     UNSAT_CERTIFIED,
@@ -21,12 +22,17 @@ def main():
             expected_result=UNSAT_CERTIFIED, family="zero_separator", n=1)
         cert = build_separator_affine_certificate(instance)
         assert cert.final_result == UNSAT_CERTIFIED, (label, cert.final_result)
+        source = formula.canonical_dimacs()
+        parsed, raw, tokens, spellings = parse_dimacs_with_text_evidence(source)
+        assert parsed.formula_hash == formula.formula_hash
         result = verify_g14_unsat_cover_with_lean(
-            formula, cert, raw_clauses=clauses,
-            timeout_seconds=180)
+            formula, cert, raw_clauses=raw,
+            source_tokens=tokens, source_spellings=spellings,
+            source_text=source, timeout_seconds=180)
         print(label, result)
         assert result.get("verified") is True, (label, result)
-        assert result.get("lean_formal_status") == "LEAN_G5_COVER_AND_PARTITIONS_VERIFIED", (label, result)
+        assert result.get("lean_formal_status") == "LEAN_END_TO_END_G14_UNSAT_VERIFIED", (label, result)
+        assert result.get("source_document_verified") is True, (label, result)
         assert result.get("source_normalization_verified") is True, (label, result)
 
 
