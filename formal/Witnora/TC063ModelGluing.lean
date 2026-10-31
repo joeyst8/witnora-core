@@ -198,4 +198,72 @@ theorem glue_independent_unfixed_components
 
 #print axioms Witnora.TC063ModelGluing.glue_independent_unfixed_components
 
+/-- Every surviving literal in a conditioned clause has an unfixed variable. -/
+theorem conditioned_clause_unfixed
+    (fixed : Nat → Option Bool) (clause : List Literal) :
+    ∀ reduced, Witnora.Conditioning.conditionClause fixed clause = some reduced →
+      ∀ lit ∈ reduced, fixed lit.1 = none := by
+  induction clause with
+  | nil =>
+      intro reduced h lit hl
+      simp [Witnora.Conditioning.conditionClause] at h
+      subst reduced
+      simp at hl
+  | cons head tail ih =>
+      intro reduced h lit hl
+      cases hv : fixed head.1 with
+      | none =>
+          cases hc : Witnora.Conditioning.conditionClause fixed tail with
+          | none =>
+              simp [Witnora.Conditioning.conditionClause, hv, hc] at h
+          | some r =>
+              simp [Witnora.Conditioning.conditionClause, hv, hc] at h
+              subst reduced
+              rcases List.mem_cons.mp hl with heq | htail
+              · subst lit
+                exact hv
+              · exact ih r hc lit htail
+      | some b =>
+          by_cases ht : (if head.2 then b else !b) = true
+          · simp [Witnora.Conditioning.conditionClause, hv, ht] at h
+          · have hrest : Witnora.Conditioning.conditionClause fixed tail =
+                some reduced := by
+              simpa [Witnora.Conditioning.conditionClause, hv, ht] using h
+            exact ih reduced hrest lit hl
+
+/-- Conditioning eliminates every literal whose variable is fixed, no
+    matter whether its clause was dropped, shortened or made empty. -/
+theorem conditioned_cnf_unfixed (fixed : Nat → Option Bool) (cnf : CNF) :
+    ∀ v ∈ variableSupport
+        (Witnora.Conditioning.conditionCNF fixed cnf),
+      fixed v = none := by
+  induction cnf with
+  | nil =>
+      intro v hv
+      simp [Witnora.Conditioning.conditionCNF, variableSupport] at hv
+  | cons clause rest ih =>
+      intro v hv
+      cases hc : Witnora.Conditioning.conditionClause fixed clause with
+      | none =>
+          have htail : v ∈ variableSupport
+              (Witnora.Conditioning.conditionCNF fixed rest) := by
+            simpa [Witnora.Conditioning.conditionCNF, variableSupport, hc]
+              using hv
+          exact ih v htail
+      | some reduced =>
+          have hmem : v ∈ variableSupport [reduced] ∨
+              v ∈ variableSupport
+                (Witnora.Conditioning.conditionCNF fixed rest) := by
+            simpa [Witnora.Conditioning.conditionCNF, variableSupport, hc]
+              using hv
+          rcases hmem with hhead | htail
+          · have hlit : ∃ lit ∈ reduced, lit.1 = v := by
+              simpa [variableSupport] using hhead
+            obtain ⟨lit, hlit, heq⟩ := hlit
+            subst v
+            exact conditioned_clause_unfixed fixed clause reduced hc lit hlit
+          · exact ih v htail
+
+#print axioms Witnora.TC063ModelGluing.conditioned_cnf_unfixed
+
 end Witnora.TC063ModelGluing
