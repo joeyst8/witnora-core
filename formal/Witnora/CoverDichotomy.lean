@@ -43,7 +43,6 @@ theorem optionToFin_injective (n : Nat)
       have hij : i = j := by
         apply Fin.ext
         simp [optionToFin] at hv
-        omega
       exact congrArg Option.some hij
 
 theorem cover_color_or_larger_clique
