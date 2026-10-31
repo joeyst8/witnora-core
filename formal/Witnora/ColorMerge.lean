@@ -1,5 +1,5 @@
 import Lean
-import Lean.Elab.Tactic.Omega
+import Init.Omega
 
 /-!
 # Constructive finite palette compression
