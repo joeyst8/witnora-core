@@ -2190,7 +2190,7 @@ def build_affine_residue_certificate(instance: AffineResidueInstance, *, max_ari
         "contradiction_row": None,
         "solution": None,
     }
-    if equations:
+    if equations or instance.formula.num_clauses == 0:
         elimination = gaussian_eliminate_gf2(equations)
         if elimination["status"] == "UNSAT":
             status = AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED
@@ -2296,7 +2296,7 @@ def check_affine_residue_certificate(
                 }
             )
 
-    if not verified_equations:
+    if not verified_equations and formula.num_clauses > 0:
         errors.append("NO_VERIFIED_AFFINE_EQUATIONS")
     recomputed = gaussian_eliminate_gf2(verified_equations)
     if data.get("row_operations") != recomputed.get("row_operations"):
@@ -2310,7 +2310,7 @@ def check_affine_residue_certificate(
             errors.append("GF2_CONTRADICTION_ROW_MISSING")
     if status == AFFINE_RESIDUE_SAT_WITNESS_VERIFIED or public_category == SAT_AFFINE_RESIDUE_NATIVE_CERTIFIED:
         assignment = _affine_assignment_from_payload(data.get("solution"))
-        if not assignment:
+        if not assignment and formula.num_clauses > 0:
             errors.append("AFFINE_SAT_SOLUTION_MISSING")
         elif not _assignment_satisfies_equations(verified_equations, assignment):
             errors.append("AFFINE_SOLUTION_DOES_NOT_SATISFY_EQUATIONS")
