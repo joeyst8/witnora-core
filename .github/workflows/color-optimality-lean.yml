@@ -1,0 +1,32 @@
+name: Explicit graph coloring optimality Lean certificate
+
+on:
+  push:
+    branches:
+      - research/color-optimality-lean-v28
+  pull_request:
+    paths:
+      - "formal/Witnora/ColoringOptimalityCertificate.lean"
+      - ".github/workflows/color-optimality-lean.yml"
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check optimality certificates
+        working-directory: formal
+        run: lake build Witnora.ColoringOptimalityCertificate
+      - name: Reject sorry, axiom and unsafe declarations
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ColoringOptimalityCertificate.lean; then
+            echo "Unproved declaration in explicit graph certificate"
+            exit 1
+          fi
