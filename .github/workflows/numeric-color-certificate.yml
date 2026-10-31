@@ -1,0 +1,32 @@
+name: Lean numeric graph coloring certificate
+
+on:
+  push:
+    branches:
+      - research/numeric-color-certificate-v31
+  pull_request:
+    paths:
+      - "formal/Witnora/NumericColorCertificate.lean"
+      - ".github/workflows/numeric-color-certificate.yml"
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check range-validated numeric source
+        working-directory: formal
+        run: lake build Witnora.NumericColorCertificate
+      - name: Reject sorry axiom and unsafe source declarations
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/NumericColorCertificate.lean; then
+            echo "Unproved declaration in numeric color certificate"
+            exit 1
+          fi
