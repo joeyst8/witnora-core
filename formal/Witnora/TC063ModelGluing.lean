@@ -98,4 +98,66 @@ theorem glue_two_disjoint_components
 #print axioms Witnora.TC063ModelGluing.cnfHolds_congr_on_support
 #print axioms Witnora.TC063ModelGluing.glue_two_disjoint_components
 
+/-- Arbitrarily many pairwise independent components can be satisfied
+    simultaneously, preserving an arbitrary base assignment on all variables
+    outside the union of their supports. -/
+theorem glue_pairwise_components (parts : List CNF) :
+    Independent parts →
+    (∀ component ∈ parts, ∃ a : Nat → Bool, CNFHolds component a) →
+    ∀ base : Nat → Bool,
+      ∃ a : Nat → Bool,
+        (∀ component ∈ parts, CNFHolds component a) ∧
+        (∀ v, v ∉ (parts.map variableSupport).flatten → a v = base v) := by
+  induction parts with
+  | nil =>
+      intro _ _ base
+      refine ⟨base, ?_, ?_⟩
+      · simp
+      · simp
+  | cons head tail ih =>
+      intro hp hm base
+      have hp' : List.Pairwise
+          (fun left right : CNF =>
+            ∀ v, v ∈ variableSupport left →
+              v ∉ variableSupport right) (head :: tail) := hp
+      obtain ⟨hhead, htail⟩ := List.pairwise_cons.mp hp'
+      have hmhead : ∃ a, CNFHolds head a := hm head (by simp)
+      obtain ⟨ah, hh⟩ := hmhead
+      have hmtail : ∀ component ∈ tail,
+          ∃ a : Nat → Bool, CNFHolds component a := by
+        intro component hc
+        exact hm component (by simp [hc])
+      obtain ⟨at, ht, htbase⟩ := ih htail hmtail base
+      let a := patchSupport (variableSupport head) ah at
+      refine ⟨a, ?_, ?_⟩
+      · intro component hc
+        rcases List.mem_cons.mp hc with hEq | hcTail
+        · subst component
+          exact (cnfHolds_congr_on_support head ah a
+            (by
+              intro v hv
+              simp [a, patchSupport, hv])).1 hh
+        · have hdis : ∀ v ∈ variableSupport component,
+              v ∉ variableSupport head := by
+            intro v hv hbad
+            exact (hhead component hcTail v hbad) hv
+          exact (cnfHolds_congr_on_support component at a
+            (by
+              intro v hv
+              simp [a, patchSupport, hdis v hv])).1
+            (ht component hcTail)
+      · intro v hv
+        have hvhead : v ∉ variableSupport head := by
+          intro hmem
+          apply hv
+          simp [hmem]
+        have hvtail : v ∉ (tail.map variableSupport).flatten := by
+          intro hmem
+          apply hv
+          simp [hmem]
+        rw [htbase v hvtail]
+        simp [a, patchSupport, hvhead]
+
+#print axioms Witnora.TC063ModelGluing.glue_pairwise_components
+
 end Witnora.TC063ModelGluing
