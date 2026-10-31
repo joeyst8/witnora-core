@@ -70,4 +70,42 @@ theorem fin_injective_card_le :
       have hSmall : m ≤ n := ih m lower hLowerInject
       omega
 
+/-- Encode each of k+1 positions as an optional k-position. -/
+def finToOption (k : Nat) (i : Fin (k + 1)) : Option (Fin k) :=
+  if h : i.val = 0 then none
+  else some ⟨i.val - 1, by
+    have hi := i.isLt
+    omega⟩
+
+theorem finToOption_injective (k : Nat)
+    (a b : Fin (k + 1))
+    (h : finToOption k a = finToOption k b) : a = b := by
+  by_cases ha : a.val = 0
+  · by_cases hb : b.val = 0
+    · apply Fin.ext
+      omega
+    · simp [finToOption, ha, hb] at h
+  · by_cases hb : b.val = 0
+    · simp [finToOption, ha, hb] at h
+    · have hVals : a.val - 1 = b.val - 1 := by
+        have h' := congrArg (Option.map Fin.val) h
+        simpa [finToOption, ha, hb] using h'
+      apply Fin.ext
+      omega
+
+/-- Every indexed clique in a graph on Fin N has at most N vertices. -/
+theorem indexed_clique_size_le_vertices
+    (N : Nat) (Adj : Fin N → Fin N → Prop)
+    (k : Nat) (vertices : Option (Fin k) → Fin N)
+    (hInject : ∀ a b, vertices a = vertices b → a = b) :
+    k + 1 ≤ N := by
+  let f : Fin (k + 1) → Fin N :=
+    fun i => vertices (finToOption k i)
+  have hf : ∀ a b, f a = f b → a = b := by
+    intro a b heq
+    have hOption : finToOption k a = finToOption k b :=
+      hInject (finToOption k a) (finToOption k b) heq
+    exact finToOption_injective k a b hOption
+  exact fin_injective_card_le (k + 1) N f hf
+
 end Witnora.FinitePigeonhole
