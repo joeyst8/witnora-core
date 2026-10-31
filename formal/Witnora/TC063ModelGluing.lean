@@ -266,4 +266,86 @@ theorem conditioned_cnf_unfixed (fixed : Nat → Option Bool) (cnf : CNF) :
 
 #print axioms Witnora.TC063ModelGluing.conditioned_cnf_unfixed
 
+/-- An exact residual partition cannot invent any fixed-variable literal:
+    every component clause occurs in the conditioned CNF. -/
+theorem partition_components_unfixed
+    (fixed : Nat → Option Bool) (original : CNF)
+    (parts : List CNF)
+    (hpart : Witnora.ComponentPartition.checkPartition
+      (Witnora.Conditioning.conditionCNF fixed original) parts = true) :
+    ∀ component ∈ parts,
+      ∀ v ∈ variableSupport component, fixed v = none := by
+  have hp : List.Perm
+      (Witnora.Conditioning.conditionCNF fixed original)
+      parts.flatten := by
+    simpa [Witnora.ComponentPartition.checkPartition] using hpart
+  intro component hcomponent v hv
+  obtain ⟨lit, hlit, heq⟩ := List.mem_map.mp hv
+  obtain ⟨clause, hclause, hclauseLit⟩ := List.mem_flatten.mp hlit
+  have hflatten : clause ∈ parts.flatten :=
+    List.mem_flatten.mpr ⟨component, hcomponent, hclause⟩
+  have hres : clause ∈ Witnora.Conditioning.conditionCNF fixed original :=
+    hp.mem_iff.mpr hflatten
+  have hresLit :
+      lit ∈ (Witnora.Conditioning.conditionCNF fixed original).flatten :=
+    List.mem_flatten.mpr ⟨clause, hres, hclauseLit⟩
+  have hunfixed := conditioned_cnf_unfixed fixed original lit.1
+    (List.mem_map.mpr ⟨lit, hresLit, rfl⟩)
+  simpa [heq] using hunfixed
+
+/-- For every certified SAF family member, exact partitions and pairwise
+    variable-disjoint components *prove* branch model gluing. The previously
+    explicit gluing premise is discharged rather than assumed. -/
+theorem family_has_branch_model_gluing
+    (c r : Nat) (raw : List (List Int))
+    (hfamily : Family c r raw) :
+    ∃ separator : List Nat,
+      separator.length ≤ c ∧
+      ∃ components : List (Nat × Bool) → List CNF,
+        Witnora.TC063CoverBridge.BranchModelGluing separator components ∧
+        (∀ branch ∈ Witnora.SeparatorAssignments.enumerate separator,
+          Witnora.ComponentPartition.checkPartition
+            (Witnora.Conditioning.conditionCNF
+              (Witnora.SeparatorAssignments.fixedOf branch)
+              (Witnora.SignedSerialization.decodeCNF raw))
+            (components branch) = true) := by
+  obtain ⟨separator, _, hbound, components, hbranches⟩ := hfamily
+  refine ⟨separator, hbound, components, ?_, ?_⟩
+  · intro branch hb hmodels
+    exact glue_independent_unfixed_components
+      (Witnora.SeparatorAssignments.fixedOf branch)
+      (components branch)
+      (hbranches branch hb).2.1
+      (partition_components_unfixed
+        (Witnora.SeparatorAssignments.fixedOf branch)
+        (Witnora.SignedSerialization.decodeCNF raw)
+        (components branch) (hbranches branch hb).1)
+      hmodels
+  · intro branch hb
+    exact (hbranches branch hb).1
+
+/-- Main semantic TC-063 cover milestone: every UNSAT certified SAF member
+    admits at least one UNSAT residual component on *every* separator
+    branch, without a model-gluing assumption. Constructing G5 traces
+    remains a separate certificate-completeness obligation. -/
+theorem family_unsat_has_semantic_component_cover
+    (c r : Nat) (raw : List (List Int))
+    (hfamily : Family c r raw)
+    (hunsat : ¬ ∃ a : Nat → Bool,
+      Witnora.SignedSerialization.signedCNFHolds raw a) :
+    ∃ separator : List Nat,
+      separator.length ≤ c ∧
+      ∃ components : List (Nat × Bool) → List CNF,
+        Witnora.TC063CoverBridge.SemanticUnsatCover
+          separator components := by
+  obtain ⟨separator, hbound, components, hglue, hpart⟩ :=
+    family_has_branch_model_gluing c r raw hfamily
+  refine ⟨separator, hbound, components, ?_⟩
+  exact Witnora.TC063CoverBridge.unsat_has_semantic_component_cover
+    raw separator components hpart hglue hunsat
+
+#print axioms Witnora.TC063ModelGluing.partition_components_unfixed
+#print axioms Witnora.TC063ModelGluing.family_has_branch_model_gluing
+#print axioms Witnora.TC063ModelGluing.family_unsat_has_semantic_component_cover
+
 end Witnora.TC063ModelGluing
