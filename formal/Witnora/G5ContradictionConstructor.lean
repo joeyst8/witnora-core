@@ -77,4 +77,27 @@ theorem oppositePairSteps_complete (xs : List Nat)
 #print axioms Witnora.G5ContradictionConstructor.opposite_rows_certified
 #print axioms Witnora.G5ContradictionConstructor.oppositePairSteps_complete
 
+/-- Two arbitrary equations may combine to contradict a third. The DAG
+    first appends a ⊕ b and then appends c ⊕ (a ⊕ b), which is 0 = 1
+    whenever the third row has the same support and opposite RHS. -/
+theorem xor_pair_conflicts_with_third
+    (a b c : Row)
+    (hcoeff : c.coefficients =
+      xorCoefficients a.coefficients b.coefficients)
+    (hrhs : c.rhs ≠ Bool.xor a.rhs b.rhs) :
+    checkDagContradiction [a, b, c] [(0, 1), (2, 3)] = true := by
+  cases a with
+  | mk ca ra =>
+    cases b with
+    | mk cb rb =>
+      cases c with
+      | mk cc rc =>
+        simp only at hcoeff hrhs
+        subst cc
+        cases ra <;> cases rb <;> cases rc <;>
+          simp_all [checkDagContradiction, replayDag, xorRow,
+            xorCoefficients_self]
+
+#print axioms Witnora.G5ContradictionConstructor.xor_pair_conflicts_with_third
+
 end Witnora.G5ContradictionConstructor
