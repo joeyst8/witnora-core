@@ -127,8 +127,8 @@ theorem glue_pairwise_components (parts : List CNF) :
           ∃ a : Nat → Bool, CNFHolds component a := by
         intro component hc
         exact hm component (by simp [hc])
-      obtain ⟨at, ht, htbase⟩ := ih htail hmtail base
-      let a := patchSupport (variableSupport head) ah at
+      obtain ⟨aTail, ht, htbase⟩ := ih htail hmtail base
+      let a := patchSupport (variableSupport head) ah aTail
       refine ⟨a, ?_, ?_⟩
       · intro component hc
         rcases List.mem_cons.mp hc with hEq | hcTail
@@ -141,7 +141,7 @@ theorem glue_pairwise_components (parts : List CNF) :
               v ∉ variableSupport head := by
             intro v hv hbad
             exact (hhead component hcTail v hbad) hv
-          exact (cnfHolds_congr_on_support component at a
+          exact (cnfHolds_congr_on_support component aTail a
             (by
               intro v hv
               simp [a, patchSupport, hdis v hv])).1
