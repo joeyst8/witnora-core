@@ -138,4 +138,29 @@ theorem colorable_with_cover_plus_one
     · simp [paint, hu, hv]
     · exact False.elim ((hIndependent u v hu hv) huv)
 
+/-- A recoloring whose only collisions are a chosen nonadjacent cover
+pair remains proper on the cover. This is the local color-merging step. -/
+theorem merge_nonadjacent_cover_pair
+    {V : Type} (Adj : V → V → Prop) (S : V → Prop)
+    (merged : V → Nat) (x y : V)
+    (hSym : ∀ u v, Adj u v → Adj v u)
+    (hNoLoops : ∀ u, ¬ Adj u u)
+    (hNoPairEdge : ¬ Adj x y)
+    (hCollisions :
+      ∀ u v, S u → S v → merged u = merged v →
+        u = v ∨ (u = x ∧ v = y) ∨ (u = y ∧ v = x)) :
+    ∀ u v, S u → S v → Adj u v → merged u ≠ merged v := by
+  intro u v hu hv huv heq
+  rcases hCollisions u v hu hv heq with hSame | hPair | hReverse
+  · subst v
+    exact hNoLoops u huv
+  · rcases hPair with ⟨hux, hvy⟩
+    subst u
+    subst v
+    exact hNoPairEdge huv
+  · rcases hReverse with ⟨huy, hvx⟩
+    subst u
+    subst v
+    exact hNoPairEdge (hSym y x huv)
+
 end Witnora.GraphCoverColoring
