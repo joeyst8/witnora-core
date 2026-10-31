@@ -3,10 +3,10 @@ import Init.Omega
 import Witnora.ColoringOptimalityCertificate
 
 /-!
-# Executable certificate checker over enumerated finite graph data
+# Executable finite-edge-list coloring optimality certificate
 
-All conditions are checked by Boolean iteration over explicit finite
-lists; no noncomputable classical Prop-decision oracle is used.
+All graph conditions are checked by structurally recursive Boolean
+enumeration over Fin N and Option (Fin k), not classical Prop decisions.
 -/
 
 namespace Witnora.ConcreteColorCertificate
@@ -22,46 +22,58 @@ def edgeAdj {N : Nat} (edges : List (Fin N × Fin N))
     (u v : Fin N) : Prop :=
   edgeBool edges u v = true
 
-def optionIndices (k : Nat) : List (Option (Fin k)) :=
-  none :: (List.finRange k).map some
+/-- Total Boolean quantifier over Fin n. -/
+def allFin : (n : Nat) → (Fin n → Bool) → Bool
+  | 0, _ => true
+  | n + 1, p => p 0 && allFin n (fun i => p i.succ)
 
-def allFin (n : Nat) (p : Fin n → Bool) : Bool :=
-  (List.finRange n).all p
+private theorem allFin_sound :
+    ∀ n (p : Fin n → Bool),
+      allFin n p = true → ∀ x : Fin n, p x = true := by
+  intro n
+  induction n with
+  | zero =>
+      intro p h x
+      exact x.elim0
+  | succ n ih =>
+      intro p h x
+      have hParts :
+          p 0 = true ∧ allFin n (fun i => p i.succ) = true := by
+        simpa only [allFin, Bool.and_eq_true] using h
+      refine Fin.cases ?_ ?_ x
+      · exact hParts.1
+      · intro i
+        exact ih (fun i => p i.succ) hParts.2 i
 
 def allOptionFin (k : Nat) (p : Option (Fin k) → Bool) : Bool :=
-  (optionIndices k).all p
-
-private theorem allFin_sound (n : Nat) (p : Fin n → Bool)
-    (h : allFin n p = true) (x : Fin n) : p x = true := by
-  exact (List.all_eq_true.mp h) x (List.mem_finRange x)
+  p none && allFin k (fun i => p (some i))
 
 private theorem allOptionFin_sound (k : Nat)
     (p : Option (Fin k) → Bool)
     (h : allOptionFin k p = true)
     (x : Option (Fin k)) : p x = true := by
-  apply (List.all_eq_true.mp h) x
+  have hParts :
+      p none = true ∧ allFin k (fun i => p (some i)) = true := by
+    simpa only [allOptionFin, Bool.and_eq_true] using h
   cases x with
-  | none => simp [optionIndices]
-  | some i =>
-      simp only [optionIndices, List.mem_cons, List.mem_map]
-      right
-      exact ⟨i, List.mem_finRange i, rfl⟩
+  | none => exact hParts.1
+  | some i => exact allFin_sound k _ hParts.2 i
 
-/-- Every finite input condition is checked by concrete Boolean loops. -/
+/-- Four complete finite checks for a proposed coloring and clique. -/
 def checkCertificate {N k : Nat}
     (edges : List (Fin N × Fin N))
     (paint : Fin N → Fin (k + 1))
     (vertices : Option (Fin k) → Fin N) : Bool :=
-  allFin N (fun u => decide (¬ edgeAdj edges u u)) &&
+  allFin N (fun u => decide (edgeBool edges u u = false)) &&
   allFin N (fun u =>
     allFin N (fun v =>
-      decide (edgeAdj edges u v → paint u ≠ paint v))) &&
+      decide (edgeBool edges u v = true → paint u ≠ paint v))) &&
   allOptionFin k (fun a =>
     allOptionFin k (fun b =>
       decide (vertices a = vertices b → a = b))) &&
   allOptionFin k (fun a =>
     allOptionFin k (fun b =>
-      decide (a ≠ b → edgeAdj edges (vertices a) (vertices b))))
+      decide (a ≠ b → edgeBool edges (vertices a) (vertices b) = true)))
 
 theorem checked_certificate_sound {N k : Nat}
     (edges : List (Fin N × Fin N))
@@ -71,36 +83,40 @@ theorem checked_certificate_sound {N k : Nat}
     ∃ hNoLoops : ∀ u : Fin N, ¬ edgeAdj edges u u,
       chromaticNumber (edgeAdj edges) hNoLoops = k + 1 := by
   have hParts :
-      allFin N (fun u => decide (¬ edgeAdj edges u u)) = true ∧
+      allFin N (fun u => decide (edgeBool edges u u = false)) = true ∧
       allFin N (fun u =>
         allFin N (fun v =>
-          decide (edgeAdj edges u v → paint u ≠ paint v))) = true ∧
+          decide (edgeBool edges u v = true → paint u ≠ paint v))) = true ∧
       allOptionFin k (fun a =>
         allOptionFin k (fun b =>
           decide (vertices a = vertices b → a = b))) = true ∧
       allOptionFin k (fun a =>
         allOptionFin k (fun b =>
-          decide (a ≠ b → edgeAdj edges (vertices a) (vertices b)))) = true := by
+          decide (a ≠ b →
+            edgeBool edges (vertices a) (vertices b) = true))) = true := by
     simpa only [checkCertificate, Bool.and_eq_true] using hChecked
   rcases hParts with ⟨hLoops, hProperCheck, hInjectCheck, hCliqueCheck⟩
   have hNoLoops : ∀ u : Fin N, ¬ edgeAdj edges u u := by
-    intro u
-    exact of_decide_true (allFin_sound N _ hLoops u)
+    intro u hAdj
+    have hFalse : edgeBool edges u u = false :=
+      of_decide_eq_true (allFin_sound N _ hLoops u)
+    simp [edgeAdj, hFalse] at hAdj
   have hProper : ∀ u v : Fin N,
       edgeAdj edges u v → paint u ≠ paint v := by
-    intro u v
+    intro u v hAdj
     have hu := allFin_sound N _ hProperCheck u
-    exact of_decide_true (allFin_sound N _ hu v)
+    have hv := allFin_sound N _ hu v
+    exact (of_decide_eq_true hv) hAdj
   have hInject : ∀ a b : Option (Fin k),
       vertices a = vertices b → a = b := by
     intro a b
     have ha := allOptionFin_sound k _ hInjectCheck a
-    exact of_decide_true (allOptionFin_sound k _ ha b)
+    exact of_decide_eq_true (allOptionFin_sound k _ ha b)
   have hClique : ∀ a b : Option (Fin k),
       a ≠ b → edgeAdj edges (vertices a) (vertices b) := by
     intro a b
     have ha := allOptionFin_sound k _ hCliqueCheck a
-    exact of_decide_true (allOptionFin_sound k _ ha b)
+    exact of_decide_eq_true (allOptionFin_sound k _ ha b)
   exact ⟨hNoLoops,
     exact_chromatic_of_matching_witnesses
       N k (edgeAdj edges) hNoLoops paint hProper
