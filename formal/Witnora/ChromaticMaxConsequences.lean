@@ -18,10 +18,10 @@ theorem max_cover_chromatic
     (hCoverBound : chi ≤ max tau omega) :
     max tau omega = max tau chi := by
   apply Nat.le_antisymm
-  · apply max_le
+  · apply Nat.max_le
     · exact le_max_left tau chi
-    · exact le_trans hClique (le_max_right tau chi)
-  · apply max_le
+    · exact Nat.le_trans hClique (le_max_right tau chi)
+  · apply Nat.max_le
     · exact le_max_left tau omega
     · exact hCoverBound
 
@@ -32,11 +32,11 @@ theorem max_edges_chromatic
     (hCoverBound : chi ≤ max tau omega) :
     max edges omega = max edges chi := by
   have hLift : max tau omega ≤ max edges omega := by
-    apply max_le
-    · exact le_trans hCoverEdges (le_max_left edges omega)
+    apply Nat.max_le
+    · exact Nat.le_trans hCoverEdges (le_max_left edges omega)
     · exact le_max_right edges omega
   have hBound : chi ≤ max edges omega :=
-    le_trans hCoverBound hLift
+    Nat.le_trans hCoverBound hLift
   exact max_cover_chromatic edges omega chi hClique hBound
 
 end Witnora.ChromaticMaxConsequences
