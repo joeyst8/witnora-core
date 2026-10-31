@@ -58,9 +58,11 @@ theorem unit_counterexample_in_saf :
 theorem unit_counterexample_unsat :
     ¬ ∃ a, signedCNFHolds [[1], [-1]] a := by
   intro ⟨a, ha⟩
-  unfold signedCNFHolds at ha
+  have hc : Witnora.G5Extraction.CNFHolds unitContradiction a := by
+    exact (signedCNFHolds_iff [[1], [-1]] a).mp ha
+  unfold Witnora.G5Extraction.CNFHolds unitContradiction at hc
   cases hv : a 1 <;>
-    simp [decode, Witnora.FiniteXor.signedLitTrue, hv] at ha
+    simp [Witnora.FiniteXor.signedLitTrue, hv] at hc
 
 #print axioms Witnora.TC063UnitCounterexample.unit_rows_exact
 #print axioms Witnora.TC063UnitCounterexample.unit_counterexample_in_saf
