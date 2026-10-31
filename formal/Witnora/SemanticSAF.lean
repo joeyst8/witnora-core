@@ -1,10 +1,10 @@
 import Witnora.TC063Direct
 
 /-!
-# A mathematical, Python-independent SAF(c,r) target
+# A mathematical, Python-independent certificate-admissible SAF(c,r) target
 
-Membership here means *semantic equivalence* to bounded GF(2) rows for
-every variable-disjoint residual component on every separator branch.
+Membership here requires checkable evidence of equivalence to bounded
+GF(2) rows for every variable-disjoint residual component on every branch.
 It does not define the family as "whatever Python recognizes".
 
 The same mathematical CNF model set may have many syntactically distinct
@@ -57,6 +57,33 @@ theorem semantic_affine_closed_under_covered_clause
   intro a
   exact (covered_clause_extension_iff cnf extra hcovered a).trans (hequiv a)
 
+/-- Pure model-equivalence is too permissive for a *complexity* family:
+    every UNSAT CNF is equivalent to the inconsistent empty-support XOR row.
+    This theorem is an adversarial warning, not a membership algorithm. -/
+theorem every_unsat_semantically_affine (r : Nat) (cnf : CNF)
+    (hunsat : ¬ ∃ a : Nat → Bool, CNFHolds cnf a) :
+    SemanticAffine r cnf := by
+  refine ⟨[{coefficients := [], rhs := true}], by decide, ?_⟩
+  intro a
+  constructor
+  · intro hc
+    exact False.elim (hunsat ⟨a, hc⟩)
+  · intro hrows
+    have hbad := hrows {coefficients := [], rhs := true} (by simp)
+    simp [parityVars] at hbad
+
+/-- The *actual* restricted family therefore requires a concrete,
+    independently checkable affine extraction witness, not mere semantic
+    existential equivalence. This still does not trust Python execution. -/
+def CertifiedAffine (r : Nat) (cnf : CNF) : Prop :=
+  ∃ rows : List Witnora.G5Trace.Row,
+    checkSemanticExactAffine r cnf rows = true
+
+theorem certified_affine_sound (r : Nat) (cnf : CNF)
+    (h : CertifiedAffine r cnf) : SemanticAffine r cnf := by
+  obtain ⟨rows, hc⟩ := h
+  exact checked_implies_semantic_affine r cnf rows hc
+
 /-- Variable support of a component, including every residual literal. -/
 def variableSupport (cnf : CNF) : List Nat :=
   cnf.flatten.map Prod.fst
@@ -67,9 +94,10 @@ def Independent (parts : List CNF) : Prop :=
   parts.Pairwise (fun left right =>
     ∀ v, v ∈ variableSupport left → v ∉ variableSupport right)
 
-/-- Semantic SAF(c,r): a bounded, duplicate-free separator and, for each
-    complete Boolean branch, an exact clause partition into independent
-    components each equivalent to bounded affine rows. -/
+/-- Certificate-admissible SAF(c,r): a bounded duplicate-free separator,
+    exhaustive branches, exact independent residual partitions, and each
+    component equipped with a checkable exact affine representation.
+    This avoids the vacuous all-UNSAT semantic-equivalence family. -/
 def Family (c r : Nat) (raw : List (List Int)) : Prop :=
   ∃ separator : List Nat,
     separator.Nodup ∧ separator.length ≤ c ∧
@@ -80,7 +108,7 @@ def Family (c r : Nat) (raw : List (List Int)) : Prop :=
             (decodeCNF raw))
           (components branch) = true ∧
         Independent (components branch) ∧
-        ∀ component ∈ components branch, SemanticAffine r component
+        ∀ component ∈ components branch, CertifiedAffine r component
 
 /-- Even a semantic SAF witness guarantees the exact original-to-residual
     model relationship on every branch. No Python conditioning contract. -/
@@ -116,6 +144,16 @@ theorem tc063_semantic_family_target
       ∃ cert : CoverData, cert.accepts c raw = true :=
   tc063_unsat_iff_checked_cover c (Family c r) hcomplete raw hmember
 
+/-- The redundant three-variable clause is also *certifiably* affine in
+    this supported case, despite the historical Python recognizer rejecting
+    its syntactic source coverage. -/
+example :
+    CertifiedAffine 2
+      [[(1, true), (2, false)], [(1, false), (2, true)],
+       [(1, true), (2, false), (3, true)]] := by
+  refine ⟨[{coefficients := [1, 2], rhs := false}], ?_⟩
+  decide
+
 /-- A concrete redundant clause still belongs to the same semantic affine
     component: x1=x2 plus a weaker three-variable clause. -/
 example :
@@ -127,6 +165,8 @@ example :
   decide
 
 #print axioms Witnora.SemanticSAF.checked_implies_semantic_affine
+#print axioms Witnora.SemanticSAF.every_unsat_semantically_affine
+#print axioms Witnora.SemanticSAF.certified_affine_sound
 #print axioms Witnora.SemanticSAF.semantic_affine_closed_under_covered_clause
 #print axioms Witnora.SemanticSAF.family_partition_model_transfer
 #print axioms Witnora.SemanticSAF.tc063_semantic_family_target
