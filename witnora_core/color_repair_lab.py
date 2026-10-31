@@ -135,13 +135,20 @@ def run_repair_experiment() -> dict:
                     edges = tuple((u, v) for u, v in combinations(range(n), 2)
                                   if rng.random() < density)
                     original = _dsatur_greedy_coloring(n, edges)
-                    multistart = multistart_dsatur(n, edges, 8)
-                    recolor = bounded_recolor(n, edges, original["coloring"])
-                    combined = min(multistart["bound"], recolor["bound"])
-                    # Fully independent exact k-colorability check to certify
-                    # any failure: a smaller verified coloring suffices.
+                    # An independently checked absence of any smaller coloring
+                    # establishes that repair cannot improve this instance.
+                    # Expensive local search is reserved for verified failures.
                     exact_better = exact_k_coloring(n, edges, original["bound"] - 1)
                     failed = exact_better is not None
+                    if failed:
+                        multistart = multistart_dsatur(n, edges, 8)
+                        recolor = bounded_recolor(n, edges, original["coloring"])
+                    else:
+                        multistart = {"bound": original["bound"], "coloring": original["coloring"],
+                                      "restart": 0}
+                        recolor = {"bound": original["bound"], "coloring": original["coloring"],
+                                   "improved": False, "nodes": 0, "exhausted": False}
+                    combined = min(multistart["bound"], recolor["bound"])
                     stats["graphs"] += 1
                     stats["dsatur_failures"] += failed
                     stats["multistart_improvements"] += multistart["bound"] < original["bound"]
