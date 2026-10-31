@@ -98,6 +98,29 @@ def matching_color_bound(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
 
 
 
+def _connected_components(n: int, edges: tuple[tuple[int, int], ...]) -> list[list[int]]:
+    neighbors = [set() for _ in range(n)]
+    for u, v in edges:
+        neighbors[u].add(v)
+        neighbors[v].add(u)
+    seen = set()
+    components = []
+    for start in range(n):
+        if start in seen:
+            continue
+        component = []
+        queue = [start]
+        seen.add(start)
+        for u in queue:
+            component.append(u)
+            for v in sorted(neighbors[u]):
+                if v not in seen:
+                    seen.add(v)
+                    queue.append(v)
+        components.append(sorted(component))
+    return components
+
+
 def _componentwise_baseline(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
@@ -148,10 +171,12 @@ def run_experiment() -> dict:
         "matching_exact": 0, "baseline_exact": 0, "hybrid_exact": 0,
         "strong_baseline_exact": 0, "strong_hybrid_exact": 0,
         "matching_strict_improvements_over_strong": 0,
+        "connected_graphs": 0,
+        "connected_improvements_over_strong": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
-                "first_hybrid_gap": None}
+                "first_hybrid_gap": None, "first_connected_strong_improvement": None}
 
     def inspect(label: str, n: int, edges: tuple[tuple[int, int], ...]):
         values = graph_metrics(n, edges)
@@ -162,6 +187,7 @@ def run_experiment() -> dict:
         strong_baseline = min(baseline, component_bound, greedy_bound)
         hybrid = min(attempt["bound"], baseline)
         strong_hybrid = min(attempt["bound"], strong_baseline)
+        connected = n > 0 and len(_connected_components(n, edges)) == 1
         if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
         if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid:
@@ -175,6 +201,8 @@ def run_experiment() -> dict:
         tally["strong_baseline_exact"] += strong_baseline == values["chi"]
         tally["strong_hybrid_exact"] += strong_hybrid == values["chi"]
         tally["matching_strict_improvements_over_strong"] += attempt["bound"] < strong_baseline
+        tally["connected_graphs"] += connected
+        tally["connected_improvements_over_strong"] += connected and attempt["bound"] < strong_baseline
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
         details = {
@@ -190,6 +218,8 @@ def run_experiment() -> dict:
             examples["first_matching_gap"] = details
         if hybrid > values["chi"] and examples["first_hybrid_gap"] is None:
             examples["first_hybrid_gap"] = details
+        if connected and attempt["bound"] < strong_baseline and examples["first_connected_strong_improvement"] is None:
+            examples["first_connected_strong_improvement"] = details
 
     for n in range(1, 7):
         for _, edges in graphs(n):
