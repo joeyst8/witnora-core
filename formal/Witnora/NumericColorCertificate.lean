@@ -44,6 +44,30 @@ def decodedClique (N K : Nat) (clique : List Nat) :
   fun i => ⟨((clique[optionIndex i]?).getD 0) % (N + 1),
     Nat.mod_lt _ (Nat.succ_pos N)⟩
 
+/-- In-range numeric edge endpoints decode without changing their values. -/
+theorem decodeEdge_preserves
+    (N u v : Nat) (hu : u < N + 1) (hv : v < N + 1) :
+    decodeEdge N (u, v) = some (⟨u, hu⟩, ⟨v, hv⟩) := by
+  simp [decodeEdge, hu, hv]
+
+/-- An accepted raw color lookup is not changed by finite-number reduction. -/
+theorem decodedPaint_preserves
+    (N K : Nat) (colors : List Nat)
+    (i : Fin (N + 1)) (color : Nat)
+    (hGet : colors[i.val]? = some color)
+    (hBound : color < K + 1) :
+    (decodedPaint N K colors i).val = color := by
+  simp [decodedPaint, hGet, Nat.mod_eq_of_lt hBound]
+
+/-- The clique index adapter preserves each in-range source vertex. -/
+theorem decodedClique_preserves
+    (N K : Nat) (clique : List Nat)
+    (i : Option (Fin K)) (vertex : Nat)
+    (hGet : clique[optionIndex i]? = some vertex)
+    (hBound : vertex < N + 1) :
+    (decodedClique N K clique i).val = vertex := by
+  simp [decodedClique, hGet, Nat.mod_eq_of_lt hBound]
+
 /-- Explicit length/range checks executed before any certificate acceptance. -/
 def numericRangesValid (N K : Nat)
     (edges : List (Nat × Nat))
@@ -121,6 +145,9 @@ theorem repeated_clique_vertex_rejected :
 
 end Witnora.NumericColorCertificate
 
+#print axioms Witnora.NumericColorCertificate.decodeEdge_preserves
+#print axioms Witnora.NumericColorCertificate.decodedPaint_preserves
+#print axioms Witnora.NumericColorCertificate.decodedClique_preserves
 #print axioms Witnora.NumericColorCertificate.checked_numeric_sound
 #print axioms Witnora.NumericColorCertificate.numeric_triangle_passes
 #print axioms Witnora.NumericColorCertificate.numeric_triangle_optimal
