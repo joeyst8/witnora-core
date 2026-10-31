@@ -29,6 +29,6 @@ jobs:
           test: false
       - name: Build partition, G5 and G14 source bridge
         working-directory: formal
-        run: lake build Witnora.G14ConcreteBridge Witnora.SourceG5
+        run: lake build Witnora.G14ConcreteBridge Witnora.SourceG5 Witnora.G5IndexedBridge
       - name: Verify zero-separator G14 certificate with Lean
         run: PYTHONPATH=. python scripts/check_g14_zero_separator_lean.py
