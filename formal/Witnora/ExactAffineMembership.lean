@@ -77,6 +77,36 @@ theorem checkExactAffine_sound (r : Nat) (cnf : CNF)
     rw [all_perm (fun clause => clause.any (signedLitTrue a)) hp]
   exact hs.trans (expandedHolds_iff rows a)
 
+/-- Equivalence check allowing redundant source clauses. Each initial row must
+    be implied by CNF, while each CNF clause must follow from the canonical
+    encoding of the row system. Unlike exact clause permutation, this accepts
+    genuine syntactic redundancy but still rejects extra restrictions. -/
+def checkSemanticExactAffine (r : Nat) (cnf : CNF)
+    (rows : List Witnora.G5Trace.Row) : Bool :=
+  rows.all (rowSupported r) &&
+    checkInitialRows cnf rows &&
+    cnf.all (checkClauseCoverage (expanded rows))
+
+theorem checkSemanticExactAffine_sound (r : Nat) (cnf : CNF)
+    (rows : List Witnora.G5Trace.Row)
+    (h : checkSemanticExactAffine r cnf rows = true)
+    (a : Nat → Bool) :
+    CNFHolds cnf a ↔
+      ∀ row ∈ rows, parityVars row.coefficients a = row.rhs := by
+  unfold checkSemanticExactAffine at h
+  simp at h
+  obtain ⟨_, hrows, hsource⟩ := h
+  constructor
+  · intro hc row hr
+    exact checkInitialRows_sound cnf rows hrows a hc row hr
+  · intro hpar
+    have hgenerated : CNFHolds (expanded rows) a :=
+      (expandedHolds_iff rows a).mpr hpar
+    apply List.all_eq_true.mpr
+    intro clause hmem
+    have hc := List.all_eq_true.mp hsource clause hmem
+    exact checkClauseCoverage_sound (expanded rows) clause a hgenerated hc
+
 /-- A complete single-equation encoding is accepted. -/
 example :
     checkExactAffine 2
@@ -106,5 +136,6 @@ example :
     rowSupported 2 {coefficients := [1, 1], rhs := false} = false := by decide
 
 #print axioms Witnora.ExactAffineMembership.checkExactAffine_sound
+#print axioms Witnora.ExactAffineMembership.checkSemanticExactAffine_sound
 
 end Witnora.ExactAffineMembership
