@@ -45,7 +45,7 @@ The GitHub Actions run on 2026-10-31 passed unit tests and the full experiment, 
 | \(\min(B_M,B_{\mathrm{strong}})=\chi\) | 31,907 | 391 |
 | Invalid upper-bound instances | 0 | 0 |
 
-The first improvement over the *weak* baseline is two disconnected triangles. This is **not** evidence of a new structural insight, since componentwise coloring already handles it. The connected and stronger-baseline counts are the more informative falsification tests.
+The first improvement over the *weak* baseline is two disconnected triangles. This is **not** evidence of a new structural insight, since componentwise coloring already handles it. The connected and stronger-baseline counts are the more informative falsification tests. **Important remaining confounder:** the first connected improvement (six vertices, edges `01, 02, 05, 15, 23, 24, 34`) consists of two triangles joined by a bridge. A blockwise coloring baseline also achieves its chromatic number 3. Therefore even connected-graph improvements do not yet establish an advantage over standard block decomposition.
 
 **Counterexample to exactness:** three disjoint edges (a matching on six vertices) have \(\chi=2\), whereas both \(B_M\) and \(B_0\) give 3. Thus the matching operator is not an exact chromatic-number formula.
 
@@ -53,7 +53,7 @@ The first improvement over the *weak* baseline is two disconnected triangles. Th
 
 The results show a repeatable improvement over these *specific* classical baselines. They do **not** imply improvement over the strongest known coloring bounds, novelty of the formula, or a breakthrough. The operator only merges color classes of size two inside one vertex cover plus at most one independent outside class; this restricted class of colorings is a plausible source of its failures.
 
-Next: compare against established matching/complement-cover coloring bounds from the literature; independently audit the constructive proof; formalize the bound and its concrete witness validity in Lean if it survives that comparison. Keep this draft PR separate from the Lean-verified theorem branch until those gates are met.
+Next: add biconnected-block baselines and prioritize 2-connected examples, then compare against established matching/complement-cover coloring bounds from the literature; independently audit the constructive proof; formalize the bound and its concrete witness validity in Lean if it survives that comparison. Keep this draft PR separate from the Lean-verified theorem branch until those gates are met.
 
 ## Reproduction
 
