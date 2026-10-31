@@ -87,4 +87,26 @@ theorem reuse_cover_colors
         exact (hPickNonneighbor u hu) hEdge
       · exact False.elim ((hIndependent u v hu hv) huv)
 
+/-- A clique cover together with one outside vertex adjacent to every
+cover vertex forms a larger clique. -/
+theorem clique_extension
+    {V : Type} (Adj : V → V → Prop) (S : V → Prop) (outside : V)
+    (hSym : ∀ u v, Adj u v → Adj v u)
+    (hCoverClique :
+      ∀ u v, S u → S v → u ≠ v → Adj u v)
+    (hOutside : ¬ S outside)
+    (hAllNeighbors : ∀ u, S u → Adj outside u) :
+    ∀ u v, (S u ∨ u = outside) → (S v ∨ v = outside) →
+      u ≠ v → Adj u v := by
+  intro u v hu hv hne
+  rcases hu with hsu | hue
+  · rcases hv with hsv | hve
+    · exact hCoverClique u v hsu hsv hne
+    · subst v
+      exact hSym outside u (hAllNeighbors u hsu)
+  · rcases hv with hsv | hve
+    · subst u
+      exact hAllNeighbors v hsv
+    · exact False.elim (hne (hue.trans hve.symm))
+
 end Witnora.GraphCoverColoring
