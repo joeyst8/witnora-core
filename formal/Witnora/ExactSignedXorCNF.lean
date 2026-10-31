@@ -71,25 +71,26 @@ theorem generatedSignedHolds_iff
       parityVars vars a = rhs := by
   constructor
   · intro hcnf
-    by_contra hwrong
-    let bad := vars.map a
-    have hmem : bad ∈ allBits vars.length := by
-      simpa [bad] using allBits_complete bad
-    have hbad : bad ∈ generateForbiddenPatterns vars.length rhs := by
-      simp [generateForbiddenPatterns, hmem, bad, parityBits_map, hwrong]
-    have hclause : (signForbiddenClause (List.zip vars bad)).any
-        (signedLitTrue a) = true := by
-      have hmember : signForbiddenClause (List.zip vars bad) ∈
-          generateSignedClauses vars rhs := by
-        exact List.mem_map.mpr ⟨bad, hbad, rfl⟩
-      exact List.all_eq_true.mp hcnf _ hmember
-    have hfalse :
-        (signForbiddenClause (List.zip vars bad)).any
-            (signedLitTrue a) = false := by
-      rw [signForbiddenClause_true]
-      simp [bad, zip_map_agrees]
-    rw [hfalse] at hclause
-    cases hclause
+    by_cases hright : parityVars vars a = rhs
+    · exact hright
+    · let bad := vars.map a
+      have hmem : bad ∈ allBits vars.length := by
+        simpa [bad] using allBits_complete bad
+      have hbad : bad ∈ generateForbiddenPatterns vars.length rhs := by
+        simp [generateForbiddenPatterns, hmem, bad, parityBits_map, hright]
+      have hclause : (signForbiddenClause (List.zip vars bad)).any
+          (signedLitTrue a) = true := by
+        have hmember : signForbiddenClause (List.zip vars bad) ∈
+            generateSignedClauses vars rhs := by
+          exact List.mem_map.mpr ⟨bad, hbad, rfl⟩
+        exact List.all_eq_true.mp hcnf _ hmember
+      have hfalse :
+          (signForbiddenClause (List.zip vars bad)).any
+              (signedLitTrue a) = false := by
+        rw [signForbiddenClause_true]
+        simp [bad, zip_map_agrees]
+      rw [hfalse] at hclause
+      cases hclause
   · intro hright
     unfold generatedSignedHolds generateSignedClauses
     simp only [List.all_map]
