@@ -74,6 +74,8 @@ theorem all_g5_certificates_pass :
       checkG5Closed (bound branch) (selected branch)
         (rows branch) (steps branch) = true := by
   intro branch _
+  change checkG5Closed 3 residual
+    [⟨[2], true⟩, ⟨[2], false⟩] [(0, 1)] = true
   decide
 
 /-- Concrete kernel-checked nontrivial G14 branch composition:
