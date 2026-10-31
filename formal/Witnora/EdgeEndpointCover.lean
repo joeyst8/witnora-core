@@ -48,4 +48,28 @@ theorem first_endpoints_witnessed
     (u : Fin N) (hu : FirstEndpoints enumeration u) :
     ∃ i : Fin m, (enumeration.edge i).1 = u := hu
 
+/-- Each distinct selected endpoint is assigned an index of an edge
+for which it is the first endpoint. This index assignment is injective,
+so the selected cover has at most as many vertices as listed edges. -/
+theorem first_endpoints_inject_into_edge_slots
+    {N m : Nat} (Adj : Fin N → Fin N → Prop)
+    (enumeration : EdgeEnumeration N m Adj) :
+    ∃ label : {u : Fin N // FirstEndpoints enumeration u} → Fin m,
+      ∀ u v, label u = label v → u = v := by
+  classical
+  let label : {u : Fin N // FirstEndpoints enumeration u} → Fin m :=
+    fun u => Classical.choose u.property
+  have hSelected :
+      ∀ u : {v : Fin N // FirstEndpoints enumeration v},
+        (enumeration.edge (label u)).1 = u.val := by
+    intro u
+    exact Classical.choose_spec u.property
+  refine ⟨label, ?_⟩
+  intro u v heq
+  apply Subtype.ext
+  calc
+    u.val = (enumeration.edge (label u)).1 := (hSelected u).symm
+    _ = (enumeration.edge (label v)).1 := by rw [heq]
+    _ = v.val := hSelected v
+
 end Witnora.EdgeEndpointCover
