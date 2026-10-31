@@ -27,6 +27,8 @@ class G14SizeLadderTests(unittest.TestCase):
             self.assertNotEqual(selected[0], selected[1])
             lean = emit_python_g14_lean(name)
             self.assertIn("python_g14_g5_dimacs_unsat", lean)
+            self.assertIn("python_selected_strict_affine_rejected", lean)
+            self.assertIn("python_selected_semantic_affine_pass", lean)
             self.assertIn("python_missing_component_rejected", lean)
             self.assertIn("python_invalid_g5_reference_rejected", lean)
         self.assertEqual(counts, sorted(counts))

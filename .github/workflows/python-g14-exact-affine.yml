@@ -1,0 +1,48 @@
+name: Python G14 exact affine bridge
+
+on:
+  push:
+    branches:
+      - research/python-g14-exact-affine-v51
+  pull_request:
+    paths:
+      - "witnora_core/python_g14_lean_artifact.py"
+      - "tests/test_g14_size_ladder.py"
+      - ".github/workflows/python-g14-exact-affine.yml"
+  workflow_dispatch:
+
+jobs:
+  exact-affine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test Python G14 data and fixture obligations
+        run: PYTHONPATH=. python -m unittest tests.test_g14_size_ladder -v
+      - name: Generate actual Python G14 data for 2, 3, and 4 components
+        run: PYTHONPATH=. python scripts/generate_g14_size_ladder_lean.py
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build strict affine and G14 proof checkers
+        working-directory: formal
+        run: lake build Witnora.ExactAffineMembership Witnora.G14ConcreteBridge
+      - name: Lean-check actual selected G5 rows on two-component instance
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG14Size2.lean
+      - name: Lean-check actual selected G5 rows on three-component instance
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG14Size3.lean
+      - name: Lean-check actual selected G5 rows on four-component instance
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG14Size4.lean
+      - name: Reject holes and untrusted native evaluation
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/GeneratedG14Size{2,3,4}.lean; then
+            exit 1
+          fi
