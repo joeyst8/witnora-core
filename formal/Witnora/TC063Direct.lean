@@ -104,7 +104,8 @@ theorem covered_clause_extension_iff
   constructor
   · intro h
     unfold Witnora.G5Extraction.CNFHolds at h ⊢
-    simp at h
+    simp only [List.all_append, List.all_cons, List.all_nil,
+      Bool.and_true, Bool.and_eq_true] at h
     exact h.1
   · intro h
     have he := Witnora.G5Extraction.checkClauseCoverage_sound
