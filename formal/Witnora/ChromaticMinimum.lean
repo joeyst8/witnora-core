@@ -20,16 +20,17 @@ theorem least_nat_witness (P : Nat → Prop) (h : ∃ k, P k) :
     ∃ k, P k ∧ ∀ m, P m → k ≤ m := by
   have hInd : ∀ w, P w → ∃ k, P k ∧ ∀ m, P m → k ≤ m := by
     intro w
-    apply Nat.strongRecOn w
-    intro w ih hw
-    by_cases hSmaller : ∃ m, m < w ∧ P m
-    · obtain ⟨m, hmw, hPm⟩ := hSmaller
-      exact ih m hmw hPm
-    · refine ⟨w, hw, ?_⟩
-      intro m hm
-      by_cases hmw : m < w
-      · exact False.elim (hSmaller ⟨m, hmw, hm⟩)
-      · omega
+    exact Nat.strongRecOn
+      (motive := fun w => P w → ∃ k, P k ∧ ∀ m, P m → k ≤ m)
+      w (fun w ih hw => by
+        by_cases hSmaller : ∃ m, m < w ∧ P m
+        · obtain ⟨m, hmw, hPm⟩ := hSmaller
+          exact ih m hmw hPm
+        · refine ⟨w, hw, ?_⟩
+          intro m hm
+          by_cases hmw : m < w
+          · exact False.elim (hSmaller ⟨m, hmw, hm⟩)
+          · omega)
   obtain ⟨w, hw⟩ := h
   exact hInd w hw
 
