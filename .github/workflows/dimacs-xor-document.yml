@@ -1,0 +1,31 @@
+name: DIMACS byte to XOR equivalence
+
+on:
+  push:
+    branches:
+      - research/dimacs-xor-document-v41
+  pull_request:
+    paths:
+      - "formal/Witnora/DimacsXorDocument.lean"
+      - ".github/workflows/dimacs-xor-document.yml"
+  workflow_dispatch:
+
+jobs:
+  theorem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Check whole-document byte-to-XOR iff and adversarial rejections
+        working-directory: formal
+        run: lake build Witnora.DimacsXorDocument
+      - name: Reject proof holes, unsafe, or extra axioms
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/DimacsXorDocument.lean; then
+            exit 1
+          fi
