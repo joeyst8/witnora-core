@@ -79,10 +79,35 @@ def structured_graphs(seed: int = 20261102, per_family: int = 60):
         yield "k_tree", n, _edges_from_set(edges)
 
 
+def greedy_clique_lower_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+    """Return the size of an actual clique, hence a certified chi lower bound."""
+    if n == 0:
+        return 0
+    adjacency = [set() for _ in range(n)]
+    for u, v in edges:
+        adjacency[u].add(v)
+        adjacency[v].add(u)
+    best = 1
+    for start in range(n):
+        candidates = adjacency[start].copy()
+        clique_size = 1
+        while candidates:
+            chosen = max(candidates, key=lambda v: (
+                len(adjacency[v] & candidates), len(adjacency[v]), -v))
+            clique_size += 1
+            candidates &= adjacency[chosen]
+        best = max(best, clique_size)
+    return best
+
+
 def ungated_repair(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
     """No chromatic-oracle calls, with capped local search per ordinary graph."""
     base = _dsatur_greedy_coloring(n, edges)
     best = {"bound": base["bound"], "coloring": base["coloring"], "stage": "dsatur"}
+    # A witnessed clique of size k certifies that a proper k-coloring is
+    # optimal; no exact chromatic oracle or speculative repair is needed.
+    if greedy_clique_lower_bound(n, edges) == base["bound"]:
+        return {**best, "stage": "clique_certified"}
     multi = multistart_dsatur(n, edges, starts=8)
     if multi["bound"] < best["bound"]:
         best = {**multi, "stage": "multistart"}
@@ -112,7 +137,8 @@ def run_structured_study() -> dict:
             "total": 300, "oracle_gated": False}
     stats = {"graphs": 0, "dsatur_failures": 0,
              "repair_improvements": 0, "repair_fixes_failures": 0,
-             "repair_remaining_failures": 0, "dsatur_seconds": 0.0,
+             "repair_remaining_failures": 0, "clique_certified": 0,
+             "dsatur_seconds": 0.0,
              "repair_seconds": 0.0, "by_family": {}}
     examples = {"first_improvement": None, "first_unresolved": None}
     for family, n, edges in structured_graphs():
@@ -137,6 +163,7 @@ def run_structured_study() -> dict:
         stats["graphs"] += 1
         stats["dsatur_failures"] += dsatur_failed
         stats["repair_improvements"] += improved
+        stats["clique_certified"] += repaired["stage"] == "clique_certified"
         stats["repair_fixes_failures"] += dsatur_failed and not repair_failed
         stats["repair_remaining_failures"] += repair_failed
         group["graphs"] += 1
