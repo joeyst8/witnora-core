@@ -15,7 +15,8 @@ class DSATURAdversarialTests(unittest.TestCase):
         ]:
             with self.subTest(n=n, edges=edges):
                 self.assertEqual(chromatic_certificate(n, edges, n)["chi"], chi)
-                self.assertIsNone(exact_k_coloring(n, edges, chi - 1))
+                if chi > 0:
+                    self.assertIsNone(exact_k_coloring(n, edges, chi - 1))
                 witness = exact_k_coloring(n, edges, chi)
                 self.assertIsNotNone(witness)
                 self.assertEqual(len(witness), n)
