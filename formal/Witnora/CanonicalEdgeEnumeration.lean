@@ -33,8 +33,13 @@ noncomputable def canonical_edge_enumeration
     intro a b heq
     apply Subtype.ext
     exact pairIndex_injective N a.val b.val heq
-  obtain ⟨m, hm, rank, hRankInject, hRankSurject⟩ :=
+  have hCompressed :=
     compress_injective_labels (N * N) encode hEncode
+  let m := Classical.choose hCompressed
+  have hm := Classical.choose_spec hCompressed
+  let rank := Classical.choose hm.2
+  have hRankInject := (Classical.choose_spec hm.2).1
+  have hRankSurject := (Classical.choose_spec hm.2).2
   let rep : Fin m → CanonicalEdge N Adj :=
     fun i => Classical.choose (hRankSurject i)
   have hRep : ∀ i, rank (rep i) = i := by
