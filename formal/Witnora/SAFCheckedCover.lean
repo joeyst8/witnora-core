@@ -63,20 +63,16 @@ theorem checkBoundedUnsatCover_sound
       checkG5Closed (bound branch) (selected branch)
         (rows branch) (steps branch) = true :=
     by simpa using hall branch hb
-  apply Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
-    raw separator components
+  refine Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
+    raw separator components ?_ selected ?_ bound rows steps ?_
   · intro branch hb
     have hs := hbranch branch hb
     simp at hs
     exact hs.1.1
-  · exact selected
   · intro branch hb
     have hs := hbranch branch hb
     simp at hs
     exact hs.1.2
-  · exact bound
-  · exact rows
-  · exact steps
   · intro branch hb
     have hs := hbranch branch hb
     simp at hs
