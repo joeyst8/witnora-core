@@ -21,11 +21,11 @@ open Witnora.EdgeEndpointCover
 def CanonicalEdge (N : Nat) (Adj : Fin N → Fin N → Prop) :=
   {p : Fin N × Fin N // p.1.val < p.2.val ∧ Adj p.1 p.2}
 
-theorem canonical_edge_enumeration_exists
+noncomputable def canonical_edge_enumeration
     (N : Nat) (Adj : Fin N → Fin N → Prop)
     (hSym : ∀ u v, Adj u v → Adj v u)
     (hNoLoops : ∀ u, ¬ Adj u u) :
-    ∃ m, EdgeEnumeration N m Adj := by
+    Σ m, EdgeEnumeration N m Adj := by
   classical
   let encode : CanonicalEdge N Adj → Fin (N * N) :=
     fun p => pairIndex N p.val
@@ -84,8 +84,12 @@ theorem canonical_edge_enumeration_exists
         _ = j := hRep j
     · have hi := hOrder i
       have hj := hOrder j
-      have hFirst := congrArg Prod.fst hReverse
-      have hSecond := congrArg Prod.snd hReverse
+      have hFirst : (edge i).1 = (edge j).2 :=
+        congrArg Prod.fst hReverse
+      have hSecond : (edge i).2 = (edge j).1 :=
+        congrArg Prod.snd hReverse
+      have hFirstVal := congrArg Fin.val hFirst
+      have hSecondVal := congrArg Fin.val hSecond
       omega
   exact ⟨m, ⟨edge, hSound, hComplete, hUnique⟩⟩
 
