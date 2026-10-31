@@ -126,7 +126,9 @@ theorem swapFin_involutive {k : Nat} (a b z : Fin k) :
     swapFin a b (swapFin a b z) = z := by
   by_cases hab : a = b
   · subst b
-    simp [swapFin]
+    by_cases hza : z = a
+    · simp [swapFin, hza]
+    · simp [swapFin, hza]
   · by_cases hza : z = a
     · subst z
       simp [swapFin, hab, Ne.symm hab]
@@ -136,7 +138,7 @@ theorem swapFin_involutive {k : Nat} (a b z : Fin k) :
       · simp [swapFin, hza, hzb]
 
 theorem swapFin_injective {k : Nat} (a b : Fin k) :
-    Function.Injective (swapFin a b) := by
+    ∀ x y, swapFin a b x = swapFin a b y → x = y := by
   intro x y h
   have h' := congrArg (swapFin a b) h
   simpa [swapFin_involutive] using h'
@@ -145,7 +147,7 @@ theorem swapFin_injective {k : Nat} (a b : Fin k) :
 by an injective relabeling. -/
 theorem normalize_pair (n : Nat) (a b : Fin (n + 2)) (hab : a ≠ b) :
     ∃ relabel : Fin (n + 2) → Fin (n + 2),
-      Function.Injective relabel ∧
+      (∀ x y, relabel x = relabel y → x = y) ∧
       (relabel a).val = 0 ∧
       (relabel b).val = 1 := by
   let zero : Fin (n + 2) := ⟨0, by omega⟩
@@ -176,6 +178,7 @@ theorem normalize_pair (n : Nat) (a b : Fin (n + 2)) (hab : a ≠ b) :
     rw [hFirstA, hSecondZero]
     rfl
   · change (second b').val = 1
-    simp [second, swapFin]
+    change one.val = 1
+    rfl
 
 end Witnora.ColorMerge
