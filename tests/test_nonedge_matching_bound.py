@@ -2,7 +2,7 @@
 import unittest
 
 from witnora_core.graph_conjecture_lab import graph_metrics, graphs
-from witnora_core.nonedge_matching_bound import matching_color_bound
+from witnora_core.nonedge_matching_bound import matching_color_bound, _is_two_connected
 from witnora_core.targeted_graph_theorems import cycle, mycielski_c5
 
 
@@ -29,6 +29,13 @@ class NonedgeMatchingBoundTests(unittest.TestCase):
                 result = matching_color_bound(n, edges)
                 actual = graph_metrics(n, edges)["chi"]
                 self.assertGreaterEqual(result["bound"], actual)
+
+    def test_two_connected_classifier(self):
+        self.assertTrue(_is_two_connected(3, ((0, 1), (0, 2), (1, 2))))
+        self.assertTrue(_is_two_connected(*cycle(5)))
+        self.assertFalse(_is_two_connected(2, ((0, 1),)))
+        self.assertFalse(_is_two_connected(4, ((0, 1), (1, 2), (2, 3))))
+        self.assertFalse(_is_two_connected(4, ((0, 1), (2, 3))))
 
     def test_bad_edges_rejected(self):
         for edges in (((0, 0),), ((1, 0),), ((0, 1), (0, 1))):
