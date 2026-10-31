@@ -23,6 +23,7 @@ theorem graph_bound_from_cover_certificate
     (hCertificate : CoverCertificate Adj k)
     (hk : 2 ≤ k) :
     chromaticNumber Adj hNoLoops ≤ max k (finiteCliqueNumber N Adj) := by
+  classical
   obtain ⟨n, rfl⟩ : ∃ n, k = n + 2 := ⟨k - 2, by omega⟩
   obtain ⟨S, label, hCover, hInject, hSurject⟩ := hCertificate
   let totalLabel : Fin N → Fin (n + 2) :=
@@ -37,7 +38,7 @@ theorem graph_bound_from_cover_certificate
       ∀ u v, S u → S v → totalLabel u = totalLabel v → u = v := by
     intro u v hu hv heq
     have hEq : label ⟨u, hu⟩ = label ⟨v, hv⟩ := by
-      simpa [totalLabel, hu, hv] using heq
+      simpa only [totalLabel, dif_pos hu, dif_pos hv] using heq
     have hSub := hInject ⟨u, hu⟩ ⟨v, hv⟩ hEq
     exact congrArg Subtype.val hSub
   have hTotalSurject :
