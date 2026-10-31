@@ -17,6 +17,7 @@ of Python's richer affine recognizer is not claimed.
 namespace Witnora.ExactAffineMembership
 
 open Witnora.Concrete
+open Witnora.FiniteXor
 open Witnora.Extraction
 open Witnora.G5Extraction
 open Witnora.ExactSignedXorCNF
