@@ -9,7 +9,7 @@ from __future__ import annotations
 from itertools import combinations
 import random
 
-from .nonedge_matching_bound import _dsatur_greedy_coloring
+from .nonedge_matching_bound import _dsatur_greedy_coloring, matching_color_bound
 from .graph_conjecture_lab import graph_metrics
 
 
@@ -74,7 +74,9 @@ def run_adversarial_search() -> dict:
     n_values = (10, 12, 14, 16)
     rng = random.Random(20261031)
     stats = {"graphs": 0, "failures": 0, "by_n": {}, "by_density": {},
-             "small_exact_crosschecks": 0}
+             "small_exact_crosschecks": 0, "matching_evaluated_failures": 0,
+             "matching_beats_dsatur_on_failures": 0,
+             "matching_fixes_dsatur_failures": 0}
     examples = []
 
     # Independently cross-check the decision procedure against the existing
@@ -106,6 +108,12 @@ def run_adversarial_search() -> dict:
                 exact = chromatic_certificate(n, edges, greedy["bound"] - 1)
                 assert exact["chi"] < greedy["bound"]
                 stats["failures"] += 1
+                matching = None
+                if n <= 11:
+                    matching = matching_color_bound(n, edges)
+                    stats["matching_evaluated_failures"] += 1
+                    stats["matching_beats_dsatur_on_failures"] += matching["bound"] < greedy["bound"]
+                    stats["matching_fixes_dsatur_failures"] += matching["bound"] == exact["chi"]
                 if len(examples) < 10:
                     examples.append({
                         "n": n, "density": density, "sample_index": index,
@@ -114,6 +122,7 @@ def run_adversarial_search() -> dict:
                         "dsatur_coloring": greedy["coloring"],
                         "exact_chi": exact["chi"],
                         "better_coloring": exact["coloring"],
+                        "matching_bound": matching["bound"] if matching else None,
                     })
     return {
         "plan": {"vertices": list(n_values), "densities": list(densities),
