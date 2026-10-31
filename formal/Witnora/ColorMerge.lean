@@ -53,4 +53,69 @@ theorem collapseFirstTwo_collision (n : Nat)
       simp [ha0, hb0] at hval
       omega
 
+/-- If cover vertices have distinct labels, and the two vertices
+labeled 0 and 1 are nonadjacent, the entire graph is colorable with
+one fewer color than the elementary cover-plus-one construction. -/
+theorem colorable_after_merging_nonedge
+    {V : Type} (Adj : V → V → Prop) (S : V → Prop)
+    (n : Nat) (label : V → Fin (n + 2)) (x y : V)
+    (hSym : ∀ u v, Adj u v → Adj v u)
+    (hNoLoops : ∀ u, ¬ Adj u u)
+    (hIndependent : ∀ u v, ¬ S u → ¬ S v → ¬ Adj u v)
+    (hInjectOnCover :
+      ∀ u v, S u → S v → label u = label v → u = v)
+    (hx : S x) (hy : S y)
+    (hZero : (label x).val = 0)
+    (hOne : (label y).val = 1)
+    (hNoPairEdge : ¬ Adj x y) :
+    ∃ paint : V → Option (Fin (n + 1)),
+      ∀ u v, Adj u v → paint u ≠ paint v := by
+  classical
+  let compressed : V → Fin (n + 1) :=
+    fun u => collapseFirstTwo n (label u)
+  have hProperCover :
+      ∀ u v, S u → S v → Adj u v → compressed u ≠ compressed v := by
+    intro u v hu hv huv heq
+    have hCollision :=
+      collapseFirstTwo_collision n (label u) (label v) heq
+    rcases hCollision with hSame | hForward | hReverse
+    · have hVertex := hInjectOnCover u v hu hv hSame
+      subst v
+      exact hNoLoops u huv
+    · rcases hForward with ⟨huZero, hvOne⟩
+      have hlu : label u = label x := by
+        apply Fin.ext
+        omega
+      have hlv : label v = label y := by
+        apply Fin.ext
+        omega
+      have hux := hInjectOnCover u x hu hx hlu
+      have hvy := hInjectOnCover v y hv hy hlv
+      subst u
+      subst v
+      exact hNoPairEdge huv
+    · rcases hReverse with ⟨huOne, hvZero⟩
+      have hlu : label u = label y := by
+        apply Fin.ext
+        omega
+      have hlv : label v = label x := by
+        apply Fin.ext
+        omega
+      have huy := hInjectOnCover u y hu hy hlu
+      have hvx := hInjectOnCover v x hv hx hlv
+      subst u
+      subst v
+      exact hNoPairEdge (hSym y x huv)
+  let paint : V → Option (Fin (n + 1)) :=
+    fun u => if S u then some (compressed u) else none
+  refine ⟨paint, ?_⟩
+  intro u v huv
+  by_cases hu : S u
+  · by_cases hv : S v
+    · simpa [paint, hu, hv] using hProperCover u v hu hv huv
+    · simp [paint, hu, hv]
+  · by_cases hv : S v
+    · simp [paint, hu, hv]
+    · exact False.elim ((hIndependent u v hu hv) huv)
+
 end Witnora.ColorMerge
