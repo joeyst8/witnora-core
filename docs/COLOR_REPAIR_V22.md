@@ -28,7 +28,7 @@ Both return explicit color assignments checked on every edge. Neither needs the 
 | Still unresolved by both | **5** | **8** |
 | Budget exhaustion count, oracle-gated run | 1 | 2 |
 
-Thus the combined procedure repairs **59/64 (92.2%)** of the training failures and **75/83 (90.4%)** of the held-out failures. The 13 remaining failures are important counterexamples for the next iteration. A repaired solution is reported only when its edge-checked coloring uses fewer colors.
+Thus the combined procedure repairs **59/64 (92.2%)** of the training failures and **75/83 (90.4%)** of the held-out failures. The 13 remaining failures are important counterexamples for the next iteration. The first unresolved training instance has 14 vertices, density 0.60, and DSATUR uses 6 colors while a valid 5-color witness exists; the five-change recoloring search traversed 2,045 nodes without improvement (not a global impossibility proof). The first unresolved holdout instance also has 14 vertices, density 0.45, and DSATUR uses 5 versus a valid 4-coloring; its recoloring attempt visited 743 nodes without improvement. Their complete edge lists and witnesses are retained in the ledger. A repaired solution is reported only when its edge-checked coloring uses fewer colors.
 
 The first v21 counterexample on ten vertices (DSATUR 4, exact chromatic number 3) is repaired by both methods: multi-start finds a proper 3-coloring on restart 2, and the bounded recoloring finds another 3-coloring after only 11 search nodes.
 
