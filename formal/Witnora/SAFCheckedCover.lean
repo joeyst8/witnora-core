@@ -62,7 +62,7 @@ theorem checkBoundedUnsatCover_sound
        decide (selected branch ∈ components branch)) &&
       checkG5Closed (bound branch) (selected branch)
         (rows branch) (steps branch) = true :=
-    List.all_eq_true.mp hall branch hb
+    by simpa using hall branch hb
   apply Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
     raw separator components
   · intro branch hb
