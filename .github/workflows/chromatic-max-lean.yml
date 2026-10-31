@@ -8,6 +8,7 @@ on:
     paths:
       - 'formal/Witnora/ChromaticMaxConsequences.lean'
       - 'formal/Witnora/GraphCoverColoring.lean'
+      - 'formal/Witnora/ColorMerge.lean'
       - '.github/workflows/chromatic-max-lean.yml'
 
 jobs:
@@ -26,9 +27,10 @@ jobs:
         run: |
           lake env lean Witnora/ChromaticMaxConsequences.lean
           lake env lean Witnora/GraphCoverColoring.lean
+          lake env lean Witnora/ColorMerge.lean
       - name: Reject sorry and added axiom declarations in this file
         run: |
-          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean; then
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean formal/Witnora/ColorMerge.lean; then
             echo "Unproved declaration in chromatic consequences"
             exit 1
           fi
