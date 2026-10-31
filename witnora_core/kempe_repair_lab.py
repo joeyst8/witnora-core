@@ -64,6 +64,15 @@ def kempe_repair(n: int, edges: tuple[tuple[int, int], ...],
         if attempts >= max_swaps:
             break
         attempts += 1
+        used = sorted(set(variant["coloring"]))
+        if len(used) < original_k:
+            compact = {c: i for i, c in enumerate(used)}
+            improved_colors = [compact[c] for c in variant["coloring"]]
+            assert _checked(n, edges, improved_colors)
+            return {"bound": len(used), "coloring": improved_colors,
+                    "improved": True, "attempts": attempts,
+                    "swapped_colors": variant["swapped_colors"],
+                    "component": variant["component"], "recolor_nodes": 0}
         trial = bounded_recolor(n, edges, variant["coloring"],
                                 max_changed=5, max_nodes=max_nodes_each)
         if trial["improved"]:
