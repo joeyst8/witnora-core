@@ -20,17 +20,16 @@ theorem least_nat_witness (P : Nat → Prop) (h : ∃ k, P k) :
     ∃ k, P k ∧ ∀ m, P m → k ≤ m := by
   have hInd : ∀ w, P w → ∃ k, P k ∧ ∀ m, P m → k ≤ m := by
     intro w
-    induction w using Nat.strong_induction_on with
-    | h w ih =>
-      intro hw
-      by_cases hSmaller : ∃ m, m < w ∧ P m
-      · obtain ⟨m, hmw, hPm⟩ := hSmaller
-        exact ih m hmw hPm
-      · refine ⟨w, hw, ?_⟩
-        intro m hm
-        by_cases hmw : m < w
-        · exact False.elim (hSmaller ⟨m, hmw, hm⟩)
-        · omega
+    apply Nat.strongRecOn w
+    intro w ih hw
+    by_cases hSmaller : ∃ m, m < w ∧ P m
+    · obtain ⟨m, hmw, hPm⟩ := hSmaller
+      exact ih m hmw hPm
+    · refine ⟨w, hw, ?_⟩
+      intro m hm
+      by_cases hmw : m < w
+      · exact False.elim (hSmaller ⟨m, hmw, hm⟩)
+      · omega
   obtain ⟨w, hw⟩ := h
   exact hInd w hw
 
@@ -41,6 +40,7 @@ theorem finite_colorable {N : Nat}
   refine ⟨N, ?_⟩
   refine ⟨fun u => u, ?_⟩
   intro u v huv heq
+  change u = v at heq
   subst v
   exact hNoLoops u huv
 
