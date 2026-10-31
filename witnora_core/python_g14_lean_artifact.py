@@ -16,6 +16,7 @@ from .operator_genesis import (
     AffineResidueInstance, build_affine_residue_certificate,
     AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED,
     AFFINE_RESIDUE_CERTIFICATE_VERIFIED,
+    AFFINE_RESIDUE_SAT_WITNESS_VERIFIED,
 )
 from .lean_g5_gate import _compile_dag, _serialize_rows
 
@@ -140,6 +141,13 @@ def emit_python_g14_lean(instance_id=None):
             branch_statuses.append(component_cert.status)
         all_component_rows.append("[" + ", ".join(branch_rows) + "]")
         all_component_statuses.append(branch_statuses)
+
+    if instance_id is not None:
+        native_statuses = [status for branch in all_component_statuses
+                           for status in branch]
+        if (AFFINE_RESIDUE_SAT_WITNESS_VERIFIED not in native_statuses
+                or AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED not in native_statuses):
+            raise ValueError("fixture must cover both SAT and UNSAT affine components")
 
     steps = [
         _compile_dag(cert.gaussian_elimination_trace[0]["rows"],
