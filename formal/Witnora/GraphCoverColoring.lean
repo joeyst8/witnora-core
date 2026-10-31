@@ -191,12 +191,14 @@ theorem clique_cover_color_or_extend
   · left
     have hWitness : ∀ u, ¬ S u → ∃ v, S v ∧ ¬ Adj u v := by
       intro u hu
-      by_contra hNoWitness
-      have hAll : ∀ v, S v → Adj u v := by
-        intro v hv
-        by_contra hNoEdge
-        exact hNoWitness ⟨v, hv, hNoEdge⟩
-      exact hUniversal ⟨u, hu, hAll⟩
+      by_cases hExists : ∃ v, S v ∧ ¬ Adj u v
+      · exact hExists
+      · have hAll : ∀ v, S v → Adj u v := by
+          intro v hv
+          by_cases hEdge : Adj u v
+          · exact hEdge
+          · exact False.elim (hExists ⟨v, hv, hEdge⟩)
+        exact False.elim (hUniversal ⟨u, hu, hAll⟩)
     let pick : V → V :=
       fun u => if h : ¬ S u then Classical.choose (hWitness u h) else u
     have hPickInside : ∀ u, ¬ S u → S (pick u) := by
