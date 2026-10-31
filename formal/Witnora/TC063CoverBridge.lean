@@ -54,27 +54,31 @@ theorem unsat_has_semantic_component_cover
     SemanticUnsatCover separator components := by
   classical
   intro branch hb
-  by_contra hno
-  have hlocal : ∀ component ∈ components branch,
-      ∃ a : Nat → Bool, CNFHolds component a := by
-    intro component hc
-    by_contra hnot
-    exact hno ⟨component, hc, hnot⟩
-  obtain ⟨a, hagree, hall⟩ := hglue branch hb hlocal
-  have hparts :
-      (components branch).all
-        (fun component => component.all
-          (fun clause => clause.any
-            (Witnora.FiniteXor.signedLitTrue a))) = true := by
-    apply List.all_eq_true.mpr
-    intro component hc
-    exact hall component hc
-  have hsource : CNFHolds (decodeCNF raw) a :=
-    (conditioned_partition_correct
-      (Witnora.SeparatorAssignments.fixedOf branch)
-      (decodeCNF raw) (components branch)
-      (hpartition branch hb) a hagree).2 hparts
-  exact hunsat ⟨a, (signedCNFHolds_iff raw a).2 hsource⟩
+  by_cases hcover : ∃ component ∈ components branch,
+      ¬ ∃ a : Nat → Bool, CNFHolds component a
+  · exact hcover
+  · exfalso
+    have hlocal : ∀ component ∈ components branch,
+        ∃ a : Nat → Bool, CNFHolds component a := by
+      intro component hc
+      by_cases hsat : ∃ a : Nat → Bool, CNFHolds component a
+      · exact hsat
+      · exact False.elim (hcover ⟨component, hc, hsat⟩)
+    obtain ⟨a, hagree, hall⟩ := hglue branch hb hlocal
+    have hparts :
+        (components branch).all
+          (fun component => component.all
+            (fun clause => clause.any
+              (Witnora.FiniteXor.signedLitTrue a))) = true := by
+      apply List.all_eq_true.mpr
+      intro component hc
+      exact hall component hc
+    have hsource : CNFHolds (decodeCNF raw) a :=
+      (conditioned_partition_correct
+        (Witnora.SeparatorAssignments.fixedOf branch)
+        (decodeCNF raw) (components branch)
+        (hpartition branch hb) a hagree).2 hparts
+    exact hunsat ⟨a, (signedCNFHolds_iff raw a).2 hsource⟩
 
 /-- For semantic SAF membership, the remaining premise is precisely
     model gluing; no additional model-transfer assumption is hidden. -/
