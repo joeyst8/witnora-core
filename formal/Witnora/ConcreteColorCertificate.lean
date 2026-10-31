@@ -142,8 +142,33 @@ theorem triangle_chromatic_exact :
   exact checked_certificate_sound
     triangleEdges trianglePaint triangleClique triangle_certificate_passes
 
+/-- Invalid coloring: adjacent triangle vertices all receive color zero. -/
+def invalidTrianglePaint : Fin 3 → Fin 3 := fun _ => 0
+
+theorem invalid_triangle_coloring_rejected :
+    checkCertificate triangleEdges invalidTrianglePaint triangleClique = false := by
+  decide
+
+/-- Invalid clique: two indexed positions point to the same vertex. -/
+def invalidTriangleClique : Option (Fin 2) → Fin 3 := fun _ => 0
+
+theorem invalid_triangle_clique_rejected :
+    checkCertificate triangleEdges trianglePaint invalidTriangleClique = false := by
+  decide
+
+/-- A concrete self-loop invalidates the finite simple graph check. -/
+def loopTriangleEdges : List (Fin 3 × Fin 3) :=
+  (0, 0) :: triangleEdges
+
+theorem loop_triangle_rejected :
+    checkCertificate loopTriangleEdges trianglePaint triangleClique = false := by
+  decide
+
 end Witnora.ConcreteColorCertificate
 
 #print axioms Witnora.ConcreteColorCertificate.checked_certificate_sound
 #print axioms Witnora.ConcreteColorCertificate.triangle_certificate_passes
 #print axioms Witnora.ConcreteColorCertificate.triangle_chromatic_exact
+#print axioms Witnora.ConcreteColorCertificate.invalid_triangle_coloring_rejected
+#print axioms Witnora.ConcreteColorCertificate.invalid_triangle_clique_rejected
+#print axioms Witnora.ConcreteColorCertificate.loop_triangle_rejected
