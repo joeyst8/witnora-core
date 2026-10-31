@@ -9,10 +9,21 @@ from .cnf import CNFFormula
 from .separator_affine_family_theorem import (
     _all_assignments, _component_dicts, _condition_by_separator,
 )
-from .xor import XorEquation, XorSystem, solve_xor_system_gaussian, XOR_UNSAT
+from .separator_affine_family_theorem import _guarded_xor_equation
+from .operator_genesis import (
+    AffineResidueInstance, build_affine_residue_certificate,
+    AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED,
+    AFFINE_RESIDUE_CERTIFICATE_VERIFIED,
+)
+from .lean_g5_gate import _compile_dag, _serialize_rows
 
 
-SOURCE_ROWS = ((1, 2), (-1, 2), (-2,))
+SOURCE_ROWS = tuple(
+    tuple(row)
+    for parity in (0, 1)
+    for active in (False, True)
+    for row in _guarded_xor_equation(1, active, (2, 3), parity)
+)
 SEPARATOR = (1,)
 
 
@@ -51,20 +62,20 @@ def actual_python_g14_artifacts():
         chosen = next(iter(parts.values()))
         if chosen != residual:
             raise ValueError("selected component does not match residual")
-        units = chosen.to_clause_lists()
-        if len(units) != 2 or any(len(row) != 1 for row in units):
-            raise ValueError("expected two unit clauses")
-        if units[0][0] != -units[1][0]:
-            raise ValueError("expected opposite unit literals")
-        equations = [
-            XorEquation((abs(row[0]),), int(row[0] > 0))
-            for row in units
-        ]
-        # Invoke the actual Python GF(2) solver as an independent diagnostic.
-        native = solve_xor_system_gaussian(XorSystem(equations))
-        if native["status"] != XOR_UNSAT:
-            raise ValueError("Python GF(2) solver did not find contradiction")
-        result.append((assignment, residual, list(parts.values()), chosen, units))
+        native_instance = AffineResidueInstance(
+            instance_id=f"g14_branch_{int(assignment[1])}",
+            equations=(), formula=chosen,
+        )
+        certificate = build_affine_residue_certificate(native_instance, max_arity=2)
+        if (certificate.status != AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED
+                or certificate.checker_status != AFFINE_RESIDUE_CERTIFICATE_VERIFIED):
+            raise ValueError("native G5 certificate not verified")
+        trace = certificate.gaussian_elimination_trace
+        if (not trace or trace[0].get("type") != "INITIAL_ROWS"
+                or not certificate.row_operations):
+            raise ValueError("native G5 trace missing initial rows or operations")
+        result.append((assignment, residual, list(parts.values()),
+                       chosen, certificate))
     return formula, tuple(result)
 
 
@@ -88,13 +99,15 @@ def emit_python_g14_lean():
           for _, _, parts, _, _ in branches]
     selected = [lean_cnf(chosen) for _, _, _, chosen, _ in branches]
     bounds = [str(chosen.max_var + 1) for _, _, _, chosen, _ in branches]
-    row_values = []
-    for _, _, _, _, units in branches:
-        row_values.append("[" + ", ".join(
-            "{ coefficients := [" + str(abs(row[0])) + "], rhs := " +
-            ("true" if row[0] > 0 else "false") + " }"
-            for row in units) + "]")
-    steps = ["[(0, 1)]"] * len(branches)
+    row_values = [
+        _serialize_rows(cert.gaussian_elimination_trace[0]["rows"])
+        for _, _, _, _, cert in branches
+    ]
+    steps = [
+        _compile_dag(cert.gaussian_elimination_trace[0]["rows"],
+                     cert.row_operations)
+        for _, _, _, _, cert in branches
+    ]
 
     lines = [
         "import Witnora.G14ConcreteBridge",

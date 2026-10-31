@@ -9,13 +9,15 @@ from witnora_core.python_g14_lean_artifact import (
 class PythonG14ArtifactTests(unittest.TestCase):
     def test_python_branches_and_residuals(self):
         formula, branches = actual_python_g14_artifacts()
-        self.assertEqual(formula.num_clauses, 3)
+        self.assertEqual(formula.num_clauses, 8)
         self.assertEqual([assignment for assignment, *_ in branches],
                          [{1: False}, {1: True}])
-        for assignment, residual, parts, chosen, units in branches:
+        for assignment, residual, parts, chosen, certificate in branches:
             self.assertEqual(residual, chosen)
             self.assertEqual(parts, [chosen])
-            self.assertEqual({row[0] for row in units}, {-2, 2})
+            self.assertEqual(chosen.num_clauses, 4)
+            self.assertGreater(len(certificate.row_operations), 0)
+            self.assertEqual(certificate.gaussian_elimination_trace[0]['type'], 'INITIAL_ROWS')
 
     def test_deterministic_lean_generation(self):
         source = emit_python_g14_lean()
