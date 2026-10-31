@@ -129,6 +129,7 @@ def run_repair_experiment() -> dict:
                  "recolor_fixes": 0, "combined_fixes": 0,
                  "budget_exhaustions": 0}
         example = None
+        unresolved = None
         for n in orders:
             for density in densities:
                 for index in range(samples_per_cell):
@@ -158,6 +159,12 @@ def run_repair_experiment() -> dict:
                     stats["recolor_fixes"] += failed and recolor["bound"] == original["bound"] - 1
                     stats["combined_fixes"] += failed and combined == original["bound"] - 1
                     stats["budget_exhaustions"] += recolor["exhausted"]
+                    if failed and combined == original["bound"] and unresolved is None:
+                        unresolved = {"n": n, "density": density, "index": index,
+                                      "edges": [list(e) for e in edges],
+                                      "dsatur": original, "multistart": multistart,
+                                      "bounded_recolor": recolor,
+                                      "better_witness": exact_better}
                     if failed and example is None:
                         example = {
                             "n": n, "density": density, "index": index,
@@ -168,6 +175,7 @@ def run_repair_experiment() -> dict:
                         }
         report[partition] = stats
         report["examples"][partition] = example
+        report["examples"][partition + "_unresolved"] = unresolved
     report.update({"novelty_verified": False, "lean_verified": False,
                    "promoted": False})
     return report
