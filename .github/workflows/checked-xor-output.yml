@@ -1,0 +1,31 @@
+name: Checked Python XOR output theorem
+
+on:
+  push:
+    branches:
+      - research/checked-xor-output-v38
+  pull_request:
+    paths:
+      - "formal/Witnora/CheckedXorOutput.lean"
+      - ".github/workflows/checked-xor-output.yml"
+  workflow_dispatch:
+
+jobs:
+  theorem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Prove checked normalized signed XOR output matches raw equation
+        working-directory: formal
+        run: lake build Witnora.CheckedXorOutput
+      - name: Reject proof holes and axioms
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/CheckedXorOutput.lean; then
+            exit 1
+          fi
