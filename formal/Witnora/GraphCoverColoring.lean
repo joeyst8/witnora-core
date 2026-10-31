@@ -109,4 +109,33 @@ theorem clique_extension
       exact hAllNeighbors v hsv
     · exact False.elim (hne (hue.trans hve.symm))
 
+/-- A cover labeled injectively by k colors gives a proper coloring
+with Option (Fin k), i.e. one additional distinguished color. -/
+theorem colorable_with_cover_plus_one
+    {V : Type} (Adj : V → V → Prop) (S : V → Prop) (k : Nat)
+    (label : V → Fin k)
+    (hNoLoops : ∀ u, ¬ Adj u u)
+    (hIndependent : ∀ u v, ¬ S u → ¬ S v → ¬ Adj u v)
+    (hInjectOnCover :
+      ∀ u v, S u → S v → label u = label v → u = v) :
+    ∃ paint : V → Option (Fin k),
+      ∀ u v, Adj u v → paint u ≠ paint v := by
+  classical
+  let paint : V → Option (Fin k) :=
+    fun u => if S u then some (label u) else none
+  refine ⟨paint, ?_⟩
+  intro u v huv
+  by_cases hu : S u
+  · by_cases hv : S v
+    · have hDistinct : label u ≠ label v := by
+        intro heq
+        have hVertex := hInjectOnCover u v hu hv heq
+        subst v
+        exact hNoLoops u huv
+      simpa [paint, hu, hv] using hDistinct
+    · simp [paint, hu, hv]
+  · by_cases hv : S v
+    · simp [paint, hu, hv]
+    · exact False.elim ((hIndependent u v hu hv) huv)
+
 end Witnora.GraphCoverColoring
