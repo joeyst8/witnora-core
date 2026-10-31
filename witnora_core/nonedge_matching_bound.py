@@ -118,7 +118,7 @@ def run_experiment() -> dict:
     tally = {
         "graphs": 0, "matching_strict_improvements": 0,
         "matching_worse_than_baseline": 0,
-        "matching_exact": 0, "hybrid_exact": 0,
+        "matching_exact": 0, "baseline_exact": 0, "hybrid_exact": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
@@ -129,7 +129,7 @@ def run_experiment() -> dict:
         attempt = matching_color_bound(n, edges)
         baseline = max(values["tau"], values["omega"])
         hybrid = min(attempt["bound"], baseline)
-        if not values["chi"] <= attempt["bound"] and values["chi"] <= baseline:
+        if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
         if not values["chi"] <= hybrid:
             raise AssertionError("hybrid is not an upper bound")
@@ -137,6 +137,7 @@ def run_experiment() -> dict:
         tally["matching_strict_improvements"] += attempt["bound"] < baseline
         tally["matching_worse_than_baseline"] += attempt["bound"] > baseline
         tally["matching_exact"] += attempt["bound"] == values["chi"]
+        tally["baseline_exact"] += baseline == values["chi"]
         tally["hybrid_exact"] += hybrid == values["chi"]
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
