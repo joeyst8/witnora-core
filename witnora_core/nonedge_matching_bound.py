@@ -144,6 +144,27 @@ def _is_two_connected(n: int, edges: tuple[tuple[int, int], ...]) -> bool:
     return True
 
 
+def _brooks_componentwise_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+    """Brooks' theorem on each connected component (K1 uses one color)."""
+    components = _connected_components(n, edges)
+    answer = 0
+    edge_set = set(edges)
+    for component in components:
+        size = len(component)
+        local_edges = [(u, v) for u, v in combinations(component, 2)
+                       if (u, v) in edge_set]
+        degree = {v: 0 for v in component}
+        for u, v in local_edges:
+            degree[u] += 1
+            degree[v] += 1
+        maximum_degree = max(degree.values(), default=0)
+        complete = len(local_edges) == size * (size - 1) // 2
+        odd_cycle = size >= 3 and size % 2 == 1 and all(degree[v] == 2 for v in component)
+        local_bound = maximum_degree + 1 if complete or odd_cycle else maximum_degree
+        answer = max(answer, local_bound)
+    return answer
+
+
 def _componentwise_baseline(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
@@ -200,11 +221,15 @@ def run_experiment() -> dict:
         "two_connected_improvements_over_strong": 0,
         "two_connected_strong_hybrid_exact": 0,
         "two_connected_strong_baseline_exact": 0,
+        "brooks_baseline_exact": 0,
+        "brooks_hybrid_exact": 0,
+        "two_connected_improvements_over_brooks": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
                 "first_hybrid_gap": None, "first_connected_strong_improvement": None,
-                "first_two_connected_strong_improvement": None}
+                "first_two_connected_strong_improvement": None,
+                "first_two_connected_brooks_improvement": None}
 
     def inspect(label: str, n: int, edges: tuple[tuple[int, int], ...]):
         values = graph_metrics(n, edges)
@@ -213,13 +238,15 @@ def run_experiment() -> dict:
         component_bound = _componentwise_baseline(n, edges)
         greedy_bound = values["delta"] + 1 if n else 0
         strong_baseline = min(baseline, component_bound, greedy_bound)
+        brooks_baseline = min(strong_baseline, _brooks_componentwise_bound(n, edges))
+        brooks_hybrid = min(attempt["bound"], brooks_baseline)
         hybrid = min(attempt["bound"], baseline)
         strong_hybrid = min(attempt["bound"], strong_baseline)
         connected = n > 0 and len(_connected_components(n, edges)) == 1
         two_connected = _is_two_connected(n, edges)
         if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
-        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid:
+        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid or not values["chi"] <= brooks_hybrid:
             raise AssertionError("hybrid is not an upper bound")
         tally["graphs"] += 1
         tally["matching_strict_improvements"] += attempt["bound"] < baseline
@@ -236,6 +263,9 @@ def run_experiment() -> dict:
         tally["two_connected_improvements_over_strong"] += two_connected and attempt["bound"] < strong_baseline
         tally["two_connected_strong_hybrid_exact"] += two_connected and strong_hybrid == values["chi"]
         tally["two_connected_strong_baseline_exact"] += two_connected and strong_baseline == values["chi"]
+        tally["brooks_baseline_exact"] += brooks_baseline == values["chi"]
+        tally["brooks_hybrid_exact"] += brooks_hybrid == values["chi"]
+        tally["two_connected_improvements_over_brooks"] += two_connected and attempt["bound"] < brooks_baseline
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
         details = {
@@ -243,6 +273,7 @@ def run_experiment() -> dict:
             "chi": values["chi"], "tau": values["tau"], "omega": values["omega"],
             "baseline": baseline, "matching_bound": attempt["bound"],
             "hybrid": hybrid, "strong_baseline": strong_baseline,
+            "brooks_baseline": brooks_baseline, "brooks_hybrid": brooks_hybrid,
             "strong_hybrid": strong_hybrid, "witness": attempt,
         }
         if attempt["bound"] < baseline and examples["first_improvement"] is None:
@@ -255,6 +286,8 @@ def run_experiment() -> dict:
             examples["first_connected_strong_improvement"] = details
         if two_connected and attempt["bound"] < strong_baseline and examples["first_two_connected_strong_improvement"] is None:
             examples["first_two_connected_strong_improvement"] = details
+        if two_connected and attempt["bound"] < brooks_baseline and examples["first_two_connected_brooks_improvement"] is None:
+            examples["first_two_connected_brooks_improvement"] = details
 
     for n in range(1, 7):
         for _, edges in graphs(n):
