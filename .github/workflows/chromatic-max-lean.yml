@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'formal/Witnora/ChromaticMaxConsequences.lean'
+      - 'formal/Witnora/GraphCoverColoring.lean'
       - '.github/workflows/chromatic-max-lean.yml'
 
 jobs:
@@ -22,10 +23,12 @@ jobs:
           test: false
       - name: Kernel-check arithmetic consequences without sorry
         working-directory: formal
-        run: lake env lean Witnora/ChromaticMaxConsequences.lean
+        run: |
+          lake env lean Witnora/ChromaticMaxConsequences.lean
+          lake env lean Witnora/GraphCoverColoring.lean
       - name: Reject sorry and added axiom declarations in this file
         run: |
-          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean; then
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean; then
             echo "Unproved declaration in chromatic consequences"
             exit 1
           fi
