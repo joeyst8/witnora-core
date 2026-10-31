@@ -1,0 +1,34 @@
+name: G14 zero-separator completeness probe
+
+on:
+  push:
+    branches:
+      - research/g14-zero-separator-v57
+  pull_request:
+    paths:
+      - "tests/test_g14_zero_separator.py"
+      - "scripts/check_g14_zero_separator_lean.py"
+      - ".github/workflows/g14-zero-separator.yml"
+  workflow_dispatch:
+
+jobs:
+  zero-separator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Native G14 zero-separator and empty-component tests
+        run: PYTHONPATH=. python -m unittest tests.test_g14_zero_separator -v
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build partition, G5 and G14 source bridge
+        working-directory: formal
+        run: lake build Witnora.G14ConcreteBridge Witnora.SourceG5
+      - name: Verify zero-separator G14 certificate with Lean
+        run: PYTHONPATH=. python scripts/check_g14_zero_separator_lean.py
