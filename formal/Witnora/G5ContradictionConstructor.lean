@@ -32,7 +32,8 @@ theorem filter_not_mem_self (xs : List Nat) :
         have ht : ∀ w ∈ rest, w ∈ xs := by
           intro w hw
           exact hsub w (by simp [hw])
-        simp [List.filter_cons, hv, ih ht]
+        have hrest := ih ht
+        simp [List.filter_cons, hv, hrest]
   exact aux xs (by intro v hv; exact hv)
 
 /-- XORing a row's support with itself cancels every variable. -/
