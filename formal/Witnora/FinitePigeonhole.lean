@@ -65,7 +65,8 @@ theorem fin_injective_card_le :
           exact hVal
         have hCast := hgInject (Fin.castSucc a) (Fin.castSucc b) hG
         apply Fin.ext
-        exact congrArg Fin.val hCast
+        have hVals := congrArg Fin.val hCast
+        exact hVals
       have hSmall : m ≤ n := ih m lower hLowerInject
       omega
 
