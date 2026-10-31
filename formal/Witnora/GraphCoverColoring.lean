@@ -163,4 +163,79 @@ theorem merge_nonadjacent_cover_pair
     subst v
     exact hNoPairEdge (hSym y x huv)
 
+/-- A clique vertex cover labeled injectively by k colors yields a
+dichotomy: either the graph is k-colorable, or the cover extends to a
+larger clique by one outside vertex. -/
+theorem clique_cover_color_or_extend
+    {V : Type} (Adj : V → V → Prop) (S : V → Prop)
+    (k : Nat) (label : V → Fin k)
+    (hSym : ∀ u v, Adj u v → Adj v u)
+    (hNoLoops : ∀ u, ¬ Adj u u)
+    (hIndependent : ∀ u v, ¬ S u → ¬ S v → ¬ Adj u v)
+    (hInjectOnCover :
+      ∀ u v, S u → S v → label u = label v → u = v)
+    (hCoverClique :
+      ∀ u v, S u → S v → u ≠ v → Adj u v) :
+    (∃ paint : V → Fin k,
+      ∀ u v, Adj u v → paint u ≠ paint v) ∨
+    (∃ outside : V, ¬ S outside ∧
+      ∀ u v, (S u ∨ u = outside) → (S v ∨ v = outside) →
+        u ≠ v → Adj u v) := by
+  classical
+  by_cases hUniversal :
+      ∃ outside, ¬ S outside ∧ ∀ u, S u → Adj outside u
+  · right
+    obtain ⟨outside, hOutside, hAll⟩ := hUniversal
+    exact ⟨outside, hOutside,
+      clique_extension Adj S outside hSym hCoverClique hOutside hAll⟩
+  · left
+    have hWitness : ∀ u, ¬ S u → ∃ v, S v ∧ ¬ Adj u v := by
+      intro u hu
+      by_contra hNoWitness
+      have hAll : ∀ v, S v → Adj u v := by
+        intro v hv
+        by_contra hNoEdge
+        exact hNoWitness ⟨v, hv, hNoEdge⟩
+      exact hUniversal ⟨u, hu, hAll⟩
+    let pick : V → V :=
+      fun u => if h : ¬ S u then Classical.choose (hWitness u h) else u
+    have hPickInside : ∀ u, ¬ S u → S (pick u) := by
+      intro u hu
+      simpa [pick, hu] using (Classical.choose_spec (hWitness u hu)).1
+    have hPickNonneighbor : ∀ u, ¬ S u → ¬ Adj u (pick u) := by
+      intro u hu
+      simpa [pick, hu] using (Classical.choose_spec (hWitness u hu)).2
+    let paint : V → Fin k :=
+      fun u => if S u then label u else label (pick u)
+    refine ⟨paint, ?_⟩
+    intro u v huv
+    by_cases hu : S u
+    · by_cases hv : S v
+      · have hVertex : u ≠ v := by
+          intro heq
+          subst v
+          exact hNoLoops u huv
+        have hDistinct : label u ≠ label v := by
+          intro heq
+          exact hVertex (hInjectOnCover u v hu hv heq)
+        simpa [paint, hu, hv] using hDistinct
+      · intro heq
+        have hEq : label u = label (pick v) := by
+          simpa [paint, hu, hv] using heq
+        have hVertex : u = pick v :=
+          hInjectOnCover u (pick v) hu (hPickInside v hv) hEq
+        have hEdge : Adj v (pick v) := by
+          simpa [hVertex] using hSym u v huv
+        exact (hPickNonneighbor v hv) hEdge
+    · by_cases hv : S v
+      · intro heq
+        have hEq : label (pick u) = label v := by
+          simpa [paint, hu, hv] using heq
+        have hVertex : pick u = v :=
+          hInjectOnCover (pick u) v (hPickInside u hu) hv hEq
+        have hEdge : Adj u (pick u) := by
+          simpa [hVertex] using huv
+        exact (hPickNonneighbor u hu) hEdge
+      · exact False.elim ((hIndependent u v hu hv) huv)
+
 end Witnora.GraphCoverColoring
