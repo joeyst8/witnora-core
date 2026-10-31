@@ -124,7 +124,7 @@ theorem one_cover_bound
       chromaticNumber_minimal Adj hNoLoops 1 ⟨paint, hPaint⟩
     exact Nat.le_trans hChi1
       (Nat.le_max_left 1 (finiteCliqueNumber N Adj))
-  · obtain ⟨covered, hCovered, hLabelCovered⟩ :=
+  · obtain ⟨covered, hLabelCovered⟩ :=
       hSurject (⟨0, by omega⟩ : Fin 1)
     let rep : Fin N := covered.val
     have hRepInside : S rep := covered.property
