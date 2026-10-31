@@ -96,6 +96,7 @@ theorem sat_rejects_every_unsat_cover
 example (cert : CoverData) :
     cert.accepts 1 [[1]] = false := by
   apply sat_rejects_every_unsat_cover 1 [[1]] (fun _ => true)
+  unfold signedCNFHolds
   decide
 
 #print axioms Witnora.TC063Direct.acceptedCover_sound
