@@ -175,6 +175,19 @@ def emit_python_g14_lean(instance_id=None):
         """∀ branch ∈ enumerate [1],
       checkG5Closed (pythonBound branch) (pythonSelected branch)
         (pythonRows branch) (pythonSteps branch) = true"""))
+    if instance_id is not None:
+        lines.extend([
+            """theorem python_missing_component_rejected :
+    checkPartition
+      (conditionCNF (fixedOf [(1, false)]) (decodeCNF pythonClauses))
+      [pythonSelected [(1, false)]] = false := by
+  decide""",
+            """theorem python_invalid_g5_reference_rejected :
+    checkG5Closed (pythonBound [(1, false)])
+      (pythonSelected [(1, false)]) (pythonRows [(1, false)])
+      [(999, 0)] = false := by
+  decide""",
+        ])
     lines.extend([
         """theorem python_g14_g5_dimacs_unsat :
     parseDocument pythonSourceBytes = some (serialize pythonClauses) ∧
