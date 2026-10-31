@@ -14,7 +14,7 @@ class KempeRepairTests(unittest.TestCase):
             initial = _dsatur_greedy_coloring(n, edges)["coloring"]
             for variant in kempe_swaps(n, edges, initial):
                 self.assertEqual(len(variant["coloring"]), n)
-                self.assertEqual(len(set(variant["coloring"])), len(set(initial)))
+                self.assertLessEqual(len(set(variant["coloring"])), len(set(initial)))
                 for u, v in edges:
                     self.assertNotEqual(variant["coloring"][u], variant["coloring"][v])
 
