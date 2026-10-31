@@ -164,6 +164,24 @@ theorem serializedSignedClauses_semantics
         (fun clause => clause.any (signedLitTrue a)) = true
   rw [hs]
 
+/-- Direct iff for the accepted submitted signed integers, assuming
+    normalized IDs are positive (as required by the DIMACS convention).
+    Deriving this hypothesis from the output check itself is the next step. -/
+theorem checked_submitted_signedCNF_iff_raw_xor
+    (raw normalized : List Nat) (rhs : Bool)
+    (submitted : List (List Int))
+    (hcheck : checkPythonEncodingOutput raw normalized rhs submitted = true)
+    (hpositive : ∀ v, v ∈ normalized → 0 < v)
+    (a : Nat → Bool) :
+    signedCNFHolds submitted a ↔ parityVars raw a = rhs := by
+  have hcert := Witnora.CheckedXorOutput.checked_python_xor_output_exact
+    raw normalized rhs submitted hcheck a
+  rw [hcert.1]
+  exact (serializedSignedClauses_semantics normalized rhs a hpositive).trans
+    hcert.2
+
+#print axioms Witnora.SignedIntSemanticBridge.checked_submitted_signedCNF_iff_raw_xor
+
 #print axioms Witnora.SignedIntSemanticBridge.serializedSignedClauses_semantics
 
 end Witnora.SignedIntSemanticBridge
