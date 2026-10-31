@@ -95,7 +95,7 @@ theorem checkSemanticExactAffine_sound (r : Nat) (cnf : CNF)
       ∀ row ∈ rows, parityVars row.coefficients a = row.rhs := by
   unfold checkSemanticExactAffine at h
   simp at h
-  obtain ⟨_, hrows, hsource⟩ := h
+  obtain ⟨⟨_, hrows⟩, hsource⟩ := h
   constructor
   · intro hc row hr
     exact checkInitialRows_sound cnf rows hrows a hc row hr
@@ -104,7 +104,7 @@ theorem checkSemanticExactAffine_sound (r : Nat) (cnf : CNF)
       (expandedHolds_iff rows a).mpr hpar
     apply List.all_eq_true.mpr
     intro clause hmem
-    have hc := List.all_eq_true.mp hsource clause hmem
+    have hc := hsource clause hmem
     exact checkClauseCoverage_sound (expanded rows) clause a hgenerated hc
 
 /-- A complete single-equation encoding is accepted. -/
