@@ -76,11 +76,11 @@ def triangleWire : String := "2|2|0,1;0,2;1,2|0,1,2|0,1,2"
 theorem triangle_parses :
     parseCertificate triangleWire =
       some (2, 2, [(0, 1), (0, 2), (1, 2)], [0, 1, 2], [0, 1, 2]) := by
-  decide
+  native_decide
 
 theorem triangle_serialized_passes :
     checkSerialized triangleWire = true := by
-  decide
+  native_decide
 
 theorem triangle_serialized_optimal :
     ∃ hNoLoops : ∀ u : Fin 3,
@@ -93,27 +93,27 @@ theorem triangle_serialized_optimal :
 
 theorem rejects_leading_zero :
     checkSerialized "02|2|0,1;0,2;1,2|0,1,2|0,1,2" = false := by
-  decide
+  native_decide
 
 theorem rejects_missing_field :
     checkSerialized "2|2|0,1;0,2;1,2|0,1,2" = false := by
-  decide
+  native_decide
 
 theorem rejects_extra_edge_separator :
     checkSerialized "2|2|0,1;;0,2;1,2|0,1,2|0,1,2" = false := by
-  decide
+  native_decide
 
 theorem rejects_negative_endpoint :
     checkSerialized "2|2|-1,1;0,2;1,2|0,1,2|0,1,2" = false := by
-  decide
+  native_decide
 
 theorem rejects_out_of_range_endpoint :
     checkSerialized "2|2|0,3;0,2;1,2|0,1,2|0,1,2" = false := by
-  decide
+  native_decide
 
 theorem rejects_wrong_color_length :
     checkSerialized "2|2|0,1;0,2;1,2|0,1|0,1,2" = false := by
-  decide
+  native_decide
 
 end Witnora.SerializedNumericCertificate
 
