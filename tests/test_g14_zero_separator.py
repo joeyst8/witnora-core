@@ -33,12 +33,14 @@ class G14ZeroSeparatorTest(unittest.TestCase):
         result = check_separator_affine_certificate(item.formula, cert)
         self.assertEqual(result["status"], "SEPARATOR_AFFINE_CERTIFICATE_VERIFIED", result)
 
-    def test_empty_clause_without_variables_exposes_separate_gap(self):
+    def test_empty_clause_has_zero_variable_cover_component(self):
         item = instance("empty_zero_separator", [[]])
         cert = build_separator_affine_certificate(item)
-        # Current component finder has no variable vertex to assign the
-        # empty clause to; this is distinct from the now-fixed G5 arity gap.
-        self.assertNotEqual(cert.final_result, UNSAT_CERTIFIED)
+        self.assertEqual(cert.final_result, UNSAT_CERTIFIED)
+        self.assertEqual(len(cert.separator_assignments), 1)
+        self.assertEqual(cert.separator_verification["components_after_removal"][0]["component_id"], "C0")
+        result = check_separator_affine_certificate(item.formula, cert)
+        self.assertEqual(result["status"], "SEPARATOR_AFFINE_CERTIFICATE_VERIFIED", result)
 
 
 if __name__ == "__main__":
