@@ -1,0 +1,31 @@
+name: Structured coloring holdout
+
+on:
+  push:
+    branches:
+      - research/structured-holdout-v25
+  pull_request:
+    paths:
+      - "witnora_core/structured_coloring_study.py"
+      - "scripts/experiment_structured_coloring.py"
+      - "tests/test_structured_coloring_study.py"
+      - ".github/workflows/structured-coloring.yml"
+  workflow_dispatch:
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test unfamiliar graph families and repair invariants
+        run: PYTHONPATH=. python -m unittest tests.test_structured_coloring_study -v
+      - name: Run ungated end-to-end structured study
+        run: PYTHONPATH=. python scripts/experiment_structured_coloring.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: structured-coloring-ledger
+          path: structured-coloring-ledger.json
