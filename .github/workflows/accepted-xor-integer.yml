@@ -1,0 +1,31 @@
+name: Accepted signed integer XOR equivalence
+
+on:
+  push:
+    branches:
+      - research/accepted-xor-integer-v40
+  pull_request:
+    paths:
+      - "formal/Witnora/AcceptedXorInteger.lean"
+      - ".github/workflows/accepted-xor-integer.yml"
+  workflow_dispatch:
+
+jobs:
+  theorem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Prove checker acceptance implies actual Int CNF iff original XOR
+        working-directory: formal
+        run: lake build Witnora.AcceptedXorInteger
+      - name: Reject sorry, axioms and unsafe declarations
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/AcceptedXorInteger.lean; then
+            exit 1
+          fi
