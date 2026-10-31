@@ -160,7 +160,7 @@ theorem normalize_pair (n : Nat) (a b : Fin (n + 2)) (hab : a ≠ b) :
     intro hb'
     have hEq : first b = first a := by
       simpa [b', hFirstA] using hb'
-    exact hab ((swapFin_injective a zero) hEq).symm
+    exact hab (swapFin_injective a zero b a hEq).symm
   let second := swapFin b' one
   let relabel := fun z => second (first z)
   have hSecondZero : second zero = zero := by
@@ -172,13 +172,11 @@ theorem normalize_pair (n : Nat) (a b : Fin (n + 2)) (hab : a ≠ b) :
     simp [second, swapFin, Ne.symm hBNotZero, hZeroNotOne]
   refine ⟨relabel, ?_, ?_, ?_⟩
   · intro x y heq
-    exact (swapFin_injective a zero)
-      ((swapFin_injective b' one) heq)
+    exact swapFin_injective a zero x y
+      (swapFin_injective b' one (first x) (first y) heq)
   · change (second (first a)).val = 0
     rw [hFirstA, hSecondZero]
-    rfl
   · change (second b').val = 1
-    change one.val = 1
-    rfl
+    simp [second, swapFin, one]
 
 end Witnora.ColorMerge
