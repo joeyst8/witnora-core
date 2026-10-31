@@ -1,0 +1,37 @@
+name: TC-063 affine completeness counterexample
+
+on:
+  push:
+    branches:
+      - research/tc063-unit-counterexample-v55
+  pull_request:
+    paths:
+      - "formal/Witnora/TC063UnitCounterexample.lean"
+      - "tests/test_tc063_unit_counterexample.py"
+      - ".github/workflows/tc063-unit-counterexample.yml"
+  workflow_dispatch:
+
+jobs:
+  counterexample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Probe default and lowered-arity native extraction
+        run: PYTHONPATH=. python -m unittest tests.test_tc063_unit_counterexample -v
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Verify affine family membership and UNSAT in Lean
+        working-directory: formal
+        run: lake build Witnora.TC063UnitCounterexample
+      - name: Reject proof holes and axioms
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/TC063UnitCounterexample.lean; then
+            exit 1
+          fi
