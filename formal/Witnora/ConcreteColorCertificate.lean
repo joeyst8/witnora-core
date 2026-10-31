@@ -83,19 +83,19 @@ theorem checked_certificate_sound {N k : Nat}
     ∃ hNoLoops : ∀ u : Fin N, ¬ edgeAdj edges u u,
       chromaticNumber (edgeAdj edges) hNoLoops = k + 1 := by
   have hParts :
-      allFin N (fun u => decide (edgeBool edges u u = false)) = true ∧
+      ((allFin N (fun u => decide (edgeBool edges u u = false)) = true ∧
       allFin N (fun u =>
         allFin N (fun v =>
-          decide (edgeBool edges u v = true → paint u ≠ paint v))) = true ∧
+          decide (edgeBool edges u v = true → paint u ≠ paint v))) = true) ∧
       allOptionFin k (fun a =>
         allOptionFin k (fun b =>
-          decide (vertices a = vertices b → a = b))) = true ∧
+          decide (vertices a = vertices b → a = b))) = true) ∧
       allOptionFin k (fun a =>
         allOptionFin k (fun b =>
           decide (a ≠ b →
             edgeBool edges (vertices a) (vertices b) = true))) = true := by
     simpa only [checkCertificate, Bool.and_eq_true] using hChecked
-  rcases hParts with ⟨hLoops, hProperCheck, hInjectCheck, hCliqueCheck⟩
+  rcases hParts with ⟨⟨⟨hLoops, hProperCheck⟩, hInjectCheck⟩, hCliqueCheck⟩
   have hNoLoops : ∀ u : Fin N, ¬ edgeAdj edges u u := by
     intro u hAdj
     have hFalse : edgeBool edges u u = false :=
@@ -115,6 +115,7 @@ theorem checked_certificate_sound {N k : Nat}
   have hClique : ∀ a b : Option (Fin k),
       a ≠ b → edgeAdj edges (vertices a) (vertices b) := by
     intro a b
+    change a ≠ b → edgeBool edges (vertices a) (vertices b) = true
     have ha := allOptionFin_sound k _ hCliqueCheck a
     exact of_decide_eq_true (allOptionFin_sound k _ ha b)
   exact ⟨hNoLoops,
