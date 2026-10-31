@@ -50,8 +50,8 @@ theorem checkBoundedUnsatCover_sound
       components selected bound rows steps = true) :
     separator.length ≤ c ∧ ¬ ∃ a, signedCNFHolds raw a := by
   unfold checkBoundedUnsatCover at h
-  obtain ⟨hsize, hall⟩ := Bool.and_eq_true.mp h
-  have hc : separator.length ≤ c := of_decide_eq_true hsize
+  simp at h
+  obtain ⟨hc, hall⟩ := h
   refine ⟨hc, ?_⟩
   have hbranch (branch : List (Nat × Bool))
       (hb : branch ∈ Witnora.SeparatorAssignments.enumerate separator) :
@@ -66,18 +66,21 @@ theorem checkBoundedUnsatCover_sound
   apply Witnora.G14ConcreteBridge.signed_unsat_of_enumerated_partitions
     raw separator components
   · intro branch hb
-    exact (Bool.and_eq_true.mp (Bool.and_eq_true.mp
-      (hbranch branch hb)).1).1
+    have hs := hbranch branch hb
+    simp at hs
+    exact hs.1.1
   · exact selected
   · intro branch hb
-    have hs := (Bool.and_eq_true.mp (Bool.and_eq_true.mp
-      (hbranch branch hb)).1).2
-    exact of_decide_eq_true hs
+    have hs := hbranch branch hb
+    simp at hs
+    exact hs.1.2
   · exact bound
   · exact rows
   · exact steps
   · intro branch hb
-    exact (Bool.and_eq_true.mp (hbranch branch hb)).2
+    have hs := hbranch branch hb
+    simp at hs
+    exact hs.2
 
 /-- A separator exceeding the claimed fixed bound fails closed. -/
 example :
