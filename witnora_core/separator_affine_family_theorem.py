@@ -200,11 +200,21 @@ def _component_dicts(formula: CNFFormula, separator: list[int]) -> list[dict[str
         for var in variables:
             lookup[var] = cid
         components.append({"component_id": cid, "variables": variables, "clause_ids": [], "boundary_separator_variables": []})
+    # A source empty clause has no primal-graph vertex. Preserve it as an
+    # independent zero-variable component instead of silently dropping it.
+    if any(len(clause) == 0 for clause in formula.clauses):
+        components.append({
+            "component_id": "C0", "variables": [],
+            "clause_ids": [], "boundary_separator_variables": [],
+        })
     clause_ids: dict[str, list[int]] = defaultdict(list)
     boundary: dict[str, set[int]] = defaultdict(set)
     for clause_id, clause in _clause_id_map(formula).items():
         non_separator = [var for var in clause.variables if var not in separator_set]
         if not non_separator:
+            if len(clause) == 0 and any(
+                    item["component_id"] == "C0" for item in components):
+                clause_ids["C0"].append(clause_id)
             continue
         cids = {lookup.get(var) for var in non_separator}
         if len(cids) == 1 and None not in cids:
@@ -249,7 +259,10 @@ def _condition_by_separator(
             continue
         residual_clauses.append(reduced)
         if len(reduced) == 0:
-            errors.append(f"EMPTY_RESIDUAL_CLAUSE:{clause_id}")
+            if "C0" in component_clauses:
+                component_clauses["C0"].append(reduced)
+            else:
+                errors.append(f"EMPTY_RESIDUAL_CLAUSE:{clause_id}")
             continue
         cids = {lookup.get(var) for var in reduced.variables if var not in separator_assignment}
         if len(cids) != 1 or None in cids:
