@@ -35,7 +35,7 @@ theorem zero_cover_bound
     have hColor : Colorable Adj 0 := by
       refine ⟨fun u => u, ?_⟩
       intro u v huv heq
-      exact hNoLoops u huv
+      exact hNoEdges u v huv
     have hChi : chromaticNumber Adj hNoLoops ≤ 0 :=
       chromaticNumber_minimal Adj hNoLoops 0 hColor
     exact Nat.le_trans hChi (Nat.le_max_left 0 (finiteCliqueNumber 0 Adj))
