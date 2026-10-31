@@ -2035,7 +2035,7 @@ def make_affine_residue_instance(instance_id: str) -> AffineResidueInstance:
     )
 
 
-def extract_affine_residue_equations(formula: CNFFormula, *, max_arity: int = 10, min_arity: int = 2) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def extract_affine_residue_equations(formula: CNFFormula, *, max_arity: int = 10, min_arity: int = 0) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     clause_ids = _clause_id_map(formula)
     groups: dict[tuple[int, ...], set[tuple[int, ...]]] = defaultdict(set)
     diagnostics: list[dict[str, Any]] = []
