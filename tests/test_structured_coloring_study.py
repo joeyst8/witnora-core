@@ -1,7 +1,7 @@
 """Checks for the out-of-distribution coloring benchmark."""
 import unittest
 
-from witnora_core.structured_coloring_study import structured_graphs, ungated_repair
+from witnora_core.structured_coloring_study import structured_graphs, ungated_repair, greedy_clique_lower_bound
 from witnora_core.nonedge_matching_bound import _dsatur_greedy_coloring
 
 
@@ -14,6 +14,14 @@ class StructuredColoringTests(unittest.TestCase):
             self.assertLessEqual(n, 16)
             self.assertEqual(edges, tuple(sorted(set(edges))))
             self.assertTrue(all(0 <= u < v < n for u, v in edges), family)
+
+    def test_clique_lower_bound_is_valid(self):
+        self.assertEqual(greedy_clique_lower_bound(0, ()), 0)
+        self.assertEqual(greedy_clique_lower_bound(1, ()), 1)
+        self.assertEqual(greedy_clique_lower_bound(
+            3, ((0, 1), (0, 2), (1, 2))), 3)
+        self.assertEqual(greedy_clique_lower_bound(
+            4, ((0, 1), (1, 2), (2, 3))), 2)
 
     def test_ungated_repair_never_degrades_color(self):
         records = list(structured_graphs(seed=20261102, per_family=2))
