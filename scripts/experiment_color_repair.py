@@ -14,6 +14,8 @@ def main() -> None:
     print({"design": report["design"], "training": report["training"],
            "holdout": report["holdout"],
            "first_training_failure": report["examples"]["training"],
+           "first_unresolved_training": report["examples"]["training_unresolved"],
+           "first_unresolved_holdout": report["examples"]["holdout_unresolved"],
            "novelty_verified": False, "lean_verified": False})
 
 
