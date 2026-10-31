@@ -11,6 +11,7 @@ on:
       - 'formal/Witnora/ColorMerge.lean'
       - 'formal/Witnora/CoverDichotomy.lean'
       - 'formal/Witnora/FiniteCliqueBridge.lean'
+      - 'formal/Witnora/ChromaticNumericalBridge.lean'
       - '.github/workflows/chromatic-max-lean.yml'
 
 jobs:
@@ -28,10 +29,10 @@ jobs:
         working-directory: formal
         run: |
           lake env lean Witnora/ChromaticMaxConsequences.lean
-          lake build Witnora.FiniteCliqueBridge
+          lake build Witnora.ChromaticNumericalBridge
       - name: Reject sorry and added axiom declarations in this file
         run: |
-          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean formal/Witnora/ColorMerge.lean formal/Witnora/CoverDichotomy.lean formal/Witnora/FiniteCliqueBridge.lean; then
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean formal/Witnora/ColorMerge.lean formal/Witnora/CoverDichotomy.lean formal/Witnora/FiniteCliqueBridge.lean formal/Witnora/ChromaticNumericalBridge.lean; then
             echo "Unproved declaration in chromatic consequences"
             exit 1
           fi
