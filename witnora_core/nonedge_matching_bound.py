@@ -97,6 +97,33 @@ def matching_color_bound(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
     }
 
 
+
+def _componentwise_baseline(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+    neighbors = [set() for _ in range(n)]
+    for u, v in edges:
+        neighbors[u].add(v)
+        neighbors[v].add(u)
+    seen = set()
+    bound = 0
+    for start in range(n):
+        if start in seen:
+            continue
+        component = []
+        queue = [start]
+        seen.add(start)
+        for u in queue:
+            component.append(u)
+            for v in sorted(neighbors[u]):
+                if v not in seen:
+                    seen.add(v)
+                    queue.append(v)
+        local = {v: i for i, v in enumerate(sorted(component))}
+        local_edges = tuple((local[u], local[v]) for u, v in edges
+                            if u in local and v in local)
+        values = graph_metrics(len(component), local_edges)
+        bound = max(bound, values["tau"], values["omega"])
+    return bound
+
 def _edge_list(n: int, mask: int) -> tuple[tuple[int, int], ...]:
     pairs = list(combinations(range(n), 2))
     return tuple(pair for i, pair in enumerate(pairs) if mask & (1 << i))
@@ -119,6 +146,8 @@ def run_experiment() -> dict:
         "graphs": 0, "matching_strict_improvements": 0,
         "matching_worse_than_baseline": 0,
         "matching_exact": 0, "baseline_exact": 0, "hybrid_exact": 0,
+        "strong_baseline_exact": 0, "strong_hybrid_exact": 0,
+        "matching_strict_improvements_over_strong": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
@@ -128,10 +157,14 @@ def run_experiment() -> dict:
         values = graph_metrics(n, edges)
         attempt = matching_color_bound(n, edges)
         baseline = max(values["tau"], values["omega"])
+        component_bound = _componentwise_baseline(n, edges)
+        greedy_bound = values["delta"] + 1 if n else 0
+        strong_baseline = min(baseline, component_bound, greedy_bound)
         hybrid = min(attempt["bound"], baseline)
+        strong_hybrid = min(attempt["bound"], strong_baseline)
         if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
-        if not values["chi"] <= hybrid:
+        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid:
             raise AssertionError("hybrid is not an upper bound")
         tally["graphs"] += 1
         tally["matching_strict_improvements"] += attempt["bound"] < baseline
@@ -139,13 +172,17 @@ def run_experiment() -> dict:
         tally["matching_exact"] += attempt["bound"] == values["chi"]
         tally["baseline_exact"] += baseline == values["chi"]
         tally["hybrid_exact"] += hybrid == values["chi"]
+        tally["strong_baseline_exact"] += strong_baseline == values["chi"]
+        tally["strong_hybrid_exact"] += strong_hybrid == values["chi"]
+        tally["matching_strict_improvements_over_strong"] += attempt["bound"] < strong_baseline
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
         details = {
             "family": label, "n": n, "edges": [list(e) for e in edges],
             "chi": values["chi"], "tau": values["tau"], "omega": values["omega"],
             "baseline": baseline, "matching_bound": attempt["bound"],
-            "hybrid": hybrid, "witness": attempt,
+            "hybrid": hybrid, "strong_baseline": strong_baseline,
+            "strong_hybrid": strong_hybrid, "witness": attempt,
         }
         if attempt["bound"] < baseline and examples["first_improvement"] is None:
             examples["first_improvement"] = details
