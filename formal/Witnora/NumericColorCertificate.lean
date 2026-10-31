@@ -36,11 +36,13 @@ def optionIndex {K : Nat} : Option (Fin K) → Nat
 /-- Fin.ofNat is total; raw range checks forbid wraparound on accepted data. -/
 def decodedPaint (N K : Nat) (colors : List Nat) :
     Fin (N + 1) → Fin (K + 1) :=
-  fun i => Fin.ofNat (K + 1) ((colors[i.val]?).getD 0)
+  fun i => ⟨((colors[i.val]?).getD 0) % (K + 1),
+    Nat.mod_lt _ (Nat.succ_pos K)⟩
 
 def decodedClique (N K : Nat) (clique : List Nat) :
     Option (Fin K) → Fin (N + 1) :=
-  fun i => Fin.ofNat (N + 1) ((clique[optionIndex i]?).getD 0)
+  fun i => ⟨((clique[optionIndex i]?).getD 0) % (N + 1),
+    Nat.mod_lt _ (Nat.succ_pos N)⟩
 
 /-- Explicit length/range checks executed before any certificate acceptance. -/
 def numericRangesValid (N K : Nat)
