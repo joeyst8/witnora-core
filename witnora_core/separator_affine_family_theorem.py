@@ -200,9 +200,11 @@ def _component_dicts(formula: CNFFormula, separator: list[int]) -> list[dict[str
         for var in variables:
             lookup[var] = cid
         components.append({"component_id": cid, "variables": variables, "clause_ids": [], "boundary_separator_variables": []})
-    # A source empty clause has no primal-graph vertex. Preserve it as an
-    # independent zero-variable component instead of silently dropping it.
-    if any(len(clause) == 0 for clause in formula.clauses):
+    # Clauses supported entirely on separator variables can condition to
+    # an empty contradiction. Preserve them in a zero-variable component;
+    # on satisfying branches this component is an empty (true) CNF.
+    if any(all(v in separator_set for v in clause.variables)
+           for clause in formula.clauses):
         components.append({
             "component_id": "C0", "variables": [],
             "clause_ids": [], "boundary_separator_variables": [],
@@ -212,8 +214,7 @@ def _component_dicts(formula: CNFFormula, separator: list[int]) -> list[dict[str
     for clause_id, clause in _clause_id_map(formula).items():
         non_separator = [var for var in clause.variables if var not in separator_set]
         if not non_separator:
-            if len(clause) == 0 and any(
-                    item["component_id"] == "C0" for item in components):
+            if any(item["component_id"] == "C0" for item in components):
                 clause_ids["C0"].append(clause_id)
             continue
         cids = {lookup.get(var) for var in non_separator}
@@ -699,7 +700,7 @@ def check_separator_affine_certificate(
                 errors.append(f"COMPONENT_RESULT_MISMATCH:{assignment_id}:{cid}")
             if expected_component_result == "SAT":
                 witness = _assignment_from_payload(component_record.get("component_witness"))
-                if not witness or not formula_satisfied(component_formula, witness):
+                if (not witness and component_formula.num_clauses > 0) or not formula_satisfied(component_formula, witness):
                     errors.append(f"COMPONENT_SAT_WITNESS_INVALID:{assignment_id}:{cid}")
         expected_assignment_result = ALL_COMPONENTS_SAT if component_results and all(value == "SAT" for value in component_results.values()) and not localization_errors else SOME_COMPONENT_UNSAT if any(value == "UNSAT" for value in component_results.values()) else DIAGNOSTIC_ONLY
         if record.get("assignment_result") != expected_assignment_result:
