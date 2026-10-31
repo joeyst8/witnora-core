@@ -122,6 +122,7 @@ def emit_python_g14_lean(instance_id=None):
 
     lines = [
         "import Witnora.G14ConcreteBridge",
+        "import Witnora.ExactAffineMembership",
         "namespace Witnora.GeneratedPythonG14",
         "open Witnora.Concrete",
         "open Witnora.G14ConcreteBridge",
@@ -131,6 +132,7 @@ def emit_python_g14_lean(instance_id=None):
         "open Witnora.SeparatorAssignments",
         "open Witnora.SignedSerialization",
         "open Witnora.SparseBridge",
+        "open Witnora.ExactAffineMembership",
         "open Witnora.DIMACSDocument",
         "open Witnora.DIMACSTokens",
         "set_option maxRecDepth 8192",
@@ -175,6 +177,12 @@ def emit_python_g14_lean(instance_id=None):
         """∀ branch ∈ enumerate [1],
       checkG5Closed (pythonBound branch) (pythonSelected branch)
         (pythonRows branch) (pythonSteps branch) = true"""))
+    # Stronger than one-way G5 extraction: every selected native residual
+    # must match the complete signed XOR-CNF of its actual initial G5 rows.
+    lines.append(premise("python_selected_exact_affine_pass",
+        """∀ branch ∈ enumerate [1],
+      checkExactAffine 2 (pythonSelected branch)
+        (pythonRows branch) = true"""))
     if instance_id is not None:
         lines.extend([
             """theorem python_missing_component_rejected :
