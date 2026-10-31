@@ -16,6 +16,7 @@ from .operator_genesis import (
     AffineResidueInstance, build_affine_residue_certificate,
     AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED,
     AFFINE_RESIDUE_CERTIFICATE_VERIFIED,
+    AFFINE_RESIDUE_SAT_WITNESS_VERIFIED,
 )
 from .lean_g5_gate import _compile_dag, _serialize_rows
 
@@ -114,6 +115,40 @@ def emit_python_g14_lean(instance_id=None):
         _serialize_rows(cert.gaussian_elimination_trace[0]["rows"])
         for _, _, _, _, cert in branches
     ]
+    # Obtain native affine-extraction evidence for *every* residual
+    # component, not just the branch-selected UNSAT witness.
+    all_component_rows = []
+    all_component_statuses = []
+    for assignment, _residual, parts, chosen, selected_cert in branches:
+        branch_rows = []
+        branch_statuses = []
+        for index, component in enumerate(parts):
+            if component is chosen:
+                component_cert = selected_cert
+            else:
+                component_cert = build_affine_residue_certificate(
+                    AffineResidueInstance(
+                        instance_id=f"g14_all_{instance_id}_{int(assignment[1])}_{index}",
+                        equations=(), formula=component,
+                    ), max_arity=2,
+                )
+            trace = component_cert.gaussian_elimination_trace
+            if not trace or trace[0].get("type") != "INITIAL_ROWS":
+                raise ValueError("component missing native affine initial rows")
+            if component_cert.checker_status != AFFINE_RESIDUE_CERTIFICATE_VERIFIED:
+                raise ValueError("component missing accepted native affine evidence")
+            branch_rows.append(_serialize_rows(trace[0]["rows"]))
+            branch_statuses.append(component_cert.status)
+        all_component_rows.append("[" + ", ".join(branch_rows) + "]")
+        all_component_statuses.append(branch_statuses)
+
+    if instance_id is not None:
+        native_statuses = [status for branch in all_component_statuses
+                           for status in branch]
+        if (AFFINE_RESIDUE_SAT_WITNESS_VERIFIED not in native_statuses
+                or AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED not in native_statuses):
+            raise ValueError("fixture must cover both SAT and UNSAT affine components")
+
     steps = [
         _compile_dag(cert.gaussian_elimination_trace[0]["rows"],
                      cert.row_operations)
@@ -142,6 +177,7 @@ def emit_python_g14_lean(instance_id=None):
         f"def pythonClauses : List (List Int) := {raw}",
         branch_definition("pythonComponents", "List CNF", cs, "[]"),
         branch_definition("pythonSelected", "CNF", selected, "[]"),
+        branch_definition("pythonAllRows", "List (List Witnora.G5Trace.Row)", all_component_rows, "[]"),
         branch_definition("pythonBound", "Nat", bounds, "0"),
         branch_definition("pythonRows", "List Witnora.G5Trace.Row", row_values, "[]"),
         branch_definition("pythonSteps", "List Witnora.G5Dag.XorRef", steps, "[]"),
@@ -188,6 +224,15 @@ def emit_python_g14_lean(instance_id=None):
         """∀ branch ∈ enumerate [1],
       checkSemanticExactAffine 2 (pythonSelected branch)
         (pythonRows branch) = true"""))
+    # Length equality prevents zipWith from silently skipping a residual.
+    lines.append(premise("python_all_component_lengths_pass",
+        """∀ branch ∈ enumerate [1],
+      (pythonComponents branch).length = (pythonAllRows branch).length"""))
+    lines.append(premise("python_all_components_semantic_affine_pass",
+        """∀ branch ∈ enumerate [1],
+      (List.zipWith (fun component rows =>
+        checkSemanticExactAffine 2 component rows)
+        (pythonComponents branch) (pythonAllRows branch)).all id = true"""))
     if instance_id is not None:
         lines.extend([
             """theorem python_missing_component_rejected :
