@@ -1,0 +1,32 @@
+name: Serialized numeric Lean certificates
+
+on:
+  push:
+    branches:
+      - research/serialized-numeric-v33
+  pull_request:
+    paths:
+      - "formal/Witnora/SerializedNumericCertificate.lean"
+      - ".github/workflows/serialized-numeric-certificates.yml"
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build serialized parser and kernel-check positive and negative examples
+        working-directory: formal
+        run: lake build Witnora.SerializedNumericCertificate
+      - name: Reject proof holes and unsafe declarations in parser
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/SerializedNumericCertificate.lean; then
+            echo "Unproved declaration in serialized parser"
+            exit 1
+          fi
