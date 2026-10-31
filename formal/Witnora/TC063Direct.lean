@@ -92,6 +92,26 @@ theorem sat_rejects_every_unsat_cover
       have hu := (acceptedCover_sound c raw cert hc).2
       exact False.elim (hu ⟨a, hsat⟩)
 
+/-- Adding a source-implied clause cannot change satisfiability.
+    This supplies the mathematical control for the adversarial redundant
+    clause experiment, independent of Python's membership verdict. -/
+theorem covered_clause_extension_iff
+    (cnf : CNF) (extra : List Literal)
+    (hcovered : Witnora.G5Extraction.checkClauseCoverage cnf extra = true)
+    (a : Nat → Bool) :
+    Witnora.G5Extraction.CNFHolds (cnf ++ [extra]) a ↔
+      Witnora.G5Extraction.CNFHolds cnf a := by
+  constructor
+  · intro h
+    unfold Witnora.G5Extraction.CNFHolds at h ⊢
+    simp at h
+    exact h.1
+  · intro h
+    have he := Witnora.G5Extraction.checkClauseCoverage_sound
+      cnf extra a h hcovered
+    unfold Witnora.G5Extraction.CNFHolds at h ⊢
+    simp [h, he]
+
 /-- Simple satisfiable source: no candidate may pass the UNSAT gate. -/
 example (cert : CoverData) :
     cert.accepts 1 [[1]] = false := by
@@ -99,6 +119,7 @@ example (cert : CoverData) :
   unfold signedCNFHolds
   decide
 
+#print axioms Witnora.TC063Direct.covered_clause_extension_iff
 #print axioms Witnora.TC063Direct.acceptedCover_sound
 #print axioms Witnora.TC063Direct.tc063_unsat_iff_checked_cover
 #print axioms Witnora.TC063Direct.tc063_total_certificates_of_complete_cover
