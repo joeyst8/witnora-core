@@ -1,0 +1,31 @@
+name: DSATUR bipartite audit
+
+on:
+  push:
+    branches:
+      - research/dsatur-bipartite-audit-v27
+  pull_request:
+    paths:
+      - "witnora_core/dsatur_bipartite_audit.py"
+      - "scripts/experiment_dsatur_bipartite_audit.py"
+      - "tests/test_dsatur_bipartite_audit.py"
+      - ".github/workflows/dsatur-bipartite-audit.yml"
+  workflow_dispatch:
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check bipartition and DSATUR regression tests
+        run: PYTHONPATH=. python -m unittest tests.test_dsatur_bipartite_audit -v
+      - name: Run exhaustive small and seeded large bipartite audit
+        run: PYTHONPATH=. python scripts/experiment_dsatur_bipartite_audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dsatur-bipartite-audit-ledger
+          path: dsatur-bipartite-audit-ledger.json
