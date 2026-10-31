@@ -65,11 +65,29 @@ The first 2-connected improvement that survives Brooks has **six vertices**, edg
 
 2-connected classification tests and the combined CI run passed. The remaining comparisons should include degeneracy/coloring-order bounds, independent-set recursive bounds, and known complement-matching/coloring formulations. Avoid asserting that the mechanism is mathematically new until this independent audit is complete.
 
+## Third adversarial round: degeneracy and DSATUR (decisive negative result)
+
+We added two more coloring comparators:
+
+1. **Degeneracy + 1**, obtained by repeatedly deleting a minimum-degree vertex and tracking the maximum deleted degree.
+2. **Deterministic DSATUR greedy coloring**, choosing the remaining vertex with highest color saturation (ties broken by degree and vertex ID) and assigning the lowest available color. Its output is an explicit coloring, and every edge is checked.
+
+| Measure | Exhaustive | Holdout |
+| --- | ---: | ---: |
+| 2-connected cases beating Brooks-enhanced bound | 2,040 | 140 |
+| 2-connected cases beating degeneracy-enhanced bound | 960 | 61 |
+| 2-connected cases beating **DSATUR-enhanced** bound | **0** | **0** |
+| DSATUR-enhanced bound equals exact chromatic number | **33,867 / 33,867** | **454 / 454** |
+
+This is a **meaningful falsification of the operator's practical advantage on the predeclared study**. All earlier improvements vanish when benchmarked against this deterministic greedy strategy. The finite result does not imply DSATUR is optimal on every graph, nor that the matching construction is mathematically invalid. It means these experiments do **not** justify promoting matching as an improved coloring algorithm.
+
+**Research decision:** keep v20 as a negative-result branch and do not merge the operator into production or claim a discovery. A future operator experiment must benchmark against DSATUR from the start, on larger adversarial instances and independently solved exact chromatic numbers. Lean verification remains appropriate for genuinely useful structural propositions, not as a substitute for this empirical gate.
+
 ## Interpretation and limits
 
 The results show a repeatable improvement over these *specific* classical baselines. They do **not** imply improvement over the strongest known coloring bounds, novelty of the formula, or a breakthrough. The operator only merges color classes of size two inside one vertex cover plus at most one independent outside class; this restricted class of colorings is a plausible source of its failures.
 
-Next: compare against established matching/complement-cover coloring bounds, degeneracy-based and block-based coloring bounds from the literature; independently audit the constructive proof; formalize the bound and its concrete witness validity in Lean if it survives that comparison. Keep this draft PR separate from the Lean-verified theorem branch until those gates are met.
+Next: design operator proposals that target DSATUR failure families, and continue checking known matching/complement-cover coloring results from the literature; independently audit the constructive proof; formalize the bound and its concrete witness validity in Lean if it survives that comparison. Keep this draft PR separate from the Lean-verified theorem branch until those gates are met.
 
 ## Reproduction
 
