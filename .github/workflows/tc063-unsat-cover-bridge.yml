@@ -1,0 +1,31 @@
+name: TC-063 semantic UNSAT cover bridge
+
+on:
+  push:
+    branches:
+      - formal/tc063-unsat-cover-bridge-v60
+  pull_request:
+    paths:
+      - "formal/Witnora/TC063CoverBridge.lean"
+      - ".github/workflows/tc063-unsat-cover-bridge.yml"
+  workflow_dispatch:
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check semantic component cover bridge
+        working-directory: formal
+        run: lake build Witnora.TC063CoverBridge
+      - name: Reject proof holes, native_decide, and project axioms
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/TC063CoverBridge.lean; then
+            exit 1
+          fi
