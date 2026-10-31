@@ -14,7 +14,10 @@ namespace Witnora.ColorMerge
 def collapseFirstTwo (n : Nat) (i : Fin (n + 2)) : Fin (n + 1) :=
   ⟨if i.val = 0 then 0 else i.val - 1, by
     have hi := i.isLt
-    split_ifs <;> omega⟩
+    by_cases hz : i.val = 0
+    · simp [hz]
+    · simp [hz]
+      omega⟩
 
 theorem collapseFirstTwo_collision (n : Nat)
     (a b : Fin (n + 2))
