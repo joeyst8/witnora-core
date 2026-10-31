@@ -68,7 +68,7 @@ def _lean_case(name: str, n: int, edges: tuple[tuple[int, int], ...],
     if not clique_values:
         clique_lines.append(f"  | some _ => {clique[0]}")
     else:
-        clique_lines.append("  | some i =>")
+        clique_lines.append("  | some _ =>" if len(clique_values) == 1 else "  | some i =>")
         if len(clique_values) == 1:
             clique_lines.append(f"      {clique_values[0]}")
         else:
