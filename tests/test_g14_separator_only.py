@@ -2,6 +2,7 @@
 import unittest
 
 from witnora_core.cnf import CNFFormula
+from witnora_core.operator_genesis import AffineResidueInstance, build_affine_residue_certificate, AFFINE_RESIDUE_SAT_WITNESS_VERIFIED, AFFINE_RESIDUE_CERTIFICATE_VERIFIED
 from witnora_core.separator_affine_family_theorem import (
     SeparatorAffineFamilyInstance,
     SAT_CERTIFIED,
@@ -21,6 +22,15 @@ def instance(name, clauses):
 
 
 class G14SeparatorOnly(unittest.TestCase):
+    def test_empty_affine_component_trivial_sat_evidence(self):
+        formula = CNFFormula.from_raw_clauses([])
+        cert = build_affine_residue_certificate(
+            AffineResidueInstance(instance_id="empty_sat_component",
+                                  equations=(), formula=formula), max_arity=2)
+        self.assertEqual(cert.status, AFFINE_RESIDUE_SAT_WITNESS_VERIFIED)
+        self.assertEqual(cert.checker_status, AFFINE_RESIDUE_CERTIFICATE_VERIFIED)
+        self.assertEqual(cert.solution, {})
+
     def test_opposite_units_cover_both_branches(self):
         item = instance("separator_unit_unsat", [[1], [-1]])
         cert = build_separator_affine_certificate(item)
