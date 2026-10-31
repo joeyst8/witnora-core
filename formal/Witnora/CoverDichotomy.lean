@@ -32,7 +32,6 @@ theorem optionToFin_injective (n : Nat)
     | some j =>
       have hv := congrArg Fin.val h
       simp [optionToFin] at hv
-      omega
   | some i =>
     cases b with
     | none =>
