@@ -155,8 +155,7 @@ theorem glue_pairwise_components (parts : List CNF) :
           intro hmem
           apply hv
           simp [hmem]
-        rw [htbase v hvtail]
-        simp [a, patchSupport, hvhead]
+        simp [a, patchSupport, hvhead, htbase v hvtail]
 
 #print axioms Witnora.TC063ModelGluing.glue_pairwise_components
 
