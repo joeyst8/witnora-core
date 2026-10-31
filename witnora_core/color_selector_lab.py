@@ -136,10 +136,13 @@ def run_selector_study() -> dict:
             _dsatur_greedy_coloring(n, edges)
             baseline_time += perf_counter() - t
             t = perf_counter()
-            if triggers(chosen, row["signals"]):
+            fresh_greedy = _dsatur_greedy_coloring(n, edges)
+            fresh_signals = signals(n, edges, fresh_greedy["coloring"])
+            assert fresh_signals == row["signals"]
+            if triggers(chosen, fresh_signals):
                 candidate = ungated_repair(n, edges)
             else:
-                candidate = _dsatur_greedy_coloring(n, edges)
+                candidate = fresh_greedy
             conditional_time += perf_counter() - t
             improved = candidate["bound"] < row["dsatur"]["bound"]
             repair_improvements += improved
