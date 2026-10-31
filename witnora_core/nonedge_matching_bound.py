@@ -165,6 +165,23 @@ def _brooks_componentwise_bound(n: int, edges: tuple[tuple[int, int], ...]) -> i
     return answer
 
 
+def _degeneracy_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+    """Degeneracy plus one from repeatedly removing a minimum-degree vertex."""
+    if n == 0:
+        return 0
+    neighbors = [set() for _ in range(n)]
+    for u, v in edges:
+        neighbors[u].add(v)
+        neighbors[v].add(u)
+    remaining = set(range(n))
+    degeneracy = 0
+    while remaining:
+        degree, chosen = min((len(neighbors[v] & remaining), v) for v in remaining)
+        degeneracy = max(degeneracy, degree)
+        remaining.remove(chosen)
+    return degeneracy + 1
+
+
 def _componentwise_baseline(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
@@ -224,12 +241,16 @@ def run_experiment() -> dict:
         "brooks_baseline_exact": 0,
         "brooks_hybrid_exact": 0,
         "two_connected_improvements_over_brooks": 0,
+        "degeneracy_baseline_exact": 0,
+        "degeneracy_hybrid_exact": 0,
+        "two_connected_improvements_over_degeneracy": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
                 "first_hybrid_gap": None, "first_connected_strong_improvement": None,
                 "first_two_connected_strong_improvement": None,
-                "first_two_connected_brooks_improvement": None}
+                "first_two_connected_brooks_improvement": None,
+                "first_two_connected_degeneracy_improvement": None}
 
     def inspect(label: str, n: int, edges: tuple[tuple[int, int], ...]):
         values = graph_metrics(n, edges)
@@ -240,13 +261,15 @@ def run_experiment() -> dict:
         strong_baseline = min(baseline, component_bound, greedy_bound)
         brooks_baseline = min(strong_baseline, _brooks_componentwise_bound(n, edges))
         brooks_hybrid = min(attempt["bound"], brooks_baseline)
+        degeneracy_baseline = min(brooks_baseline, _degeneracy_bound(n, edges))
+        degeneracy_hybrid = min(attempt["bound"], degeneracy_baseline)
         hybrid = min(attempt["bound"], baseline)
         strong_hybrid = min(attempt["bound"], strong_baseline)
         connected = n > 0 and len(_connected_components(n, edges)) == 1
         two_connected = _is_two_connected(n, edges)
         if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
-        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid or not values["chi"] <= brooks_hybrid:
+        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid or not values["chi"] <= brooks_hybrid or not values["chi"] <= degeneracy_hybrid:
             raise AssertionError("hybrid is not an upper bound")
         tally["graphs"] += 1
         tally["matching_strict_improvements"] += attempt["bound"] < baseline
@@ -266,6 +289,9 @@ def run_experiment() -> dict:
         tally["brooks_baseline_exact"] += brooks_baseline == values["chi"]
         tally["brooks_hybrid_exact"] += brooks_hybrid == values["chi"]
         tally["two_connected_improvements_over_brooks"] += two_connected and attempt["bound"] < brooks_baseline
+        tally["degeneracy_baseline_exact"] += degeneracy_baseline == values["chi"]
+        tally["degeneracy_hybrid_exact"] += degeneracy_hybrid == values["chi"]
+        tally["two_connected_improvements_over_degeneracy"] += two_connected and attempt["bound"] < degeneracy_baseline
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
         details = {
@@ -274,6 +300,7 @@ def run_experiment() -> dict:
             "baseline": baseline, "matching_bound": attempt["bound"],
             "hybrid": hybrid, "strong_baseline": strong_baseline,
             "brooks_baseline": brooks_baseline, "brooks_hybrid": brooks_hybrid,
+            "degeneracy_baseline": degeneracy_baseline, "degeneracy_hybrid": degeneracy_hybrid,
             "strong_hybrid": strong_hybrid, "witness": attempt,
         }
         if attempt["bound"] < baseline and examples["first_improvement"] is None:
@@ -288,6 +315,8 @@ def run_experiment() -> dict:
             examples["first_two_connected_strong_improvement"] = details
         if two_connected and attempt["bound"] < brooks_baseline and examples["first_two_connected_brooks_improvement"] is None:
             examples["first_two_connected_brooks_improvement"] = details
+        if two_connected and attempt["bound"] < degeneracy_baseline and examples["first_two_connected_degeneracy_improvement"] is None:
+            examples["first_two_connected_degeneracy_improvement"] = details
 
     for n in range(1, 7):
         for _, edges in graphs(n):
