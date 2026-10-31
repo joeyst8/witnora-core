@@ -19,8 +19,10 @@ def main() -> int:
     print({
         "training": report["training"],
         "holdout": report["holdout"],
-        "first_improvement": report["examples"]["first_improvement"] is not None,
-        "first_hybrid_gap": report["examples"]["first_hybrid_gap"] is not None,
+        "first_improvement": {k: v for k, v in report["examples"]["first_improvement"].items()
+                              if k in ("n", "edges", "chi", "baseline", "matching_bound", "hybrid")},
+        "first_hybrid_gap": {k: v for k, v in report["examples"]["first_hybrid_gap"].items()
+                             if k in ("n", "edges", "chi", "baseline", "matching_bound", "hybrid")},
         "lean_verified": False,
         "novelty_verified": False,
     })
