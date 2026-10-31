@@ -31,6 +31,9 @@ def main() -> int:
         "first_two_connected_brooks_improvement": ({k: v for k, v in report["examples"]["first_two_connected_brooks_improvement"].items()
                                                    if k in ("n", "edges", "chi", "strong_baseline", "brooks_baseline", "matching_bound", "brooks_hybrid")}
                                                   if report["examples"]["first_two_connected_brooks_improvement"] else None),
+        "first_two_connected_degeneracy_improvement": ({k: v for k, v in report["examples"]["first_two_connected_degeneracy_improvement"].items()
+                                                   if k in ("n", "edges", "chi", "brooks_baseline", "degeneracy_baseline", "matching_bound", "degeneracy_hybrid")}
+                                                  if report["examples"]["first_two_connected_degeneracy_improvement"] else None),
         "lean_verified": False,
         "novelty_verified": False,
     })
