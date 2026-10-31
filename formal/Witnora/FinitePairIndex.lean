@@ -19,7 +19,6 @@ def pairIndex (N : Nat) (p : Fin N × Fin N) : Fin (N * N) :=
       Nat.mul_le_mul_right N (by omega)
     have hLt : p.1.val * N + p.2.val < (p.1.val + 1) * N := by
       simp [Nat.succ_mul]
-      omega
     exact Nat.lt_of_lt_of_le hLt hMul⟩
 
 theorem pairIndex_injective (N : Nat)
