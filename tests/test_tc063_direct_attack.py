@@ -5,6 +5,7 @@ These are empirical native-validator probes, not proofs of completeness.
 import unittest
 
 from witnora_core.separator_affine_family_theorem import make_separator_affine_instance
+from witnora_core.cnf import CNFFormula
 from witnora_core.tc063_theorem_hardening import (
     SAF_MEMBER_REJECTED,
     SAF_MEMBER_VERIFIED,
@@ -33,6 +34,20 @@ class TC063DirectAttack(unittest.TestCase):
         record = validate_saf_membership(
             instance.formula, c=1, r=2, separator_variables=[1])
         self.assertEqual(record.validation_status, SAF_MEMBER_REJECTED)
+        self.assertIn("COMPONENT_NOT_EXACT_AFFINE", record.invalid_reason)
+
+    def test_redundant_clause_recognition_boundary(self):
+        # Adding a logically weaker clause cannot change the original
+        # formula's models. It does change the syntactic input to extraction.
+        instance = make_separator_affine_instance("saf_unsat_cover_2")
+        source = instance.formula.to_clause_lists()
+        self.assertNotIn(99, instance.formula.variables)
+        extended = CNFFormula.from_raw_clauses(
+            [*source, [*source[0], 99]])
+        record = validate_saf_membership(
+            extended, c=1, r=2, separator_variables=[1])
+        self.assertEqual(record.validation_status, SAF_MEMBER_REJECTED,
+                         "native recognizer unexpectedly accepted redundant extension")
         self.assertIn("COMPONENT_NOT_EXACT_AFFINE", record.invalid_reason)
 
     def test_valid_structure_over_fixed_separator_bound_rejected(self):
