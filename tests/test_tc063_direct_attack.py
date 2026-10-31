@@ -21,6 +21,13 @@ class TC063DirectAttack(unittest.TestCase):
         self.assertTrue(record.every_component_affine_verified)
         self.assertEqual(record.separator_assignment_count, 2)
 
+    def test_automatic_separator_recognition_on_supported_member(self):
+        instance = make_separator_affine_instance("saf_unsat_cover_2")
+        record = validate_saf_membership(instance.formula, c=1, r=2)
+        self.assertEqual(record.validation_status, SAF_MEMBER_VERIFIED,
+                         record.invalid_reason)
+        self.assertEqual(record.separator_size, 1)
+
     def test_non_affine_residual_is_rejected(self):
         instance = make_separator_affine_instance("non_affine_component")
         record = validate_saf_membership(
