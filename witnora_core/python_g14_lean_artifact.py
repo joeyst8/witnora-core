@@ -177,11 +177,16 @@ def emit_python_g14_lean(instance_id=None):
         """∀ branch ∈ enumerate [1],
       checkG5Closed (pythonBound branch) (pythonSelected branch)
         (pythonRows branch) (pythonSteps branch) = true"""))
-    # Stronger than one-way G5 extraction: every selected native residual
-    # must match the complete signed XOR-CNF of its actual initial G5 rows.
-    lines.append(premise("python_selected_exact_affine_pass",
+    # Test the stricter clause-permutation criterion separately: native
+    # G5 rows may leave redundant clauses in a selected residual component.
+    lines.append(premise("python_selected_strict_affine_rejected",
         """∀ branch ∈ enumerate [1],
       checkExactAffine 2 (pythonSelected branch)
+        (pythonRows branch) = false"""))
+    # Check the full model-equivalence criterion, allowing proved redundancy.
+    lines.append(premise("python_selected_semantic_affine_pass",
+        """∀ branch ∈ enumerate [1],
+      checkSemanticExactAffine 2 (pythonSelected branch)
         (pythonRows branch) = true"""))
     if instance_id is not None:
         lines.extend([
