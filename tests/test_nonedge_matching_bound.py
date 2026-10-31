@@ -2,7 +2,7 @@
 import unittest
 
 from witnora_core.graph_conjecture_lab import graph_metrics, graphs
-from witnora_core.nonedge_matching_bound import matching_color_bound, _is_two_connected, _brooks_componentwise_bound
+from witnora_core.nonedge_matching_bound import matching_color_bound, _is_two_connected, _brooks_componentwise_bound, _degeneracy_bound
 from witnora_core.targeted_graph_theorems import cycle, mycielski_c5
 
 
@@ -44,6 +44,14 @@ class NonedgeMatchingBoundTests(unittest.TestCase):
         self.assertEqual(_brooks_componentwise_bound(*cycle(5)), 3)
         self.assertEqual(_brooks_componentwise_bound(*cycle(4)), 2)
         self.assertEqual(_brooks_componentwise_bound(4, ((0, 1), (1, 2), (2, 3))), 2)
+
+    def test_degeneracy_bound_examples(self):
+        self.assertEqual(_degeneracy_bound(0, ()), 0)
+        self.assertEqual(_degeneracy_bound(1, ()), 1)
+        self.assertEqual(_degeneracy_bound(*cycle(4)), 3)
+        self.assertEqual(_degeneracy_bound(*cycle(5)), 3)
+        self.assertEqual(_degeneracy_bound(4, ((0, 1), (1, 2), (2, 3))), 2)
+        self.assertEqual(_degeneracy_bound(3, ((0, 1), (0, 2), (1, 2))), 3)
 
     def test_bad_edges_rejected(self):
         for edges in (((0, 0),), ((1, 0),), ((0, 1), (0, 1))):
