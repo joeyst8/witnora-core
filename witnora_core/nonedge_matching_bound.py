@@ -121,6 +121,29 @@ def _connected_components(n: int, edges: tuple[tuple[int, int], ...]) -> list[li
     return components
 
 
+def _is_two_connected(n: int, edges: tuple[tuple[int, int], ...]) -> bool:
+    """A connected graph with at least three vertices and no cut vertex."""
+    if n < 3 or len(_connected_components(n, edges)) != 1:
+        return False
+    for removed in range(n):
+        surviving = [v for v in range(n) if v != removed]
+        seen = {surviving[0]}
+        stack = [surviving[0]]
+        adjacency = [set() for _ in range(n)]
+        for u, v in edges:
+            if u != removed and v != removed:
+                adjacency[u].add(v)
+                adjacency[v].add(u)
+        while stack:
+            for v in adjacency[stack.pop()]:
+                if v not in seen:
+                    seen.add(v)
+                    stack.append(v)
+        if len(seen) != n - 1:
+            return False
+    return True
+
+
 def _componentwise_baseline(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
@@ -173,10 +196,15 @@ def run_experiment() -> dict:
         "matching_strict_improvements_over_strong": 0,
         "connected_graphs": 0,
         "connected_improvements_over_strong": 0,
+        "two_connected_graphs": 0,
+        "two_connected_improvements_over_strong": 0,
+        "two_connected_strong_hybrid_exact": 0,
+        "two_connected_strong_baseline_exact": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
-                "first_hybrid_gap": None, "first_connected_strong_improvement": None}
+                "first_hybrid_gap": None, "first_connected_strong_improvement": None,
+                "first_two_connected_strong_improvement": None}
 
     def inspect(label: str, n: int, edges: tuple[tuple[int, int], ...]):
         values = graph_metrics(n, edges)
@@ -188,6 +216,7 @@ def run_experiment() -> dict:
         hybrid = min(attempt["bound"], baseline)
         strong_hybrid = min(attempt["bound"], strong_baseline)
         connected = n > 0 and len(_connected_components(n, edges)) == 1
+        two_connected = _is_two_connected(n, edges)
         if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
         if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid:
@@ -203,6 +232,10 @@ def run_experiment() -> dict:
         tally["matching_strict_improvements_over_strong"] += attempt["bound"] < strong_baseline
         tally["connected_graphs"] += connected
         tally["connected_improvements_over_strong"] += connected and attempt["bound"] < strong_baseline
+        tally["two_connected_graphs"] += two_connected
+        tally["two_connected_improvements_over_strong"] += two_connected and attempt["bound"] < strong_baseline
+        tally["two_connected_strong_hybrid_exact"] += two_connected and strong_hybrid == values["chi"]
+        tally["two_connected_strong_baseline_exact"] += two_connected and strong_baseline == values["chi"]
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
         details = {
@@ -220,6 +253,8 @@ def run_experiment() -> dict:
             examples["first_hybrid_gap"] = details
         if connected and attempt["bound"] < strong_baseline and examples["first_connected_strong_improvement"] is None:
             examples["first_connected_strong_improvement"] = details
+        if two_connected and attempt["bound"] < strong_baseline and examples["first_two_connected_strong_improvement"] is None:
+            examples["first_two_connected_strong_improvement"] = details
 
     for n in range(1, 7):
         for _, edges in graphs(n):
