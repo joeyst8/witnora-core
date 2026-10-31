@@ -182,6 +182,29 @@ def _degeneracy_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     return degeneracy + 1
 
 
+def _dsatur_greedy_coloring(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
+    """Deterministic DSATUR greedy coloring, with a checked witness."""
+    neighbors = [set() for _ in range(n)]
+    for u, v in edges:
+        neighbors[u].add(v)
+        neighbors[v].add(u)
+    colors = [-1] * n
+    uncolored = set(range(n))
+    while uncolored:
+        def priority(v: int):
+            saturation = len({colors[u] for u in neighbors[v] if colors[u] >= 0})
+            return (saturation, len(neighbors[v]), -v)
+        chosen = max(uncolored, key=priority)
+        forbidden = {colors[u] for u in neighbors[chosen] if colors[u] >= 0}
+        color = 0
+        while color in forbidden:
+            color += 1
+        colors[chosen] = color
+        uncolored.remove(chosen)
+    assert all(colors[u] != colors[v] for u, v in edges)
+    return {"bound": max(colors, default=-1) + 1, "coloring": colors}
+
+
 def _componentwise_baseline(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
@@ -244,13 +267,17 @@ def run_experiment() -> dict:
         "degeneracy_baseline_exact": 0,
         "degeneracy_hybrid_exact": 0,
         "two_connected_improvements_over_degeneracy": 0,
+        "dsatur_baseline_exact": 0,
+        "dsatur_hybrid_exact": 0,
+        "two_connected_improvements_over_dsatur": 0,
         "hybrid_counterexamples": 0,
     }
     examples = {"first_improvement": None, "first_matching_gap": None,
                 "first_hybrid_gap": None, "first_connected_strong_improvement": None,
                 "first_two_connected_strong_improvement": None,
                 "first_two_connected_brooks_improvement": None,
-                "first_two_connected_degeneracy_improvement": None}
+                "first_two_connected_degeneracy_improvement": None,
+                "first_two_connected_dsatur_improvement": None}
 
     def inspect(label: str, n: int, edges: tuple[tuple[int, int], ...]):
         values = graph_metrics(n, edges)
@@ -263,13 +290,16 @@ def run_experiment() -> dict:
         brooks_hybrid = min(attempt["bound"], brooks_baseline)
         degeneracy_baseline = min(brooks_baseline, _degeneracy_bound(n, edges))
         degeneracy_hybrid = min(attempt["bound"], degeneracy_baseline)
+        dsatur_witness = _dsatur_greedy_coloring(n, edges)
+        dsatur_baseline = min(degeneracy_baseline, dsatur_witness["bound"])
+        dsatur_hybrid = min(attempt["bound"], dsatur_baseline)
         hybrid = min(attempt["bound"], baseline)
         strong_hybrid = min(attempt["bound"], strong_baseline)
         connected = n > 0 and len(_connected_components(n, edges)) == 1
         two_connected = _is_two_connected(n, edges)
         if not values["chi"] <= attempt["bound"]:
             raise AssertionError("invalid upper bound")
-        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid or not values["chi"] <= brooks_hybrid or not values["chi"] <= degeneracy_hybrid:
+        if not values["chi"] <= hybrid or not values["chi"] <= strong_hybrid or not values["chi"] <= brooks_hybrid or not values["chi"] <= degeneracy_hybrid or not values["chi"] <= dsatur_hybrid:
             raise AssertionError("hybrid is not an upper bound")
         tally["graphs"] += 1
         tally["matching_strict_improvements"] += attempt["bound"] < baseline
@@ -292,6 +322,9 @@ def run_experiment() -> dict:
         tally["degeneracy_baseline_exact"] += degeneracy_baseline == values["chi"]
         tally["degeneracy_hybrid_exact"] += degeneracy_hybrid == values["chi"]
         tally["two_connected_improvements_over_degeneracy"] += two_connected and attempt["bound"] < degeneracy_baseline
+        tally["dsatur_baseline_exact"] += dsatur_baseline == values["chi"]
+        tally["dsatur_hybrid_exact"] += dsatur_hybrid == values["chi"]
+        tally["two_connected_improvements_over_dsatur"] += two_connected and attempt["bound"] < dsatur_baseline
         if hybrid < values["chi"]:
             tally["hybrid_counterexamples"] += 1
         details = {
@@ -301,6 +334,7 @@ def run_experiment() -> dict:
             "hybrid": hybrid, "strong_baseline": strong_baseline,
             "brooks_baseline": brooks_baseline, "brooks_hybrid": brooks_hybrid,
             "degeneracy_baseline": degeneracy_baseline, "degeneracy_hybrid": degeneracy_hybrid,
+            "dsatur_baseline": dsatur_baseline, "dsatur_hybrid": dsatur_hybrid,
             "strong_hybrid": strong_hybrid, "witness": attempt,
         }
         if attempt["bound"] < baseline and examples["first_improvement"] is None:
@@ -317,6 +351,8 @@ def run_experiment() -> dict:
             examples["first_two_connected_brooks_improvement"] = details
         if two_connected and attempt["bound"] < degeneracy_baseline and examples["first_two_connected_degeneracy_improvement"] is None:
             examples["first_two_connected_degeneracy_improvement"] = details
+        if two_connected and attempt["bound"] < dsatur_baseline and examples["first_two_connected_dsatur_improvement"] is None:
+            examples["first_two_connected_dsatur_improvement"] = details
 
     for n in range(1, 7):
         for _, edges in graphs(n):
