@@ -25,6 +25,7 @@ on:
       - 'formal/Witnora/GraphMaxEquality.lean'
       - 'formal/Witnora/EdgeEndpointCover.lean'
       - 'formal/Witnora/FiniteImageCardinality.lean'
+      - 'formal/Witnora/EdgeCountEquality.lean'
       - '.github/workflows/chromatic-max-lean.yml'
 
 jobs:
@@ -42,10 +43,10 @@ jobs:
         working-directory: formal
         run: |
           lake env lean Witnora/ChromaticMaxConsequences.lean
-          lake build Witnora.GraphMaxEquality Witnora.EdgeEndpointCover Witnora.FiniteImageCardinality
+          lake build Witnora.EdgeCountEquality
       - name: Reject sorry and added axiom declarations in this file
         run: |
-          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean formal/Witnora/ColorMerge.lean formal/Witnora/CoverDichotomy.lean formal/Witnora/FiniteCliqueBridge.lean formal/Witnora/ChromaticNumericalBridge.lean formal/Witnora/ChromaticMinimum.lean formal/Witnora/FiniteChromaticBound.lean formal/Witnora/CliqueMaximum.lean formal/Witnora/ExtremalGraphBound.lean formal/Witnora/FinitePigeonhole.lean formal/Witnora/ConcreteGraphBound.lean formal/Witnora/VertexCoverMinimum.lean formal/Witnora/CoverMinimumBridge.lean formal/Witnora/SmallCoverBounds.lean formal/Witnora/UniversalChromaticMax.lean formal/Witnora/GraphMaxEquality.lean formal/Witnora/EdgeEndpointCover.lean formal/Witnora/FiniteImageCardinality.lean; then
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/ChromaticMaxConsequences.lean formal/Witnora/GraphCoverColoring.lean formal/Witnora/ColorMerge.lean formal/Witnora/CoverDichotomy.lean formal/Witnora/FiniteCliqueBridge.lean formal/Witnora/ChromaticNumericalBridge.lean formal/Witnora/ChromaticMinimum.lean formal/Witnora/FiniteChromaticBound.lean formal/Witnora/CliqueMaximum.lean formal/Witnora/ExtremalGraphBound.lean formal/Witnora/FinitePigeonhole.lean formal/Witnora/ConcreteGraphBound.lean formal/Witnora/VertexCoverMinimum.lean formal/Witnora/CoverMinimumBridge.lean formal/Witnora/SmallCoverBounds.lean formal/Witnora/UniversalChromaticMax.lean formal/Witnora/GraphMaxEquality.lean formal/Witnora/EdgeEndpointCover.lean formal/Witnora/FiniteImageCardinality.lean formal/Witnora/EdgeCountEquality.lean; then
             echo "Unproved declaration in chromatic consequences"
             exit 1
           fi
