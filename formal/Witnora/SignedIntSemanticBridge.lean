@@ -28,10 +28,15 @@ theorem decode_signedLiteralToInt
   | succ n =>
       cases polarity with
       | false =>
-          have hneg : -(Int.ofNat (n + 1)) = Int.negSucc n := by omega
-          simp [signedLiteralToInt, hneg, decode]
+          have hneg : -(Int.ofNat (n + 1)) = Int.negSucc n := by
+            simp only [Nat.cast_add, Nat.cast_one]
+            omega
+          change decode (-(Int.ofNat (n + 1))) = (n + 1, false)
+          rw [hneg]
+          rfl
       | true =>
-          simp [signedLiteralToInt, decode]
+          change decode (Int.ofNat (n + 1)) = (n + 1, true)
+          rfl
 
 theorem insertSignedInt_perm (x : Int) (xs : List Int) :
     (insertSignedInt x xs).Perm (x :: xs) := by
@@ -114,6 +119,29 @@ theorem signForbiddenClause_positive
             exact hv
           · exact ih bs hrest lit htail
 
+/-- Applying the signed encoder to every clause preserves conjunction
+    semantics whenever all literal IDs are positive. -/
+theorem signedClauseList_semantics
+    (clauses : List (List Literal)) (a : Nat → Bool)
+    (hpositive : ∀ clause, clause ∈ clauses →
+      ∀ lit, lit ∈ clause → 0 < lit.1) :
+    (clauses.map (fun clause =>
+      sortSignedClause (clause.map signedLiteralToInt))).all
+        (fun clause => clause.any (fun z => signedLitTrue a (decode z))) =
+      clauses.all (fun clause => clause.any (signedLitTrue a)) := by
+  induction clauses with
+  | nil => rfl
+  | cons clause rest ih =>
+      have hc : ∀ lit, lit ∈ clause → 0 < lit.1 := by
+        intro lit hlit
+        exact hpositive clause (by simp) lit hlit
+      have hr : ∀ sub, sub ∈ rest →
+          ∀ lit, lit ∈ sub → 0 < lit.1 := by
+        intro sub hsub lit hlit
+        exact hpositive sub (by simp [hsub]) lit hlit
+      simp only [List.map_cons, List.all_cons]
+      rw [signedClause_semantics clause a hc, ih hr]
+
 /-- Every normalized positive-ID clause is semantically unchanged by
     signed-Int conversion, in-clause sorting, and Int decoding. -/
 theorem serializedSignedClauses_semantics
@@ -121,35 +149,21 @@ theorem serializedSignedClauses_semantics
     (hpositive : ∀ v, v ∈ vars → 0 < v) :
     signedCNFHolds (serializedSignedClauses vars rhs) a ↔
       generatedSignedHolds vars rhs a = true := by
-  simp only [signedCNFHolds, serializedSignedClauses,
-    generatedSignedHolds, List.all_map]
-  constructor
-  · intro h
-    apply List.all_eq_true.mpr
-    intro bad hbad
-    have hclause := List.all_eq_true.mp h bad hbad
-    have hs := signedClause_semantics
-      (signForbiddenClause (List.zip vars bad)) a
-      (signForbiddenClause_positive vars bad hpositive)
-    change (sortSignedClause
-      ((signForbiddenClause (List.zip vars bad)).map signedLiteralToInt)).any
-      (fun z => signedLitTrue a (decode z)) = true at hclause
-    rw [hs] at hclause
-    exact hclause
-  · intro h
-    apply List.all_eq_true.mpr
-    intro bad hbad
-    have hclause := List.all_eq_true.mp h bad hbad
-    have hs := signedClause_semantics
-      (signForbiddenClause (List.zip vars bad)) a
-      (signForbiddenClause_positive vars bad hpositive)
-    change (signForbiddenClause (List.zip vars bad)).any
-      (signedLitTrue a) = true at hclause
-    change (sortSignedClause
-      ((signForbiddenClause (List.zip vars bad)).map signedLiteralToInt)).any
-      (fun z => signedLitTrue a (decode z)) = true
-    rw [hs]
-    exact hclause
+  have hclauses : ∀ clause, clause ∈ generateSignedClauses vars rhs →
+      ∀ lit, lit ∈ clause → 0 < lit.1 := by
+    intro clause hc lit hl
+    obtain ⟨bad, _, heq⟩ := List.mem_map.mp hc
+    rw [← heq] at hl
+    exact signForbiddenClause_positive vars bad hpositive lit hl
+  have hs := signedClauseList_semantics
+    (generateSignedClauses vars rhs) a hclauses
+  change
+    (generateSignedClauses vars rhs |>.map (fun clause =>
+      sortSignedClause (clause.map signedLiteralToInt))).all
+        (fun clause => clause.any (fun z => signedLitTrue a (decode z))) = true ↔
+      (generateSignedClauses vars rhs).all
+        (fun clause => clause.any (signedLitTrue a)) = true
+  rw [hs]
 
 #print axioms Witnora.SignedIntSemanticBridge.serializedSignedClauses_semantics
 
