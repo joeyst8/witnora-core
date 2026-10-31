@@ -118,4 +118,64 @@ theorem colorable_after_merging_nonedge
     · simp [paint, hu, hv]
     · exact False.elim ((hIndependent u v hu hv) huv)
 
+/-- Swap two labels, leaving all other labels unchanged. -/
+def swapFin {k : Nat} (a b z : Fin k) : Fin k :=
+  if z = a then b else if z = b then a else z
+
+theorem swapFin_involutive {k : Nat} (a b z : Fin k) :
+    swapFin a b (swapFin a b z) = z := by
+  by_cases hab : a = b
+  · subst b
+    simp [swapFin]
+  · by_cases hza : z = a
+    · subst z
+      simp [swapFin, hab, Ne.symm hab]
+    · by_cases hzb : z = b
+      · subst z
+        simp [swapFin, hab, Ne.symm hab]
+      · simp [swapFin, hza, hzb]
+
+theorem swapFin_injective {k : Nat} (a b : Fin k) :
+    Function.Injective (swapFin a b) := by
+  intro x y h
+  have h' := congrArg (swapFin a b) h
+  simpa [swapFin_involutive] using h'
+
+/-- Any two distinct palette labels can be moved to positions 0 and 1
+by an injective relabeling. -/
+theorem normalize_pair (n : Nat) (a b : Fin (n + 2)) (hab : a ≠ b) :
+    ∃ relabel : Fin (n + 2) → Fin (n + 2),
+      Function.Injective relabel ∧
+      (relabel a).val = 0 ∧
+      (relabel b).val = 1 := by
+  let zero : Fin (n + 2) := ⟨0, by omega⟩
+  let one : Fin (n + 2) := ⟨1, by omega⟩
+  let first := swapFin a zero
+  let b' := first b
+  have hFirstA : first a = zero := by
+    simp [first, swapFin]
+  have hBNotZero : b' ≠ zero := by
+    intro hb'
+    have hEq : first b = first a := by
+      simpa [b', hFirstA] using hb'
+    exact hab ((swapFin_injective a zero) hEq).symm
+  let second := swapFin b' one
+  let relabel := fun z => second (first z)
+  have hSecondZero : second zero = zero := by
+    have hZeroNotOne : zero ≠ one := by
+      intro h
+      have hv := congrArg Fin.val h
+      dsimp [zero, one] at hv
+      omega
+    simp [second, swapFin, Ne.symm hBNotZero, hZeroNotOne]
+  refine ⟨relabel, ?_, ?_, ?_⟩
+  · intro x y heq
+    exact (swapFin_injective a zero)
+      ((swapFin_injective b' one) heq)
+  · change (second (first a)).val = 0
+    rw [hFirstA, hSecondZero]
+    rfl
+  · change (second b').val = 1
+    simp [second, swapFin]
+
 end Witnora.ColorMerge
