@@ -1,0 +1,37 @@
+name: G14 separator-only branch adversaries
+
+on:
+  push:
+    branches:
+      - research/g14-separator-only-v58
+  pull_request:
+    paths:
+      - "witnora_core/separator_affine_family_theorem.py"
+      - "witnora_core/operator_genesis.py"
+      - "tests/test_g14_separator_only.py"
+      - "scripts/check_g14_separator_only_lean.py"
+      - ".github/workflows/g14-separator-only.yml"
+  workflow_dispatch:
+
+jobs:
+  separator-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Native SAT/UNSAT adversaries and regressions
+        run: |
+          PYTHONPATH=. python -m unittest tests.test_g14_separator_only tests.test_g14_zero_separator tests.test_separator_affine_family_checker tests.test_separator_affine_family_controls tests.test_affine_residue_certificate tests.test_tc063_direct_attack -v
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build full source G14 and indexed G5 checkers
+        working-directory: formal
+        run: lake build Witnora.G14ConcreteBridge Witnora.G5IndexedBridge
+      - name: Lean UNSAT proof and SAT rejection
+        run: PYTHONPATH=. python scripts/check_g14_separator_only_lean.py
