@@ -49,11 +49,27 @@ The first improvement over the *weak* baseline is two disconnected triangles. Th
 
 **Counterexample to exactness:** three disjoint edges (a matching on six vertices) have \(\chi=2\), whereas both \(B_M\) and \(B_0\) give 3. Thus the matching operator is not an exact chromatic-number formula.
 
+## Additional adversarial round: 2-connected graphs and Brooks' theorem
+
+A connected graph can still decompose at articulation points. We therefore classified a graph as **2-connected** only if it has at least three vertices and remains connected after removing any single vertex. We also implemented the classical Brooks bound on each connected component: \(\chi(C)\le\Delta(C)\) except for complete graphs and odd cycles, which use \(\Delta(C)+1\). The Brooks benchmark is the minimum of that bound and the previous strong baseline.
+
+| Measure | Exhaustive | Holdout |
+| --- | ---: | ---: |
+| 2-connected graphs | 11,617 | 258 |
+| Operator strictly beats previous strong bound on 2-connected graphs | 2,460 | 144 |
+| Operator strictly beats **Brooks-enhanced** bound on 2-connected graphs | **2,040** | **140** |
+| Brooks-enhanced benchmark exactly equals \(\chi\), all sampled graphs | 30,107 | 248 |
+| Hybrid with matching bound exactly equals \(\chi\), all sampled graphs | 32,327 | 398 |
+
+The first 2-connected improvement that survives Brooks has **six vertices**, edges \(01,02,03,05,12,15,23,24,34\), and exact \(\chi=3\). The Brooks-enhanced benchmark gives 4, while the operator produces a valid 3-color witness. It is a **strict computational improvement relative to these benchmarks**, not evidence of novelty against the literature.
+
+2-connected classification tests and the combined CI run passed. The remaining comparisons should include degeneracy/coloring-order bounds, independent-set recursive bounds, and known complement-matching/coloring formulations. Avoid asserting that the mechanism is mathematically new until this independent audit is complete.
+
 ## Interpretation and limits
 
 The results show a repeatable improvement over these *specific* classical baselines. They do **not** imply improvement over the strongest known coloring bounds, novelty of the formula, or a breakthrough. The operator only merges color classes of size two inside one vertex cover plus at most one independent outside class; this restricted class of colorings is a plausible source of its failures.
 
-Next: add biconnected-block baselines and prioritize 2-connected examples, then compare against established matching/complement-cover coloring bounds from the literature; independently audit the constructive proof; formalize the bound and its concrete witness validity in Lean if it survives that comparison. Keep this draft PR separate from the Lean-verified theorem branch until those gates are met.
+Next: compare against established matching/complement-cover coloring bounds, degeneracy-based and block-based coloring bounds from the literature; independently audit the constructive proof; formalize the bound and its concrete witness validity in Lean if it survives that comparison. Keep this draft PR separate from the Lean-verified theorem branch until those gates are met.
 
 ## Reproduction
 
