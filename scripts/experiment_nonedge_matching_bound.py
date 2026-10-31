@@ -25,6 +25,9 @@ def main() -> int:
                              if k in ("n", "edges", "chi", "baseline", "matching_bound", "hybrid")},
         "first_connected_strong_improvement": {k: v for k, v in report["examples"]["first_connected_strong_improvement"].items()
                                                if k in ("n", "edges", "chi", "baseline", "strong_baseline", "matching_bound", "strong_hybrid")},
+        "first_two_connected_strong_improvement": ({k: v for k, v in report["examples"]["first_two_connected_strong_improvement"].items()
+                                                   if k in ("n", "edges", "chi", "baseline", "strong_baseline", "matching_bound", "strong_hybrid")}
+                                                  if report["examples"]["first_two_connected_strong_improvement"] else None),
         "lean_verified": False,
         "novelty_verified": False,
     })
