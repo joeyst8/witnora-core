@@ -63,7 +63,7 @@ theorem semantic_affine_closed_under_covered_clause
 theorem every_unsat_semantically_affine (r : Nat) (cnf : CNF)
     (hunsat : ¬ ∃ a : Nat → Bool, CNFHolds cnf a) :
     SemanticAffine r cnf := by
-  refine ⟨[{coefficients := [], rhs := true}], by decide, ?_⟩
+  refine ⟨[{coefficients := [], rhs := true}], by simp [rowSupported], ?_⟩
   intro a
   constructor
   · intro hc
