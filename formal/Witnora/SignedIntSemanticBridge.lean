@@ -29,8 +29,7 @@ theorem decode_signedLiteralToInt
       cases polarity with
       | false =>
           have hneg : -(Int.ofNat (n + 1)) = Int.negSucc n := by
-            simp only [Int.ofNat_add]
-            omega
+            rfl
           change decode (-(Int.ofNat (n + 1))) = (n + 1, false)
           rw [hneg]
           rfl
