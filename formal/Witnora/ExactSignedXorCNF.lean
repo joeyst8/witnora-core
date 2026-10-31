@@ -114,6 +114,8 @@ theorem generatedSignedHolds_iff
           (fun p => a p.1 == p.2) = false := by
         cases hb : (List.zip vars bad).all
             (fun p => a p.1 == p.2) <;> simp_all
+      change (signForbiddenClause (List.zip vars bad)).any
+        (signedLitTrue a) = true
       rw [signForbiddenClause_true]
       simp [hagFalse]
 
