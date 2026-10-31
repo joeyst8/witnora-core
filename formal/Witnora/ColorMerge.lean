@@ -179,4 +179,34 @@ theorem normalize_pair (n : Nat) (a b : Fin (n + 2)) (hab : a ≠ b) :
   · change (second b').val = 1
     simp [second, swapFin, one]
 
+/-- A vertex cover with n+2 distinct labels and any nonadjacent
+pair in it gives a proper coloring with only n+2 colors in total:
+n+1 merged cover labels plus one for the independent complement. -/
+theorem colorable_after_merging_arbitrary_nonedge
+    {V : Type} (Adj : V → V → Prop) (S : V → Prop)
+    (n : Nat) (label : V → Fin (n + 2)) (x y : V)
+    (hSym : ∀ u v, Adj u v → Adj v u)
+    (hNoLoops : ∀ u, ¬ Adj u u)
+    (hIndependent : ∀ u v, ¬ S u → ¬ S v → ¬ Adj u v)
+    (hInjectOnCover :
+      ∀ u v, S u → S v → label u = label v → u = v)
+    (hx : S x) (hy : S y)
+    (hxy : x ≠ y)
+    (hNoPairEdge : ¬ Adj x y) :
+    ∃ paint : V → Option (Fin (n + 1)),
+      ∀ u v, Adj u v → paint u ≠ paint v := by
+  have hDifferent : label x ≠ label y := by
+    intro heq
+    exact hxy (hInjectOnCover x y hx hy heq)
+  obtain ⟨relabel, hRelabelInject, hz, ho⟩ :=
+    normalize_pair n (label x) (label y) hDifferent
+  let newLabel : V → Fin (n + 2) := fun u => relabel (label u)
+  have hNewInject :
+      ∀ u v, S u → S v → newLabel u = newLabel v → u = v := by
+    intro u v hu hv heq
+    exact hInjectOnCover u v hu hv
+      (hRelabelInject (label u) (label v) heq)
+  exact colorable_after_merging_nonedge Adj S n newLabel x y
+    hSym hNoLoops hIndependent hNewInject hx hy hz ho hNoPairEdge
+
 end Witnora.ColorMerge
