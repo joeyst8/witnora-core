@@ -1,3 +1,4 @@
+import Lean
 import Witnora.CheckedXorOutput
 import Witnora.SignedSerialization
 
@@ -25,8 +26,12 @@ theorem decode_signedLiteralToInt
   cases v with
   | zero => simp at hpos
   | succ n =>
-      cases polarity <;>
-        simp [signedLiteralToInt, decode]
+      cases polarity with
+      | false =>
+          have hneg : -(Int.ofNat (n + 1)) = Int.negSucc n := by omega
+          simp [signedLiteralToInt, hneg, decode]
+      | true =>
+          simp [signedLiteralToInt, decode]
 
 theorem insertSignedInt_perm (x : Int) (xs : List Int) :
     (insertSignedInt x xs).Perm (x :: xs) := by
@@ -39,7 +44,7 @@ theorem insertSignedInt_perm (x : Int) (xs : List Int) :
           cases hh : decide (x ≤ y) <;> simp_all
         simp only [insertSignedInt, hf, ite_false]
         exact (List.Perm.cons y ih).trans
-          (List.Perm.swap x y ys).symm
+          (List.Perm.swap x y ys)
 
 theorem sortSignedClause_perm (xs : List Int) :
     (sortSignedClause xs).Perm xs := by
@@ -77,8 +82,11 @@ theorem signedClause_semantics (clause : List Literal)
       have hr : ∀ x, x ∈ rest → 0 < x.1 := by
         intro x hx
         exact hpositive x (by simp [hx])
-      simp only [List.map_cons, List.any_cons, List.any_map]
-      rw [decode_signedLiteralToInt lit hp, ih hr]
+      simp only [List.map_cons, List.any_cons, List.any_map,
+        Function.comp_apply]
+      rw [decode_signedLiteralToInt lit hp]
+      congr 1
+      simpa only [List.any_map, Function.comp_apply] using ih hr
 
 theorem signForbiddenClause_positive
     (vars : List Nat) (bad : List Bool)
@@ -102,7 +110,7 @@ theorem signForbiddenClause_positive
           simp only [List.zip_cons_cons, signForbiddenClause, List.map_cons,
             List.mem_cons] at hlit
           rcases hlit with heq | htail
-          · rw [← heq]
+          · subst lit
             exact hv
           · exact ih bs hrest lit htail
 
@@ -113,9 +121,9 @@ theorem serializedSignedClauses_semantics
     (hpositive : ∀ v, v ∈ vars → 0 < v) :
     signedCNFHolds (serializedSignedClauses vars rhs) a ↔
       generatedSignedHolds vars rhs a = true := by
-  unfold signedCNFHolds serializedSignedClauses generatedSignedHolds
-  simp only [List.all_map]
-  apply Iff.intro
+  simp only [signedCNFHolds, serializedSignedClauses,
+    generatedSignedHolds, List.all_map]
+  constructor
   · intro h
     apply List.all_eq_true.mpr
     intro bad hbad
@@ -123,7 +131,11 @@ theorem serializedSignedClauses_semantics
     have hs := signedClause_semantics
       (signForbiddenClause (List.zip vars bad)) a
       (signForbiddenClause_positive vars bad hpositive)
-    simpa only [Function.comp_apply, hs] using hclause
+    change (sortSignedClause
+      ((signForbiddenClause (List.zip vars bad)).map signedLiteralToInt)).any
+      (fun z => signedLitTrue a (decode z)) = true at hclause
+    rw [hs] at hclause
+    exact hclause
   · intro h
     apply List.all_eq_true.mpr
     intro bad hbad
@@ -131,7 +143,13 @@ theorem serializedSignedClauses_semantics
     have hs := signedClause_semantics
       (signForbiddenClause (List.zip vars bad)) a
       (signForbiddenClause_positive vars bad hpositive)
-    simpa only [Function.comp_apply, hs] using hclause
+    change (signForbiddenClause (List.zip vars bad)).any
+      (signedLitTrue a) = true at hclause
+    change (sortSignedClause
+      ((signForbiddenClause (List.zip vars bad)).map signedLiteralToInt)).any
+      (fun z => signedLitTrue a (decode z)) = true
+    rw [hs]
+    exact hclause
 
 #print axioms Witnora.SignedIntSemanticBridge.serializedSignedClauses_semantics
 
