@@ -9,7 +9,9 @@ from .cnf import CNFFormula
 from .separator_affine_family_theorem import (
     _all_assignments, _component_dicts, _condition_by_separator,
 )
-from .separator_affine_family_theorem import _guarded_xor_equation
+from .separator_affine_family_theorem import (
+    _guarded_xor_equation, make_separator_affine_instance,
+)
 from .operator_genesis import (
     AffineResidueInstance, build_affine_residue_certificate,
     AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED,
@@ -50,26 +52,35 @@ def lean_branch(assignment):
     ) + "]"
 
 
-def actual_python_g14_artifacts():
-    formula = CNFFormula.from_raw_clauses(SOURCE_ROWS)
+def actual_python_g14_artifacts(instance_id=None):
+    formula = (
+        CNFFormula.from_raw_clauses(SOURCE_ROWS)
+        if instance_id is None
+        else make_separator_affine_instance(instance_id).formula
+    )
     components = _component_dicts(formula, list(SEPARATOR))
     result = []
     for assignment in _all_assignments(SEPARATOR):
         residual, parts, errors = _condition_by_separator(
             formula, assignment, components)
-        if errors or len(parts) != 1:
+        if errors or not parts:
             raise ValueError("Python conditioning/partition rejected")
-        chosen = next(iter(parts.values()))
-        if chosen != residual:
-            raise ValueError("selected component does not match residual")
-        native_instance = AffineResidueInstance(
-            instance_id=f"g14_branch_{int(assignment[1])}",
-            equations=(), formula=chosen,
-        )
-        certificate = build_affine_residue_certificate(native_instance, max_arity=2)
-        if (certificate.status != AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED
-                or certificate.checker_status != AFFINE_RESIDUE_CERTIFICATE_VERIFIED):
-            raise ValueError("native G5 certificate not verified")
+        chosen = None
+        certificate = None
+        for candidate in parts.values():
+            native_instance = AffineResidueInstance(
+                instance_id=f"g14_branch_{int(assignment[1])}",
+                equations=(), formula=candidate,
+            )
+            candidate_cert = build_affine_residue_certificate(
+                native_instance, max_arity=2)
+            if (candidate_cert.status == AFFINE_RESIDUE_UNSAT_NATIVE_CERTIFIED
+                    and candidate_cert.checker_status == AFFINE_RESIDUE_CERTIFICATE_VERIFIED):
+                chosen = candidate
+                certificate = candidate_cert
+                break
+        if chosen is None or certificate is None:
+            raise ValueError("no native G5 contradiction covering branch")
         trace = certificate.gaussian_elimination_trace
         if (not trace or trace[0].get("type") != "INITIAL_ROWS"
                 or not certificate.row_operations):
@@ -79,8 +90,8 @@ def actual_python_g14_artifacts():
     return formula, tuple(result)
 
 
-def emit_python_g14_lean():
-    formula, branches = actual_python_g14_artifacts()
+def emit_python_g14_lean(instance_id=None):
+    formula, branches = actual_python_g14_artifacts(instance_id)
     data = formula.canonical_dimacs().encode("ascii")
     token_stream = [lit for clause in formula.to_clause_lists()
                     for lit in (*clause, 0)]
@@ -164,6 +175,19 @@ def emit_python_g14_lean():
         """∀ branch ∈ enumerate [1],
       checkG5Closed (pythonBound branch) (pythonSelected branch)
         (pythonRows branch) (pythonSteps branch) = true"""))
+    if instance_id is not None:
+        lines.extend([
+            """theorem python_missing_component_rejected :
+    checkPartition
+      (conditionCNF (fixedOf [(1, false)]) (decodeCNF pythonClauses))
+      [pythonSelected [(1, false)]] = false := by
+  decide""",
+            """theorem python_invalid_g5_reference_rejected :
+    checkG5Closed (pythonBound [(1, false)])
+      (pythonSelected [(1, false)]) (pythonRows [(1, false)])
+      [(999, 0)] = false := by
+  decide""",
+        ])
     lines.extend([
         """theorem python_g14_g5_dimacs_unsat :
     parseDocument pythonSourceBytes = some (serialize pythonClauses) ∧
