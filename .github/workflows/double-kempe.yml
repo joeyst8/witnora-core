@@ -1,0 +1,31 @@
+name: Double Kempe repair
+
+on:
+  push:
+    branches:
+      - research/double-kempe-v24
+  pull_request:
+    paths:
+      - "witnora_core/double_kempe_lab.py"
+      - "scripts/experiment_double_kempe.py"
+      - "tests/test_double_kempe_lab.py"
+      - ".github/workflows/double-kempe.yml"
+  workflow_dispatch:
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify two-step swap coloring invariants
+        run: PYTHONPATH=. python -m unittest tests.test_double_kempe_lab -v
+      - name: Run fixed adversarial train and holdout cases
+        run: PYTHONPATH=. python scripts/experiment_double_kempe.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: double-kempe-ledger
+          path: double-kempe-ledger.json
