@@ -141,7 +141,7 @@ theorem emitPass_total_with_invariants
         exact htargets slot (by simp [hm])
       obtain ⟨restOps, finished, hr, hreadFinal, hvalidFinal, hpFinal⟩ :=
         ih updated hpivotRest htargetsRest hpivotUpdated
-          hv hvalidUpdated hreadUpdated
+          hvalidUpdated hreadUpdated
       refine ⟨firstOps ++ restOps, finished, ?_,
         hreadFinal, hvalidFinal, hpFinal⟩
       simp [emitPass, hf, hr]
