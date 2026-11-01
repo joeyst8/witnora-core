@@ -181,6 +181,84 @@ theorem emitted_schedule_models_iff
       (List.range initial.length) (SourceState.start initial)
       result operations h) hreplay
 
+/-- Pointwise indexed row satisfaction is equivalent to satisfaction of
+    every row in the finite list. This connects independent replay to
+    the original Gaussian driver's list-membership formulation. -/
+theorem slotsHold_iff_all
+    (bound : Nat) (rows : List Row) (a : Nat → Bool) :
+    SlotsHold bound rows a ↔
+      (∀ row ∈ rows, Witnora.G5Certificate.RowHolds bound row a) := by
+  induction rows with
+  | nil =>
+      constructor
+      · intro hall row hmem
+        simp at hmem
+      · intro hall
+        unfold SlotsHold
+        intro slot row hlookup
+        cases slot <;> simp at hlookup
+  | cons head tail ih =>
+      constructor
+      · intro hall row hmem
+        obtain hhead | htail := List.mem_cons.mp hmem
+        · subst row
+          exact hall 0 head rfl
+        · have htailSlots : SlotsHold bound tail a := by
+            unfold SlotsHold
+            intro slot r hlookup
+            exact hall (slot + 1) r (by simpa using hlookup)
+          exact ih.mp htailSlots row htail
+      · intro hall
+        unfold SlotsHold
+        intro slot row hlookup
+        cases slot with
+        | zero =>
+            have heq : row = head := by
+              exact Option.some.inj (hlookup.symm.trans rfl)
+            subst row
+            exact hall head (by simp)
+        | succ j =>
+            have htailAll :
+                ∀ row ∈ tail,
+                  Witnora.G5Certificate.RowHolds bound row a := by
+              intro row hmem
+              exact hall row (by simp [hmem])
+            have htailSlots := ih.mpr htailAll
+            exact htailSlots j row (by simpa using hlookup)
+
+/-- Main semantic bridge: the original Gaussian elimination driver and
+    the emitted indexed scheduler have *identical* model sets for every
+    assignment. Their concrete row order need not be identical. -/
+theorem scheduled_vs_gaussian_driver_models_iff
+    (bound : Nat) (initial : List Row)
+    (variables : List Nat) (result : SourceState initial)
+    (operations : List Op)
+    (h : emitSchedule initial variables (List.range initial.length)
+      (SourceState.start initial) = some (operations, result)) :
+    ∃ finalRows,
+      replay initial (operations.map toReplayStep) = some finalRows ∧
+      TableRel initial result finalRows ∧
+      (∀ a : Nat → Bool,
+        (∀ row ∈
+          (Witnora.G5TerminatingPivot.eliminateVariables
+            variables initial).1 ++
+          (Witnora.G5TerminatingPivot.eliminateVariables
+            variables initial).2,
+          Witnora.G5Certificate.RowHolds bound row a) ↔
+        SlotsHold bound finalRows a) := by
+  obtain ⟨finalRows, hreplay, hrel, hmodels⟩ :=
+    emitted_schedule_models_iff bound initial variables
+      result operations h
+  refine ⟨finalRows, hreplay, hrel, ?_⟩
+  intro a
+  exact
+    (Witnora.G5TerminatingPivot.eliminateVariables_models_iff
+      bound variables initial a).symm |>.trans
+      ((slotsHold_iff_all bound initial a).symm.trans (hmodels a))
+
+#print axioms Witnora.G5ScheduledModelPreservation.slotsHold_iff_all
+#print axioms Witnora.G5ScheduledModelPreservation.scheduled_vs_gaussian_driver_models_iff
+
 #print axioms Witnora.G5ScheduledModelPreservation.emitSchedule_only_xors
 #print axioms Witnora.G5ScheduledModelPreservation.emitted_schedule_models_iff
 
