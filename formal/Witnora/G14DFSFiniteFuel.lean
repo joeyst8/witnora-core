@@ -61,7 +61,7 @@ theorem reserve_add_present (neighbors : Nat → List Nat)
       · subst head
         have hrest := reserve_add_absent neighbors tail processed v
           hparts.1
-        simp [reserve, hunseen, hrest]
+        simp [reserve, hunseen, hrest, Nat.add_comm]
       · have hne : head ≠ v := by
           intro heq
           subst head
@@ -70,7 +70,7 @@ theorem reserve_add_present (neighbors : Nat → List Nat)
             (head ∈ v :: processed) ↔ head ∈ processed := by
           simp [hne]
         have htailEq :=
-          ih hparts.2 htailmem hunseen
+          ih hparts.2 htailmem
         simp only [reserve]
         simp [hhead]
         omega
@@ -105,7 +105,7 @@ theorem step_preserves_pending_within
       · simpa [step, hp, hseen, PendingWithin] using hrest
       · simp [step, hp, hseen, PendingWithin]
         intro v hm
-        rcases List.mem_append.mp hm with hnew | hold
+        rcases hm with hnew | hold
         · exact hneighbor vertex hv v hnew
         · exact hrest v hold
 
@@ -126,6 +126,7 @@ theorem step_spends_one
         hwithin vertex (by simp [hp])
       by_cases hseen : vertex ∈ state.processed
       · simp [potential, step, hp, hseen]
+        omega
       · have hcredit := reserve_add_present
           neighbors vertices state.processed vertex hnd hv hseen
         simp only [potential, step, hp, hseen, ↓reduceIte,
@@ -189,7 +190,9 @@ theorem start_terminates
   apply run_terminates_with_fuel
     neighbors vertices hnd hneighbor
   · intro v hv
-    simpa [start] using hroot
+    simp [start] at hv
+    subst v
+    exact hroot
   · exact Nat.le_refl _
 
 /-- A fully completed DFS therefore produces an edge-closed component
@@ -213,14 +216,7 @@ theorem start_component_closed
 /-- Finite cyclic graph termination without a guessed fuel number. -/
 example :
     (run triangle (potential triangle [1, 2, 3] (start 1))
-      (start 1)).pending = [] := by
-  apply start_terminates triangle [1, 2, 3]
-  · decide
-  · intro v hv w hw
-    simp at hv
-    rcases hv with rfl | rfl | rfl <;> simp [triangle] at hw ⊢ <;>
-      aesop
-  · decide
+      (start 1)).pending = [] := by decide
 
 #print axioms Witnora.G14DFSFiniteFuel.run_terminates_with_fuel
 #print axioms Witnora.G14DFSFiniteFuel.start_component_closed
