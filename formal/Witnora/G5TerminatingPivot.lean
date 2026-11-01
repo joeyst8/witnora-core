@@ -175,7 +175,7 @@ theorem extractPivot_perm
                 subst pivot
                 subst others
                 exact (List.Perm.cons head (ih p remaining hp)).trans
-                  (List.Perm.swap head p remaining)
+                  (List.Perm.swap head p remaining).symm
 
 /-- One extracted pivot plus its elimination pass is *exactly*
     model-equivalent to the original entire row list. -/
