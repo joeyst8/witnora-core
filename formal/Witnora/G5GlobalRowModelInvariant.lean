@@ -24,7 +24,8 @@ open Witnora.G5DriverXorOrderBridge
 /-- A complete row table holds when every successfully looked-up slot
     holds, including tables with no rows. -/
 def SlotsHold (bound : Nat) (rows : List Row) (a : Nat → Bool) : Prop :=
-  ∀ slot row, rows[slot]? = some row → RowHolds bound row a
+  ∀ (slot : Nat) (row : Row),
+    rows[slot]? = some row → RowHolds bound row a
 
 /-- Any legal indexed target XOR replacement preserves *all* satisfying
     assignments of the entire working-row table, in both directions. -/
@@ -37,7 +38,9 @@ theorem xor_update_models_iff
     SlotsHold bound rows a ↔
     SlotsHold bound (rows.set target (xorRow targetRow sourceRow)) a := by
   constructor
-  · intro hall slot row hlookup
+  · intro hall
+    unfold SlotsHold at hall ⊢
+    intro slot row hlookup
     by_cases heq : slot = target
     · subst slot
       have hnew := row_lookup_set_self rows target targetRow
@@ -52,7 +55,9 @@ theorem xor_update_models_iff
           (xorRow targetRow sourceRow) (Ne.symm heq)]
         exact hlookup
       exact hall slot row hold
-  · intro hall slot row hlookup
+  · intro hall
+    unfold SlotsHold at hall ⊢
+    intro slot row hlookup
     have hsourceNew : (rows.set target
         (xorRow targetRow sourceRow))[source]? = some sourceRow := by
       rw [row_lookup_set_other rows target source
