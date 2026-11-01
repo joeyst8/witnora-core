@@ -103,18 +103,23 @@ theorem combined_unsat_forces_survivor_contradiction
     ∃ slot ∈ outcome.survivors, ∃ row,
       workingRow initial outcome.finalState slot = some row ∧
       row.rhs = true := by
-  by_contra hbad
-  have hno : NoSurvivorContradiction initial outcome := by
-    intro slot hs row hrow
-    cases hr : row.rhs with
-    | false => rfl
-    | true =>
-        exact False.elim (hbad ⟨slot, hs, row, hrow, hr⟩)
-  have hmodel :=
-    (no_survivor_contradiction_iff_combined_model initial
-      bound variables candidates state outcome hinput hnd
-      hvalid hvars h).mp hno
-  exact hunsat hmodel
+  classical
+  by_cases hbad : ∃ slot ∈ outcome.survivors, ∃ row,
+      workingRow initial outcome.finalState slot = some row ∧
+      row.rhs = true
+  · exact hbad
+  · exfalso
+    have hno : NoSurvivorContradiction initial outcome := by
+      intro slot hs row hrow
+      cases hr : row.rhs with
+      | false => rfl
+      | true =>
+          exact False.elim (hbad ⟨slot, hs, row, hrow, hr⟩)
+    have hmodel :=
+      (no_survivor_contradiction_iff_combined_model initial
+        bound variables candidates state outcome hinput hnd
+        hvalid hvars h).mp hno
+    exact hunsat hmodel
 
 #print axioms Witnora.G5LedgerSurvivorModel.no_survivor_contradiction_iff_combined_model
 #print axioms Witnora.G5LedgerSurvivorModel.combined_unsat_forces_survivor_contradiction
