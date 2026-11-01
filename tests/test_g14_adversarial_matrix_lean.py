@@ -22,7 +22,7 @@ class G14AdversarialMatrixTests(unittest.TestCase):
         self.assertGreaterEqual(stats["branches"], 40)
         self.assertGreater(stats["rejected_mutations"], 0)
         self.assertGreater(stats["normalized_duplicate_cases"], 0)
-        self.assertIn("checkPartition", source)
+        self.assertIn("checkNormalizedPartition", source)
         self.assertIn("= false := by decide", source)
         self.assertNotIn("native_decide", source)
         self.assertNotIn("sorry", source)
