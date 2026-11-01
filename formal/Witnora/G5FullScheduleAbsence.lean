@@ -86,13 +86,13 @@ theorem emitSchedule_preserves_absence_superset
                                   state updated firstOps pivotRow
                                   hpivotMem htargets hpivotNot hpivotRow
                                   hvalid habs he
+                              have hrun := emitPass_replays initial w
+                                pivotSlot targets state updated firstOps he
                               have hvalidUpdated :
-                                  LiveRefsValid initial updated := by
-                                exact foldlM_preserves_valid initial firstOps
+                                  LiveRefsValid initial updated :=
+                                foldlM_preserves_valid initial firstOps
                                   state updated hvalid
-                                  (by simpa [executeFrom] using
-                                    emitPass_replays initial w pivotSlot
-                                      targets state updated firstOps he)
+                                  (by simpa [executeFrom] using hrun)
                               exact ih targets updated finished restOps
                                 htargets hvalidUpdated habsUpdated hr
 
