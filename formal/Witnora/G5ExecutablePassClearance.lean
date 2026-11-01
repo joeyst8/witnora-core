@@ -177,6 +177,84 @@ theorem emitPass_preserves_outside
                         htargetOther hpivot hvalid hf
                       exact htail.trans hfirst
 
+/-- Full executable pass clearance: every distinct target slot ends with
+    a dereferenceable row that excludes the chosen pivot variable.
+    The pivot is never in the target list and stays unchanged. -/
+theorem emitPass_clears_all_targets
+    (initial : List Row) (v pivotSlot : Nat)
+    (targets : List Nat)
+    (state result : SourceState initial) (operations : List Op)
+    (pivotRow : Row)
+    (hnd : targets.Nodup)
+    (hpivotNot : pivotSlot ∉ targets)
+    (hpivot : workingRow initial state pivotSlot = some pivotRow)
+    (hvPivot : v ∈ pivotRow.coefficients)
+    (hvalid : LiveRefsValid initial state)
+    (h : emitPass initial v pivotSlot targets state =
+      some (operations, result)) :
+    ∀ slot ∈ targets, ∃ row,
+      workingRow initial result slot = some row ∧
+      v ∉ row.coefficients := by
+  induction targets generalizing state result operations with
+  | nil =>
+      intro slot hm
+      simp at hm
+  | cons target rest ih =>
+      have htargetPivot : target ≠ pivotSlot := by
+        intro heq
+        subst target
+        exact hpivotNot (by simp)
+      have hpivotRest : pivotSlot ∉ rest := by
+        intro hm
+        exact hpivotNot (by simp [hm])
+      have htargetRest : target ∉ rest := hnd.1
+      have hrestNodup : rest.Nodup := hnd.2
+      cases hf : emitOne initial v pivotSlot target state with
+      | none =>
+          simp [emitPass, hf] at h
+      | some first =>
+          cases first with
+          | mk firstOps updated =>
+              cases hr : emitPass initial v pivotSlot rest updated with
+              | none =>
+                  simp [emitPass, hf, hr] at h
+              | some second =>
+                  cases second with
+                  | mk restOps finished =>
+                      simp [emitPass, hf, hr] at h
+                      rcases h with ⟨hops, hresult⟩
+                      subst result
+                      have hfirst := emitOne_clears_view initial v
+                        pivotSlot target state updated firstOps
+                        pivotRow htargetPivot hpivot hvPivot hf
+                      have hpivotUpdated :
+                          workingRow initial updated pivotSlot =
+                            some pivotRow := by
+                        rw [emitOne_preserves_other_view initial v
+                          pivotSlot target pivotSlot state updated
+                          firstOps pivotRow htargetPivot
+                          (Ne.symm htargetPivot) hpivot hvalid hf]
+                        exact hpivot
+                      have hupdatedValid := emitOne_preserves_valid
+                        initial v pivotSlot target state updated
+                        firstOps hvalid hf
+                      have htail := ih updated finished restOps
+                        hrestNodup hpivotRest hpivotUpdated
+                        hvPivot hupdatedValid hr
+                      intro slot hmem
+                      rcases List.mem_cons.mp hmem with hslot | hrest
+                      · subst slot
+                        have hkeep := emitPass_preserves_outside
+                          initial v pivotSlot target rest
+                          updated finished restOps pivotRow
+                          hpivotRest htargetRest hpivotUpdated
+                          hupdatedValid hr
+                        rw [hkeep]
+                        exact hfirst
+                      · exact htail slot hrest
+
+#print axioms Witnora.G5ExecutablePassClearance.emitPass_clears_all_targets
+
 #print axioms Witnora.G5ExecutablePassClearance.emitPass_preserves_outside
 
 #print axioms Witnora.G5ExecutablePassClearance.workingRow_derefs
