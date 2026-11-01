@@ -22,7 +22,20 @@ from scripts.experiment_autonomous_parity_separator import (
 )
 
 
-def solve(rows, counters, *, split, hints=None):
+def normalized_component_key(rows):
+    """Variable-renaming-invariant signature for structurally identical CNFs.
+
+    This simple sorted-variable relabeling is not a complete graph-isomorphism
+    canonicalizer; it only finds a conservative subset of equivalent shapes.
+    """
+    variables = sorted({abs(lit) for row in rows for lit in row})
+    renumber = {v: i + 1 for i, v in enumerate(variables)}
+    return tuple(sorted(tuple(sorted(
+        renumber[abs(lit)] if lit > 0 else -renumber[abs(lit)]
+        for lit in row)) for row in rows))
+
+
+def solve(rows, counters, *, split, hints=None, cache=None):
     counters["nodes"] += 1
     rows = tuple(tuple(row) for row in rows)
     while True:
@@ -51,8 +64,21 @@ def solve(rows, counters, *, split, hints=None):
             counters["split_events"] += 1
             counters["component_jobs"] += len(groups)
             # Exact AND decomposition. No requirement that the groups be SAT.
-            return all(solve(group, counters, split=split, hints=hints)
-                       for group in groups)
+            for group in groups:
+                if cache is None:
+                    answer = solve(group, counters, split=split, hints=hints)
+                else:
+                    signature = normalized_component_key(group)
+                    if signature in cache:
+                        counters["cache_hits"] += 1
+                        answer = cache[signature]
+                    else:
+                        answer = solve(group, counters, split=split,
+                                       hints=hints, cache=cache)
+                        cache[signature] = answer
+                if not answer:
+                    return False
+            return True
 
     occurrences = Counter(abs(lit) for row in rows for lit in row)
     chosen = min(occurrences, key=lambda v: (
@@ -63,7 +89,7 @@ def solve(rows, counters, *, split, hints=None):
     for val in (True, False):
         reduced = simplify(rows, {chosen: val})
         if reduced is not None and solve(reduced, counters,
-                                         split=split, hints=hints):
+                                         split=split, hints=hints, cache=cache):
             return True
     return False
 
@@ -71,13 +97,16 @@ def solve(rows, counters, *, split, hints=None):
 def run(formula, variant):
     rows = formula.to_clause_lists()
     split = variant != "frequency"
+    use_cache = variant == "support_split_cache"
     start = perf_counter()
     hints = support_candidates(rows) if variant == "support_split" else None
     stats = {
         "nodes": 0, "decisions": 0, "hinted_decisions": 0,
         "component_scans": 0, "split_events": 0, "component_jobs": 0,
+        "cache_hits": 0,
     }
-    answer = solve(rows, stats, split=split, hints=hints)
+    answer = solve(rows, stats, split=split, hints=hints,
+                   cache={} if use_cache else None)
     return {
         "sat": answer, **stats,
         "elapsed_ms": round((perf_counter() - start) * 1000, 5),
@@ -100,7 +129,8 @@ def benchmark(seed_count=8):
     for family, copies, seed, formula in cases:
         variants = {
             name: run(formula, name)
-            for name in ("frequency", "frequency_split", "support_split")
+            for name in ("frequency", "frequency_split", "support_split",
+                             "support_split_cache")
         }
         if len({item["sat"] for item in variants.values()}) != 1:
             raise AssertionError((family, copies, seed, "SAT disagreement"))
@@ -121,6 +151,14 @@ def benchmark(seed_count=8):
             "support_over_split_time_wins": sum(
                 r["support_split"]["elapsed_ms"]
                 < r["frequency_split"]["elapsed_ms"] for r in records),
+            "cache_node_wins_over_support_split": sum(
+                r["support_split_cache"]["nodes"]
+                < r["support_split"]["nodes"] for r in records),
+            "cache_time_wins_over_support_split": sum(
+                r["support_split_cache"]["elapsed_ms"]
+                < r["support_split"]["elapsed_ms"] for r in records),
+            "total_cache_hits": sum(
+                r["support_split_cache"]["cache_hits"] for r in records),
             "total_split_events": sum(
                 r["frequency_split"]["split_events"] for r in records),
             "novelty_established": False,
@@ -136,6 +174,12 @@ def benchmark(seed_count=8):
             "support_split_nodes": sum(
                 r["support_split"]["nodes"] for r in records
                 if r["family"] == family and r["copies"] == copies),
+            "cache_nodes": sum(r["support_split_cache"]["nodes"]
+                               for r in records if r["family"] == family
+                               and r["copies"] == copies),
+            "cache_hits": sum(r["support_split_cache"]["cache_hits"]
+                              for r in records if r["family"] == family
+                              and r["copies"] == copies),
             "split_events": sum(r["frequency_split"]["split_events"]
                                 for r in records if r["family"] == family
                                 and r["copies"] == copies),
