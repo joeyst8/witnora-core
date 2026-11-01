@@ -1,0 +1,28 @@
+name: Autonomous parity separator OOD experiment
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+  pull_request:
+    paths:
+      - "witnora_core/autonomous_parity_separator.py"
+      - "scripts/experiment_autonomous_parity_separator.py"
+      - "tests/test_autonomous_parity_separator.py"
+      - ".github/workflows/autonomous-parity-separator.yml"
+  workflow_dispatch:
+jobs:
+  blind-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Autonomous detector regressions
+        run: python -m unittest tests.test_autonomous_parity_separator -v
+      - name: Blind OOD experiment
+        run: python -m scripts.experiment_autonomous_parity_separator
+      - name: Archive every positive and negative result
+        uses: actions/upload-artifact@v4
+        with:
+          name: autonomous-separator-ood-results
+          path: research/autonomous_parity_separator_results.json
+          retention-days: 30
