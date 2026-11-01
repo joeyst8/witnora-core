@@ -72,6 +72,7 @@ theorem step_preserves_valid
             | some sourceRef =>
                 simp only [SourceState.step, hneq, hi, hj] at hstep
                 split at hstep
+                · simp at hstep
                 · cases hstep
                   have hprev : ∀ ref ∈ state.refs,
                       ref < state.dag.rows.length + 1 := by
@@ -84,7 +85,6 @@ theorem step_preserves_valid
                       (fun ref => ref < state.dag.rows.length + 1)
                       target state.dag.rows.length hprev
                       (Nat.lt_succ_self _))
-                · simp at hstep
 
 
 theorem foldlM_preserves_valid
