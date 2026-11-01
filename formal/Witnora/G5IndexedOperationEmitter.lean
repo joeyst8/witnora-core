@@ -48,8 +48,7 @@ def SourceState.step (initial : List Row)
             | some targetRow, some sourceRow =>
                 let nextDag := state.dag.append initial
                   targetRef sourceRef targetRow sourceRow ht hs
-                some { dag := nextDag,
-                  refs := state.refs.set target state.dag.rows.length }
+                some ({ dag := nextDag, refs := state.refs.set target state.dag.rows.length } : SourceState initial)
             | _, _ => none
         | _, _ => none
 
