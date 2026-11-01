@@ -80,15 +80,17 @@ theorem tracked_execution_matches_schedule
                           simp [emitScheduleTracked, hp, targets, he, hr] at h
                       | some second =>
                           cases second with
-                          | mk restOps result survivorsRest =>
-                              simp [emitScheduleTracked, hp, targets, he, hr] at h
-                              rcases h with ⟨hops, hfinished, hsurvivors⟩
-                              subst operations
-                              subst finished
-                              subst survivors
-                              have hrest := ih targets updated result
+                          | mk restOps pair =>
+                          cases pair with
+                          | mk result survivorsRest =>
+                                  simp [emitScheduleTracked, hp, targets, he, hr] at h
+                                  rcases h with ⟨hops, hfinished, hsurvivors⟩
+                                  subst operations
+                                  subst finished
+                                  subst survivors
+                                  have hrest := ih targets updated result
                                 restOps survivorsRest hr
-                              simpa [emitSchedule, hp, targets, he, hrest]
+                                  simpa [emitSchedule, hp, targets, he, hrest]
 
 /-- The final tracked slots are a subset of the starting candidates:
     successful pivot retirement removes candidates but never adds them. -/
@@ -130,12 +132,14 @@ theorem tracked_survivors_subset
                           simp [emitScheduleTracked, hp, targets, he, hr] at h
                       | some second =>
                           cases second with
-                          | mk restOps result survivorsRest =>
-                              simp [emitScheduleTracked, hp, targets, he, hr] at h
-                              rcases h with ⟨hops, hfinished, hsurvivors⟩
-                              subst survivors
-                              intro slot hm
-                              exact (List.mem_filter.mp
+                          | mk restOps pair =>
+                          cases pair with
+                          | mk result survivorsRest =>
+                                  simp [emitScheduleTracked, hp, targets, he, hr] at h
+                                  rcases h with ⟨hops, hfinished, hsurvivors⟩
+                                  subst survivors
+                                  intro slot hm
+                                  exact (List.mem_filter.mp
                                 (ih targets updated result restOps
                                   survivorsRest hr slot hm)).1
 
