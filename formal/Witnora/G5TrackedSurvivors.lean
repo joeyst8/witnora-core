@@ -44,7 +44,7 @@ theorem tracked_execution_matches_schedule
     (initial : List Row)
     (variables candidates : List Nat)
     (state finished : SourceState initial)
-    (operations survivors : List Nat)
+    (operations : List Op) (survivors : List Nat)
     (h : emitScheduleTracked initial variables candidates state =
       some (operations, finished, survivors)) :
     emitSchedule initial variables candidates state =
@@ -96,7 +96,7 @@ theorem tracked_survivors_subset
     (initial : List Row)
     (variables candidates : List Nat)
     (state finished : SourceState initial)
-    (operations survivors : List Nat)
+    (operations : List Op) (survivors : List Nat)
     (h : emitScheduleTracked initial variables candidates state =
       some (operations, finished, survivors)) :
     ∀ slot ∈ survivors, slot ∈ candidates := by
