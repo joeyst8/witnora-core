@@ -9,6 +9,7 @@ on:
       - "scripts/experiment_autonomous_parity_separator.py"
       - "tests/test_autonomous_parity_separator.py"
       - "scripts/benchmark_separator_decomposition.py"
+      - "tests/test_separator_solver_comparison.py"
       - ".github/workflows/autonomous-parity-separator.yml"
   workflow_dispatch:
 jobs:
@@ -18,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Autonomous detector regressions
-        run: python -m unittest tests.test_autonomous_parity_separator -v
+        run: python -m unittest tests.test_autonomous_parity_separator tests.test_separator_solver_comparison -v
       - name: Blind OOD experiment
         run: python -m scripts.experiment_autonomous_parity_separator
       - name: Compare DPLL with discovered-cut decomposition
