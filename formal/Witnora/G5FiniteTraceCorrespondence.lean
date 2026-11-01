@@ -174,6 +174,33 @@ theorem foldlM_simulates
           refine ⟨finalRows, ?_, hfinalRel⟩
           simpa [replay, happly] using hreplay
 
+/-- The real source interpreter starts with the same observable table as
+    the independent replay interpreter. -/
+theorem start_table_relation (initial : List Row) :
+    TableRel initial (SourceState.start initial) initial := by
+  intro slot
+  simp [TableRel, workingRow, SourceState.start,
+    Witnora.G5VerifiedDagEmitter.Builder.start]
+
+/-- Direct theorem for SourceState.run from initial rows: the independent
+    replay succeeds and exposes exactly the same row at every slot. -/
+theorem run_simulates
+    (initial : List Row)
+    (operations : List Witnora.G5IndexedBridge.Operation)
+    (result : SourceState initial)
+    (hlegal : ∀ op ∈ operations, NoSelfSwap op)
+    (hrun : run initial operations = some result) :
+    ∃ finalRows,
+      replay initial (operations.map toReplayStep) = some finalRows ∧
+      TableRel initial result finalRows := by
+  exact foldlM_simulates initial operations
+    (SourceState.start initial) result initial
+    (start_valid initial) (start_table_relation initial)
+    hlegal hrun
+
+#print axioms Witnora.G5FiniteTraceCorrespondence.start_table_relation
+#print axioms Witnora.G5FiniteTraceCorrespondence.run_simulates
+
 #print axioms Witnora.G5FiniteTraceCorrespondence.step_simulates
 #print axioms Witnora.G5FiniteTraceCorrespondence.foldlM_simulates
 
