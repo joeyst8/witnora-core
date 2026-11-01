@@ -35,7 +35,7 @@ theorem workingRow_derefs
   | some ref =>
       have hrow : state.dag.rows[ref]? = some row := by
         simpa [hr] using h
-      exact ⟨ref, hr, hrow⟩
+      exact ⟨ref, rfl, hrow⟩
 
 /-- Every successful target emitter step clears v, stated only using
     observable working-row lookups rather than internal DAG indices. -/
