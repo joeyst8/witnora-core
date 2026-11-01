@@ -15,6 +15,7 @@ assert that every UNSAT input automatically generates a contradiction.
 namespace Witnora.G5EmittedPassAcceptedCertificate
 
 open Witnora.G5Trace
+open Witnora.G5Dag
 open Witnora.G5IndexedOperationEmitter
 open Witnora.G5EmittedPivotPass
 open Witnora.G5VerifiedDagEmitter
