@@ -293,4 +293,106 @@ theorem eliminateTagged_triangular
 #print axioms Witnora.G5BackSubstitution.tagged_preserves_absence
 #print axioms Witnora.G5BackSubstitution.eliminateTagged_triangular
 
+/-- Every tag emitted by the driver is one of the requested variables. -/
+theorem tagged_pivots_from_schedule
+    (vars : List Nat) (rows : List Row) :
+    ∀ entry ∈ (eliminateTagged vars rows).1, entry.1 ∈ vars := by
+  induction vars generalizing rows with
+  | nil =>
+      intro entry h
+      simp [eliminateTagged] at h
+  | cons v rest ih =>
+      cases hp : Witnora.G5TerminatingPivot.extractPivot v rows with
+      | none =>
+          intro entry h
+          have hrest : entry ∈ (eliminateTagged rest rows).1 := by
+            simpa [eliminateTagged, hp] using h
+          exact List.mem_cons_of_mem v (ih rows entry hrest)
+      | some result =>
+          cases result with
+          | mk pivot others =>
+              cases ht : eliminateTagged rest
+                  (Witnora.G5TerminatingPivot.eliminatePass v pivot others) with
+              | mk pivots residual =>
+                  intro entry h
+                  have hmem : entry ∈ (v, pivot) :: pivots := by
+                    simpa [eliminateTagged, hp, ht] using h
+                  rcases List.mem_cons.mp hmem with heq | htail
+                  · subst entry
+                    simp
+                  · have hrest : entry.1 ∈ rest := by
+                      apply ih (Witnora.G5TerminatingPivot.eliminatePass
+                        v pivot others) entry
+                      simpa [ht] using htail
+                    exact List.mem_cons_of_mem v hrest
+
+/-- Universal contradiction-discovery theorem for complete in-range
+    variable schedules. If the original row system is UNSAT, elimination
+    must leave a true RHS in the zero-support residual system. This is
+    the converse of the existing contradiction-soundness result. -/
+theorem unsat_forces_residual_contradiction
+    (bound : Nat) (vars : List Nat) (rows : List Row)
+    (hcoverage : ∀ row ∈ rows,
+      ∀ v ∈ row.coefficients, v ∈ vars)
+    (hvars : ∀ v ∈ vars, v < bound)
+    (hunsat : ¬ ∃ a : Nat → Bool,
+      ∀ row ∈ rows, RowHolds bound row a) :
+    ∃ row ∈ (Witnora.G5TerminatingPivot.eliminateVariables vars rows).2,
+      row.coefficients = [] ∧ row.rhs = true := by
+  classical
+  by_cases htrue : ∃ row ∈
+      (Witnora.G5TerminatingPivot.eliminateVariables vars rows).2,
+      row.rhs = true
+  · obtain ⟨row, hr, hright⟩ := htrue
+    exact ⟨row, hr,
+      Witnora.G5ResidualNormalForm.complete_schedule_residual_empty_support
+        vars rows hcoverage row hr, hright⟩
+  · exfalso
+    have hfalse : ∀ row ∈
+        (Witnora.G5TerminatingPivot.eliminateVariables vars rows).2,
+        row.rhs = false := by
+      intro row hr
+      cases hv : row.rhs with
+      | false => rfl
+      | true => exact False.elim (htrue ⟨row, hr, hv⟩)
+    have htri := eliminateTagged_triangular vars rows
+    have htags : ∀ entry ∈ (eliminateTagged vars rows).1,
+        entry.1 < bound := by
+      intro entry he
+      exact hvars entry.1
+        (tagged_pivots_from_schedule vars rows entry he)
+    obtain ⟨a, hpivots⟩ :=
+      triangular_has_model bound (eliminateTagged vars rows).1 htri htags
+    have htagmatch := eliminateTagged_matches_driver vars rows
+    have htagrows :
+        (eliminateTagged vars rows).1.map Prod.snd =
+          (Witnora.G5TerminatingPivot.eliminateVariables vars rows).1 :=
+      congrArg Prod.fst htagmatch
+    have hresidual :
+        (eliminateTagged vars rows).2 =
+          (Witnora.G5TerminatingPivot.eliminateVariables vars rows).2 :=
+      congrArg Prod.snd htagmatch
+    have hfinal : ∀ row ∈
+        (Witnora.G5TerminatingPivot.eliminateVariables vars rows).1 ++
+        (Witnora.G5TerminatingPivot.eliminateVariables vars rows).2,
+        RowHolds bound row a := by
+      intro row hr
+      rcases List.mem_append.mp hr with hp | hres
+      · rw [← htagrows] at hp
+        obtain ⟨entry, he, heq⟩ := List.mem_map.mp hp
+        subst row
+        exact hpivots entry he
+      · have hcoeff :=
+          Witnora.G5ResidualNormalForm.complete_schedule_residual_empty_support
+            vars rows hcoverage row hres
+        have hright := hfalse row hres
+        unfold RowHolds
+        simp [hcoeff, hright, sparseParity_empty]
+    have hsource :=
+      (Witnora.G5TerminatingPivot.eliminateVariables_models_iff
+        bound vars rows a).mpr hfinal
+    exact hunsat ⟨a, hsource⟩
+
+#print axioms Witnora.G5BackSubstitution.unsat_forces_residual_contradiction
+
 end Witnora.G5BackSubstitution
