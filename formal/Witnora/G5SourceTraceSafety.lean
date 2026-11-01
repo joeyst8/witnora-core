@@ -70,28 +70,22 @@ theorem step_preserves_valid
             | none =>
                 simp [SourceState.step, hneq, hi, hj] at hstep
             | some sourceRef =>
-                cases ht : state.dag.rows[targetRef]? with
-                | none =>
-                    simp [SourceState.step, hneq, hi, hj, ht] at hstep
-                | some targetRow =>
-                    cases hs : state.dag.rows[sourceRef]? with
-                    | none =>
-                        simp [SourceState.step, hneq, hi, hj, ht, hs] at hstep
-                    | some sourceRow =>
-                        simp [SourceState.step, hneq, hi, hj, ht, hs] at hstep
-                        cases hstep
-                        have hnew : state.dag.rows.length <
-                            (state.dag.append initial targetRef sourceRef
-                              targetRow sourceRow ht hs).rows.length := by
-                          simp [Witnora.G5VerifiedDagEmitter.Builder.append]
-                        have hprev : ∀ ref ∈ state.refs,
-                            ref < (state.dag.append initial targetRef sourceRef
-                              targetRow sourceRow ht hs).rows.length := by
-                          intro ref hm
-                          exact Nat.lt_of_lt_of_le (hvalid ref hm)
-                            (by simp [Witnora.G5VerifiedDagEmitter.Builder.append])
-                        exact Witnora.G5IndexedReferenceSafety.property_set
-                          _ _ target state.dag.rows.length hprev hnew
+                simp only [SourceState.step, hneq, hi, hj] at hstep
+                split at hstep
+                · cases hstep
+                  have hprev : ∀ ref ∈ state.refs,
+                      ref < state.dag.rows.length + 1 := by
+                    intro ref hm
+                    exact Nat.lt_succ_of_lt (hvalid ref hm)
+                  simpa [LiveRefsValid,
+                    Witnora.G5VerifiedDagEmitter.Builder.append] using
+                    (Witnora.G5IndexedReferenceSafety.property_set
+                      state.refs
+                      (fun ref => ref < state.dag.rows.length + 1)
+                      target state.dag.rows.length hprev
+                      (Nat.lt_succ_self _))
+                · simp at hstep
+
 
 theorem foldlM_preserves_valid
     (initial : List Row)
