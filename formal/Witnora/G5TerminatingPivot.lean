@@ -42,8 +42,9 @@ theorem eliminateTarget_iff (bound v : Nat) (pivot target : Row)
   by_cases hv : v ∈ target.coefficients
   · constructor
     · intro ht
-      exact (xor_replacement_iff bound pivot target a).mp
-        ⟨hp, ht⟩ |>.2
+      have hx := ((xor_replacement_iff bound pivot target a).mp
+        ⟨hp, ht⟩).2
+      simpa [eliminateTarget, hv] using hx
     · intro ht
       exact (xor_replacement_iff bound pivot target a).mpr
         ⟨hp, by simpa [eliminateTarget, hv] using ht⟩ |>.2
@@ -58,11 +59,12 @@ theorem eliminateTarget_clears_variable
   by_cases ht : v ∈ target.coefficients
   · change v ∉ (xorRow pivot target).coefficients
     intro hbad
-    have hx := (mem_xorCoefficients
-      pivot.coefficients target.coefficients v).mp hbad
-    rcases hx with ⟨_, hn⟩ | ⟨_, hn⟩
-    · exact hn ht
-    · exact hn hp
+      have hx := (mem_xorCoefficients
+        pivot.coefficients target.coefficients v).mp hbad
+      rcases hx with ⟨_, hn⟩ | ⟨_, hn⟩
+      · exact hn ht
+      · exact hn hp
+    simpa [eliminateTarget, ht] using hcleared
   · simpa [eliminateTarget, ht]
 
 /-- A pass over any finite list preserves the entire conjunction of
