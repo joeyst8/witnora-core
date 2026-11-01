@@ -57,8 +57,8 @@ theorem eliminateTarget_clears_variable
     (hp : v ∈ pivot.coefficients) :
     v ∉ (eliminateTarget v pivot target).coefficients := by
   by_cases ht : v ∈ target.coefficients
-  · change v ∉ (xorRow pivot target).coefficients
-    intro hbad
+  · have hcleared : v ∉ (xorRow pivot target).coefficients := by
+      intro hbad
       have hx := (mem_xorCoefficients
         pivot.coefficients target.coefficients v).mp hbad
       rcases hx with ⟨_, hn⟩ | ⟨_, hn⟩
