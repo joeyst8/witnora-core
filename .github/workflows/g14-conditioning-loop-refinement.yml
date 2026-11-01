@@ -1,0 +1,29 @@
+name: Universal G14 conditioning loop refinement
+on:
+  push:
+    branches:
+      - formal/g14-universal-conditioning-loop-v111
+  pull_request:
+    paths:
+      - "formal/Witnora/G14PythonConditioningLoop.lean"
+      - ".github/workflows/g14-conditioning-loop-refinement.yml"
+  workflow_dispatch:
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check universal conditioning loop
+        working-directory: formal
+        run: lake build Witnora.G14PythonConditioningLoop
+      - name: Reject proof holes
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14PythonConditioningLoop.lean; then
+            exit 1
+          fi
