@@ -146,15 +146,19 @@ def benchmark(seed_count=8, repeats=5):
     for family, generator in families:
         for seed in range(seed_count):
             formula = generator(seed)
+            baseline = [reference_run(formula, "frequency")
+                        for _ in range(repeats)]
             old = [reference_run(formula, "support_split_event2_cache")
                    for _ in range(repeats)]
             new = [run_masked(formula) for _ in range(repeats)]
             with Minisat22(bootstrap_with=formula.to_clause_lists()) as oracle:
                 expected = oracle.solve()
-            if len({r["sat"] for r in old + new} | {expected}) != 1:
+            if len({r["sat"] for r in baseline + old + new} | {expected}) != 1:
                 raise AssertionError((family, seed, "SAT disagreement"))
             records.append({
                 "family": family, "seed": seed,
+                "frequency_nodes": baseline[0]["nodes"],
+                "frequency_ms": median(r["elapsed_ms"] for r in baseline),
                 "reference_nodes": old[0]["nodes"],
                 "masked_nodes": new[0]["nodes"],
                 "reference_ms": median(r["elapsed_ms"] for r in old),
@@ -165,6 +169,10 @@ def benchmark(seed_count=8, repeats=5):
     return {
         "summary": {
             "total": len(records), "answers_agree": len(records),
+            "masked_vs_frequency_time_wins": sum(
+                r["masked_ms"] < r["frequency_ms"] for r in records),
+            "frequency_total_ms": round(sum(
+                r["frequency_ms"] for r in records), 4),
             "masked_time_wins": sum(r["masked_ms"] < r["reference_ms"]
                                     for r in records),
             "masked_node_wins": sum(r["masked_nodes"] < r["reference_nodes"]
@@ -176,6 +184,8 @@ def benchmark(seed_count=8, repeats=5):
         },
         "by_family": [{
             "family": family,
+            "frequency_ms": round(sum(r["frequency_ms"] for r in records
+                                      if r["family"] == family), 5),
             "reference_ms": round(sum(r["reference_ms"] for r in records
                                       if r["family"] == family), 5),
             "masked_ms": round(sum(r["masked_ms"] for r in records
