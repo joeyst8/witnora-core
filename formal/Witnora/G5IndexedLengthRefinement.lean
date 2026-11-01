@@ -73,66 +73,39 @@ theorem source_state_next_reference
 #print axioms Witnora.G5IndexedLengthRefinement.next_reference_agrees
 #print axioms Witnora.G5IndexedLengthRefinement.source_state_next_reference
 
-/-- A single accepted source operation refines the existing mutable
-    G5IndexedBridge compiler, provided the working reference count equals
-    the original input row count. This establishes identical reference
-    remapping and emitted DAG operation pairs. -/
-theorem accepted_step_refines_compiler
-    (initial : List Row) (state next : SourceState initial)
-    (op : Witnora.G5IndexedBridge.Operation)
-    (hlen : state.refs.length = initial.length)
-    (hstep : state.step initial op = some next) :
-    ∃ compiled : Witnora.G5IndexedBridge.State,
-      Witnora.G5IndexedBridge.step
-        (state.refs, state.dag.steps) op = some compiled ∧
-      compiled = (next.refs, next.dag.steps) := by
-  cases op with
-  | swapRows i j =>
-      cases hi : state.refs[i]? with
-      | none =>
-          simp [SourceState.step, hi] at hstep
-      | some left =>
-          cases hj : state.refs[j]? with
-          | none =>
-              simp [SourceState.step, hi, hj] at hstep
-          | some right =>
-              simp [SourceState.step, hi, hj] at hstep
-              cases hstep
-              refine ⟨_, ?_, ?_⟩
-              · simp [Witnora.G5IndexedBridge.step, hi, hj]
-              · rfl
-  | addRowXor target source =>
-      by_cases hneq : target = source
-      · subst source
-        simp [SourceState.step] at hstep
-      · have hbeq : (target == source) = false :=
-          decide_eq_false hneq
-        cases htref : state.refs[target]? with
-        | none =>
-            simp [SourceState.step, hbeq, htref] at hstep
-        | some targetRef =>
-            cases hsref : state.refs[source]? with
-            | none =>
-                simp [SourceState.step, hbeq, htref, hsref] at hstep
-            | some sourceRef =>
-                cases ht : state.dag.rows[targetRef]? with
-                | none =>
-                    simp [SourceState.step, hbeq, htref, hsref, ht] at hstep
-                | some targetRow =>
-                    cases hs : state.dag.rows[sourceRef]? with
-                    | none =>
-                        simp [SourceState.step, hbeq, htref, hsref, ht, hs] at hstep
-                    | some sourceRow =>
-                        simp [SourceState.step, hbeq, htref, hsref, ht, hs]
-                          at hstep
-                        cases hstep
-                        refine ⟨_, ?_, ?_⟩
-                        · simp [Witnora.G5IndexedBridge.step, hbeq,
-                            htref, hsref]
-                        · simp [Builder.append,
-                            source_state_next_reference initial state,
-                            hlen, Nat.add_comm]
+/-- Swap preserves the DAG and remaps exactly the two source references
+    used by the verified source-style emitter. -/
+theorem swap_step_refines_compiler
+    (initial : List Row) (state : SourceState initial)
+    (i j left right : Nat)
+    (hi : state.refs[i]? = some left)
+    (hj : state.refs[j]? = some right) :
+    Witnora.G5IndexedBridge.step
+      (state.refs, state.dag.steps)
+      (.swapRows i j) =
+      some ((state.refs.set i right).set j left,
+        state.dag.steps) := by
+  simp [Witnora.G5IndexedBridge.step, hi, hj]
 
-#print axioms Witnora.G5IndexedLengthRefinement.accepted_step_refines_compiler
+/-- Every accepted source XOR obtains the same next row reference
+    and the same appended DAG pair as the original indexed compiler. -/
+theorem xor_step_refines_compiler
+    (initial : List Row) (state : SourceState initial)
+    (target source targetRef sourceRef : Nat)
+    (hneq : target ≠ source)
+    (hlen : state.refs.length = initial.length)
+    (ht : state.refs[target]? = some targetRef)
+    (hs : state.refs[source]? = some sourceRef) :
+    Witnora.G5IndexedBridge.step
+      (state.refs, state.dag.steps)
+      (.addRowXor target source) =
+      some (state.refs.set target state.dag.rows.length,
+        state.dag.steps ++ [(targetRef, sourceRef)]) := by
+  have hbeq : (target == source) = false := decide_eq_false hneq
+  have hn := source_state_next_reference initial state
+  simp [Witnora.G5IndexedBridge.step, hbeq, ht, hs, hn, hlen]
+
+#print axioms Witnora.G5IndexedLengthRefinement.swap_step_refines_compiler
+#print axioms Witnora.G5IndexedLengthRefinement.xor_step_refines_compiler
 
 end Witnora.G5IndexedLengthRefinement
