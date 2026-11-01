@@ -82,11 +82,10 @@ def pythonConditionCNF (fixed : Nat → Option Bool)
 theorem pythonConditionCNF_eq
     (fixed : Nat → Option Bool) (cnf : CNF) :
     pythonConditionCNF fixed cnf = conditionCNF fixed cnf := by
-  induction cnf with
-  | nil => rfl
-  | cons clause rest ih =>
-      simp [pythonConditionCNF, conditionCNF,
-        pythonConditionClause_eq, ih]
+  have hf : pythonConditionClause fixed = conditionClause fixed := by
+    funext clause
+    exact pythonConditionClause_eq fixed clause
+  simp [pythonConditionCNF, conditionCNF, hf]
 
 /-- Full source-model correspondence of the iterative Python-style
     conditioning algorithm under a consistent separator assignment. -/
