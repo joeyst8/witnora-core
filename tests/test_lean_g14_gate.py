@@ -63,7 +63,8 @@ class G14LeanCoverGateTest(unittest.TestCase):
             path = Path(argv[3])
             source_code = path.read_text(encoding="utf-8")
             if path.name == "G14CompleteSourceProof.lean":
-                self.assertIn("checked_ascii_dimacs_g14_canonical_unsat", source_code)
+                self.assertIn("checked_ascii_dimacs_g14_canonical_normalized_unsat", source_code)
+                self.assertIn("checkNormalizedPartition", source_code)
                 self.assertNotIn(chr(92) + "n", source_code)
                 captured.append(source_code)
             return subprocess.CompletedProcess(argv, 0, "", "")
