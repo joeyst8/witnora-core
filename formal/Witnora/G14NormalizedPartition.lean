@@ -1,5 +1,6 @@
 import Witnora.ComponentPartition
 import Witnora.CNFSorted
+import Witnora.SeparatorAssignments
 
 /-!
 # Sound G14 partition checking after canonical CNF normalization
@@ -15,6 +16,7 @@ canonical residual clause exactly once.
 namespace Witnora.G14NormalizedPartition
 
 open Witnora.Concrete
+open Witnora.FiniteXor
 open Witnora.G5Extraction
 open Witnora.Conditioning
 open Witnora.ComponentPartition
