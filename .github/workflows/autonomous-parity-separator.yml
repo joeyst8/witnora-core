@@ -13,6 +13,7 @@ on:
       - "scripts/benchmark_scaled_minisat_separator.py"
       - "scripts/benchmark_incremental_minisat_separator.py"
       - "scripts/benchmark_adaptive_separator_holdout.py"
+      - "scripts/benchmark_repeated_query_separator.py"
       - ".github/workflows/autonomous-parity-separator.yml"
   workflow_dispatch:
 jobs:
@@ -35,6 +36,8 @@ jobs:
         run: python -m scripts.benchmark_incremental_minisat_separator
       - name: Held-out adaptive policy comparison
         run: python -m scripts.benchmark_adaptive_separator_holdout
+      - name: Repeated queries with cheap pre-screen
+        run: python -m scripts.benchmark_repeated_query_separator
       - name: Archive every positive and negative result
         uses: actions/upload-artifact@v4
         with:
@@ -45,4 +48,5 @@ jobs:
             research/scaled_minisat_separator_benchmark.json
             research/incremental_minisat_separator_benchmark.json
             research/adaptive_separator_holdout_benchmark.json
+            research/repeated_query_separator_benchmark.json
           retention-days: 30
