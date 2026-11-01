@@ -69,7 +69,11 @@ theorem sourceOrderEliminateTarget_idempotent
         sourceOrderEliminateTarget v pivot target := by
   have hclear :=
     sourceOrderEliminateTarget_clears v pivot target hp
-  simp [sourceOrderEliminateTarget, hclear]
+  change (if v ∈ (sourceOrderEliminateTarget v pivot target).coefficients
+    then xorRow (sourceOrderEliminateTarget v pivot target) pivot
+    else sourceOrderEliminateTarget v pivot target) =
+    sourceOrderEliminateTarget v pivot target
+  simp [hclear]
 
 /-- The explicit checked DAG append makes a mutable target slot contain
     the exact XOR row, and that row is free of the eliminated variable. -/
