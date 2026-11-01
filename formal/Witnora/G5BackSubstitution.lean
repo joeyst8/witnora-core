@@ -61,7 +61,8 @@ theorem xorFold_flip_index
         cases hp : xorFold k f <;> cases hb : f k <;> decide
       · have hlt : v < k := by
           exact (Nat.lt_succ_iff_lt_or_eq.mp hv).resolve_right he
-        simp only [xorFold, if_neg he]
+        have hk : k ≠ v := Ne.symm he
+        simp only [xorFold, if_neg hk]
         rw [ih hlt]
         cases hp : xorFold k f <;> cases hb : f k <;> decide
 
