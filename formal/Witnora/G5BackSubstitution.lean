@@ -285,8 +285,10 @@ theorem eliminateTagged_triangular
                   have hdis : ∀ entry ∈ pivots,
                       v ∉ entry.2.coefficients := by
                     simpa [ht] using habsent
-                  change Triangular ((v, pivot) :: pivots)
-                  exact ⟨hvar, hdis, htri⟩
+                  have hresult : Triangular ((v, pivot) :: pivots) :=
+                    ⟨hvar, hdis, htri⟩
+                  simpa [eliminateTagged, hp, remainingRows, ht]
+                    using hresult
 
 #print axioms Witnora.G5BackSubstitution.tagged_preserves_absence
 #print axioms Witnora.G5BackSubstitution.eliminateTagged_triangular
