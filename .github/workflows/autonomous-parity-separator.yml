@@ -12,6 +12,7 @@ on:
       - "tests/test_separator_solver_comparison.py"
       - "scripts/benchmark_scaled_minisat_separator.py"
       - "scripts/benchmark_incremental_minisat_separator.py"
+      - "scripts/benchmark_adaptive_separator_holdout.py"
       - ".github/workflows/autonomous-parity-separator.yml"
   workflow_dispatch:
 jobs:
@@ -32,6 +33,8 @@ jobs:
         run: python -m scripts.benchmark_scaled_minisat_separator
       - name: Single-solver incremental separator comparison
         run: python -m scripts.benchmark_incremental_minisat_separator
+      - name: Held-out adaptive policy comparison
+        run: python -m scripts.benchmark_adaptive_separator_holdout
       - name: Archive every positive and negative result
         uses: actions/upload-artifact@v4
         with:
@@ -41,4 +44,5 @@ jobs:
             research/solver_decomposition_benchmark.json
             research/scaled_minisat_separator_benchmark.json
             research/incremental_minisat_separator_benchmark.json
+            research/adaptive_separator_holdout_benchmark.json
           retention-days: 30
