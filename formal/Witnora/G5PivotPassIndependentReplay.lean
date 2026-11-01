@@ -60,7 +60,7 @@ theorem emitPass_no_self_swaps
     (h : emitPass initial v pivotSlot targets state =
       some (operations, result)) :
     ∀ op ∈ operations, NoSelfSwap op := by
-  induction targets generalizing state operations with
+  induction targets generalizing state operations result with
   | nil =>
       simp [emitPass] at h
       rcases h with ⟨hops, hresult⟩
