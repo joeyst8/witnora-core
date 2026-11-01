@@ -109,6 +109,76 @@ theorem emitOne_preserves_absent_candidates
         subst result
         exact habs
 
+/-- Once absent from the candidate slots, a variable stays absent
+    throughout a complete emitted pivot pass on those candidates. -/
+theorem emitPass_preserves_absent_candidates
+    (initial : List Row) (w v pivotSlot : Nat)
+    (targets candidates : List Nat)
+    (state result : SourceState initial) (operations : List Op)
+    (pivotRow : Row)
+    (hpivotMem : pivotSlot ∈ candidates)
+    (htargets : ∀ slot ∈ targets, slot ∈ candidates)
+    (hpivotNot : pivotSlot ∉ targets)
+    (hpivot : workingRow initial state pivotSlot = some pivotRow)
+    (hvalid : LiveRefsValid initial state)
+    (habs : AbsentOn initial v state candidates)
+    (h : emitPass initial w pivotSlot targets state =
+      some (operations, result)) :
+    AbsentOn initial v result candidates := by
+  induction targets generalizing state result operations with
+  | nil =>
+      simp [emitPass] at h
+      rcases h with ⟨hops, hresult⟩
+      subst result
+      exact habs
+  | cons target rest ih =>
+      have htargetMem : target ∈ candidates :=
+        htargets target (by simp)
+      have htargetPivot : target ≠ pivotSlot := by
+        intro heq
+        subst target
+        exact hpivotNot (by simp)
+      have hpivotRest : pivotSlot ∉ rest := by
+        intro hm
+        exact hpivotNot (by simp [hm])
+      have htargetsRest : ∀ slot ∈ rest, slot ∈ candidates := by
+        intro slot hm
+        exact htargets slot (by simp [hm])
+      cases hf : emitOne initial w pivotSlot target state with
+      | none =>
+          simp [emitPass, hf] at h
+      | some first =>
+          cases first with
+          | mk firstOps updated =>
+              cases hr : emitPass initial w pivotSlot rest updated with
+              | none =>
+                  simp [emitPass, hf, hr] at h
+              | some second =>
+                  cases second with
+                  | mk restOps finished =>
+                      simp [emitPass, hf, hr] at h
+                      rcases h with ⟨hops, hresult⟩
+                      subst result
+                      have habsUpdated := emitOne_preserves_absent_candidates
+                        initial w v pivotSlot target candidates
+                        state updated firstOps pivotRow hpivotMem
+                        htargetMem htargetPivot hpivot hvalid habs hf
+                      have hpivotUpdated :
+                          workingRow initial updated pivotSlot =
+                            some pivotRow := by
+                        rw [emitOne_preserves_other_view initial w
+                          pivotSlot target pivotSlot state updated
+                          firstOps pivotRow htargetPivot
+                          (Ne.symm htargetPivot) hpivot hvalid hf]
+                        exact hpivot
+                      have hvalidUpdated := emitOne_preserves_valid
+                        initial w pivotSlot target state updated
+                        firstOps hvalid hf
+                      exact ih updated finished restOps
+                        htargetsRest hpivotRest hpivotUpdated
+                        hvalidUpdated habsUpdated hr
+
+#print axioms Witnora.G5ScheduledAbsenceInvariant.emitPass_preserves_absent_candidates
 #print axioms Witnora.G5ScheduledAbsenceInvariant.xorRow_preserves_absence
 #print axioms Witnora.G5ScheduledAbsenceInvariant.emitOne_preserves_absent_candidates
 
