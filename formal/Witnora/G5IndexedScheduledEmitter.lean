@@ -161,6 +161,23 @@ theorem emitted_schedule_independent_replay
     (emitSchedule_replays initial variables candidates
       state result operations h)
 
+/-- Real end-to-end scheduler entry point: start from the identity
+    row-reference table and visit all original input row slots. -/
+theorem emitted_from_initial_replays
+    (initial : List Row) (variables : List Nat)
+    (result : SourceState initial) (operations : List Op)
+    (h : emitSchedule initial variables (List.range initial.length)
+      (SourceState.start initial) = some (operations, result)) :
+    ∃ finalRows,
+      replay initial (operations.map toReplayStep) = some finalRows ∧
+      TableRel initial result finalRows := by
+  exact emitted_schedule_independent_replay initial
+    variables (List.range initial.length)
+    (SourceState.start initial) result initial operations
+    (start_valid initial) (start_table_relation initial) h
+
+#print axioms Witnora.G5IndexedScheduledEmitter.emitted_from_initial_replays
+
 #print axioms Witnora.G5IndexedScheduledEmitter.emitSchedule_replays
 #print axioms Witnora.G5IndexedScheduledEmitter.emitSchedule_no_self_swaps
 #print axioms Witnora.G5IndexedScheduledEmitter.emitted_schedule_independent_replay
