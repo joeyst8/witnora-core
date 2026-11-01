@@ -137,7 +137,7 @@ theorem foldlM_preserves_refs_valid
             simpa [List.foldlM_cons, hs] using h
           exact ih updated
             (step_preserves_refs_valid n state updated op hvalid hlen hs)
-            ((step_preserves_ref_length state updated op hs).trans hlen)
+            ((Witnora.G5IndexedExecutionInvariant.step_preserves_ref_length state updated op hs).trans hlen)
             hrest
 
 theorem indexed_run_refs_valid
