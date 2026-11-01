@@ -231,4 +231,64 @@ theorem eliminateTagged_matches_driver
 
 #print axioms Witnora.G5BackSubstitution.eliminateTagged_matches_driver
 
+/-- An absent variable remains absent from all *tagged* retained pivots. -/
+theorem tagged_preserves_absence
+    (vars : List Nat) (rows : List Row) (v : Nat)
+    (ha : Witnora.G5ResidualNormalForm.AbsentFrom v rows) :
+    ∀ entry ∈ (eliminateTagged vars rows).1,
+      v ∉ entry.2.coefficients := by
+  have hmodels :=
+    Witnora.G5ResidualNormalForm.eliminateVariables_preserves_absence
+      vars rows v ha
+  have hmatch := eliminateTagged_matches_driver vars rows
+  have hmap : (eliminateTagged vars rows).1.map Prod.snd =
+      (Witnora.G5TerminatingPivot.eliminateVariables vars rows).1 :=
+    congrArg Prod.fst hmatch
+  intro entry hentry
+  have hmem : entry.2 ∈ (eliminateTagged vars rows).1.map Prod.snd :=
+    List.mem_map.mpr ⟨entry, hentry, rfl⟩
+  rw [hmap] at hmem
+  exact hmodels entry.2 (List.mem_append.mpr (Or.inl hmem))
+
+/-- The actual elimination driver produces a triangular list of pivots:
+    every pivot contains its tag, and all subsequently retained pivots
+    exclude that earlier pivot variable. -/
+theorem eliminateTagged_triangular
+    (vars : List Nat) (rows : List Row) :
+    Triangular (eliminateTagged vars rows).1 := by
+  induction vars generalizing rows with
+  | nil =>
+      trivial
+  | cons v rest ih =>
+      cases hp : Witnora.G5TerminatingPivot.extractPivot v rows with
+      | none =>
+          simpa [eliminateTagged, hp] using ih rows
+      | some result =>
+          cases result with
+          | mk pivot others =>
+              let remainingRows :=
+                Witnora.G5TerminatingPivot.eliminatePass v pivot others
+              have hvar : v ∈ pivot.coefficients :=
+                Witnora.G5ResidualNormalForm.extractPivot_some_contains
+                  v rows pivot others hp
+              have hpass : Witnora.G5ResidualNormalForm.AbsentFrom v
+                  remainingRows := by
+                intro row hr
+                exact Witnora.G5TerminatingPivot.eliminatePass_clears_variable
+                  v pivot others hvar row hr
+              have htail := ih remainingRows
+              have habsent := tagged_preserves_absence rest remainingRows v hpass
+              cases ht : eliminateTagged rest remainingRows with
+              | mk pivots residual =>
+                  have htri : Triangular pivots := by
+                    simpa [ht] using htail
+                  have hdis : ∀ entry ∈ pivots,
+                      v ∉ entry.2.coefficients := by
+                    simpa [ht] using habsent
+                  change Triangular ((v, pivot) :: pivots)
+                  exact ⟨hvar, hdis, htri⟩
+
+#print axioms Witnora.G5BackSubstitution.tagged_preserves_absence
+#print axioms Witnora.G5BackSubstitution.eliminateTagged_triangular
+
 end Witnora.G5BackSubstitution
