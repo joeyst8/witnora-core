@@ -75,7 +75,8 @@ def total_time(records, min_vars, include_discovery=False):
     return sum(
         (record["guided_ms"] if use_guidance(record, min_vars)
          else record["base_ms"])
-        + (record["discovery_ms"] if include_discovery else 0)
+        + (record["discovery_ms"] if include_discovery
+           and record["vars"] >= min_vars else 0)
         for record in records)
 
 
