@@ -39,7 +39,7 @@ class AutonomousParitySeparatorTests(unittest.TestCase):
     def test_blind_study_reproducible(self):
         first = run_experiment(seed_count=2)
         self.assertEqual(first, run_experiment(seed_count=2))
-        self.assertEqual(first["summary"]["total"], 12)
+        self.assertEqual(first["summary"]["total"], 14)
         self.assertTrue(first["summary"]["ground_truth_not_provided_to_detector"])
 
 
