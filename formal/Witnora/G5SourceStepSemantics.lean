@@ -41,7 +41,16 @@ theorem xor_step_exact
   simp only [SourceState.step, hneq, hi, hj, xorUpdatedState]
   split
   · simp_all
-  · split <;> simp_all
+  · split
+    · rename_i actualTarget actualSource hactualTarget hactualSource
+      have htargetEq : actualTarget = targetRow :=
+        Option.some.inj (hactualTarget.symm.trans ht)
+      have hsourceEq : actualSource = sourceRow :=
+        Option.some.inj (hactualSource.symm.trans hs)
+      subst actualTarget
+      subst actualSource
+      simp [Witnora.G5VerifiedDagEmitter.Builder.append]
+    · simp_all
 
 theorem swap_agrees_with_replay
     (initial : List Row) (state : SourceState initial)
