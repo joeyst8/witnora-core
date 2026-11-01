@@ -39,7 +39,9 @@ theorem xor_step_exact
         targetRow sourceRow ht hs) := by
   have hneq : (target == source) = false := decide_eq_false hne
   simp only [SourceState.step, hneq, hi, hj, xorUpdatedState]
-  split <;> simp_all
+  split
+  · simp_all
+  · split <;> simp_all
 
 theorem swap_agrees_with_replay
     (initial : List Row) (state : SourceState initial)
