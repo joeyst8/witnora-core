@@ -33,6 +33,18 @@ def _bridged_controls(seed: int) -> CNFFormula:
     return CNFFormula.from_raw_clauses(rows)
 
 
+def _dense_bridge_negative(seed: int) -> CNFFormula:
+    base, metadata = make_hidden_separator(seed, width=2, cross_noise=False)
+    left, right = metadata["left_block"], metadata["right_block"]
+    rows = base.to_clause_lists()
+    # A complete bipartite 3x3 cross-connection requires at least
+    # three extra removals to separate these preserved parity groups.
+    for u in left:
+        for v in right:
+            rows.append([u, v])
+    return CNFFormula.from_raw_clauses(rows)
+
+
 def run_experiment(seed_count: int = 8):
     if not 1 <= seed_count <= 24:
         raise ValueError("seed count out of range")
@@ -52,7 +64,8 @@ def run_experiment(seed_count: int = 8):
                 })
     for family, generate in [
         ("random_3sat", _random_three_sat),
-        ("bridged_control", _bridged_controls),
+        ("bridged_stress", _bridged_controls),
+        ("dense_bridge_negative", _dense_bridge_negative),
     ]:
         for seed in range(seed_count):
             formula = generate(seed)
@@ -73,8 +86,11 @@ def run_experiment(seed_count: int = 8):
             if r["family"] == "hidden_separator" and r["cross_noise"]),
         "random_3sat_detected": sum(
             r["detected"] for r in records if r["family"] == "random_3sat"),
-        "bridged_control_detected": sum(
-            r["detected"] for r in records if r["family"] == "bridged_control"),
+        "bridged_stress_detected": sum(
+            r["detected"] for r in records if r["family"] == "bridged_stress"),
+        "dense_bridge_negative_detected": sum(
+            r["detected"] for r in records
+            if r["family"] == "dense_bridge_negative"),
         "mean_candidate_trials": round(sum(
             r["result"]["trials"] for r in records) / len(records), 2),
         "ground_truth_not_provided_to_detector": True,
