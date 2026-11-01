@@ -157,6 +157,16 @@ def benchmark(seed_count=8):
             "cache_time_wins_over_support_split": sum(
                 r["support_split_cache"]["elapsed_ms"]
                 < r["support_split"]["elapsed_ms"] for r in records),
+            "cache_over_frequency_node_wins": sum(
+                r["support_split_cache"]["nodes"] < r["frequency"]["nodes"]
+                for r in records),
+            "cache_over_frequency_time_wins": sum(
+                r["support_split_cache"]["elapsed_ms"]
+                < r["frequency"]["elapsed_ms"] for r in records),
+            "total_frequency_ms": round(sum(
+                r["frequency"]["elapsed_ms"] for r in records), 4),
+            "total_cached_ms": round(sum(
+                r["support_split_cache"]["elapsed_ms"] for r in records), 4),
             "total_cache_hits": sum(
                 r["support_split_cache"]["cache_hits"] for r in records),
             "total_split_events": sum(
