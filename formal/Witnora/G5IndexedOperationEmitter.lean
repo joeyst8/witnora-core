@@ -105,4 +105,21 @@ example :
 #print axioms Witnora.G5IndexedOperationEmitter.run_replay_exact
 #print axioms Witnora.G5IndexedOperationEmitter.accepts_has_checked_dag
 
+/-- An accepted source-level indexed operation sequence is sound for any
+    CNF model predicate whose satisfying assignments obey the given
+    source rows. No Boolean assignment enumeration or Python trust is used. -/
+theorem accepts_unsat_of_extraction
+    (bound : Nat) (cnfHolds : (Nat → Bool) → Prop)
+    (initial : List Row) (operations : List Operation)
+    (hextract : ∀ a, cnfHolds a →
+      AllHold bound initial a)
+    (haccepts : accepts initial operations = true) :
+    ¬ ∃ a : Nat → Bool, cnfHolds a := by
+  obtain ⟨result, _, hcheck⟩ :=
+    accepts_has_checked_dag initial operations haccepts
+  exact checkDagContradiction_unsat
+    bound cnfHolds initial result.dag.steps hextract hcheck
+
+#print axioms Witnora.G5IndexedOperationEmitter.accepts_unsat_of_extraction
+
 end Witnora.G5IndexedOperationEmitter
