@@ -73,18 +73,20 @@ theorem step_preserves_valid
                 simp only [SourceState.step, hneq, hi, hj] at hstep
                 split at hstep
                 · simp at hstep
-                · cases hstep
-                  have hprev : ∀ ref ∈ state.refs,
+                · split at hstep
+                  · cases hstep
+                    have hprev : ∀ ref ∈ state.refs,
                       ref < state.dag.rows.length + 1 := by
-                    intro ref hm
-                    exact Nat.lt_succ_of_lt (hvalid ref hm)
-                  simpa [LiveRefsValid,
-                    Witnora.G5VerifiedDagEmitter.Builder.append] using
-                    (Witnora.G5IndexedReferenceSafety.property_set
-                      state.refs
-                      (fun ref => ref < state.dag.rows.length + 1)
-                      target state.dag.rows.length hprev
-                      (Nat.lt_succ_self _))
+                      intro ref hm
+                      exact Nat.lt_succ_of_lt (hvalid ref hm)
+                    simpa [LiveRefsValid,
+                      Witnora.G5VerifiedDagEmitter.Builder.append] using
+                      (Witnora.G5IndexedReferenceSafety.property_set
+                        state.refs
+                        (fun ref => ref < state.dag.rows.length + 1)
+                        target state.dag.rows.length hprev
+                        (Nat.lt_succ_self _))
+                  · simp at hstep
 
 
 theorem foldlM_preserves_valid
