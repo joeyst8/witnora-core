@@ -186,7 +186,7 @@ theorem choosePivot_complete
   | some choice =>
       cases choice with
       | mk chosen chosenRow =>
-          exact ⟨chosen, chosenRow, hp⟩
+          exact ⟨chosen, chosenRow, rfl⟩
 
 #print axioms Witnora.G5IndexedPivotSelection.choosePivot_none_absent
 #print axioms Witnora.G5IndexedPivotSelection.choosePivot_complete
