@@ -14,6 +14,7 @@ from pathlib import Path
 from time import perf_counter
 
 from scripts.benchmark_separator_decomposition import simplify, components
+from witnora_core.component_equivalence import cheap_shape, exact_signed_isomorphism
 from scripts.experiment_inloop_support_hints import support_candidates
 from scripts.benchmark_scaled_minisat_separator import scale_hidden_formula
 from scripts.benchmark_incremental_minisat_separator import contradiction_variant
@@ -37,7 +38,7 @@ def normalized_component_key(rows):
 
 def solve(rows, counters, *, split, hints=None, cache=None,
           event_driven=False, scan_allowed=True,
-          hint_depth=0, min_hint_depth=1):
+          hint_depth=0, min_hint_depth=1, equiv_cache=None):
     counters["nodes"] += 1
     rows = tuple(tuple(row) for row in rows)
     while True:
@@ -71,19 +72,36 @@ def solve(rows, counters, *, split, hints=None, cache=None,
                     answer = solve(group, counters, split=split, hints=hints,
                                    event_driven=event_driven,
                                    scan_allowed=not event_driven,
-                                   hint_depth=0, min_hint_depth=min_hint_depth)
+                                   hint_depth=0, min_hint_depth=min_hint_depth,
+                                   equiv_cache=equiv_cache)
                 else:
                     signature = normalized_component_key(group)
                     if signature in cache:
                         counters["cache_hits"] += 1
                         answer = cache[signature]
                     else:
-                        answer = solve(group, counters, split=split,
-                                       hints=hints, cache=cache,
-                                       event_driven=event_driven,
-                                       scan_allowed=not event_driven,
-                                       hint_depth=0, min_hint_depth=min_hint_depth)
+                        matched = None
+                        shape = cheap_shape(group) if equiv_cache is not None else None
+                        if equiv_cache is not None:
+                            for previous_rows, previous_key in equiv_cache.get(shape, []):
+                                if exact_signed_isomorphism(group, previous_rows) is not None:
+                                    matched = previous_key
+                                    break
+                        if matched is not None:
+                            counters["equivalence_hits"] += 1
+                            answer = cache[matched]
+                        else:
+                            answer = solve(group, counters, split=split,
+                                           hints=hints, cache=cache,
+                                           event_driven=event_driven,
+                                           scan_allowed=not event_driven,
+                                           hint_depth=0,
+                                           min_hint_depth=min_hint_depth,
+                                           equiv_cache=equiv_cache)
                         cache[signature] = answer
+                        if equiv_cache is not None:
+                            equiv_cache.setdefault(shape, []).append(
+                                (tuple(tuple(row) for row in group), signature))
                 if not answer:
                     return False
             return True
@@ -103,7 +121,8 @@ def solve(rows, counters, *, split, hints=None, cache=None,
                                                        bool(hints and hints.get(chosen, 0))
                                                        and hint_depth + 1 >= min_hint_depth),
                                          hint_depth=hint_depth + bool(hints and hints.get(chosen, 0)),
-                                         min_hint_depth=min_hint_depth):
+                                         min_hint_depth=min_hint_depth,
+                                         equiv_cache=equiv_cache):
             return True
     return False
 
@@ -111,23 +130,30 @@ def solve(rows, counters, *, split, hints=None, cache=None,
 def run(formula, variant):
     rows = formula.to_clause_lists()
     split = variant != "frequency"
+    use_equivalence = variant == "support_split_equiv_cache"
     use_cache = variant in ("support_split_cache", "support_split_event_cache",
-                            "support_split_event2_cache")
+                            "support_split_event2_cache",
+                            "support_split_equiv_cache")
     event_driven = variant in ("support_split_event_cache",
-                               "support_split_event2_cache")
+                               "support_split_event2_cache",
+                               "support_split_equiv_cache")
     start = perf_counter()
     hints = support_candidates(rows) if variant in (
         "support_split", "support_split_cache", "support_split_event_cache",
-        "support_split_event2_cache") else None
+        "support_split_event2_cache",
+        "support_split_equiv_cache") else None
     stats = {
         "nodes": 0, "decisions": 0, "hinted_decisions": 0,
         "component_scans": 0, "split_events": 0, "component_jobs": 0,
-        "cache_hits": 0,
+        "cache_hits": 0, "equivalence_hits": 0,
     }
     answer = solve(rows, stats, split=split, hints=hints,
                    cache={} if use_cache else None,
                    event_driven=event_driven, scan_allowed=not event_driven,
-                   min_hint_depth=2 if variant == "support_split_event2_cache" else 1)
+                   min_hint_depth=2 if variant in (
+                       "support_split_event2_cache",
+                       "support_split_equiv_cache") else 1,
+                   equiv_cache={} if use_equivalence else None)
     return {
         "sat": answer, **stats,
         "elapsed_ms": round((perf_counter() - start) * 1000, 5),
@@ -152,7 +178,7 @@ def benchmark(seed_count=8):
             name: run(formula, name)
             for name in ("frequency", "frequency_split", "support_split",
                              "support_split_cache", "support_split_event_cache",
-                             "support_split_event2_cache")
+                             "support_split_event2_cache", "support_split_equiv_cache")
         }
         if len({item["sat"] for item in variants.values()}) != 1:
             raise AssertionError((family, copies, seed, "SAT disagreement"))
@@ -211,6 +237,20 @@ def benchmark(seed_count=8):
                 for r in records),
             "event2_split_events": sum(
                 r["support_split_event2_cache"]["split_events"]
+                for r in records),
+            "equiv_total_ms": round(sum(
+                r["support_split_equiv_cache"]["elapsed_ms"]
+                for r in records), 4),
+            "equiv_cache_hits": sum(
+                r["support_split_equiv_cache"]["equivalence_hits"]
+                for r in records),
+            "equiv_vs_event2_node_wins": sum(
+                r["support_split_equiv_cache"]["nodes"]
+                < r["support_split_event2_cache"]["nodes"]
+                for r in records),
+            "equiv_vs_event2_time_wins": sum(
+                r["support_split_equiv_cache"]["elapsed_ms"]
+                < r["support_split_event2_cache"]["elapsed_ms"]
                 for r in records),
             "event2_total_ms": round(sum(
                 r["support_split_event2_cache"]["elapsed_ms"]
