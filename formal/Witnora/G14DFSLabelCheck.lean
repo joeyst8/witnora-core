@@ -46,8 +46,8 @@ theorem checkGraphEdgeLabels_sound
   obtain ⟨clause, hc, hu, hv⟩ := hedge
   obtain ⟨lu, hlu, heu⟩ := List.mem_map.mp hu
   obtain ⟨lv, hlv, hev⟩ := List.mem_map.mp hv
-  have huvar : lu.1 = u := by simpa using heu.symm
-  have hvvar : lv.1 = v := by simpa using hev.symm
+  have huvar : lu.1 = u := by simpa using heu
+  have hvvar : lv.1 = v := by simpa using hev
   have hlu : lu ∈ nonseparatorLiterals separator clause := by
     apply List.mem_filter.mpr
     refine ⟨hlu, ?_⟩
