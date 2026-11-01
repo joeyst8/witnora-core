@@ -106,4 +106,46 @@ theorem eliminatePass_clears_variable
 #print axioms Witnora.G5TerminatingPivot.eliminatePass_equiv
 #print axioms Witnora.G5TerminatingPivot.eliminatePass_clears_variable
 
+/-- Select the first row containing v, retaining all other rows in their
+    original relative order. Structural recursion on the row list
+    guarantees this search terminates. -/
+def extractPivot (v : Nat) : List Row → Option (Row × List Row)
+  | [] => none
+  | row :: rest =>
+      if v ∈ row.coefficients then
+        some (row, rest)
+      else
+        (extractPivot v rest).map (fun result => (result.1, row :: result.2))
+
+/-- A complete finite pass driver. It never tries to re-eliminate into a
+    previously retained pivot. The recursive argument is the shrinking
+    variable list, giving a direct termination proof by construction. -/
+def eliminateVariables : List Nat → List Row → List Row × List Row
+  | [], rows => ([], rows)
+  | v :: remainingVars, rows =>
+      match extractPivot v rows with
+      | none => eliminateVariables remainingVars rows
+      | some (pivot, otherRows) =>
+          let (pivots, residual) :=
+            eliminateVariables remainingVars
+              (eliminatePass v pivot otherRows)
+          (pivot :: pivots, residual)
+
+/-- The empty schedule terminates immediately and changes no row. -/
+theorem eliminateVariables_empty (rows : List Row) :
+    eliminateVariables [] rows = ([], rows) := rfl
+
+/-- A three-row contradiction is revealed by two successive pivot passes.
+    This is an executable regression, not the universal completeness proof. -/
+example :
+    (eliminateVariables [1, 2]
+      [⟨[1, 2], false⟩, ⟨[1], false⟩, ⟨[2], true⟩]).2 =
+      [⟨[], true⟩] := by decide
+
+/-- A consistent system leaves an equation rather than fabricating a
+    contradiction. -/
+example :
+    (eliminateVariables [1, 2]
+      [⟨[1, 2], false⟩, ⟨[1], false⟩]).2 = [] := by decide
+
 end Witnora.G5TerminatingPivot
