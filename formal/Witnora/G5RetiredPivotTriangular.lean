@@ -185,6 +185,33 @@ theorem emitted_pivot_ledger_triangular
                             Triangular remainder.pivots
                           exact ⟨hv, htailAbs, htailTri⟩
 
+/-- Existing certified back-substitution applies to the *actual*
+    executable pivot ledger: every retained pivot equation can be
+    satisfied simultaneously, whenever scheduled variables are in
+    range of the sparse parity evaluator. -/
+theorem executable_pivot_ledger_has_model
+    (initial : List Row) (bound : Nat)
+    (variables candidates : List Nat)
+    (state : SourceState initial) (outcome : PivotOutcome initial)
+    (hnd : candidates.Nodup)
+    (hvalid : LiveRefsValid initial state)
+    (hvars : ∀ v ∈ variables, v < bound)
+    (h : emitScheduleWithPivots initial variables candidates state =
+      some outcome) :
+    ∃ assignment : Nat → Bool,
+      ∀ entry ∈ outcome.pivots,
+        Witnora.G5Certificate.RowHolds bound entry.2 assignment := by
+  have htri := emitted_pivot_ledger_triangular initial
+    variables candidates state outcome hnd hvalid h
+  have htags := ledger_tags_belong_to_schedule initial
+    variables candidates state outcome h
+  have hinrange : ∀ entry ∈ outcome.pivots, entry.1 < bound := by
+    intro entry he
+    exact hvars entry.1 (htags entry he)
+  exact triangular_has_model bound outcome.pivots htri hinrange
+
+#print axioms Witnora.G5RetiredPivotTriangular.executable_pivot_ledger_has_model
+
 #print axioms Witnora.G5RetiredPivotTriangular.ledger_pivots_preserve_absence
 #print axioms Witnora.G5RetiredPivotTriangular.emitted_pivot_ledger_triangular
 
