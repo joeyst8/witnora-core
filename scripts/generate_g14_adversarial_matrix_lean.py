@@ -100,7 +100,7 @@ def emit_adversarial_matrix(random_cases: int = 16) -> tuple[str, dict[str, int]
             # Verify that Python's own residual clauses are exactly Lean's
             # conditioned clauses, up to normalized order.
             lines.append(
-                f"example : checkPartition {residual_lean} "
+                f"example : checkNormalizedPartition {residual_lean} "
                 f"[{lean_cnf(residual)}] = true := by decide"
             )
             if not residual.num_clauses:
