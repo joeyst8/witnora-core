@@ -22,14 +22,14 @@ def reserve (neighbors : Nat → List Nat) :
       (if vertex ∈ processed then 0 else (neighbors vertex).length) +
         reserve neighbors rest processed
 
-/-- Marking a vertex absent from the finite universe does not change
+/-- Marking a vertex absent from the finite vertices does not change
     the remaining neighbor credits. -/
 theorem reserve_add_absent (neighbors : Nat → List Nat)
-    (universe processed : List Nat) (v : Nat)
-    (hv : v ∉ universe) :
-    reserve neighbors universe (v :: processed) =
-      reserve neighbors universe processed := by
-  induction universe with
+    (vertices processed : List Nat) (v : Nat)
+    (hv : v ∉ vertices) :
+    reserve neighbors vertices (v :: processed) =
+      reserve neighbors vertices processed := by
+  induction vertices with
   | nil => rfl
   | cons head tail ih =>
       have hne : head ≠ v := by
@@ -44,16 +44,16 @@ theorem reserve_add_absent (neighbors : Nat → List Nat)
         simp [hne]
       simp [hmem, ih htail]
 
-/-- Marking an unprocessed vertex in a duplicate-free universe spends
+/-- Marking an unprocessed vertex in a duplicate-free vertices spends
     exactly that vertex's reserved neighbor credit. -/
 theorem reserve_add_present (neighbors : Nat → List Nat)
-    (universe processed : List Nat) (v : Nat)
-    (hnd : universe.Nodup) (hv : v ∈ universe)
+    (vertices processed : List Nat) (v : Nat)
+    (hnd : vertices.Nodup) (hv : v ∈ vertices)
     (hunseen : v ∉ processed) :
-    reserve neighbors universe (v :: processed) +
+    reserve neighbors vertices (v :: processed) +
       (neighbors v).length =
-    reserve neighbors universe processed := by
-  induction universe with
+    reserve neighbors vertices processed := by
+  induction vertices with
   | nil => simp at hv
   | cons head tail ih =>
       have hparts := List.nodup_cons.mp hnd
@@ -76,29 +76,29 @@ theorem reserve_add_present (neighbors : Nat → List Nat)
         omega
 
 def potential (neighbors : Nat → List Nat)
-    (universe : List Nat) (state : State) : Nat :=
+    (vertices : List Nat) (state : State) : Nat :=
   state.pending.length +
-    reserve neighbors universe state.processed
+    reserve neighbors vertices state.processed
 
-def PendingWithin (universe : List Nat) (state : State) : Prop :=
-  ∀ v ∈ state.pending, v ∈ universe
+def PendingWithin (vertices : List Nat) (state : State) : Prop :=
+  ∀ v ∈ state.pending, v ∈ vertices
 
 def NeighborWithin (neighbors : Nat → List Nat)
-    (universe : List Nat) : Prop :=
-  ∀ v ∈ universe, ∀ w ∈ neighbors v, w ∈ universe
+    (vertices : List Nat) : Prop :=
+  ∀ v ∈ vertices, ∀ w ∈ neighbors v, w ∈ vertices
 
 theorem step_preserves_pending_within
-    (neighbors : Nat → List Nat) (universe : List Nat)
+    (neighbors : Nat → List Nat) (vertices : List Nat)
     (state : State)
-    (hneighbor : NeighborWithin neighbors universe)
-    (hstate : PendingWithin universe state) :
-    PendingWithin universe (step neighbors state) := by
+    (hneighbor : NeighborWithin neighbors vertices)
+    (hstate : PendingWithin vertices state) :
+    PendingWithin vertices (step neighbors state) := by
   cases hp : state.pending with
   | nil => simpa [step, hp] using hstate
   | cons vertex rest =>
-      have hv : vertex ∈ universe :=
+      have hv : vertex ∈ vertices :=
         hstate vertex (by simp [hp])
-      have hrest : ∀ v ∈ rest, v ∈ universe := by
+      have hrest : ∀ v ∈ rest, v ∈ vertices := by
         intro v hm
         exact hstate v (by simp [hp, hm])
       by_cases hseen : vertex ∈ state.processed
@@ -112,22 +112,22 @@ theorem step_preserves_pending_within
 /-- A nonempty DFS step consumes exactly one unit of total available
     stack-and-neighbor work, for all finite closed adjacency lists. -/
 theorem step_spends_one
-    (neighbors : Nat → List Nat) (universe : List Nat)
+    (neighbors : Nat → List Nat) (vertices : List Nat)
     (state : State)
-    (hnd : universe.Nodup)
-    (hwithin : PendingWithin universe state)
+    (hnd : vertices.Nodup)
+    (hwithin : PendingWithin vertices state)
     (hpop : state.pending ≠ []) :
-    potential neighbors universe (step neighbors state) + 1 =
-      potential neighbors universe state := by
+    potential neighbors vertices (step neighbors state) + 1 =
+      potential neighbors vertices state := by
   cases hp : state.pending with
   | nil => exact False.elim (hpop hp)
   | cons vertex rest =>
-      have hv : vertex ∈ universe :=
+      have hv : vertex ∈ vertices :=
         hwithin vertex (by simp [hp])
       by_cases hseen : vertex ∈ state.processed
       · simp [potential, step, hp, hseen]
       · have hcredit := reserve_add_present
-          neighbors universe state.processed vertex hnd hv hseen
+          neighbors vertices state.processed vertex hnd hv hseen
         simp only [potential, step, hp, hseen, ↓reduceIte,
           List.length_append, List.length_cons]
         omega
@@ -147,16 +147,16 @@ theorem run_empty_stays_empty
     sufficient DFS completion budget. No assumed successful run. -/
 theorem run_terminates_with_fuel
     (neighbors : Nat → List Nat)
-    (universe : List Nat)
-    (hnd : universe.Nodup)
-    (hneighbor : NeighborWithin neighbors universe)
+    (vertices : List Nat)
+    (hnd : vertices.Nodup)
+    (hneighbor : NeighborWithin neighbors vertices)
     (fuel : Nat) (state : State)
-    (hwithin : PendingWithin universe state)
-    (hbudget : potential neighbors universe state ≤ fuel) :
+    (hwithin : PendingWithin vertices state)
+    (hbudget : potential neighbors vertices state ≤ fuel) :
     (run neighbors fuel state).pending = [] := by
   induction fuel generalizing state with
   | zero =>
-      have hzero : potential neighbors universe state = 0 :=
+      have hzero : potential neighbors vertices state = 0 :=
         Nat.eq_zero_of_le_zero hbudget
       have hlen : state.pending.length = 0 := by
         have h := Nat.add_eq_zero_iff.mp hzero
@@ -166,28 +166,28 @@ theorem run_terminates_with_fuel
   | succ n ih =>
       by_cases hp : state.pending = []
       · exact run_empty_stays_empty neighbors (n + 1) state hp
-      · have hstep := step_spends_one neighbors universe state
+      · have hstep := step_spends_one neighbors vertices state
           hnd hwithin hp
         have hwithin' := step_preserves_pending_within
-          neighbors universe state hneighbor hwithin
+          neighbors vertices state hneighbor hwithin
         have hbudget' :
-            potential neighbors universe (step neighbors state) ≤ n := by
+            potential neighbors vertices (step neighbors state) ≤ n := by
           omega
         change (run neighbors n (step neighbors state)).pending = []
         exact ih (step neighbors state) hwithin' hbudget'
 
 /-- Starting from one valid root, the explicit bound needs only the
-    finite universe and the number of adjacency entries it contains. -/
+    finite vertices and the number of adjacency entries it contains. -/
 theorem start_terminates
-    (neighbors : Nat → List Nat) (universe : List Nat)
-    (hnd : universe.Nodup)
-    (hneighbor : NeighborWithin neighbors universe)
-    (root : Nat) (hroot : root ∈ universe) :
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hnd : vertices.Nodup)
+    (hneighbor : NeighborWithin neighbors vertices)
+    (root : Nat) (hroot : root ∈ vertices) :
     (run neighbors
-      (potential neighbors universe (start root))
+      (potential neighbors vertices (start root))
       (start root)).pending = [] := by
   apply run_terminates_with_fuel
-    neighbors universe hnd hneighbor
+    neighbors vertices hnd hneighbor
   · intro v hv
     simpa [start] using hroot
   · exact Nat.le_refl _
@@ -195,20 +195,20 @@ theorem start_terminates
 /-- A fully completed DFS therefore produces an edge-closed component
     within a computable universal finite work budget. -/
 theorem start_component_closed
-    (neighbors : Nat → List Nat) (universe : List Nat)
-    (hnd : universe.Nodup)
-    (hneighbor : NeighborWithin neighbors universe)
-    (root : Nat) (hroot : root ∈ universe) :
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hnd : vertices.Nodup)
+    (hneighbor : NeighborWithin neighbors vertices)
+    (root : Nat) (hroot : root ∈ vertices) :
     ∀ v ∈ (run neighbors
-      (potential neighbors universe (start root))
+      (potential neighbors vertices (start root))
       (start root)).processed,
       ∀ w ∈ neighbors v,
       w ∈ (run neighbors
-        (potential neighbors universe (start root))
+        (potential neighbors vertices (start root))
         (start root)).processed := by
   exact exhausted_worklist_is_edge_closed
-    neighbors (potential neighbors universe (start root)) root
-    (start_terminates neighbors universe hnd hneighbor root hroot)
+    neighbors (potential neighbors vertices (start root)) root
+    (start_terminates neighbors vertices hnd hneighbor root hroot)
 
 /-- Finite cyclic graph termination without a guessed fuel number. -/
 example :
