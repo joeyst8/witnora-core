@@ -53,7 +53,7 @@ def _check_partitions_with_lean(
 ) -> str:
     """Compile closed Lean propositions for all actual conditioned branches."""
     lines = [
-        "import Witnora.ComponentPartition",
+        "import Witnora.G14NormalizedPartition",
         "import Witnora.SeparatorAssignments",
         "import Witnora.SignedSerialization",
         "set_option maxRecDepth 16384",
@@ -88,7 +88,7 @@ def _check_partitions_with_lean(
                 f"{part.to_clause_lists()} = {_serialize_cnf(part)} := by decide"
             )
         lines.append(
-            "example : Witnora.ComponentPartition.checkPartition "
+            "example : Witnora.G14NormalizedPartition.checkNormalizedPartition "
             "(Witnora.Conditioning.conditionCNF "
             f"{_lean_partial_assignment(assignment)} {source_cnf}) "
             f"{cnfs} = true := by decide"
@@ -173,7 +173,7 @@ def _check_complete_g14_with_lean(
         return f"def {name} (branch : List (Nat × Bool)) : {result_type} := {expression}"
 
     lines = [
-        "import Witnora.G14ConcreteBridge",
+        "import Witnora.G14NormalizedPartition",
         "set_option maxRecDepth 16384",
         "set_option maxHeartbeats 0",
         definition("certComponents", "List Witnora.Concrete.CNF", component_values, "[]"),
@@ -207,7 +207,7 @@ def _check_complete_g14_with_lean(
         lines.extend(branch_cases())
     proof_for("hpart",
         f"∀ branch ∈ Witnora.SeparatorAssignments.enumerate {sorted_vars}, "
-        "Witnora.ComponentPartition.checkPartition "
+        "Witnora.G14NormalizedPartition.checkNormalizedPartition "
         "(Witnora.Conditioning.conditionCNF "
         "(Witnora.SeparatorAssignments.fixedOf branch) "
         f"(Witnora.SignedSerialization.decodeCNF {canonical})) "
@@ -221,7 +221,7 @@ def _check_complete_g14_with_lean(
         "(certBound branch) (certSelected branch) "
         "(certRows branch) (certSteps branch) = true")
     lines.append(
-        "  exact Witnora.G14ConcreteBridge.checked_ascii_dimacs_g14_canonical_unsat "
+        "  exact Witnora.G14NormalizedPartition.checked_ascii_dimacs_g14_canonical_normalized_unsat "
         f"{source_bytes} {token_data} {raw} {canonical} "
         f"(by decide) (by decide) (by decide) {sorted_vars} "
         "certComponents hpart certSelected hselected certBound certRows certSteps hcert"
