@@ -98,12 +98,14 @@ def benchmark(seed_count=8):
             truth = minicheck(formula)
             a = timed_variant(formula, "frequency")
             b = timed_variant(formula, "support_split_event2_cache")
-            if not (a["sat"] == b["sat"] == truth):
+            e = timed_variant(formula, "support_split_equiv_cache")
+            if not (a["sat"] == b["sat"] == e["sat"] == truth):
                 raise AssertionError((name, seed, "incorrect SAT answer"))
             records.append({
                 "family": name, "seed": seed, "vars": formula.num_vars,
                 "clauses": formula.num_clauses, "sat": truth,
                 "baseline": a, "event_cached": b,
+                "equivalence_cached": e,
             })
     return {
         "summary": {
@@ -119,6 +121,16 @@ def benchmark(seed_count=8):
             "baseline_total_ms": round(sum(
                 r["baseline"]["median_ms"] for r in records), 5),
             "cache_hits": sum(r["event_cached"]["cache_hits"] for r in records),
+            "equivalence_hits": sum(
+                r["equivalence_cached"]["equivalence_hits"] for r in records),
+            "equivalence_node_wins_vs_event": sum(
+                r["equivalence_cached"]["nodes"]
+                < r["event_cached"]["nodes"] for r in records),
+            "equivalence_time_wins_vs_event": sum(
+                r["equivalence_cached"]["median_ms"]
+                < r["event_cached"]["median_ms"] for r in records),
+            "equivalence_total_ms": round(sum(
+                r["equivalence_cached"]["median_ms"] for r in records), 5),
             "novelty_established": False,
             "genuinely_new_formula_families": True,
         },
@@ -136,6 +148,9 @@ def benchmark(seed_count=8):
                 if r["family"] == name), 5),
             "cache_hits": sum(r["event_cached"]["cache_hits"] for r in records
                               if r["family"] == name),
+            "equivalence_hits": sum(
+                r["equivalence_cached"]["equivalence_hits"] for r in records
+                if r["family"] == name),
         } for name, _ in families],
         "records": records,
     }
