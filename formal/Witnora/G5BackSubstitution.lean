@@ -395,4 +395,28 @@ theorem unsat_forces_residual_contradiction
 
 #print axioms Witnora.G5BackSubstitution.unsat_forces_residual_contradiction
 
+/-- Exact completeness of contradiction *discovery* for the verified
+    finite sparse Gaussian-elimination driver. An accepted indexed G5
+    DAG trace constructor is a separate, still-open proof obligation. -/
+theorem residual_contradiction_iff_unsat
+    (bound : Nat) (vars : List Nat) (rows : List Row)
+    (hcoverage : ∀ row ∈ rows,
+      ∀ v ∈ row.coefficients, v ∈ vars)
+    (hvars : ∀ v ∈ vars, v < bound) :
+    (∃ row ∈
+        (Witnora.G5TerminatingPivot.eliminateVariables vars rows).2,
+        row.coefficients = [] ∧ row.rhs = true) ↔
+    (¬ ∃ a : Nat → Bool,
+      ∀ row ∈ rows, RowHolds bound row a) := by
+  constructor
+  · rintro ⟨row, hmem, hcoeff, hrhs⟩
+    exact Witnora.G5TerminatingPivot.eliminateVariables_contradiction_unsat
+      bound vars rows
+      ⟨row, List.mem_append.mpr (Or.inr hmem), hcoeff, hrhs⟩
+  · intro hunsat
+    exact unsat_forces_residual_contradiction
+      bound vars rows hcoverage hvars hunsat
+
+#print axioms Witnora.G5BackSubstitution.residual_contradiction_iff_unsat
+
 end Witnora.G5BackSubstitution
