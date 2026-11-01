@@ -99,13 +99,15 @@ def benchmark(seed_count=8):
             a = timed_variant(formula, "frequency")
             b = timed_variant(formula, "support_split_event2_cache")
             e = timed_variant(formula, "support_split_equiv_cache")
-            if not (a["sat"] == b["sat"] == e["sat"] == truth):
+            refined = timed_variant(formula, "support_split_refined_cache")
+            if not (a["sat"] == b["sat"] == e["sat"] == refined["sat"] == truth):
                 raise AssertionError((name, seed, "incorrect SAT answer"))
             records.append({
                 "family": name, "seed": seed, "vars": formula.num_vars,
                 "clauses": formula.num_clauses, "sat": truth,
                 "baseline": a, "event_cached": b,
                 "equivalence_cached": e,
+                "refined_cached": refined,
             })
     return {
         "summary": {
@@ -129,6 +131,20 @@ def benchmark(seed_count=8):
             "equivalence_time_wins_vs_event": sum(
                 r["equivalence_cached"]["median_ms"]
                 < r["event_cached"]["median_ms"] for r in records),
+            "refined_equivalence_checks": sum(
+                r["refined_cached"]["equivalence_checks"]
+                for r in records),
+            "coarse_equivalence_checks": sum(
+                r["equivalence_cached"]["equivalence_checks"]
+                for r in records),
+            "refined_equivalence_hits": sum(
+                r["refined_cached"]["equivalence_hits"]
+                for r in records),
+            "refined_total_ms": round(sum(
+                r["refined_cached"]["median_ms"] for r in records), 5),
+            "refined_vs_coarse_time_wins": sum(
+                r["refined_cached"]["median_ms"]
+                < r["equivalence_cached"]["median_ms"] for r in records),
             "equivalence_total_ms": round(sum(
                 r["equivalence_cached"]["median_ms"] for r in records), 5),
             "novelty_established": False,
