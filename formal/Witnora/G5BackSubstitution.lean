@@ -184,4 +184,51 @@ theorem triangular_has_model
 
 #print axioms Witnora.G5BackSubstitution.triangular_has_model
 
+/-- The same deterministic elimination driver with every selected pivot
+    tagged by its variable. This records data used by back-substitution
+    without changing the underlying elimination algorithm. -/
+def eliminateTagged : List Nat → List Row → List (Nat × Row) × List Row
+  | [], rows => ([], rows)
+  | v :: remaining, rows =>
+      match Witnora.G5TerminatingPivot.extractPivot v rows with
+      | none => eliminateTagged remaining rows
+      | some (pivot, otherRows) =>
+          let (pivots, residual) :=
+            eliminateTagged remaining
+              (Witnora.G5TerminatingPivot.eliminatePass v pivot otherRows)
+          ((v, pivot) :: pivots, residual)
+
+/-- Tagging pivots is observationally equivalent to the verified untagged
+    elimination driver, including the exact residual row sequence. -/
+theorem eliminateTagged_matches_driver
+    (vars : List Nat) (rows : List Row) :
+    ((eliminateTagged vars rows).1.map Prod.snd,
+      (eliminateTagged vars rows).2) =
+      Witnora.G5TerminatingPivot.eliminateVariables vars rows := by
+  induction vars generalizing rows with
+  | nil =>
+      rfl
+  | cons v rest ih =>
+      cases hp : Witnora.G5TerminatingPivot.extractPivot v rows with
+      | none =>
+          simpa [eliminateTagged,
+            Witnora.G5TerminatingPivot.eliminateVariables, hp]
+            using ih rows
+      | some result =>
+          cases result with
+          | mk pivot others =>
+              cases ht : eliminateTagged rest
+                  (Witnora.G5TerminatingPivot.eliminatePass v pivot others) with
+              | mk pivots residual =>
+                  have hrec := ih
+                    (Witnora.G5TerminatingPivot.eliminatePass v pivot others)
+                  simp only [ht] at hrec
+                  simpa [eliminateTagged,
+                    Witnora.G5TerminatingPivot.eliminateVariables,
+                    hp, ht] using congrArg
+                    (fun p : List Row × List Row =>
+                      (pivot :: p.1, p.2)) hrec
+
+#print axioms Witnora.G5BackSubstitution.eliminateTagged_matches_driver
+
 end Witnora.G5BackSubstitution
