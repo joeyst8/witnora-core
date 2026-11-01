@@ -62,8 +62,7 @@ theorem executeFrom_append
       | none =>
           simp [executeFrom, List.foldlM_cons, hs]
       | some updated =>
-          simp [executeFrom, List.foldlM_cons, hs]
-          exact ih updated
+          simp [executeFrom, List.foldlM_cons, hs, ih]
 
 /-- Every successfully emitted target operation replays exactly to the
     returned proof-carrying source state. -/
@@ -83,10 +82,14 @@ theorem emitOne_replays
             simp [emitOne, hr, hv, hs] at h
         | some updated =>
             simp [emitOne, hr, hv, hs] at h
-            cases h
+            rcases h with ⟨hops, hresult⟩
+            subst operations
+            subst result
             simp [executeFrom, List.foldlM_cons, hs]
       · simp [emitOne, hr, hv] at h
-        cases h
+        rcases h with ⟨hops, hresult⟩
+        subst operations
+        subst result
         rfl
 
 /-- For every finite target list, including arbitrarily long lists,
@@ -102,7 +105,9 @@ theorem emitPass_replays
   induction targets generalizing state operations with
   | nil =>
       simp [emitPass] at h
-      cases h
+      rcases h with ⟨hops, hresult⟩
+      subst operations
+      subst result
       rfl
   | cons target rest ih =>
       cases hf : emitOne initial v pivotSlot target state with
@@ -118,7 +123,9 @@ theorem emitPass_replays
                   cases second with
                   | mk restOps finished =>
                       simp [emitPass, hf, hr] at h
-                      cases h
+                      rcases h with ⟨hops, hresult⟩
+                      subst operations
+                      subst result
                       rw [executeFrom_append]
                       rw [emitOne_replays initial v pivotSlot target
                         state updated firstOps hf]
