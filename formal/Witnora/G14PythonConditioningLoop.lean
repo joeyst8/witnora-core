@@ -15,6 +15,7 @@ Lean algorithm-level refinement, not a semantics theorem about CPython.
 namespace Witnora.G14PythonConditioningLoop
 
 open Witnora.Concrete
+open Witnora.FiniteXor
 open Witnora.Conditioning
 open Witnora.G5Extraction
 open Witnora.G14NormalizedPartition
