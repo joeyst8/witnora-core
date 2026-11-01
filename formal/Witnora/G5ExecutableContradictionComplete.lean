@@ -149,7 +149,7 @@ theorem initial_unsat_forces_executable_survivor_contradiction
       row.coefficients = [] ∧ row.rhs = true := by
   have hvalid := start_valid initial
   have hnd : (List.range initial.length).Nodup :=
-    List.nodup_range _
+    List.nodup_range
   have htracked := pivot_ledger_refines_tracked initial variables
     (List.range initial.length) (SourceState.start initial) outcome h
   have hsched := tracked_execution_matches_schedule initial variables
