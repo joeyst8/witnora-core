@@ -124,7 +124,7 @@ theorem emitSelectedPass_sound
                   obtain ⟨hmem, hlook, hv⟩ :=
                     choosePivot_sound initial v state candidates
                       selected pivotRow hp
-                  refine ⟨pivotRow, hp, hmem, hlook, hv, ?_⟩
+                  refine ⟨pivotRow, rfl, hmem, hlook, hv, ?_⟩
                   exact emitPass_replays initial v selected
                     (candidates.filter (fun slot => slot != selected))
                     state finished produced he
