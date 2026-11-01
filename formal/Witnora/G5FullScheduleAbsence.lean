@@ -21,19 +21,19 @@ open Witnora.G5ExecutablePassClearance
 open Witnora.G5EmittedPivotPass
 open Witnora.G5SourceTraceSafety
 
-/-- Future candidate slots stay inside their original protected set.
+/-- Future candidate slots stay inside their original guardedSlots set.
     Consequently all future pivot sources and XOR targets also exclude
-    the protected variable, and no operation can reintroduce it. -/
+    the guardedSlots variable, and no operation can reintroduce it. -/
 theorem emitSchedule_preserves_absence_superset
     (initial : List Row) (v : Nat)
-    (variables candidates protected : List Nat)
+    (variables candidates guardedSlots : List Nat)
     (state result : SourceState initial) (operations : List Op)
-    (hsubset : ∀ slot ∈ candidates, slot ∈ protected)
+    (hsubset : ∀ slot ∈ candidates, slot ∈ guardedSlots)
     (hvalid : LiveRefsValid initial state)
-    (habs : AbsentOn initial v state protected)
+    (habs : AbsentOn initial v state guardedSlots)
     (h : emitSchedule initial variables candidates state =
       some (operations, result)) :
-    AbsentOn initial v result protected := by
+    AbsentOn initial v result guardedSlots := by
   induction variables generalizing candidates state result operations with
   | nil =>
       simp [emitSchedule] at h
@@ -52,7 +52,7 @@ theorem emitSchedule_preserves_absence_superset
           cases choice with
           | mk pivotSlot pivotRow =>
               let targets := candidates.filter (fun slot => slot != pivotSlot)
-              have hpivotMem : pivotSlot ∈ protected :=
+              have hpivotMem : pivotSlot ∈ guardedSlots :=
                 hsubset pivotSlot
                   (choosePivot_sound initial w state candidates
                     pivotSlot pivotRow hp).1
@@ -60,7 +60,7 @@ theorem emitSchedule_preserves_absence_superset
                   some pivotRow :=
                 (choosePivot_sound initial w state candidates
                   pivotSlot pivotRow hp).2.1
-              have htargets : ∀ slot ∈ targets, slot ∈ protected := by
+              have htargets : ∀ slot ∈ targets, slot ∈ guardedSlots := by
                 intro slot hm
                 exact hsubset slot (List.mem_filter.mp hm).1
               have hpivotNot : pivotSlot ∉ targets := by
@@ -82,7 +82,7 @@ theorem emitSchedule_preserves_absence_superset
                               subst result
                               have habsUpdated :=
                                 emitPass_preserves_absent_candidates
-                                  initial w v pivotSlot targets protected
+                                  initial w v pivotSlot targets guardedSlots
                                   state updated firstOps pivotRow
                                   hpivotMem htargets hpivotNot hpivotRow
                                   hvalid habs he
