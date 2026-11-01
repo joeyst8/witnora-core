@@ -75,7 +75,7 @@ theorem xor_preserves_table_relation
   by_cases heq : slot = targetSlot
   · subst slot
     have hrow : rows[targetSlot]? = some targetRow := by
-      simpa [TableRel, workingRow, ht, htr] using hrel targetSlot
+      simpa [TableRel, workingRow, ht, htr] using (hrel targetSlot).symm
     simp [row_lookup_set_self rows targetSlot targetRow
       (xorRow targetRow sourceRow) hrow]
   · rw [row_lookup_set_other rows targetSlot slot
