@@ -46,9 +46,9 @@ def SourceState.step (initial : List Row)
             match ht : state.dag.rows[targetRef]?,
                   hs : state.dag.rows[sourceRef]? with
             | some targetRow, some sourceRow =>
-                let next := state.dag.append initial
+                let nextDag := state.dag.append initial
                   targetRef sourceRef targetRow sourceRow ht hs
-                some { dag := next,
+                some { dag := nextDag,
                   refs := state.refs.set target state.dag.rows.length }
             | _, _ => none
         | _, _ => none
@@ -84,7 +84,8 @@ theorem accepts_has_checked_dag (initial : List Row)
   | none =>
       simp [hr] at h
   | some result =>
-      refine ⟨result, hr, ?_⟩
+      refine ⟨result, ?_, ?_⟩
+      · simpa [hr]
       simpa [hr] using h
 
 /-- Two conflicting input rows are emitted as a verified indexed XOR. -/
