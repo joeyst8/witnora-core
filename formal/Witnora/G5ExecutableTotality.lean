@@ -197,6 +197,76 @@ theorem pivot_ledger_schedule_total
               }, ?_⟩
               simp [emitScheduleWithPivots, hp, targets, he, hr]
 
+/-- Every in-range list position resolves to a value. -/
+private theorem lookup_exists_of_lt {α : Type}
+    (xs : List α) (slot : Nat) (h : slot < xs.length) :
+    ∃ value, xs[slot]? = some value := by
+  induction xs generalizing slot with
+  | nil =>
+      simp at h
+  | cons head tail ih =>
+      cases slot with
+      | zero =>
+          exact ⟨head, rfl⟩
+      | succ n =>
+          have hn : n < tail.length := Nat.lt_of_succ_lt_succ h
+          obtain ⟨value, hv⟩ := ih n hn
+          exact ⟨value, by simpa using hv⟩
+
+/-- Identity source row references initially make every genuine
+    input-row position readable. -/
+theorem initial_candidates_readable (initial : List Row) :
+    ReadableCandidates initial (SourceState.start initial)
+      (List.range initial.length) := by
+  intro slot hm
+  have hlt : slot < initial.length := List.mem_range.mp hm
+  obtain ⟨row, hlookup⟩ :=
+    lookup_exists_of_lt initial slot hlt
+  refine ⟨row, ?_⟩
+  rw [Witnora.G5FiniteTraceCorrespondence.start_table_relation
+    initial slot]
+  exact hlookup
+
+/-- Totality at the real production entry point: for every finite
+    variable list and every input row table, a fully emitted source
+    pivot ledger exists, with no success hypothesis. -/
+theorem initial_pivot_ledger_schedule_total
+    (initial : List Row) (variables : List Nat) :
+    ∃ outcome : PivotOutcome initial,
+      emitScheduleWithPivots initial variables
+        (List.range initial.length) (SourceState.start initial) =
+        some outcome := by
+  exact pivot_ledger_schedule_total initial variables
+    (List.range initial.length) (SourceState.start initial)
+    (start_valid initial) (initial_candidates_readable initial)
+
+/-- For every UNSAT sparse-row input with a complete bounded variable
+    schedule, the executable G5 system is guaranteed to produce a
+    successful trace accepted by the production certificate checker.
+    The previous successful-execution premise has been eliminated. -/
+theorem original_unsat_has_checked_certificate
+    (initial : List Row) (bound : Nat) (variables : List Nat)
+    (hcoverage : Witnora.G5InitialSupportCoverage.Covered
+      variables initial)
+    (hvars : ∀ v ∈ variables, v < bound)
+    (hunsat : ¬ ∃ assignment : Nat → Bool,
+      ∀ row ∈ initial,
+        Witnora.G5Certificate.RowHolds bound row assignment) :
+    ∃ outcome : PivotOutcome initial,
+      emitScheduleWithPivots initial variables
+        (List.range initial.length) (SourceState.start initial) =
+        some outcome ∧
+      accepts initial outcome.operations = true := by
+  obtain ⟨outcome, hrun⟩ :=
+    initial_pivot_ledger_schedule_total initial variables
+  exact ⟨outcome, hrun,
+    Witnora.G5CompleteCheckedCertificate.original_row_unsat_yields_checked_certificate
+      initial bound variables outcome hcoverage hvars hrun hunsat⟩
+
+#print axioms Witnora.G5ExecutableTotality.initial_candidates_readable
+#print axioms Witnora.G5ExecutableTotality.initial_pivot_ledger_schedule_total
+#print axioms Witnora.G5ExecutableTotality.original_unsat_has_checked_certificate
+
 #print axioms Witnora.G5ExecutableTotality.emitOne_total
 #print axioms Witnora.G5ExecutableTotality.emitPass_total_with_invariants
 #print axioms Witnora.G5ExecutableTotality.pivot_ledger_schedule_total
