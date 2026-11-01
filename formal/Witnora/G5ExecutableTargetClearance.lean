@@ -20,6 +20,7 @@ open Witnora.G5Trace
 open Witnora.G5IndexedOperationEmitter
 open Witnora.G5IndexedRowValueRefinement
 open Witnora.G5SourceStepSemantics
+open Witnora.G5IndexedViewSimulation
 open Witnora.G5EmittedPivotPass
 open Witnora.G5IndexedPivotClearance
 
