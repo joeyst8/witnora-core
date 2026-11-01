@@ -96,4 +96,31 @@ example :
 #print axioms Witnora.G5VerifiedDagEmitter.replayDag_append
 #print axioms Witnora.G5VerifiedDagEmitter.Builder.accepted_of_contradiction
 
+/-- Appending one derived row leaves every previously valid reference
+    addressable at exactly the same index. -/
+theorem Builder.append_preserves_lookup
+    (initial : List Row) (state : Builder initial)
+    (i j k : Nat) (left right existing : Row)
+    (hi : state.rows[i]? = some left)
+    (hj : state.rows[j]? = some right)
+    (hk : state.rows[k]? = some existing) :
+    (state.append initial i j left right hi hj).rows[k]? =
+      some existing := by
+  simp [Builder.append]
+  exact List.getElem?_append_left hk
+
+/-- The new row is always located at the old row-table length. This is
+    the reference that the next G5 indexed operation may use. -/
+theorem Builder.append_new_index
+    (initial : List Row) (state : Builder initial)
+    (i j : Nat) (left right : Row)
+    (hi : state.rows[i]? = some left)
+    (hj : state.rows[j]? = some right) :
+    (state.append initial i j left right hi hj).rows[state.rows.length]? =
+      some (xorRow left right) := by
+  simp [Builder.append]
+
+#print axioms Witnora.G5VerifiedDagEmitter.Builder.append_preserves_lookup
+#print axioms Witnora.G5VerifiedDagEmitter.Builder.append_new_index
+
 end Witnora.G5VerifiedDagEmitter
