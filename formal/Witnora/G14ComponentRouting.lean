@@ -13,6 +13,7 @@ correspondence remains a separate obligation.
 namespace Witnora.G14ComponentRouting
 
 open Witnora.Concrete
+open Witnora.FiniteXor
 open Witnora.ComponentPartition
 open Witnora.G5Extraction
 
@@ -29,9 +30,10 @@ theorem filter_split_perm {α : Type} (xs : List α)
       | false =>
           have hmove :
               (rest.filter p ++ x :: rest.filter (fun y => !p y)).Perm
-                (x :: rest.filter p ++ rest.filter (fun y => !p y)) :=
-            (List.Perm.middle x (rest.filter p)
-              (rest.filter (fun y => !p y))).symm
+                (x :: rest.filter p ++ rest.filter (fun y => !p y)) := by
+            simpa using (List.Perm.append_right
+              (rest.filter (fun y => !p y))
+              (List.Perm.append_comm (rest.filter p) [x]))
           simpa [List.filter_cons, hp] using
             hmove.trans (List.Perm.cons x ih)
 
@@ -53,8 +55,10 @@ theorem routeClauses_head_owner
     owner clause = component := by
   have hm : clause ∈ clauses.filter
       (fun c => decide (owner c = component)) := by
-    simpa [routeClauses] using h
-  exact of_decide_true (List.mem_filter.mp hm).2
+    change clause ∈ clauses.filter
+      (fun c => decide (owner c = component)) at h
+    exact h
+  simpa using (List.mem_filter.mp hm).2
 
 /-- A finite list of owners covers all the initial residual clauses. -/
 def OwnersCovered (owner : List Literal → Nat)
@@ -92,13 +96,13 @@ theorem routeClauses_perm
         have horig := hcover clause hparts.1
         exact (List.mem_cons.mp horig).resolve_left hnot
       have htail := ih remainder hrest
-      calc
-        (routeClauses owner (component :: rest) clauses).flatten =
+      have heq :
+          (routeClauses owner (component :: rest) clauses).flatten =
             clauses.filter p ++ (routeClauses owner rest remainder).flatten := by
-              simp [routeClauses, p, remainder]
-        _ ~ clauses.filter p ++ remainder := by
-              exact List.Perm.append_left (clauses.filter p) htail
-        _ ~ clauses := filter_split_perm clauses p
+        simp [routeClauses, p, remainder]
+      rw [heq]
+      exact (List.Perm.append_left (clauses.filter p) htail).trans
+        (filter_split_perm clauses p)
 
 /-- The exact original multiplicities make the existing production
     certificate checker accept every fully covered routing result. -/
