@@ -32,7 +32,11 @@ theorem xorRow_support_comm (pivot target : Row) (v : Nat) :
     v ∈ (xorRow pivot target).coefficients ↔
       v ∈ (xorRow target pivot).coefficients := by
   simp only [xorRow, mem_xorCoefficients]
-  tauto
+  constructor
+  · intro h
+    exact h.elim Or.inr Or.inl
+  · intro h
+    exact h.elim Or.inr Or.inl
 
 /-- The independent sparse-parity evaluator sees the same equation in
     either operand order, for every bound and every Boolean assignment. -/
