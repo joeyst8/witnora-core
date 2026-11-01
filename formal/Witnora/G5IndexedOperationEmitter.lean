@@ -86,7 +86,7 @@ theorem accepts_has_checked_dag (initial : List Row)
   | some result =>
       refine ⟨result, ?_, ?_⟩
       · simpa [hr]
-      simpa [hr] using h
+      · simpa [hr] using h
 
 /-- Two conflicting input rows are emitted as a verified indexed XOR. -/
 example :
