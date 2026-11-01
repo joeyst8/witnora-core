@@ -209,4 +209,79 @@ theorem extract_and_eliminate_iff
 #print axioms Witnora.G5TerminatingPivot.extractPivot_perm
 #print axioms Witnora.G5TerminatingPivot.extract_and_eliminate_iff
 
+/-- Every finite elimination schedule preserves *all* models of the input
+    row system, represented by its retained pivots and residual rows.
+    The recursive driver performs only verified elementary row updates. -/
+theorem eliminateVariables_models_iff
+    (bound : Nat) (vars : List Nat) (rows : List Row) (a : Nat → Bool) :
+    (∀ row ∈ rows, RowHolds bound row a) ↔
+      (∀ row ∈ (eliminateVariables vars rows).1 ++
+          (eliminateVariables vars rows).2,
+        RowHolds bound row a) := by
+  induction vars generalizing rows with
+  | nil =>
+      simp [eliminateVariables]
+  | cons v remaining ih =>
+      cases hp : extractPivot v rows with
+      | none =>
+          simpa [eliminateVariables, hp] using ih rows
+      | some result =>
+          cases result with
+          | mk pivot others =>
+              cases hr : eliminateVariables remaining
+                  (eliminatePass v pivot others) with
+              | mk pivots residual =>
+                  have hstep := extract_and_eliminate_iff
+                    bound v rows pivot others a hp
+                  have htail :
+                      (∀ row ∈ eliminatePass v pivot others,
+                        RowHolds bound row a) ↔
+                      (∀ row ∈ pivots ++ residual,
+                        RowHolds bound row a) := by
+                    simpa [hr] using
+                      (ih (eliminatePass v pivot others))
+                  have hjoined :
+                      (RowHolds bound pivot a ∧
+                        ∀ row ∈ pivots ++ residual,
+                          RowHolds bound row a) ↔
+                      (∀ row ∈ (pivot :: pivots) ++ residual,
+                        RowHolds bound row a) := by
+                    simp [List.mem_append, List.mem_cons, or_imp, forall_and]
+                  calc
+                    (∀ row ∈ rows, RowHolds bound row a) ↔
+                        (RowHolds bound pivot a ∧
+                          ∀ row ∈ eliminatePass v pivot others,
+                            RowHolds bound row a) := hstep
+                    _ ↔ (RowHolds bound pivot a ∧
+                        ∀ row ∈ pivots ++ residual,
+                          RowHolds bound row a) := by
+                      constructor
+                      · rintro ⟨hpivot, ht⟩
+                        exact ⟨hpivot, htail.mp ht⟩
+                      · rintro ⟨hpivot, ht⟩
+                        exact ⟨hpivot, htail.mpr ht⟩
+                    _ ↔ (∀ row ∈ (eliminateVariables
+                        (v :: remaining) rows).1 ++
+                        (eliminateVariables (v :: remaining) rows).2,
+                          RowHolds bound row a) := by
+                      simpa [eliminateVariables, hp, hr] using hjoined
+
+/-- The algorithm consequently preserves satisfiability and
+    unsatisfiability, for every input row set and finite pivot schedule. -/
+theorem eliminateVariables_sat_iff
+    (bound : Nat) (vars : List Nat) (rows : List Row) :
+    (∃ a : Nat → Bool,
+      ∀ row ∈ rows, RowHolds bound row a) ↔
+    (∃ a : Nat → Bool,
+      ∀ row ∈ (eliminateVariables vars rows).1 ++
+        (eliminateVariables vars rows).2, RowHolds bound row a) := by
+  constructor
+  · rintro ⟨a, h⟩
+    exact ⟨a, (eliminateVariables_models_iff bound vars rows a).mp h⟩
+  · rintro ⟨a, h⟩
+    exact ⟨a, (eliminateVariables_models_iff bound vars rows a).mpr h⟩
+
+#print axioms Witnora.G5TerminatingPivot.eliminateVariables_models_iff
+#print axioms Witnora.G5TerminatingPivot.eliminateVariables_sat_iff
+
 end Witnora.G5TerminatingPivot
