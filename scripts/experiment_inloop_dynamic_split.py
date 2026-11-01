@@ -36,7 +36,8 @@ def normalized_component_key(rows):
 
 
 def solve(rows, counters, *, split, hints=None, cache=None,
-          event_driven=False, scan_allowed=True):
+          event_driven=False, scan_allowed=True,
+          hint_depth=0, min_hint_depth=1):
     counters["nodes"] += 1
     rows = tuple(tuple(row) for row in rows)
     while True:
@@ -69,7 +70,8 @@ def solve(rows, counters, *, split, hints=None, cache=None,
                 if cache is None:
                     answer = solve(group, counters, split=split, hints=hints,
                                    event_driven=event_driven,
-                                   scan_allowed=not event_driven)
+                                   scan_allowed=not event_driven,
+                                   hint_depth=0, min_hint_depth=min_hint_depth)
                 else:
                     signature = normalized_component_key(group)
                     if signature in cache:
@@ -79,7 +81,8 @@ def solve(rows, counters, *, split, hints=None, cache=None,
                         answer = solve(group, counters, split=split,
                                        hints=hints, cache=cache,
                                        event_driven=event_driven,
-                                       scan_allowed=not event_driven)
+                                       scan_allowed=not event_driven,
+                                       hint_depth=0, min_hint_depth=min_hint_depth)
                         cache[signature] = answer
                 if not answer:
                     return False
@@ -97,7 +100,10 @@ def solve(rows, counters, *, split, hints=None, cache=None,
                                          split=split, hints=hints, cache=cache,
                                          event_driven=event_driven,
                                          scan_allowed=(not event_driven or
-                                                       bool(hints and hints.get(chosen, 0)))):
+                                                       bool(hints and hints.get(chosen, 0))
+                                                       and hint_depth + 1 >= min_hint_depth),
+                                         hint_depth=hint_depth + bool(hints and hints.get(chosen, 0)),
+                                         min_hint_depth=min_hint_depth):
             return True
     return False
 
@@ -105,11 +111,14 @@ def solve(rows, counters, *, split, hints=None, cache=None,
 def run(formula, variant):
     rows = formula.to_clause_lists()
     split = variant != "frequency"
-    use_cache = variant in ("support_split_cache", "support_split_event_cache")
-    event_driven = variant == "support_split_event_cache"
+    use_cache = variant in ("support_split_cache", "support_split_event_cache",
+                            "support_split_event2_cache")
+    event_driven = variant in ("support_split_event_cache",
+                               "support_split_event2_cache")
     start = perf_counter()
     hints = support_candidates(rows) if variant in (
-        "support_split", "support_split_cache", "support_split_event_cache") else None
+        "support_split", "support_split_cache", "support_split_event_cache",
+        "support_split_event2_cache") else None
     stats = {
         "nodes": 0, "decisions": 0, "hinted_decisions": 0,
         "component_scans": 0, "split_events": 0, "component_jobs": 0,
@@ -117,7 +126,8 @@ def run(formula, variant):
     }
     answer = solve(rows, stats, split=split, hints=hints,
                    cache={} if use_cache else None,
-                   event_driven=event_driven, scan_allowed=not event_driven)
+                   event_driven=event_driven, scan_allowed=not event_driven,
+                   min_hint_depth=2 if variant == "support_split_event2_cache" else 1)
     return {
         "sat": answer, **stats,
         "elapsed_ms": round((perf_counter() - start) * 1000, 5),
@@ -141,7 +151,8 @@ def benchmark(seed_count=8):
         variants = {
             name: run(formula, name)
             for name in ("frequency", "frequency_split", "support_split",
-                             "support_split_cache", "support_split_event_cache")
+                             "support_split_cache", "support_split_event_cache",
+                             "support_split_event2_cache")
         }
         if len({item["sat"] for item in variants.values()}) != 1:
             raise AssertionError((family, copies, seed, "SAT disagreement"))
@@ -192,6 +203,19 @@ def benchmark(seed_count=8):
             "event_total_ms": round(sum(
                 r["support_split_event_cache"]["elapsed_ms"]
                 for r in records), 4),
+            "event2_total_ms": round(sum(
+                r["support_split_event2_cache"]["elapsed_ms"]
+                for r in records), 4),
+            "event2_vs_event_time_wins": sum(
+                r["support_split_event2_cache"]["elapsed_ms"]
+                < r["support_split_event_cache"]["elapsed_ms"]
+                for r in records),
+            "event2_vs_frequency_time_wins": sum(
+                r["support_split_event2_cache"]["elapsed_ms"]
+                < r["frequency"]["elapsed_ms"] for r in records),
+            "event2_component_scans": sum(
+                r["support_split_event2_cache"]["component_scans"]
+                for r in records),
             "event_component_scans": sum(
                 r["support_split_event_cache"]["component_scans"]
                 for r in records),
