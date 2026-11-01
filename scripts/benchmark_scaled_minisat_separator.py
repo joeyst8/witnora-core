@@ -24,8 +24,9 @@ def scale_hidden_formula(seed: int, copies: int) -> CNFFormula:
     variables = [v for v in base.variables if v not in shared]
     rows = []
     for index in range(copies):
-        mapping = {v: (v if v in shared else 10000 * (index + 1) + i)
-                   for i, v in enumerate(variables, 1)}
+        mapping = {v: v for v in shared}
+        mapping.update({v: 10000 * (index + 1) + i
+                        for i, v in enumerate(variables, 1)})
         for row in base.to_clause_lists():
             rows.append([mapping[abs(lit)] * (1 if lit > 0 else -1)
                          for lit in row])
