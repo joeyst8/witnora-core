@@ -284,4 +284,25 @@ theorem eliminateVariables_sat_iff
 #print axioms Witnora.G5TerminatingPivot.eliminateVariables_models_iff
 #print axioms Witnora.G5TerminatingPivot.eliminateVariables_sat_iff
 
+/-- An explicit contradictory row found anywhere in the retained pivots or
+    residual rows after finite elimination proves the *input* row system
+    is UNSAT. This theorem needs no SAT oracle and no extra bridge axiom. -/
+theorem eliminateVariables_contradiction_unsat
+    (bound : Nat) (vars : List Nat) (rows : List Row)
+    (hbad : ∃ row ∈ (eliminateVariables vars rows).1 ++
+        (eliminateVariables vars rows).2,
+        row.coefficients = [] ∧ row.rhs = true) :
+    ¬ ∃ a : Nat → Bool,
+      ∀ row ∈ rows, RowHolds bound row a := by
+  rintro ⟨a, hall⟩
+  have hfinal :=
+    (eliminateVariables_models_iff bound vars rows a).mp hall
+  obtain ⟨row, hmem, hcoeff, hrhs⟩ := hbad
+  have hrow := hfinal row hmem
+  unfold RowHolds at hrow
+  rw [hcoeff, sparseParity_empty, hrhs] at hrow
+  cases hrow
+
+#print axioms Witnora.G5TerminatingPivot.eliminateVariables_contradiction_unsat
+
 end Witnora.G5TerminatingPivot
