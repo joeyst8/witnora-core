@@ -6,6 +6,9 @@ on:
   pull_request:
     paths:
       - "formal/Witnora/G14NormalizedPartition.lean"
+      - "witnora_core/lean_g14_gate.py"
+      - "tests/test_lean_g14_gate.py"
+      - "tests/test_g14_normalized_gate_real.py"
       - "scripts/generate_g14_adversarial_matrix_lean.py"
       - "tests/test_g14_adversarial_matrix_lean.py"
       - ".github/workflows/python-g14-adversarial-matrix.yml"
@@ -28,6 +31,10 @@ jobs:
       - name: Kernel-check normalized partition soundness
         working-directory: formal
         run: lake build Witnora.G14NormalizedPartition
+      - name: Production G14 gate unit tests
+        run: python -m unittest tests.test_lean_g14_gate -v
+      - name: Production G14 gate real Lean tamper tests
+        run: python -m unittest tests.test_g14_normalized_gate_real -v
       - name: Kernel-check every residual and negative mutation
         working-directory: formal
         run: lake build Witnora.GeneratedG14AdversarialMatrix
