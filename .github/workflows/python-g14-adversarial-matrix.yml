@@ -1,0 +1,34 @@
+name: Python G14 adversarial Lean matrix
+on:
+  push:
+    branches:
+      - formal/python-g14-adversarial-matrix-v110
+  pull_request:
+    paths:
+      - "scripts/generate_g14_adversarial_matrix_lean.py"
+      - "tests/test_g14_adversarial_matrix_lean.py"
+      - ".github/workflows/python-g14-adversarial-matrix.yml"
+  workflow_dispatch:
+jobs:
+  python-lean-adversarial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Run deterministic Python adversarial regression
+        run: python -m unittest tests.test_g14_adversarial_matrix_lean -v
+      - name: Emit actual Python conditioned branch matrix
+        run: python -m scripts.generate_g14_adversarial_matrix_lean
+      - name: Kernel-check every residual and negative mutation
+        working-directory: formal
+        run: lake build Witnora.GeneratedG14AdversarialMatrix
+      - name: Reject proof holes
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/GeneratedG14AdversarialMatrix.lean; then
+            exit 1
+          fi
