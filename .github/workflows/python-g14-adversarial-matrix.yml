@@ -5,6 +5,7 @@ on:
       - formal/python-g14-adversarial-matrix-v110
   pull_request:
     paths:
+      - "formal/Witnora/G14NormalizedPartition.lean"
       - "scripts/generate_g14_adversarial_matrix_lean.py"
       - "tests/test_g14_adversarial_matrix_lean.py"
       - ".github/workflows/python-g14-adversarial-matrix.yml"
@@ -24,6 +25,9 @@ jobs:
         run: python -m unittest tests.test_g14_adversarial_matrix_lean -v
       - name: Emit actual Python conditioned branch matrix
         run: python -m scripts.generate_g14_adversarial_matrix_lean
+      - name: Kernel-check normalized partition soundness
+        working-directory: formal
+        run: lake build Witnora.G14NormalizedPartition
       - name: Kernel-check every residual and negative mutation
         working-directory: formal
         run: lake build Witnora.GeneratedG14AdversarialMatrix
