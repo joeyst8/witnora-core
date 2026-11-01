@@ -183,7 +183,11 @@ theorem start_table_relation (initial : List Row) :
     Witnora.G5VerifiedDagEmitter.Builder.start]
   by_cases h : slot < initial.length
   · simp [List.getElem?_range, h]
-  · simp [List.getElem?_range, h]
+  · have hr : (List.range initial.length)[slot]? = none := by
+      simp [List.getElem?_range, h]
+    have hn : initial[slot]? = none := by
+      simp [List.getElem?_eq_none_iff, Nat.le_of_not_gt h]
+    simp [hr, hn]
 
 /-- Direct theorem for SourceState.run from initial rows: the independent
     replay succeeds and exposes exactly the same row at every slot. -/
