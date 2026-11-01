@@ -1,0 +1,28 @@
+name: Parity cut boundary repair discovery experiment
+on:
+  push:
+    branches:
+      - research/parity-cut-boundary-repair-v117
+  pull_request:
+    paths:
+      - "witnora_core/parity_cut_boundary_repair.py"
+      - "scripts/experiment_parity_cut_boundary_repair.py"
+      - "tests/test_parity_cut_boundary_repair.py"
+      - ".github/workflows/parity-cut-boundary-repair.yml"
+  workflow_dispatch:
+jobs:
+  bounded-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adversarial operator regression
+        run: python -m unittest tests.test_parity_cut_boundary_repair -v
+      - name: Controlled discovery experiment
+        run: python -m scripts.experiment_parity_cut_boundary_repair
+      - name: Preserve all raw experiment records
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-cut-repair-results
+          path: research/parity_cut_boundary_repair_results.json
+          retention-days: 30
