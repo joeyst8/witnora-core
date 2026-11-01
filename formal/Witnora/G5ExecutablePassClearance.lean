@@ -207,8 +207,8 @@ theorem emitPass_clears_all_targets
       have hpivotRest : pivotSlot ∉ rest := by
         intro hm
         exact hpivotNot (by simp [hm])
-      have htargetRest : target ∉ rest := hnd.1
-      have hrestNodup : rest.Nodup := hnd.2
+      have htargetRest : target ∉ rest := (List.nodup_cons.mp hnd).1
+      have hrestNodup : rest.Nodup := (List.nodup_cons.mp hnd).2
       cases hf : emitOne initial v pivotSlot target state with
       | none =>
           simp [emitPass, hf] at h
@@ -240,7 +240,7 @@ theorem emitPass_clears_all_targets
                         firstOps hvalid hf
                       have htail := ih updated finished restOps
                         hrestNodup hpivotRest hpivotUpdated
-                        hvPivot hupdatedValid hr
+                        hupdatedValid hr
                       intro slot hmem
                       rcases List.mem_cons.mp hmem with hslot | hrest
                       · subst slot
