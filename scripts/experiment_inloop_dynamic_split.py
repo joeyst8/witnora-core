@@ -99,7 +99,7 @@ def run(formula, variant):
     split = variant != "frequency"
     use_cache = variant == "support_split_cache"
     start = perf_counter()
-    hints = support_candidates(rows) if variant == "support_split" else None
+    hints = support_candidates(rows) if variant in ("support_split", "support_split_cache") else None
     stats = {
         "nodes": 0, "decisions": 0, "hinted_decisions": 0,
         "component_scans": 0, "split_events": 0, "component_jobs": 0,
