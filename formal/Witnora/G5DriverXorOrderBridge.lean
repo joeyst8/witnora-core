@@ -69,6 +69,39 @@ example :
     xorRow ⟨[1], false⟩ ⟨[2], false⟩ ≠
       xorRow ⟨[2], false⟩ ⟨[1], false⟩ := by decide
 
+/-- A complete driver pass rendered in the target-first operand order
+    required by the indexed source emitter. -/
+def sourceOrderEliminatePass (v : Nat) (pivot : Row)
+    (targets : List Row) : List Row :=
+  targets.map (sourceOrderEliminateTarget v pivot)
+
+/-- Every target in a full Gaussian elimination pass retains exactly the
+    same solution semantics after changing operand order for the emitter. -/
+theorem eliminatePass_source_order_models
+    (bound v : Nat) (pivot : Row)
+    (targets : List Row) (a : Nat → Bool) :
+    (∀ row ∈ eliminatePass v pivot targets, RowHolds bound row a) ↔
+    (∀ row ∈ sourceOrderEliminatePass v pivot targets,
+      RowHolds bound row a) := by
+  constructor
+  · intro hall row hmem
+    obtain ⟨original, hsource, heq⟩ := List.mem_map.mp
+      (show row ∈ targets.map (sourceOrderEliminateTarget v pivot)
+        from hmem)
+    subst row
+    apply (eliminateTarget_source_order_equiv bound v pivot original a).mp
+    exact hall (eliminateTarget v pivot original)
+      (List.mem_map.mpr ⟨original, hsource, rfl⟩)
+  · intro hall row hmem
+    obtain ⟨original, hsource, heq⟩ := List.mem_map.mp
+      (show row ∈ targets.map (eliminateTarget v pivot) from hmem)
+    subst row
+    apply (eliminateTarget_source_order_equiv bound v pivot original a).mpr
+    exact hall (sourceOrderEliminateTarget v pivot original)
+      (List.mem_map.mpr ⟨original, hsource, rfl⟩)
+
+#print axioms Witnora.G5DriverXorOrderBridge.eliminatePass_source_order_models
+
 #print axioms Witnora.G5DriverXorOrderBridge.xorRow_rhs_comm
 #print axioms Witnora.G5DriverXorOrderBridge.xorRow_support_comm
 #print axioms Witnora.G5DriverXorOrderBridge.xorRow_comm_holds
