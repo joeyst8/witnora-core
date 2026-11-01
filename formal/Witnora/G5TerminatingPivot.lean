@@ -148,4 +148,61 @@ example :
     (eliminateVariables [1, 2]
       [⟨[1, 2], false⟩, ⟨[1], false⟩]).2 = [] := by decide
 
+/-- A successful pivot extraction retains exactly the same rows,
+    changing only their order. -/
+theorem extractPivot_perm
+    (v : Nat) (rows : List Row) (pivot : Row) (others : List Row)
+    (h : extractPivot v rows = some (pivot, others)) :
+    rows.Perm (pivot :: others) := by
+  induction rows with
+  | nil =>
+      simp [extractPivot] at h
+  | cons head tail ih =>
+      by_cases hv : v ∈ head.coefficients
+      · simp [extractPivot, hv] at h
+        cases h
+        rfl
+      · cases hp : extractPivot v tail with
+        | none =>
+            simp [extractPivot, hv, hp] at h
+        | some result =>
+            cases result with
+            | mk p remaining =>
+                simp [extractPivot, hv, hp] at h
+                cases h
+                exact (List.Perm.cons head (ih hp)).trans
+                  (List.Perm.swap head p remaining)
+
+/-- One extracted pivot plus its elimination pass is *exactly*
+    model-equivalent to the original entire row list. -/
+theorem extract_and_eliminate_iff
+    (bound v : Nat) (rows : List Row)
+    (pivot : Row) (others : List Row) (a : Nat → Bool)
+    (h : extractPivot v rows = some (pivot, others)) :
+    (∀ row ∈ rows, RowHolds bound row a) ↔
+      (RowHolds bound pivot a ∧
+        ∀ row ∈ eliminatePass v pivot others, RowHolds bound row a) := by
+  have hperm := extractPivot_perm v rows pivot others h
+  constructor
+  · intro hall
+    have hmodel : ∀ row ∈ pivot :: others, RowHolds bound row a := by
+      intro row hr
+      exact hall row (hperm.mem_iff.mpr hr)
+    have hp : RowHolds bound pivot a := hmodel pivot (by simp)
+    refine ⟨hp, ?_⟩
+    apply (eliminatePass_equiv bound v pivot others a hp).mp
+    intro row hr
+    exact hmodel row (by simp [hr])
+  · rintro ⟨hp, htail⟩
+    have horig := (eliminatePass_equiv bound v pivot others a hp).mpr htail
+    intro row hr
+    have hr' : row ∈ pivot :: others := hperm.mem_iff.mp hr
+    rcases List.mem_cons.mp hr' with heq | hmem
+    · subst row
+      exact hp
+    · exact horig row hmem
+
+#print axioms Witnora.G5TerminatingPivot.extractPivot_perm
+#print axioms Witnora.G5TerminatingPivot.extract_and_eliminate_iff
+
 end Witnora.G5TerminatingPivot
