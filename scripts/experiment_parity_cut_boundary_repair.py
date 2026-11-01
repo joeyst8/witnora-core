@@ -77,6 +77,11 @@ def run_experiment(seeds=range(8)):
                         len(optimum) if optimum is not None else None
                     ),
                     "search_trials": repair["trials"],
+                    "optimality_gap": (
+                        len(repair["repaired_cut"]) - len(optimum)
+                        if repair["repaired_cut"] is not None and optimum is not None
+                        else None
+                    ),
                 })
     n = len(records)
     summary = {
@@ -98,6 +103,11 @@ def run_experiment(seeds=range(8)):
             r["globally_optimal_size"] for r in records
             if r["globally_optimal_size"] is not None
         ), 2),
+        "optimal_repairs": sum(r["optimality_gap"] == 0 for r in records),
+        "max_optimality_gap": max(
+            (r["optimality_gap"] for r in records
+             if r["optimality_gap"] is not None), default=None
+        ),
         "bounded_known_family": True,
         "novelty_established": False,
     }
