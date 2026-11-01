@@ -53,7 +53,7 @@ def emit_adversarial_matrix(random_cases: int = 16) -> tuple[str, dict[str, int]
         raise ValueError("random_cases must be in [0, 64]")
     cases = list(CASES) + [_random_case(i) for i in range(random_cases)]
     lines = [
-        "import Witnora.G14ConcreteBridge",
+        "import Witnora.G14NormalizedPartition",
         "namespace Witnora.GeneratedG14AdversarialMatrix",
         "open Witnora.Concrete",
         "open Witnora.FiniteXor",
@@ -61,6 +61,7 @@ def emit_adversarial_matrix(random_cases: int = 16) -> tuple[str, dict[str, int]
         "open Witnora.G5Extraction",
         "open Witnora.Conditioning",
         "open Witnora.ComponentPartition",
+        "open Witnora.G14NormalizedPartition",
         "open Witnora.SeparatorAssignments",
         "set_option maxRecDepth 8192",
         "set_option maxHeartbeats 0",
@@ -93,7 +94,7 @@ def emit_adversarial_matrix(random_cases: int = 16) -> tuple[str, dict[str, int]
             residual_lean = f"(conditionCNF {fixed} {prefix})"
             parts_lean = _list_of_cnfs(actual)
             lines.append(
-                f"example : checkPartition {residual_lean} "
+                f"example : checkNormalizedPartition {residual_lean} "
                 f"{parts_lean} = true := by decide"
             )
             # Verify that Python's own residual clauses are exactly Lean's
