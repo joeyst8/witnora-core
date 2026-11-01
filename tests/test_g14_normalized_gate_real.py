@@ -2,9 +2,12 @@
 import unittest
 
 from witnora_core.cnf import CNFFormula
-from witnora_core.lean_g14_gate import _check_partitions_with_lean
+from witnora_core.lean_g14_gate import (
+    _check_partitions_with_lean, verify_g14_unsat_cover_with_lean,
+)
 from witnora_core.separator_affine_family_theorem import (
     _all_assignments, _component_dicts, _condition_by_separator,
+    build_separator_affine_certificate, make_separator_affine_instance,
 )
 
 
@@ -44,6 +47,26 @@ class ProductionG14NormalizedPartitionTests(unittest.TestCase):
                 self.formula, bad,
                 timeout_seconds=180, project_root=None,
             )
+
+    def test_real_combined_source_dimacs_g14_g5_certificate_accepted(self):
+        instance = make_separator_affine_instance("saf_unsat_cover_2")
+        formula = instance.formula
+        certificate = build_separator_affine_certificate(instance)
+        raw = formula.to_clause_lists()
+        tokens = [lit for clause in raw for lit in (*clause, 0)]
+        result = verify_g14_unsat_cover_with_lean(
+            formula, certificate,
+            raw_clauses=raw,
+            source_tokens=tokens,
+            source_spellings=list(map(str, tokens)),
+            source_text=formula.canonical_dimacs(),
+            timeout_seconds=240,
+        )
+        self.assertTrue(result["verified"], result)
+        self.assertEqual(
+            result["lean_formal_status"],
+            "LEAN_END_TO_END_G14_UNSAT_VERIFIED",
+        )
 
     def test_swapped_or_incomplete_branch_enumeration_fails(self):
         with self.assertRaisesRegex(
