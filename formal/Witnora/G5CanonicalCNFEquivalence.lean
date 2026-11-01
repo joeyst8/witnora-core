@@ -14,6 +14,8 @@ CNFs, not for arbitrary CNFs.
 namespace Witnora.G5CanonicalCNFEquivalence
 
 open Witnora.Concrete
+open Witnora.FiniteXor
+open Witnora.SparseParity
 open Witnora.G5Trace
 open Witnora.G5Extraction
 open Witnora.ExactSignedXorCNF
