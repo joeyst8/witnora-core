@@ -80,18 +80,12 @@ theorem witness_satisfies_source :
 theorem witness_agrees_false :
     agreesWith (fixedOf falseBranch) witness := by
   intro v b hv
-  have h : (v, b) = (1, false) := by
-    cases v with
-    | zero => simp [fixedOf, falseBranch] at hv
-    | succ n =>
-        by_cases heq : Nat.succ n = 1
-        · have hv' : v = 1 := heq
-          subst v
-          simp [fixedOf, falseBranch] at hv
-          cases hv
-          rfl
-        · simp [fixedOf, falseBranch, heq] at hv
-  cases h
+  by_cases heq : v = 1
+  · subst v
+    simp [fixedOf, falseBranch] at hv
+    subst b
+    decide
+  · simp [fixedOf, falseBranch, heq] at hv
 
 /-- A second assignment really is a model of the source CNF but not
     a model of the *wrong*, x1=false residual branch. -/
