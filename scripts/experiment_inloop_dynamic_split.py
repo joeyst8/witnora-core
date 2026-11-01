@@ -203,6 +203,15 @@ def benchmark(seed_count=8):
             "event_total_ms": round(sum(
                 r["support_split_event_cache"]["elapsed_ms"]
                 for r in records), 4),
+            "event2_node_wins_over_frequency": sum(
+                r["support_split_event2_cache"]["nodes"]
+                < r["frequency"]["nodes"] for r in records),
+            "event2_cache_hits": sum(
+                r["support_split_event2_cache"]["cache_hits"]
+                for r in records),
+            "event2_split_events": sum(
+                r["support_split_event2_cache"]["split_events"]
+                for r in records),
             "event2_total_ms": round(sum(
                 r["support_split_event2_cache"]["elapsed_ms"]
                 for r in records), 4),
