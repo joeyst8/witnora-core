@@ -102,7 +102,7 @@ theorem emitOne_preserves_absent_candidates
                   valid_lookup initial state hvalid s ref hr) slot
               have hold : workingRow initial state slot =
                   some row := by
-                simpa [hslot] using hlook.symm.trans hslots
+                simpa [hslot] using hslots.symm.trans hlook
               exact habs slot hmem row hold
       · simp [emitOne, ht, hactive] at h
         rcases h with ⟨hops, hresult⟩
