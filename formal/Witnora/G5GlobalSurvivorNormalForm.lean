@@ -115,13 +115,14 @@ theorem tracked_schedule_residual_normal_form
                               (by simpa [executeFrom] using hreplay)
                           have hnormal := ih targets updated result
                             restOps survivorsRest hndTargets hvalidUpdated hr
+                          have hselected : emitSchedule initial
+                              (w :: rest) candidates state =
+                              some (firstOps ++ restOps, result) := by
+                            simpa [hops] using hmatch
                           have hhead := schedule_selected_head_stays_clear
                             initial w pivotSlot rest candidates state result
                             (firstOps ++ restOps) pivotRow hnd hvalid hp
-                            (by simpa [emitSchedule, hp, targets, he,
-                              (tracked_execution_matches_schedule initial
-                                rest targets updated result restOps
-                                survivorsRest hr)] using hmatch)
+                            hselected
                           have hsubset := tracked_survivors_subset initial
                             rest targets updated result restOps
                             survivorsRest hr
