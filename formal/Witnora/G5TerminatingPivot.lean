@@ -154,13 +154,15 @@ theorem extractPivot_perm
     (v : Nat) (rows : List Row) (pivot : Row) (others : List Row)
     (h : extractPivot v rows = some (pivot, others)) :
     rows.Perm (pivot :: others) := by
-  induction rows with
+  induction rows generalizing pivot others with
   | nil =>
       simp [extractPivot] at h
   | cons head tail ih =>
       by_cases hv : v ∈ head.coefficients
       · simp [extractPivot, hv] at h
-        cases h
+        rcases h with ⟨heq1, heq2⟩
+        subst pivot
+        subst others
         rfl
       · cases hp : extractPivot v tail with
         | none =>
@@ -169,8 +171,10 @@ theorem extractPivot_perm
             cases result with
             | mk p remaining =>
                 simp [extractPivot, hv, hp] at h
-                cases h
-                exact (List.Perm.cons head (ih hp)).trans
+                rcases h with ⟨heq1, heq2⟩
+                subst pivot
+                subst others
+                exact (List.Perm.cons head (ih p remaining hp)).trans
                   (List.Perm.swap head p remaining)
 
 /-- One extracted pivot plus its elimination pass is *exactly*
