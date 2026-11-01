@@ -12,6 +12,8 @@ assignment demonstrates why the agreement premise cannot be dropped.
 namespace Witnora.G14ModelTransferExperiment
 
 open Witnora.Concrete
+open Witnora.FiniteXor
+open Witnora.Extraction
 open Witnora.G5Extraction
 open Witnora.Conditioning
 open Witnora.ComponentPartition
@@ -75,7 +77,8 @@ theorem every_branch_preserves_models
 def witness (v : Nat) : Bool := v == 2 || v == 4
 
 theorem witness_satisfies_source :
-    CNFHolds original witness := by decide
+    CNFHolds original witness := by
+  simp [CNFHolds, original, witness, signedLitTrue]
 
 theorem witness_agrees_false :
     agreesWith (fixedOf falseBranch) witness := by
@@ -95,7 +98,9 @@ def wrongBranchWitness (v : Nat) : Bool :=
 theorem wrong_branch_is_unsound_without_agreement :
     CNFHolds original wrongBranchWitness ∧
     ¬ CNFHolds ((components falseBranch).flatten)
-      wrongBranchWitness := by decide
+      wrongBranchWitness := by
+  simp [CNFHolds, original, components, falseBranch,
+    wrongBranchWitness, signedLitTrue]
 
 /-- A missing residual component is rejected, even if the other
     component itself is satisfiable. -/
