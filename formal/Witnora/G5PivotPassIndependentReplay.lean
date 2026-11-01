@@ -86,7 +86,7 @@ theorem emitPass_no_self_swaps
                       rcases List.mem_append.mp hm with hfirst | hrest
                       · exact emitOne_no_self_swaps initial v pivotSlot
                           target state updated firstOps hf op hfirst
-                      · exact ih updated restOps hr op hrest
+                      · exact ih updated finished restOps hr op hrest
 
 /-- The independent G5 row-list replay matches every observable row of
     any successful generated pivot pass, starting at any related valid
