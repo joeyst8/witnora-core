@@ -23,6 +23,25 @@ open Witnora.G5ExecutablePassClearance
 open Witnora.G5EmittedPivotPass
 open Witnora.G5SourceTraceSafety
 
+/-- Filtering a list of distinct candidate slots cannot create duplicates. -/
+private theorem nodup_filter_candidates (slots : List Nat)
+    (pred : Nat → Bool) (h : slots.Nodup) :
+    (slots.filter pred).Nodup := by
+  induction slots with
+  | nil =>
+      simp
+  | cons slot rest ih =>
+      have hnot : slot ∉ rest := (List.nodup_cons.mp h).1
+      have hrest : rest.Nodup := (List.nodup_cons.mp h).2
+      simp only [List.filter_cons]
+      split
+      · apply List.nodup_cons.mpr
+        constructor
+        · intro hm
+          exact hnot (List.mem_filter.mp hm).1
+        · exact ih hrest
+      · exact ih hrest
+
 /-- If pivot selection finds v at the first scheduled step, then
     the full actual scheduler eliminates v from every non-pivot
     candidate, and all later scheduled steps retain that clearance. -/
@@ -41,7 +60,8 @@ theorem schedule_selected_head_stays_clear
       (candidates.filter (fun slot => slot != pivotSlot)) := by
   let targets := candidates.filter (fun slot => slot != pivotSlot)
   have hndTargets : targets.Nodup := by
-    exact List.Nodup.filter _ hnd
+    exact nodup_filter_candidates candidates
+      (fun slot => slot != pivotSlot) hnd
   have hpivotNot : pivotSlot ∉ targets := by
     simp [targets]
   obtain ⟨_, hpivot, hv⟩ :=
