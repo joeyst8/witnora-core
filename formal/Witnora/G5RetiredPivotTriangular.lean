@@ -24,6 +24,7 @@ open Witnora.G5IndexedPivotSelection
 open Witnora.G5EmittedPivotPass
 open Witnora.G5RetiredPivotLedger
 open Witnora.G5ExecutablePassClearance
+open Witnora.G5SelectedPivotPersistence
 open Witnora.G5ScheduledAbsenceInvariant
 open Witnora.G5SourceTraceSafety
 
