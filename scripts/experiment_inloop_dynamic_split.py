@@ -1,0 +1,159 @@
+"""Dynamic residual-component splitting *inside* DPLL.
+
+Each recursive state is simplified by unit propagation. A graph of currently
+remaining clauses is then traversed, and independently connected components
+are solved as a conjunction. No oracle and no precomputed cut. Compare
+standard frequency DPLL, frequency DPLL with splitting, and support hints
+with splitting. This is known graph decomposition, not mathematical novelty.
+"""
+from __future__ import annotations
+
+from collections import Counter
+import json
+from pathlib import Path
+from time import perf_counter
+
+from scripts.benchmark_separator_decomposition import simplify, components
+from scripts.experiment_inloop_support_hints import support_candidates
+from scripts.benchmark_scaled_minisat_separator import scale_hidden_formula
+from scripts.benchmark_incremental_minisat_separator import contradiction_variant
+from scripts.experiment_autonomous_parity_separator import (
+    _random_three_sat, _dense_bridge_negative,
+)
+
+
+def solve(rows, counters, *, split, hints=None):
+    counters["nodes"] += 1
+    rows = tuple(tuple(row) for row in rows)
+    while True:
+        if not rows:
+            return True
+        if any(not row for row in rows):
+            return False
+        units = [row[0] for row in rows if len(row) == 1]
+        if not units:
+            break
+        assigned = {}
+        for literal in units:
+            v, val = abs(literal), literal > 0
+            if v in assigned and assigned[v] != val:
+                return False
+            assigned[v] = val
+        reduced = simplify(rows, assigned)
+        if reduced is None:
+            return False
+        rows = tuple(reduced)
+
+    if split:
+        counters["component_scans"] += 1
+        groups = components(rows)
+        if len(groups) > 1:
+            counters["split_events"] += 1
+            counters["component_jobs"] += len(groups)
+            # Exact AND decomposition. No requirement that the groups be SAT.
+            return all(solve(group, counters, split=split, hints=hints)
+                       for group in groups)
+
+    occurrences = Counter(abs(lit) for row in rows for lit in row)
+    chosen = min(occurrences, key=lambda v: (
+        -(hints or {}).get(v, 0), -occurrences[v], v))
+    counters["decisions"] += 1
+    if hints and hints.get(chosen, 0):
+        counters["hinted_decisions"] += 1
+    for val in (True, False):
+        reduced = simplify(rows, {chosen: val})
+        if reduced is not None and solve(reduced, counters,
+                                         split=split, hints=hints):
+            return True
+    return False
+
+
+def run(formula, variant):
+    rows = formula.to_clause_lists()
+    split = variant != "frequency"
+    start = perf_counter()
+    hints = support_candidates(rows) if variant == "support_split" else None
+    stats = {
+        "nodes": 0, "decisions": 0, "hinted_decisions": 0,
+        "component_scans": 0, "split_events": 0, "component_jobs": 0,
+    }
+    answer = solve(rows, stats, split=split, hints=hints)
+    return {
+        "sat": answer, **stats,
+        "elapsed_ms": round((perf_counter() - start) * 1000, 5),
+    }
+
+
+def benchmark(seed_count=8):
+    cases = []
+    for copies in (1, 2, 4, 8):
+        for seed in range(seed_count):
+            original = scale_hidden_formula(seed, copies)
+            cases.append(("structured_sat", copies, seed, original))
+            cases.append(("structured_unsat", copies, seed,
+                          contradiction_variant(original)))
+    for seed in range(seed_count):
+        cases.append(("random_3sat", 0, seed, _random_three_sat(seed)))
+        cases.append(("dense_bridge_negative", 0, seed,
+                      _dense_bridge_negative(seed)))
+    records = []
+    for family, copies, seed, formula in cases:
+        variants = {
+            name: run(formula, name)
+            for name in ("frequency", "frequency_split", "support_split")
+        }
+        if len({item["sat"] for item in variants.values()}) != 1:
+            raise AssertionError((family, copies, seed, "SAT disagreement"))
+        records.append({"family": family, "copies": copies, "seed": seed,
+                        "vars": formula.num_vars, **variants})
+    return {
+        "summary": {
+            "total": len(records), "answers_agree": len(records),
+            "frequency_split_node_wins": sum(
+                r["frequency_split"]["nodes"] < r["frequency"]["nodes"]
+                for r in records),
+            "frequency_split_time_wins": sum(
+                r["frequency_split"]["elapsed_ms"]
+                < r["frequency"]["elapsed_ms"] for r in records),
+            "support_over_split_node_wins": sum(
+                r["support_split"]["nodes"]
+                < r["frequency_split"]["nodes"] for r in records),
+            "support_over_split_time_wins": sum(
+                r["support_split"]["elapsed_ms"]
+                < r["frequency_split"]["elapsed_ms"] for r in records),
+            "total_split_events": sum(
+                r["frequency_split"]["split_events"] for r in records),
+            "novelty_established": False,
+        },
+        "by_scale": [{
+            "family": family, "copies": copies,
+            "frequency_nodes": sum(r["frequency"]["nodes"] for r in records
+                                   if r["family"] == family
+                                   and r["copies"] == copies),
+            "split_nodes": sum(r["frequency_split"]["nodes"] for r in records
+                               if r["family"] == family
+                               and r["copies"] == copies),
+            "support_split_nodes": sum(
+                r["support_split"]["nodes"] for r in records
+                if r["family"] == family and r["copies"] == copies),
+            "split_events": sum(r["frequency_split"]["split_events"]
+                                for r in records if r["family"] == family
+                                and r["copies"] == copies),
+        } for family in ("structured_sat", "structured_unsat")
+          for copies in (1, 2, 4, 8)],
+        "records": records,
+    }
+
+
+def main():
+    result = benchmark()
+    path = Path("research/inloop_dynamic_split_results.json")
+    path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8")
+    print(json.dumps(result["summary"], sort_keys=True))
+    for item in result["by_scale"]:
+        print(json.dumps(item, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
