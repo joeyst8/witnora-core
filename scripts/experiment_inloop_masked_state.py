@@ -11,6 +11,7 @@ from collections import Counter
 import json
 from pathlib import Path
 from statistics import median
+from pysat.solvers import Minisat22
 from time import perf_counter
 
 from scripts.experiment_inloop_dynamic_split import run as reference_run
@@ -148,7 +149,9 @@ def benchmark(seed_count=8, repeats=5):
             old = [reference_run(formula, "support_split_event2_cache")
                    for _ in range(repeats)]
             new = [run_masked(formula) for _ in range(repeats)]
-            if len({r["sat"] for r in old + new}) != 1:
+            with Minisat22(bootstrap_with=formula.to_clause_lists()) as oracle:
+                expected = oracle.solve()
+            if len({r["sat"] for r in old + new} | {expected}) != 1:
                 raise AssertionError((family, seed, "SAT disagreement"))
             records.append({
                 "family": family, "seed": seed,
@@ -171,6 +174,17 @@ def benchmark(seed_count=8, repeats=5):
             "masked_cache_hits": sum(r["masked_cache_hits"] for r in records),
             "novelty_established": False,
         },
+        "by_family": [{
+            "family": family,
+            "reference_ms": round(sum(r["reference_ms"] for r in records
+                                      if r["family"] == family), 5),
+            "masked_ms": round(sum(r["masked_ms"] for r in records
+                                   if r["family"] == family), 5),
+            "wins": sum(r["masked_ms"] < r["reference_ms"] for r in records
+                        if r["family"] == family),
+            "cache_hits": sum(r["masked_cache_hits"] for r in records
+                              if r["family"] == family),
+        } for family, _ in families],
         "records": records,
     }
 
@@ -180,6 +194,8 @@ def main():
     Path("research/inloop_masked_state_results.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result["summary"], sort_keys=True))
+    for family in result["by_family"]:
+        print(json.dumps(family, sort_keys=True))
 
 
 if __name__ == "__main__":
