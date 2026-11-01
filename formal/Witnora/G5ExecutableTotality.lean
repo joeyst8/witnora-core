@@ -263,6 +263,37 @@ theorem original_unsat_has_checked_certificate
     Witnora.G5CompleteCheckedCertificate.original_row_unsat_yields_checked_certificate
       initial bound variables outcome hcoverage hvars hrun hunsat⟩
 
+/-- Conditional CNF pipeline with no execution-success premise: an
+    equivalence-correct CNF-to-sparse-row extraction and complete bounded
+    variable schedule always produce a checker-accepted G5 certificate
+    for an UNSAT CNF predicate. The concrete extraction equivalence
+    remains the outstanding integration obligation. -/
+theorem cnf_unsat_has_checked_certificate_of_equivalence
+    (initial : List Row) (bound : Nat) (variables : List Nat)
+    (cnfHolds : (Nat → Bool) → Prop)
+    (hcoverage : Witnora.G5InitialSupportCoverage.Covered
+      variables initial)
+    (hvars : ∀ v ∈ variables, v < bound)
+    (hextract : ∀ assignment : Nat → Bool,
+      cnfHolds assignment ↔
+        (∀ row ∈ initial,
+          Witnora.G5Certificate.RowHolds bound row assignment))
+    (hunsat : ¬ ∃ assignment : Nat → Bool, cnfHolds assignment) :
+    ∃ outcome : PivotOutcome initial,
+      emitScheduleWithPivots initial variables
+        (List.range initial.length) (SourceState.start initial) =
+        some outcome ∧
+      accepts initial outcome.operations = true := by
+  have hrowUnsat : ¬ ∃ assignment : Nat → Bool,
+      ∀ row ∈ initial,
+        Witnora.G5Certificate.RowHolds bound row assignment := by
+    rintro ⟨assignment, hrows⟩
+    exact hunsat ⟨assignment, (hextract assignment).mpr hrows⟩
+  exact original_unsat_has_checked_certificate initial bound
+    variables hcoverage hvars hrowUnsat
+
+#print axioms Witnora.G5ExecutableTotality.cnf_unsat_has_checked_certificate_of_equivalence
+
 #print axioms Witnora.G5ExecutableTotality.initial_candidates_readable
 #print axioms Witnora.G5ExecutableTotality.initial_pivot_ledger_schedule_total
 #print axioms Witnora.G5ExecutableTotality.original_unsat_has_checked_certificate
