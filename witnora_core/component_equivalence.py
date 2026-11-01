@@ -60,3 +60,29 @@ def exact_signed_isomorphism(left, right, max_vars=6):
 
 def cheap_shape(rows):
     return _features(rows)[2]
+
+
+def refined_shape(rows):
+    """Stronger necessary invariant under variable renaming/sign inversion.
+
+    Along with the cheap shape, collect each variable's clause-width profile
+    and multiset of co-occurrence counts. These are unchanged by polarity
+    flips and label permutations. Equality is still not a proof of isomorphism.
+    """
+    variables = sorted({abs(lit) for row in rows for lit in row})
+    profile = Counter()
+    neighbors = {v: Counter() for v in variables}
+    for row in rows:
+        members = sorted({abs(lit) for lit in row})
+        for v in members:
+            profile[(v, len(row))] += 1
+            for u in members:
+                if u != v:
+                    neighbors[v][u] += 1
+    fingerprints = []
+    for v in variables:
+        width_profile = tuple(sorted(
+            (size, n) for (w, size), n in profile.items() if w == v))
+        fingerprints.append((width_profile,
+                             tuple(sorted(neighbors[v].values()))))
+    return cheap_shape(rows), tuple(sorted(fingerprints))
