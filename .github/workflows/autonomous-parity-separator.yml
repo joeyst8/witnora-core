@@ -17,6 +17,8 @@ on:
       - "scripts/experiment_inloop_support_hints.py"
       - "scripts/experiment_inloop_dynamic_split.py"
       - "scripts/experiment_event_cached_ood.py"
+      - "witnora_core/component_equivalence.py"
+      - "tests/test_component_equivalence.py"
       - ".github/workflows/autonomous-parity-separator.yml"
   workflow_dispatch:
 jobs:
@@ -26,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Autonomous detector regressions
-        run: python -m unittest tests.test_autonomous_parity_separator tests.test_separator_solver_comparison -v
+        run: python -m unittest tests.test_autonomous_parity_separator tests.test_separator_solver_comparison tests.test_component_equivalence -v
       - name: Blind OOD experiment
         run: python -m scripts.experiment_autonomous_parity_separator
       - name: Compare DPLL with discovered-cut decomposition
