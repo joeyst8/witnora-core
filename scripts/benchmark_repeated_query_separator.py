@@ -105,6 +105,9 @@ def benchmark(seed_count=8, workloads=(1, 10, 100, 1000)):
             "end_to_end_wins": sum(
                 r["guided_total_ms"] < r["baseline_ms"]
                 for r in records),
+            "selected_end_to_end_wins": sum(
+                r["guided_total_ms"] < r["baseline_ms"]
+                for r in records if r["cut"] is not None),
             "novelty_established": False,
             "synthetic_benchmark": True,
         },
