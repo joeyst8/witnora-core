@@ -1,7 +1,7 @@
 """Proof-obligation-style regression tests for witnessed CNF isomorphism."""
 import unittest
 
-from witnora_core.component_equivalence import exact_signed_isomorphism
+from witnora_core.component_equivalence import exact_signed_isomorphism, refined_shape
 
 
 class ComponentEquivalenceTests(unittest.TestCase):
@@ -11,6 +11,11 @@ class ComponentEquivalenceTests(unittest.TestCase):
         changed = [[9, 4, 7], [-9, -4], [-4, 7]]
         witness = exact_signed_isomorphism(original, changed)
         self.assertIsNotNone(witness)
+
+    def test_refined_shape_preserved_by_witness(self):
+        original = [[1, -2, 3], [-1, 2], [2, 3]]
+        changed = [[9, 4, 7], [-9, -4], [-4, 7]]
+        self.assertEqual(refined_shape(original), refined_shape(changed))
 
     def test_nonisomorphic_formula_rejected(self):
         left = [[1, 2], [1, -2]]
