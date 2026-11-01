@@ -199,4 +199,50 @@ theorem eliminateVariables_residual_clears_schedule
 #print axioms Witnora.G5ResidualNormalForm.extractPivot_some_contains
 #print axioms Witnora.G5ResidualNormalForm.eliminateVariables_residual_clears_schedule
 
+/-- When the finite schedule covers every original variable, every final
+    residual row has empty support. This conclusion is universal and does
+    not depend on whether the original row system is SAT or UNSAT. -/
+theorem complete_schedule_residual_empty_support
+    (vars : List Nat) (rows : List Row)
+    (hcoverage : ∀ row ∈ rows,
+      ∀ v ∈ row.coefficients, v ∈ vars) :
+    ∀ row ∈ (eliminateVariables vars rows).2,
+      row.coefficients = [] := by
+  intro row hr
+  cases hc : row.coefficients with
+  | nil =>
+      rfl
+  | cons v rest =>
+      have hv : v ∈ row.coefficients := by simp [hc]
+      by_cases hmem : v ∈ vars
+      · have hcleared :=
+          eliminateVariables_residual_clears_schedule vars rows v hmem
+        exact False.elim ((hcleared row hr) hv)
+      · have habsent : AbsentFrom v rows := by
+          intro original ho hvar
+          exact hmem (hcoverage original ho v hvar)
+        have hpreserved :=
+          eliminateVariables_preserves_absence vars rows v habsent
+        have hfinal : v ∉ row.coefficients :=
+          hpreserved row (List.mem_append.mpr (Or.inr hr))
+        exact False.elim (hfinal hv)
+
+/-- If a fully reduced residual contains a true RHS equation, it is
+    necessarily the contradiction 0 = 1; hence the input is UNSAT. -/
+theorem complete_schedule_residual_true_unsat
+    (bound : Nat) (vars : List Nat) (rows : List Row)
+    (hcoverage : ∀ row ∈ rows,
+      ∀ v ∈ row.coefficients, v ∈ vars)
+    (htrue : ∃ row ∈ (eliminateVariables vars rows).2,
+      row.rhs = true) :
+    ¬ ∃ a : Nat → Bool,
+      ∀ row ∈ rows, Witnora.G5Certificate.RowHolds bound row a := by
+  obtain ⟨row, hr, hright⟩ := htrue
+  apply eliminateVariables_contradiction_unsat bound vars rows
+  refine ⟨row, List.mem_append.mpr (Or.inr hr), ?_, hright⟩
+  exact complete_schedule_residual_empty_support vars rows hcoverage row hr
+
+#print axioms Witnora.G5ResidualNormalForm.complete_schedule_residual_empty_support
+#print axioms Witnora.G5ResidualNormalForm.complete_schedule_residual_true_unsat
+
 end Witnora.G5ResidualNormalForm
