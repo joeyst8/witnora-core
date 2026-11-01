@@ -115,6 +115,43 @@ theorem applyStep_xor_models_iff
     subst source
     simp [applyStep] at h
 
+/-- Every step in an XOR-only replay program has an indexed target and
+    source and contains no swap operation. -/
+def XorOnly (step : Step) : Prop :=
+  ∃ target source, step = .addXor target source
+
+/-- Every successful finite XOR-only replay preserves the entire set
+    of satisfying assignments in both directions, regardless of how
+    many indexed row replacements occur. -/
+theorem replay_xor_models_iff
+    (bound : Nat) (rows finalRows : List Row)
+    (steps : List Step) (a : Nat → Bool)
+    (honly : ∀ step ∈ steps, XorOnly step)
+    (hreplay : replay rows steps = some finalRows) :
+    SlotsHold bound rows a ↔ SlotsHold bound finalRows a := by
+  induction steps generalizing rows with
+  | nil =>
+      simp [replay] at hreplay
+      cases hreplay
+      rfl
+  | cons step rest ih =>
+      obtain ⟨target, source, hstep⟩ :=
+        honly step (by simp)
+      subst step
+      cases hs : applyStep rows (.addXor target source) with
+      | none =>
+          simp [replay, hs] at hreplay
+      | some updated =>
+          have hrest : replay updated rest = some finalRows := by
+            simpa [replay, hs] using hreplay
+          have hrestOnly : ∀ step ∈ rest, XorOnly step := by
+            intro step hm
+            exact honly step (by simp [hm])
+          exact (applyStep_xor_models_iff bound rows updated
+            target source a hs).trans (ih updated hrestOnly hrest)
+
+#print axioms Witnora.G5GlobalRowModelInvariant.replay_xor_models_iff
+
 #print axioms Witnora.G5GlobalRowModelInvariant.xor_update_models_iff
 #print axioms Witnora.G5GlobalRowModelInvariant.applyStep_xor_models_iff
 
