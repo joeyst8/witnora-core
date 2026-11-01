@@ -119,4 +119,69 @@ theorem solve_one_pivot
 #print axioms Witnora.G5BackSubstitution.sparseParity_flip_present
 #print axioms Witnora.G5BackSubstitution.solve_one_pivot
 
+/-- Changing one variable does not affect a row that excludes it. -/
+theorem rowHolds_preserved_outside
+    (bound v : Nat) (row : Row) (a b : Nat → Bool)
+    (hnot : v ∉ row.coefficients)
+    (hagree : ∀ w, w ≠ v → b w = a w)
+    (hholds : RowHolds bound row a) :
+    RowHolds bound row b := by
+  have heq : sparseParity bound row.coefficients b =
+      sparseParity bound row.coefficients a := by
+    apply sparseParity_congr_on_support bound row.coefficients b a
+    intro w hw
+    have hn : w ≠ v := by
+      intro h
+      subst w
+      exact hnot hw
+    exact hagree w hn
+  unfold RowHolds at hholds ⊢
+  exact heq.trans hholds
+
+/-- An explicitly tagged list of pivots is triangular if each pivot
+    variable occurs in its own row and no later pivot row mentions it. -/
+def Triangular : List (Nat × Row) → Prop
+  | [] => True
+  | (v, row) :: rest =>
+      v ∈ row.coefficients ∧
+      (∀ entry ∈ rest, v ∉ entry.2.coefficients) ∧
+      Triangular rest
+
+/-- Every triangular row system has a simultaneous satisfying assignment,
+    provided each pivot variable lies inside the sparse-parity bound.
+    Back-substitution solves the tail first, then adjusts only the head
+    pivot variable, leaving the tail solutions unchanged. -/
+theorem triangular_has_model
+    (bound : Nat) (pivots : List (Nat × Row))
+    (htri : Triangular pivots)
+    (hbound : ∀ entry ∈ pivots, entry.1 < bound) :
+    ∃ a : Nat → Bool,
+      ∀ entry ∈ pivots, RowHolds bound entry.2 a := by
+  induction pivots with
+  | nil =>
+      exact ⟨fun _ => false, by simp⟩
+  | cons entry tail ih =>
+      cases entry with
+      | mk v row =>
+          have hp : v ∈ row.coefficients := htri.1
+          have hdis : ∀ entry ∈ tail,
+              v ∉ entry.2.coefficients := htri.2.1
+          have ht : Triangular tail := htri.2.2
+          have htb : ∀ entry ∈ tail, entry.1 < bound := by
+            intro entry hmem
+            exact hbound entry (by simp [hmem])
+          obtain ⟨a, ha⟩ := ih ht htb
+          have hv : v < bound := hbound (v, row) (by simp)
+          obtain ⟨b, hagree, hrow⟩ :=
+            solve_one_pivot bound v row a hv hp
+          refine ⟨b, ?_⟩
+          intro entry hmem
+          rcases List.mem_cons.mp hmem with heq | htail
+          · subst entry
+            exact hrow
+          · exact rowHolds_preserved_outside bound v entry.2
+              a b (hdis entry htail) hagree (ha entry htail)
+
+#print axioms Witnora.G5BackSubstitution.triangular_has_model
+
 end Witnora.G5BackSubstitution
