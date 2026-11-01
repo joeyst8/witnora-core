@@ -96,6 +96,22 @@ example :
 #print axioms Witnora.G5VerifiedDagEmitter.replayDag_append
 #print axioms Witnora.G5VerifiedDagEmitter.Builder.accepted_of_contradiction
 
+/-- Appending a suffix preserves every successfully looked-up old index. -/
+theorem lookup_append_preserves
+    (xs ys : List Row) (k : Nat) (r : Row)
+    (h : xs[k]? = some r) :
+    (xs ++ ys)[k]? = some r := by
+  induction xs generalizing k with
+  | nil =>
+      cases k <;> simp at h
+  | cons head tail ih =>
+      cases k with
+      | zero =>
+          simpa using h
+      | succ n =>
+          have ht : tail[n]? = some r := by simpa using h
+          simpa using ih n ht
+
 /-- Appending one derived row leaves every previously valid reference
     addressable at exactly the same index. -/
 theorem Builder.append_preserves_lookup
@@ -106,8 +122,8 @@ theorem Builder.append_preserves_lookup
     (hk : state.rows[k]? = some existing) :
     (state.append initial i j left right hi hj).rows[k]? =
       some existing := by
-  simp [Builder.append]
-  exact List.getElem?_append_left hk
+  exact lookup_append_preserves state.rows
+    [xorRow left right] k existing hk
 
 /-- The new row is always located at the old row-table length. This is
     the reference that the next G5 indexed operation may use. -/
