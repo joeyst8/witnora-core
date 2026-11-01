@@ -30,7 +30,7 @@ def emit_sat_model_transfer() -> str:
         residual, parts, errors = _condition_by_separator(
             formula, assignment, component_specs
         )
-        if errors or len(parts) != 2:
+        if errors or len(parts) != 3:
             raise ValueError(f"invalid Python components: {errors}")
         expected = sorted(tuple(c) for c in residual.to_clause_lists())
         actual = sorted(
