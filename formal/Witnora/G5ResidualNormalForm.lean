@@ -106,4 +106,97 @@ theorem eliminateVariables_preserves_absence
 #print axioms Witnora.G5ResidualNormalForm.xorRow_preserves_absence
 #print axioms Witnora.G5ResidualNormalForm.eliminateVariables_preserves_absence
 
+/-- If no pivot is found, no input row mentions the searched variable. -/
+theorem extractPivot_none_absent
+    (v : Nat) (rows : List Row)
+    (h : extractPivot v rows = none) :
+    AbsentFrom v rows := by
+  induction rows with
+  | nil =>
+      intro row hr
+      simp at hr
+  | cons head rest ih =>
+      by_cases hv : v ∈ head.coefficients
+      · simp [extractPivot, hv] at h
+      · have htail : extractPivot v rest = none := by
+          simpa [extractPivot, hv] using h
+        intro row hr
+        rcases List.mem_cons.mp hr with heq | hrest
+        · subst row
+          exact hv
+        · exact ih htail row hrest
+
+/-- Every successfully extracted pivot contains the requested variable. -/
+theorem extractPivot_some_contains
+    (v : Nat) (rows : List Row) (pivot : Row)
+    (other : List Row)
+    (h : extractPivot v rows = some (pivot, other)) :
+    v ∈ pivot.coefficients := by
+  induction rows generalizing pivot other with
+  | nil =>
+      simp [extractPivot] at h
+  | cons head rest ih =>
+      by_cases hv : v ∈ head.coefficients
+      · simp [extractPivot, hv] at h
+        exact h.1 ▸ hv
+      · cases he : extractPivot v rest with
+        | none =>
+            simp [extractPivot, hv, he] at h
+        | some result =>
+            cases result with
+            | mk p tail =>
+                simp [extractPivot, hv, he] at h
+                have hp : p = pivot := h.1
+                exact hp ▸ ih p tail he
+
+/-- The final residual system omits *every* variable in the schedule,
+    regardless of whether that schedule contains all input variables. -/
+theorem eliminateVariables_residual_clears_schedule
+    (vars : List Nat) (rows : List Row) :
+    ∀ v ∈ vars, AbsentFrom v (eliminateVariables vars rows).2 := by
+  induction vars generalizing rows with
+  | nil =>
+      intro v hv
+      simp at hv
+  | cons first remaining ih =>
+      intro v hv
+      cases he : extractPivot first rows with
+      | none =>
+          have hresult : AbsentFrom v
+              (eliminateVariables remaining rows).2 := by
+            rcases List.mem_cons.mp hv with hfirst | hrest
+            · subst v
+              have hbefore := extractPivot_none_absent first rows he
+              have hafter := eliminateVariables_preserves_absence
+                remaining rows first hbefore
+              intro row hr
+              exact hafter row (List.mem_append.mpr (Or.inr hr))
+            · exact ih rows v hrest
+          simpa [eliminateVariables, he] using hresult
+      | some result =>
+          cases result with
+          | mk pivot other =>
+              have hp : first ∈ pivot.coefficients :=
+                extractPivot_some_contains first rows pivot other he
+              have hcleared : AbsentFrom first
+                  (eliminatePass first pivot other) := by
+                intro row hr
+                exact eliminatePass_clears_variable first pivot other hp row hr
+              have hresult : AbsentFrom v
+                  (eliminateVariables remaining
+                    (eliminatePass first pivot other)).2 := by
+                rcases List.mem_cons.mp hv with hfirst | hrest
+                · subst v
+                  have hafter := eliminateVariables_preserves_absence
+                    remaining (eliminatePass first pivot other)
+                    first hcleared
+                  intro row hr
+                  exact hafter row (List.mem_append.mpr (Or.inr hr))
+                · exact ih (eliminatePass first pivot other) v hrest
+              simpa [eliminateVariables, he] using hresult
+
+#print axioms Witnora.G5ResidualNormalForm.extractPivot_none_absent
+#print axioms Witnora.G5ResidualNormalForm.extractPivot_some_contains
+#print axioms Witnora.G5ResidualNormalForm.eliminateVariables_residual_clears_schedule
+
 end Witnora.G5ResidualNormalForm
