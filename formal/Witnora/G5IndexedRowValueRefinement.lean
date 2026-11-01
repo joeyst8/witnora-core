@@ -120,4 +120,66 @@ theorem xor_other_slot_unchanged
 #print axioms Witnora.G5IndexedRowValueRefinement.xor_target_has_exact_new_row
 #print axioms Witnora.G5IndexedRowValueRefinement.xor_other_slot_unchanged
 
+/-- The source swap branch remaps two working slots but leaves the
+    proof-carrying DAG unchanged. -/
+def swapUpdatedState
+    (initial : List Row) (state : SourceState initial)
+    (i j leftRef rightRef : Nat) : SourceState initial :=
+  { state with refs := (state.refs.set i rightRef).set j leftRef }
+
+/-- A legal swap reads the prior right-slot row through the new left slot,
+    with no change to the DAG row data. -/
+theorem swap_left_slot_exact
+    (initial : List Row) (state : SourceState initial)
+    (i j leftRef rightRef : Nat) (rightRow : Row)
+    (hne : i ≠ j)
+    (hi : state.refs[i]? = some leftRef)
+    (hj : state.refs[j]? = some rightRef)
+    (hr : state.dag.rows[rightRef]? = some rightRow) :
+    workingRow initial
+      (swapUpdatedState initial state i j leftRef rightRef) i =
+      some rightRow := by
+  have hfirst := lookup_set_self state.refs i leftRef rightRef hi
+  have hsecond := lookup_set_other (state.refs.set i rightRef)
+    j i leftRef (Ne.symm hne)
+  simp [workingRow, swapUpdatedState, hsecond, hfirst, hr]
+
+/-- The new right slot similarly reads the old left-slot row. -/
+theorem swap_right_slot_exact
+    (initial : List Row) (state : SourceState initial)
+    (i j leftRef rightRef : Nat) (leftRow : Row)
+    (hne : i ≠ j)
+    (hi : state.refs[i]? = some leftRef)
+    (hj : state.refs[j]? = some rightRef)
+    (hl : state.dag.rows[leftRef]? = some leftRow) :
+    workingRow initial
+      (swapUpdatedState initial state i j leftRef rightRef) j =
+      some leftRow := by
+  have hpre : (state.refs.set i rightRef)[j]? = some rightRef := by
+    rw [lookup_set_other state.refs i j rightRef hne]
+    exact hj
+  have hlast := lookup_set_self (state.refs.set i rightRef)
+    j rightRef leftRef hpre
+  simp [workingRow, swapUpdatedState, hlast, hl]
+
+/-- Swaps also preserve any third unrelated working slot. -/
+theorem swap_other_slot_exact
+    (initial : List Row) (state : SourceState initial)
+    (i j k leftRef rightRef otherRef : Nat) (otherRow : Row)
+    (hki : k ≠ i) (hkj : k ≠ j)
+    (ho : state.refs[k]? = some otherRef)
+    (hrow : state.dag.rows[otherRef]? = some otherRow) :
+    workingRow initial
+      (swapUpdatedState initial state i j leftRef rightRef) k =
+      some otherRow := by
+  have hfirst := lookup_set_other state.refs
+    i k rightRef (Ne.symm hki)
+  have hsecond := lookup_set_other (state.refs.set i rightRef)
+    j k leftRef (Ne.symm hkj)
+  simp [workingRow, swapUpdatedState, hfirst, hsecond, ho, hrow]
+
+#print axioms Witnora.G5IndexedRowValueRefinement.swap_left_slot_exact
+#print axioms Witnora.G5IndexedRowValueRefinement.swap_right_slot_exact
+#print axioms Witnora.G5IndexedRowValueRefinement.swap_other_slot_exact
+
 end Witnora.G5IndexedRowValueRefinement
