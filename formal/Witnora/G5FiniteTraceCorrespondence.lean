@@ -179,8 +179,11 @@ theorem foldlM_simulates
 theorem start_table_relation (initial : List Row) :
     TableRel initial (SourceState.start initial) initial := by
   intro slot
-  simp [TableRel, workingRow, SourceState.start,
+  simp only [TableRel, workingRow, SourceState.start,
     Witnora.G5VerifiedDagEmitter.Builder.start]
+  by_cases h : slot < initial.length
+  · simp [List.getElem?_range, h]
+  · simp [List.getElem?_range, h]
 
 /-- Direct theorem for SourceState.run from initial rows: the independent
     replay succeeds and exposes exactly the same row at every slot. -/
