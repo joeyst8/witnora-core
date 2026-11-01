@@ -56,7 +56,7 @@ theorem xor_all_slots
     (ht : state.refs[targetSlot]? = some targetRef)
     (htr : state.dag.rows[targetRef]? = some targetRow)
     (hsr : state.dag.rows[sourceRef]? = some sourceRow)
-    (hvalid : ∀ slot ref,
+    (hvalid : ∀ (slot ref : Nat),
       state.refs[slot]? = some ref → ref < state.dag.rows.length)
     (slot : Nat) :
     workingRow initial
