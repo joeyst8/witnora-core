@@ -129,6 +129,68 @@ theorem emitSelectedPass_sound
                     (candidates.filter (fun slot => slot != selected))
                     state finished produced he
 
+/-- Returning no pivot means every candidate that resolves to a row
+    genuinely lacks the chosen variable. -/
+theorem choosePivot_none_absent
+    (initial : List Row) (v : Nat)
+    (state : SourceState initial) (candidates : List Nat)
+    (h : choosePivot initial v state candidates = none) :
+    ∀ slot ∈ candidates, ∀ row,
+      workingRow initial state slot = some row →
+      v ∉ row.coefficients := by
+  induction candidates with
+  | nil =>
+      intro slot hmem
+      simp at hmem
+  | cons head tail ih =>
+      cases hr : workingRow initial state head with
+      | none =>
+          have ht : choosePivot initial v state tail = none := by
+            simpa [choosePivot, hr] using h
+          intro slot hmem row hlook
+          rcases List.mem_cons.mp hmem with heq | htail
+          · subst slot
+            simp [hr] at hlook
+          · exact ih ht slot htail row hlook
+      | some current =>
+          by_cases hv : v ∈ current.coefficients
+          · simp [choosePivot, hr, hv] at h
+          · have ht : choosePivot initial v state tail = none := by
+              simpa [choosePivot, hr, hv] using h
+            intro slot hmem row hlook
+            rcases List.mem_cons.mp hmem with heq | htail
+            · subst slot
+              have hrow : row = current := by
+                exact Option.some.inj (hlook.symm.trans hr)
+              subst row
+              exact hv
+            · exact ih ht slot htail row hlook
+
+/-- If any candidate row contains v, finite indexed pivot selection
+    necessarily discovers a pivot rather than silently skipping it. -/
+theorem choosePivot_complete
+    (initial : List Row) (v : Nat)
+    (state : SourceState initial) (candidates : List Nat)
+    (slot : Nat) (row : Row)
+    (hmem : slot ∈ candidates)
+    (hrow : workingRow initial state slot = some row)
+    (hv : v ∈ row.coefficients) :
+    ∃ chosen chosenRow,
+      choosePivot initial v state candidates =
+        some (chosen, chosenRow) := by
+  cases hp : choosePivot initial v state candidates with
+  | none =>
+      have hnot := choosePivot_none_absent initial v state
+        candidates hp slot hmem row hrow
+      exact False.elim (hnot hv)
+  | some choice =>
+      cases choice with
+      | mk chosen chosenRow =>
+          exact ⟨chosen, chosenRow, hp⟩
+
+#print axioms Witnora.G5IndexedPivotSelection.choosePivot_none_absent
+#print axioms Witnora.G5IndexedPivotSelection.choosePivot_complete
+
 #print axioms Witnora.G5IndexedPivotSelection.choosePivot_sound
 #print axioms Witnora.G5IndexedPivotSelection.selected_targets_exclude_pivot
 #print axioms Witnora.G5IndexedPivotSelection.emitSelectedPass_sound
