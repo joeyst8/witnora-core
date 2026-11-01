@@ -63,7 +63,7 @@ def median_time(callback, reps):
     return result, median(times)
 
 
-def benchmark(seed_count=4, reps=15):
+def benchmark(seed_count=12, reps=25):
     records = []
     for variant in ("original", "parity_contradiction"):
         for copies in (1, 2, 4, 8):
