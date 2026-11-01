@@ -10,6 +10,7 @@ on:
       - "tests/test_autonomous_parity_separator.py"
       - "scripts/benchmark_separator_decomposition.py"
       - "tests/test_separator_solver_comparison.py"
+      - "scripts/benchmark_scaled_minisat_separator.py"
       - ".github/workflows/autonomous-parity-separator.yml"
   workflow_dispatch:
 jobs:
@@ -24,6 +25,10 @@ jobs:
         run: python -m scripts.experiment_autonomous_parity_separator
       - name: Compare DPLL with discovered-cut decomposition
         run: python -m scripts.benchmark_separator_decomposition
+      - name: Install independent MiniSat baseline
+        run: python -m pip install "python-sat>=1.8.dev13,<2"
+      - name: Scaled and cached MiniSat comparison
+        run: python -m scripts.benchmark_scaled_minisat_separator
       - name: Archive every positive and negative result
         uses: actions/upload-artifact@v4
         with:
@@ -31,4 +36,5 @@ jobs:
           path: |
             research/autonomous_parity_separator_results.json
             research/solver_decomposition_benchmark.json
+            research/scaled_minisat_separator_benchmark.json
           retention-days: 30
