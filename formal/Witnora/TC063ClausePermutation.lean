@@ -204,6 +204,58 @@ theorem generated_signed_clause_perm_exists
   · exact List.mem_map.mpr ⟨translatedBits, hbadOther, rfl⟩
   · exact (signForbiddenClause_perm _ _ hpairs).symm
 
+
+/-- Boolean membership tests in a clause are unaffected by changing
+    the order of its source literals. -/
+private theorem all_perm_local {α : Type} (p : α → Bool)
+    {xs ys : List α} (h : xs.Perm ys) :
+    xs.all p = ys.all p := by
+  induction h with
+  | nil => rfl
+  | cons _ _ ih => simp [List.all_cons, ih]
+  | swap x y l =>
+      simp [List.all_cons, Bool.and_comm, Bool.and_left_comm, Bool.and_assoc]
+  | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+
+theorem clauseSubsumes_source_perm
+    (source translated expected : List Literal)
+    (hperm : source.Perm translated) :
+    clauseSubsumes source expected =
+      clauseSubsumes translated expected := by
+  exact all_perm_local (fun lit => decide (lit ∈ expected)) hperm
+
+/-- The coverage gate depends only on which clauses are present
+    up to literal permutation, in both directions. -/
+theorem checkClauseCoverage_source_transport
+    (original normalized : CNF)
+    (hforward : ∀ clause ∈ original,
+      ∃ translated ∈ normalized, clause.Perm translated)
+    (hbackward : ∀ clause ∈ normalized,
+      ∃ translated ∈ original, clause.Perm translated)
+    (expected : List Literal) :
+    checkClauseCoverage original expected =
+      checkClauseCoverage normalized expected := by
+  have htrue : checkClauseCoverage original expected = true ↔
+      checkClauseCoverage normalized expected = true := by
+    constructor
+    · intro h
+      obtain ⟨clause, hmem, hsub⟩ :=
+        (List.any_eq_true).mp h
+      obtain ⟨translated, hmemOther, hp⟩ := hforward clause hmem
+      apply (List.any_eq_true).mpr
+      refine ⟨translated, hmemOther, ?_⟩
+      exact (clauseSubsumes_source_perm clause translated expected hp).symm ▸ hsub
+    · intro h
+      obtain ⟨clause, hmem, hsub⟩ :=
+        (List.any_eq_true).mp h
+      obtain ⟨translated, hmemOther, hp⟩ := hbackward clause hmem
+      apply (List.any_eq_true).mpr
+      refine ⟨translated, hmemOther, ?_⟩
+      exact (clauseSubsumes_source_perm clause translated expected hp).symm ▸ hsub
+  cases hx : checkClauseCoverage original expected <;>
+    cases hy : checkClauseCoverage normalized expected <;>
+    simp_all [checkClauseCoverage]
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -219,5 +271,6 @@ example :
 #print axioms Witnora.TC063ClausePermutation.parityBits_perm
 #print axioms Witnora.TC063ClausePermutation.checkPattern_perm
 #print axioms Witnora.TC063ClausePermutation.generated_signed_clause_perm_exists
+#print axioms Witnora.TC063ClausePermutation.checkClauseCoverage_source_transport
 
 end Witnora.TC063ClausePermutation
