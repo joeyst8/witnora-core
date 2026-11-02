@@ -233,6 +233,140 @@ theorem start_run_strong_safe (neighbors : Nat → List Nat)
   run_preserves_strong_safe neighbors fuel (start root)
     (start_strong_safe root)
 
+
+/-- A marked vertex is either pending or already processed.
+    The equality is the work-credit invariant for seen-at-enqueue DFS. -/
+def Balance (state : State) : Prop :=
+  state.seen.length = state.pending.length + state.processed.length
+
+theorem start_balance (root : Nat) : Balance (start root) := by
+  simp [Balance, start]
+
+theorem enqueue_preserves_balance (v : Nat) (state : State)
+    (h : Balance state) : Balance (enqueue v state) := by
+  unfold Balance at h ⊢
+  by_cases hv : v ∈ state.seen
+  · simpa [enqueue, hv] using h
+  · simp [enqueue, hv]
+    omega
+
+theorem enqueueAll_preserves_balance (neighbors : List Nat)
+    (state : State) (h : Balance state) :
+    Balance (enqueueAll neighbors state) := by
+  induction neighbors generalizing state with
+  | nil => simpa [enqueueAll] using h
+  | cons v rest ih =>
+      simpa [enqueueAll] using
+        ih (enqueue v state) (enqueue_preserves_balance v state h)
+
+theorem step_preserves_balance (neighbors : Nat → List Nat)
+    (state : State) (h : Balance state) :
+    Balance (step neighbors state) := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using h
+  | cons vertex rest =>
+      have hnext : Balance
+          { state with pending := rest, processed := vertex :: state.processed } := by
+        unfold Balance at h ⊢
+        simp [hp] at h
+        simp
+        omega
+      simpa [step, hp] using
+        enqueueAll_preserves_balance (neighbors vertex)
+          { state with pending := rest, processed := vertex :: state.processed }
+          hnext
+
+theorem run_preserves_balance (neighbors : Nat → List Nat)
+    (fuel : Nat) (state : State) (h : Balance state) :
+    Balance (run neighbors fuel state) := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      simpa [run] using
+        ih (step neighbors state) (step_preserves_balance neighbors state h)
+
+theorem enqueueAll_processed (neighbors : List Nat) (state : State) :
+    (enqueueAll neighbors state).processed = state.processed := by
+  induction neighbors generalizing state with
+  | nil => rfl
+  | cons v rest ih =>
+      have hsingle : (enqueue v state).processed = state.processed := by
+        by_cases hv : v ∈ state.seen
+        · simp [enqueue, hv]
+        · simp [enqueue, hv]
+      simpa [enqueueAll, hsingle] using ih (enqueue v state)
+
+theorem nonempty_step_processes_one (neighbors : Nat → List Nat)
+    (state : State) (h : state.pending ≠ []) :
+    (step neighbors state).processed.length =
+      state.processed.length + 1 := by
+  cases hp : state.pending with
+  | nil => exact False.elim (h hp)
+  | cons vertex rest =>
+      simp [step, hp, enqueueAll_processed]
+
+theorem run_empty_stays_empty (neighbors : Nat → List Nat)
+    (fuel : Nat) (state : State) (h : state.pending = []) :
+    (run neighbors fuel state).pending = [] := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      have hs : step neighbors state = state := by
+        simp [step, h]
+      simpa [run, hs] using ih state h
+
+/-- Each step either finishes the traversal or spends one distinct
+    processing credit. This statement has no graph-size assumptions. -/
+theorem run_progress (neighbors : Nat → List Nat)
+    (fuel : Nat) (state : State) :
+    (run neighbors fuel state).pending = [] ∨
+    state.processed.length + fuel ≤
+      (run neighbors fuel state).processed.length := by
+  induction fuel generalizing state with
+  | zero =>
+      exact Or.inr (by simp [run])
+  | succ n ih =>
+      by_cases hp : state.pending = []
+      · exact Or.inl (by
+          simpa [run, step, hp] using
+            run_empty_stays_empty neighbors n state hp)
+      · have hstep := nonempty_step_processes_one neighbors state hp
+        rcases ih (step neighbors state) with hfinished | hcount
+        · exact Or.inl (by simpa [run] using hfinished)
+        · exact Or.inr (by
+            change state.processed.length + (n + 1) ≤
+              (run neighbors n (step neighbors state)).processed.length
+            omega)
+
+/--
+A finite upper bound on visited vertices supplies enough run fuel.
+To apply this to an actual graph, one still needs the closure lemma
+proving that `seen` stays within the graph's finite vertex list.
+-/
+theorem run_terminates_under_seen_cap (neighbors : Nat → List Nat)
+    (cap : Nat) (state : State)
+    (hBalance : Balance state)
+    (hCap : (run neighbors cap state).seen.length ≤ cap)
+    (hNoProcessed : state.processed = []) :
+    (run neighbors cap state).pending = [] := by
+  rcases run_progress neighbors cap state with hDone | hCount
+  · exact hDone
+  · have hFinal := run_preserves_balance neighbors cap state hBalance
+    have hZero : state.processed.length = 0 := by
+      simp [hNoProcessed]
+    have hPendingZero :
+        (run neighbors cap state).pending.length = 0 := by
+      unfold Balance at hFinal
+      omega
+    exact List.length_eq_zero.mp hPendingZero
+
+theorem start_terminates_under_seen_cap (neighbors : Nat → List Nat)
+    (cap root : Nat)
+    (hCap : (run neighbors cap (start root)).seen.length ≤ cap) :
+    (run neighbors cap (start root)).pending = [] := by
+  exact run_terminates_under_seen_cap neighbors cap (start root)
+    (start_balance root) hCap (by rfl)
+
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
     (enqueueAll [2, 2, 3, 2] (start 1)).seen.Nodup := by
@@ -243,5 +377,6 @@ example :
 #print axioms Witnora.G14DFSSeenEnqueue.step_preserves_safe
 #print axioms Witnora.G14DFSSeenEnqueue.run_preserves_safe
 #print axioms Witnora.G14DFSSeenEnqueue.run_preserves_strong_safe
+#print axioms Witnora.G14DFSSeenEnqueue.start_terminates_under_seen_cap
 
 end Witnora.G14DFSSeenEnqueue
