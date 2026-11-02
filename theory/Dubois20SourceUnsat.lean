@@ -1,6 +1,7 @@
 import Lean
 
 set_option maxHeartbeats 2000000
+set_option maxRecDepth 4096
 set_option linter.unusedSimpArgs false
 
 /-!
@@ -799,8 +800,7 @@ theorem certificate_inconsistent (bits : BitVec 60) :
   letI : Std.Associative (fun (x y : Bool) => x ^^ y) := ⟨Bool.xor_assoc⟩
   letI : Std.Commutative (fun (x y : Bool) => x ^^ y) := ⟨Bool.xor_comm⟩
   have hcancel : paritySum bits = false := by
-    calc
-      paritySum bits =
+    have hpaired : paritySum bits =
         ((bits.getLsbD 0) ^^ (bits.getLsbD 0)) ^^
         ((bits.getLsbD 1) ^^ (bits.getLsbD 1)) ^^
         ((bits.getLsbD 2) ^^ (bits.getLsbD 2)) ^^
@@ -861,10 +861,10 @@ theorem certificate_inconsistent (bits : BitVec 60) :
         ((bits.getLsbD 57) ^^ (bits.getLsbD 57)) ^^
         ((bits.getLsbD 58) ^^ (bits.getLsbD 58)) ^^
         ((bits.getLsbD 59) ^^ (bits.getLsbD 59)) := by
-          unfold paritySum parity0 parity1 parity2 parity3 parity4 parity5 parity6 parity7 parity8 parity9 parity10 parity11 parity12 parity13 parity14 parity15 parity16 parity17 parity18 parity19 parity20 parity21 parity22 parity23 parity24 parity25 parity26 parity27 parity28 parity29 parity30 parity31 parity32 parity33 parity34 parity35 parity36 parity37 parity38 parity39
-          ac_rfl
-      _ = false := by
-        simp [Bool.xor_self, Bool.xor_false, Bool.false_xor]
+      unfold paritySum parity0 parity1 parity2 parity3 parity4 parity5 parity6 parity7 parity8 parity9 parity10 parity11 parity12 parity13 parity14 parity15 parity16 parity17 parity18 parity19 parity20 parity21 parity22 parity23 parity24 parity25 parity26 parity27 parity28 parity29 parity30 parity31 parity32 parity33 parity34 parity35 parity36 parity37 parity38 parity39
+      ac_rfl
+    rw [hpaired]
+    simp [Bool.xor_self, Bool.xor_false, Bool.false_xor]
   have impossible : false = true := hcancel.symm.trans hsum
   cases impossible
 
