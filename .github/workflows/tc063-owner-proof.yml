@@ -1,0 +1,39 @@
+name: TC063 owner proof
+
+on:
+  push:
+    branches:
+      - tc063-owner-audit-2026-11-02
+    paths:
+      - formal/**
+      - tests/test_tc063_owner_certificate.py
+      - witnora_core/tc063_owner_certificate.py
+      - lean-toolchain
+      - .github/workflows/tc063-owner-proof.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - formal/**
+      - tests/test_tc063_owner_certificate.py
+      - witnora_core/tc063_owner_certificate.py
+      - lean-toolchain
+      - .github/workflows/tc063-owner-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python owner verifier
+        run: python3 -m unittest discover -s tests -p test_tc063_owner_certificate.py -v
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          use-github-cache: false
+      - name: Lean kernel check
+        run: lean formal/TC063/OwnerPartition.lean
