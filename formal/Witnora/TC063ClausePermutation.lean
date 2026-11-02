@@ -436,13 +436,16 @@ theorem canonicalSupport_mem_iff
         · simp [Witnora.SparseBridge.canonicalSupport, h]
       rw [hsplit, ih]
       constructor
-      · rintro (⟨hlt, hmem⟩ | ⟨hmem, rfl⟩)
+      · rintro (⟨hlt, hmem⟩ | ⟨hmem, heq⟩)
         · exact ⟨Nat.lt_succ_of_lt hlt, hmem⟩
-        · exact ⟨Nat.lt_succ_self n, hmem⟩
+        · constructor
+          · simpa only [heq] using Nat.lt_succ_self n
+          · simpa only [heq] using hmem
       · rintro ⟨hlt, hmem⟩
         rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hlt) with hsmall | heq
         · exact Or.inl ⟨hsmall, hmem⟩
-        · exact Or.inr ⟨hmem, heq⟩
+        · refine Or.inr ⟨?_, heq⟩
+          simpa only [heq] using hmem
 
 /-- Sparse canonical support never contains repeated coefficients. -/
 theorem canonicalSupport_nodup (bound : Nat) (coeff : List Nat) :
@@ -485,7 +488,7 @@ private theorem nodup_perm_of_mem_iff
       have hx : x ∈ right := (hmem x).mp (by simp)
       apply (List.cons_perm_iff_perm_erase).mpr
       refine ⟨hx, ?_⟩
-      apply ih hxs.2 (hnRight.erase x)
+      apply ih (right.erase x) hxs.2 (hnRight.erase x)
       intro v
       rw [List.Nodup.mem_erase_iff hnRight]
       constructor
@@ -530,8 +533,10 @@ theorem finite_support_bound_exists (coeff : List Nat) :
       obtain ⟨bound, hb⟩ := ih
       refine ⟨max (x + 1) bound, ?_⟩
       intro v hv
-      rcases List.mem_cons.mp hv with rfl | hv
-      · exact Nat.lt_of_lt_of_le (Nat.lt_succ_self x)
+      rcases List.mem_cons.mp hv with heq | hv
+      · have hlt : v < x + 1 := by
+          simpa only [heq] using Nat.lt_succ_self x
+        exact Nat.lt_of_lt_of_le hlt
           (Nat.le_max_left (x + 1) bound)
       · exact Nat.lt_of_lt_of_le (hb v hv)
           (Nat.le_max_right (x + 1) bound)
