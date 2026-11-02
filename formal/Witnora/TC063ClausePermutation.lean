@@ -252,9 +252,19 @@ theorem checkClauseCoverage_source_transport
       apply (List.any_eq_true).mpr
       refine ⟨translated, hmemOther, ?_⟩
       exact (clauseSubsumes_source_perm clause translated expected hp).symm ▸ hsub
-  cases hx : checkClauseCoverage original expected <;>
-    cases hy : checkClauseCoverage normalized expected <;>
-    simp_all [checkClauseCoverage]
+  cases hx : checkClauseCoverage original expected with
+  | false =>
+      cases hy : checkClauseCoverage normalized expected with
+      | false => rfl
+      | true =>
+          have hc := htrue.mpr hy
+          simp [hx] at hc
+  | true =>
+      cases hy : checkClauseCoverage normalized expected with
+      | false =>
+          have hc := htrue.mp hx
+          simp [hy] at hc
+      | true => rfl
 
 example :
     checkClauseCoverage
