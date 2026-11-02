@@ -9,6 +9,9 @@ on:
       - lean-toolchain
       - lakefile.toml
       - lake-manifest.json
+      - research/PR119_DUBOIS20_SOURCE_XOR_CERTIFICATE.json
+      - research/PR119_DUBOIS20_GF2_39_STEP_TRACE.json
+      - tests/test_dubois_lean_bridge.py
       - .github/workflows/dubois20-lean-proof.yml
   workflow_dispatch:
 
@@ -21,6 +24,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+      - name: Audit Lean fixture against the source and indexed trace
+        run: python -m unittest tests.test_dubois_lean_bridge -v
       - uses: leanprover/lean-action@v1
         with:
           auto-config: false
