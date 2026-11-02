@@ -367,6 +367,151 @@ theorem start_terminates_under_seen_cap (neighbors : Nat → List Nat)
   exact run_terminates_under_seen_cap neighbors cap (start root)
     (start_balance root) hCap (by rfl)
 
+
+/-- A duplicate-free list contained in another list cannot be longer.
+    Local proof keeps the theorem independent of later Lean versions. -/
+theorem nodup_subset_length (xs ys : List Nat)
+    (hNodup : xs.Nodup)
+    (hSubset : ∀ x, x ∈ xs → x ∈ ys) :
+    xs.length ≤ ys.length := by
+  induction xs generalizing ys with
+  | nil => simp
+  | cons x rest ih =>
+      have hparts := List.nodup_cons.mp hNodup
+      have hMem : x ∈ ys :=
+        hSubset x (by simp)
+      have hRest : ∀ z, z ∈ rest → z ∈ ys.erase x := by
+        intro z hz
+        have hNe : z ≠ x := by
+          intro heq
+          subst z
+          exact hparts.1 hz
+        apply (List.mem_erase_of_ne hNe).mpr
+        exact hSubset z (by simp [hz])
+      have hShort := ih (ys.erase x) hparts.2 hRest
+      have hErase := List.length_erase_of_mem hMem
+      have hPos : 0 < ys.length := by
+        cases ys with
+        | nil => simp at hMem
+        | cons y tail => simp
+      simp only [List.length_cons]
+      omega
+
+def SeenWithin (vertices : List Nat) (state : State) : Prop :=
+  ∀ v ∈ state.seen, v ∈ vertices
+
+def NeighborWithin (neighbors : Nat → List Nat)
+    (vertices : List Nat) : Prop :=
+  ∀ v ∈ vertices, ∀ w ∈ neighbors v, w ∈ vertices
+
+theorem start_seen_within (vertices : List Nat)
+    (root : Nat) (hRoot : root ∈ vertices) :
+    SeenWithin vertices (start root) := by
+  intro v hv
+  have heq : v = root := by
+    simpa [start] using hv
+  subst v
+  exact hRoot
+
+theorem enqueue_preserves_seen_within
+    (vertices : List Nat) (v : Nat) (state : State)
+    (hV : v ∈ vertices) (h : SeenWithin vertices state) :
+    SeenWithin vertices (enqueue v state) := by
+  by_cases hv : v ∈ state.seen
+  · simpa [SeenWithin, enqueue, hv] using h
+  · intro x hx
+    have hx' : x = v ∨ x ∈ state.seen := by
+      simpa [enqueue, hv] using hx
+    rcases hx' with hEq | hOld
+    · subst x
+      exact hV
+    · exact h x hOld
+
+theorem enqueueAll_preserves_seen_within
+    (vertices : List Nat) (newNeighbors : List Nat)
+    (state : State) :
+    (∀ v ∈ newNeighbors, v ∈ vertices) →
+    SeenWithin vertices state →
+    SeenWithin vertices (enqueueAll newNeighbors state) := by
+  induction newNeighbors generalizing state with
+  | nil =>
+      intro _ h
+      simpa [enqueueAll] using h
+  | cons v rest ih =>
+      intro hWithin h
+      have hv : v ∈ vertices :=
+        hWithin v (by simp)
+      have hRest : ∀ w ∈ rest, w ∈ vertices := by
+        intro w hw
+        exact hWithin w (by simp [hw])
+      simpa [enqueueAll] using
+        ih (enqueue v state) hRest
+          (enqueue_preserves_seen_within vertices v state hv h)
+
+theorem step_preserves_seen_within
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (state : State)
+    (hNeighbor : NeighborWithin neighbors vertices)
+    (hStrong : StrongSafe state)
+    (hWithin : SeenWithin vertices state) :
+    SeenWithin vertices (step neighbors state) := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using hWithin
+  | cons vertex rest =>
+      have hPending : vertex ∈ state.seen :=
+        hStrong.1.2.2 vertex (by simp [hp])
+      have hV : vertex ∈ vertices := hWithin vertex hPending
+      have hNext : SeenWithin vertices
+          { state with pending := rest, processed := vertex :: state.processed } := by
+        simpa [SeenWithin] using hWithin
+      simpa [step, hp] using
+        enqueueAll_preserves_seen_within
+          vertices (neighbors vertex)
+          { state with pending := rest, processed := vertex :: state.processed }
+          (hNeighbor vertex hV) hNext
+
+theorem run_preserves_seen_within
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (fuel : Nat) (state : State)
+    (hNeighbor : NeighborWithin neighbors vertices)
+    (hStrong : StrongSafe state)
+    (hWithin : SeenWithin vertices state) :
+    SeenWithin vertices (run neighbors fuel state) := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using hWithin
+  | succ n ih =>
+      simpa [run] using ih (step neighbors state)
+        (step_preserves_strong_safe neighbors state hStrong)
+        (step_preserves_seen_within neighbors vertices state
+          hNeighbor hStrong hWithin)
+
+/--
+Universal finite termination of the Python-style seen-at-enqueue model.
+Under a finite list of vertices closed under all adjacency entries,
+the whole traversal finishes in at most `vertices.length` pops.
+This is a bound for the Lean model, not yet CPython execution refinement.
+-/
+theorem start_terminates_on_finite_closed_graph
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (root : Nat)
+    (hNeighbor : NeighborWithin neighbors vertices)
+    (hRoot : root ∈ vertices) :
+    (run neighbors vertices.length (start root)).pending = [] := by
+  have hStrong :=
+    start_run_strong_safe neighbors vertices.length root
+  have hWithin :=
+    run_preserves_seen_within neighbors vertices vertices.length
+      (start root) hNeighbor (start_strong_safe root)
+      (start_seen_within vertices root hRoot)
+  have hBound :
+      (run neighbors vertices.length (start root)).seen.length ≤
+        vertices.length :=
+    nodup_subset_length
+      (run neighbors vertices.length (start root)).seen vertices
+      hStrong.1.1 hWithin
+  exact start_terminates_under_seen_cap
+    neighbors vertices.length root hBound
+
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
     (enqueueAll [2, 2, 3, 2] (start 1)).seen.Nodup := by
@@ -378,5 +523,6 @@ example :
 #print axioms Witnora.G14DFSSeenEnqueue.run_preserves_safe
 #print axioms Witnora.G14DFSSeenEnqueue.run_preserves_strong_safe
 #print axioms Witnora.G14DFSSeenEnqueue.start_terminates_under_seen_cap
+#print axioms Witnora.G14DFSSeenEnqueue.start_terminates_on_finite_closed_graph
 
 end Witnora.G14DFSSeenEnqueue
