@@ -1,4 +1,5 @@
 import Witnora.ExactAffineMembership
+import Witnora.SparseBridge
 
 /-!
 # TC-063 exact clause-coverage invariance under literal permutation
@@ -415,6 +416,126 @@ theorem checkSemanticExactAffine_normalize
   simp only [Witnora.ExactAffineMembership.checkSemanticExactAffine]
   rw [hs, hi, hc]
 
+
+/-- The sparse canonical support contains exactly the input variables
+    strictly below the exclusive upper bound. -/
+theorem canonicalSupport_mem_iff
+    (bound : Nat) (coeff : List Nat) (v : Nat) :
+    v ∈ Witnora.SparseBridge.canonicalSupport bound coeff ↔
+      v < bound ∧ v ∈ coeff := by
+  induction bound with
+  | zero =>
+      simp [Witnora.SparseBridge.canonicalSupport]
+  | succ n ih =>
+      have hsplit :
+          v ∈ Witnora.SparseBridge.canonicalSupport (n + 1) coeff ↔
+          v ∈ Witnora.SparseBridge.canonicalSupport n coeff ∨
+            (n ∈ coeff ∧ v = n) := by
+        by_cases h : n ∈ coeff
+        · simp [Witnora.SparseBridge.canonicalSupport, h, eq_comm]
+        · simp [Witnora.SparseBridge.canonicalSupport, h]
+      rw [hsplit, ih]
+      constructor
+      · rintro (⟨hlt, hmem⟩ | ⟨hmem, rfl⟩)
+        · exact ⟨Nat.lt_succ_of_lt hlt, hmem⟩
+        · exact ⟨Nat.lt_succ_self n, hmem⟩
+      · rintro ⟨hlt, hmem⟩
+        rcases Nat.lt_or_eq_of_le (Nat.le_of_lt_succ hlt) with hsmall | heq
+        · exact Or.inl ⟨hsmall, hmem⟩
+        · exact Or.inr ⟨hmem, heq⟩
+
+/-- Sparse canonical support never contains repeated coefficients. -/
+theorem canonicalSupport_nodup (bound : Nat) (coeff : List Nat) :
+    (Witnora.SparseBridge.canonicalSupport bound coeff).Nodup := by
+  induction bound with
+  | zero =>
+      simp [Witnora.SparseBridge.canonicalSupport]
+  | succ n ih =>
+      by_cases h : n ∈ coeff
+      · have hnot : n ∉ Witnora.SparseBridge.canonicalSupport n coeff := by
+          intro hm
+          have hlt := (canonicalSupport_mem_iff n coeff n).mp hm |>.1
+          exact Nat.lt_irrefl n hlt
+        have hn : (n :: Witnora.SparseBridge.canonicalSupport n coeff).Nodup :=
+          List.nodup_cons.mpr ⟨hnot, ih⟩
+        have hp : (n :: Witnora.SparseBridge.canonicalSupport n coeff).Perm
+            (Witnora.SparseBridge.canonicalSupport n coeff ++ [n]) := by
+          simpa using (List.perm_middle
+            (l₁ := Witnora.SparseBridge.canonicalSupport n coeff)
+            (l₂ := []) (a := n)).symm
+        simpa [Witnora.SparseBridge.canonicalSupport, h] using hn.perm hp
+      · simpa [Witnora.SparseBridge.canonicalSupport, h] using ih
+
+/-- Distinct finite lists with exactly the same members are permutations.
+    This local lemma avoids assuming a library theorem about set equality. -/
+private theorem nodup_perm_of_mem_iff
+    (left right : List Nat)
+    (hnLeft : left.Nodup) (hnRight : right.Nodup)
+    (hmem : ∀ v : Nat, v ∈ left ↔ v ∈ right) :
+    left.Perm right := by
+  induction left generalizing right with
+  | nil =>
+      cases right with
+      | nil => exact List.Perm.nil
+      | cons y rest =>
+          have hc : y ∈ ([] : List Nat) := (hmem y).mpr (by simp)
+          simp at hc
+  | cons x xs ih =>
+      have hxs : x ∉ xs ∧ xs.Nodup := List.nodup_cons.mp hnLeft
+      have hx : x ∈ right := (hmem x).mp (by simp)
+      apply (List.cons_perm_iff_perm_erase).mpr
+      refine ⟨hx, ?_⟩
+      apply ih hxs.2 (hnRight.erase x)
+      intro v
+      rw [List.Nodup.mem_erase_iff hnRight]
+      constructor
+      · intro hv
+        have hne : v ≠ x := by
+          intro heq
+          subst v
+          exact hxs.1 hv
+        exact ⟨hne, (hmem v).mp (by simp [hv])⟩
+      · rintro ⟨hne, hv⟩
+        have hc : v ∈ (x :: xs) := (hmem v).mpr hv
+        rcases List.mem_cons.mp hc with heq | htail
+        · exact False.elim (hne heq)
+        · exact htail
+
+/-- Under a sufficient exclusive bound, the canonical sparse support
+    is a *permutation* of a supported duplicate-free input row. -/
+theorem canonicalSupport_perm_of_covered
+    (bound : Nat) (coeff : List Nat)
+    (hn : coeff.Nodup)
+    (hbounded : ∀ v ∈ coeff, v < bound) :
+    (Witnora.SparseBridge.canonicalSupport bound coeff).Perm coeff := by
+  apply nodup_perm_of_mem_iff _ _
+    (canonicalSupport_nodup bound coeff) hn
+  intro v
+  rw [canonicalSupport_mem_iff]
+  constructor
+  · exact And.right
+  · intro hv
+    exact ⟨hbounded v hv, hv⟩
+
+/-- Every finite coefficient list has a single exclusive bound large
+    enough to contain its entire support. -/
+theorem finite_support_bound_exists (coeff : List Nat) :
+    ∃ bound : Nat, ∀ v ∈ coeff, v < bound := by
+  induction coeff with
+  | nil =>
+      refine ⟨0, ?_⟩
+      intro v hv
+      simp at hv
+  | cons x rest ih =>
+      obtain ⟨bound, hb⟩ := ih
+      refine ⟨max (x + 1) bound, ?_⟩
+      intro v hv
+      rcases List.mem_cons.mp hv with rfl | hv
+      · exact Nat.lt_of_lt_of_le (Nat.lt_succ_self x)
+          (Nat.le_max_left (x + 1) bound)
+      · exact Nat.lt_of_lt_of_le (hb v hv)
+          (Nat.le_max_right (x + 1) bound)
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -433,5 +554,7 @@ example :
 #print axioms Witnora.TC063ClausePermutation.checkClauseCoverage_source_transport
 #print axioms Witnora.TC063ClausePermutation.expanded_normalized_coverage
 #print axioms Witnora.TC063ClausePermutation.checkSemanticExactAffine_normalize
+#print axioms Witnora.TC063ClausePermutation.canonicalSupport_perm_of_covered
+#print axioms Witnora.TC063ClausePermutation.finite_support_bound_exists
 
 end Witnora.TC063ClausePermutation
