@@ -1,0 +1,867 @@
+{
+  "all_emitted_certificates_accepted": true,
+  "case_count": 18,
+  "certified_answer_agreement": 36,
+  "diagnostic_only_count": 0,
+  "kind": "TC063_HELDOUT_GUARDED_AFFINE_MINISAT_BENCHMARK",
+  "limitations": [
+    "Synthetic guarded-affine families, not industrial SAT benchmarks",
+    "MiniSat returns an answer; Witnora additionally produces and checks a native certificate",
+    "Lean kernel checking excluded from Witnora timings",
+    "Wall-clock timings are short; environment and noise strongly affect ratios",
+    "A native certificate check is not a universal Python-to-Lean refinement proof"
+  ],
+  "native_total_wins": 0,
+  "samples": [
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14567,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.08746,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        7
+      ],
+      "trial": 0,
+      "variables": 9,
+      "witnora_native_total_ms": 9.564943
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14567,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.065043,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        7
+      ],
+      "trial": 1,
+      "variables": 9,
+      "witnora_native_total_ms": 8.305932
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14567,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.025087,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        3
+      ],
+      "trial": 0,
+      "variables": 9,
+      "witnora_native_total_ms": 8.163154
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14567,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.043544,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        3
+      ],
+      "trial": 1,
+      "variables": 9,
+      "witnora_native_total_ms": 9.563668
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27184,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.035176,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        11
+      ],
+      "trial": 0,
+      "variables": 17,
+      "witnora_native_total_ms": 16.758766
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27184,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.056373,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        11
+      ],
+      "trial": 1,
+      "variables": 17,
+      "witnora_native_total_ms": 16.882207
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27202,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.029207,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        13
+      ],
+      "trial": 0,
+      "variables": 17,
+      "witnora_native_total_ms": 17.169996
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27202,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.062048,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        13
+      ],
+      "trial": 1,
+      "variables": 17,
+      "witnora_native_total_ms": 16.726953
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52509,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.050199,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        16
+      ],
+      "trial": 0,
+      "variables": 33,
+      "witnora_native_total_ms": 33.908024
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52509,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.088451,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        16
+      ],
+      "trial": 1,
+      "variables": 33,
+      "witnora_native_total_ms": 32.99051
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52509,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.047424,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        4
+      ],
+      "trial": 0,
+      "variables": 33,
+      "witnora_native_total_ms": 30.128771
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52509,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_sat_chain",
+      "minisat_total_ms": 0.087625,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        4
+      ],
+      "trial": 1,
+      "variables": 33,
+      "witnora_native_total_ms": 30.145363
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 22468,
+      "clauses": 20,
+      "components": 4,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.025251,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        7
+      ],
+      "trial": 0,
+      "variables": 9,
+      "witnora_native_total_ms": 11.019326
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 22468,
+      "clauses": 20,
+      "components": 4,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.046113,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        7
+      ],
+      "trial": 1,
+      "variables": 9,
+      "witnora_native_total_ms": 10.966219
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 22468,
+      "clauses": 20,
+      "components": 4,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.024007,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        3
+      ],
+      "trial": 0,
+      "variables": 9,
+      "witnora_native_total_ms": 10.451811
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 22468,
+      "clauses": 20,
+      "components": 4,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.035055,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        3
+      ],
+      "trial": 1,
+      "variables": 9,
+      "witnora_native_total_ms": 10.020151
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 34947,
+      "clauses": 36,
+      "components": 8,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.034345,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        11
+      ],
+      "trial": 0,
+      "variables": 17,
+      "witnora_native_total_ms": 17.40386
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 34947,
+      "clauses": 36,
+      "components": 8,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.058174,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        11
+      ],
+      "trial": 1,
+      "variables": 17,
+      "witnora_native_total_ms": 18.320931
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 34953,
+      "clauses": 36,
+      "components": 8,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.033768,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        13
+      ],
+      "trial": 0,
+      "variables": 17,
+      "witnora_native_total_ms": 22.115116
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 34953,
+      "clauses": 36,
+      "components": 8,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.054631,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        13
+      ],
+      "trial": 1,
+      "variables": 17,
+      "witnora_native_total_ms": 18.731639
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 59923,
+      "clauses": 68,
+      "components": 16,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.053838,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        16
+      ],
+      "trial": 0,
+      "variables": 33,
+      "witnora_native_total_ms": 44.982348
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 59923,
+      "clauses": 68,
+      "components": 16,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.098336,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        16
+      ],
+      "trial": 1,
+      "variables": 33,
+      "witnora_native_total_ms": 34.917204
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 59895,
+      "clauses": 68,
+      "components": 16,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.052754,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        4
+      ],
+      "trial": 0,
+      "variables": 33,
+      "witnora_native_total_ms": 31.806087
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 59895,
+      "clauses": 68,
+      "components": 16,
+      "family": "saf_unsat_cover",
+      "minisat_total_ms": 0.093866,
+      "native_certificate_verified": true,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        4
+      ],
+      "trial": 1,
+      "variables": 33,
+      "witnora_native_total_ms": 31.989477
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14594,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.01976,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        7
+      ],
+      "trial": 0,
+      "variables": 9,
+      "witnora_native_total_ms": 8.275413
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14594,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.048664,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        7
+      ],
+      "trial": 1,
+      "variables": 9,
+      "witnora_native_total_ms": 8.471706
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14594,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.020175,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        3
+      ],
+      "trial": 0,
+      "variables": 9,
+      "witnora_native_total_ms": 7.955127
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14594,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.029474,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        3
+      ],
+      "trial": 1,
+      "variables": 9,
+      "witnora_native_total_ms": 7.904653
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27243,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.028967,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        11
+      ],
+      "trial": 0,
+      "variables": 17,
+      "witnora_native_total_ms": 16.343322
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27243,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.050876,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        11
+      ],
+      "trial": 1,
+      "variables": 17,
+      "witnora_native_total_ms": 16.30231
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27241,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.027461,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        13
+      ],
+      "trial": 0,
+      "variables": 17,
+      "witnora_native_total_ms": 16.674922
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27241,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.057678,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        13
+      ],
+      "trial": 1,
+      "variables": 17,
+      "witnora_native_total_ms": 16.291117
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52628,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.045608,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        16
+      ],
+      "trial": 0,
+      "variables": 33,
+      "witnora_native_total_ms": 33.056121
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52628,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.084552,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "separator": [
+        16
+      ],
+      "trial": 1,
+      "variables": 33,
+      "witnora_native_total_ms": 32.635265
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52612,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.045728,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        4
+      ],
+      "trial": 0,
+      "variables": 33,
+      "witnora_native_total_ms": 29.941955
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52612,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_balanced_sat",
+      "minisat_total_ms": 0.079756,
+      "native_certificate_verified": true,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "separator": [
+        4
+      ],
+      "trial": 1,
+      "variables": 33,
+      "witnora_native_total_ms": 33.48122
+    }
+  ],
+  "scope": "Independent MiniSat22 vs native G14 recognizer + certificate builder + checker",
+  "summary": [
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14594,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_balanced_sat",
+      "minisat_median_ms": 0.034212,
+      "native_over_minisat_ratio": 244.755,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "variables": 9,
+      "witnora_native_median_ms": 8.373559
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14594,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_balanced_sat",
+      "minisat_median_ms": 0.024824,
+      "native_over_minisat_ratio": 319.438,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "variables": 9,
+      "witnora_native_median_ms": 7.92989
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27243,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_balanced_sat",
+      "minisat_median_ms": 0.039921,
+      "native_over_minisat_ratio": 408.873,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "variables": 17,
+      "witnora_native_median_ms": 16.322816
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27241,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_balanced_sat",
+      "minisat_median_ms": 0.042569,
+      "native_over_minisat_ratio": 387.203,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "variables": 17,
+      "witnora_native_median_ms": 16.483019
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52628,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_balanced_sat",
+      "minisat_median_ms": 0.06508,
+      "native_over_minisat_ratio": 504.697,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "variables": 33,
+      "witnora_native_median_ms": 32.845693
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52612,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_balanced_sat",
+      "minisat_median_ms": 0.062742,
+      "native_over_minisat_ratio": 505.428,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "variables": 33,
+      "witnora_native_median_ms": 31.711588
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14567,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_sat_chain",
+      "minisat_median_ms": 0.076251,
+      "native_over_minisat_ratio": 117.184,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "variables": 9,
+      "witnora_native_median_ms": 8.935437
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 14567,
+      "clauses": 16,
+      "components": 4,
+      "family": "saf_sat_chain",
+      "minisat_median_ms": 0.034315,
+      "native_over_minisat_ratio": 258.292,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "variables": 9,
+      "witnora_native_median_ms": 8.863411
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27184,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_sat_chain",
+      "minisat_median_ms": 0.045774,
+      "native_over_minisat_ratio": 367.464,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "variables": 17,
+      "witnora_native_median_ms": 16.820487
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 27202,
+      "clauses": 32,
+      "components": 8,
+      "family": "saf_sat_chain",
+      "minisat_median_ms": 0.045628,
+      "native_over_minisat_ratio": 371.453,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "variables": 17,
+      "witnora_native_median_ms": 16.948475
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52509,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_sat_chain",
+      "minisat_median_ms": 0.069325,
+      "native_over_minisat_ratio": 482.499,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 23,
+      "variables": 33,
+      "witnora_native_median_ms": 33.449267
+    },
+    {
+      "answer": "SAT_CERTIFIED",
+      "certificate_bytes": 52509,
+      "clauses": 64,
+      "components": 16,
+      "family": "saf_sat_chain",
+      "minisat_median_ms": 0.067525,
+      "native_over_minisat_ratio": 446.313,
+      "native_status": "SAT_CERTIFIED",
+      "seed": 59,
+      "variables": 33,
+      "witnora_native_median_ms": 30.137067
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 22468,
+      "clauses": 20,
+      "components": 4,
+      "family": "saf_unsat_cover",
+      "minisat_median_ms": 0.035682,
+      "native_over_minisat_ratio": 308.076,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "variables": 9,
+      "witnora_native_median_ms": 10.992773
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 22468,
+      "clauses": 20,
+      "components": 4,
+      "family": "saf_unsat_cover",
+      "minisat_median_ms": 0.029531,
+      "native_over_minisat_ratio": 346.618,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "variables": 9,
+      "witnora_native_median_ms": 10.235981
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 34947,
+      "clauses": 36,
+      "components": 8,
+      "family": "saf_unsat_cover",
+      "minisat_median_ms": 0.046259,
+      "native_over_minisat_ratio": 386.135,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "variables": 17,
+      "witnora_native_median_ms": 17.862396
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 34953,
+      "clauses": 36,
+      "components": 8,
+      "family": "saf_unsat_cover",
+      "minisat_median_ms": 0.0442,
+      "native_over_minisat_ratio": 462.073,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "variables": 17,
+      "witnora_native_median_ms": 20.423378
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 59923,
+      "clauses": 68,
+      "components": 16,
+      "family": "saf_unsat_cover",
+      "minisat_median_ms": 0.076087,
+      "native_over_minisat_ratio": 525.054,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 23,
+      "variables": 33,
+      "witnora_native_median_ms": 39.949776
+    },
+    {
+      "answer": "UNSAT_CERTIFIED",
+      "certificate_bytes": 59895,
+      "clauses": 68,
+      "components": 16,
+      "family": "saf_unsat_cover",
+      "minisat_median_ms": 0.07331,
+      "native_over_minisat_ratio": 435.108,
+      "native_status": "UNSAT_CERTIFIED",
+      "seed": 59,
+      "variables": 33,
+      "witnora_native_median_ms": 31.897782
+    }
+  ],
+  "trial_count": 2
+}
