@@ -29,8 +29,12 @@ theorem two_branch_unsat_cover
   intro m hm
   have hr : residual (separator m) m := (hexact m).mp hm
   cases hs : separator m with
-  | false => exact false_refuted m hs hr
-  | true => exact true_refuted m hs hr
+  | false =>
+      apply false_refuted m hs
+      simpa only [hs] using hr
+  | true =>
+      apply true_refuted m hs
+      simpa only [hs] using hr
 
 -- These are the actual four DIMACS clauses of each affected source group,
 -- with all occurrences of original DIMACS variable 1 replaced by `branch`.
