@@ -198,28 +198,28 @@ set, so every enqueue makes the same decision. No assumption about the
 number or representation order of old vertices is needed.
 -/
 
-/-- Global and local states have identical active work, with the old
+/-- Global and freshState states have identical active work, with the old
     component set only added to the global seen membership list. -/
 def StateExtends (oldSeen : List Nat)
-    (local global : State) : Prop :=
-  global.pending = local.pending ∧
-  global.processed = local.processed ∧
-  global.seen = local.seen ++ oldSeen
+    (freshState global : State) : Prop :=
+  global.pending = freshState.pending ∧
+  global.processed = freshState.processed ∧
+  global.seen = freshState.seen ++ oldSeen
 
 theorem startWithSeen_extends (oldSeen : List Nat) (root : Nat) :
     StateExtends oldSeen (start root) (startWithSeen oldSeen root) := by
   simp [StateExtends, start, startWithSeen]
 
 theorem enqueue_extends
-    (oldSeen : List Nat) (v : Nat) (local global : State)
+    (oldSeen : List Nat) (v : Nat) (freshState global : State)
     (hFresh : v ∉ oldSeen)
-    (hExt : StateExtends oldSeen local global) :
-    StateExtends oldSeen (enqueue v local) (enqueue v global) := by
+    (hExt : StateExtends oldSeen freshState global) :
+    StateExtends oldSeen (enqueue v freshState) (enqueue v global) := by
   rcases hExt with ⟨hPending, hProcessed, hSeen⟩
-  have hMem : v ∈ global.seen ↔ v ∈ local.seen := by
+  have hMem : v ∈ global.seen ↔ v ∈ freshState.seen := by
     rw [hSeen, List.mem_append]
     simp [hFresh]
-  by_cases hv : v ∈ local.seen
+  by_cases hv : v ∈ freshState.seen
   · have hg : v ∈ global.seen := hMem.mpr hv
     simp [StateExtends, enqueue, hv, hg,
       hPending, hProcessed, hSeen]
@@ -230,12 +230,12 @@ theorem enqueue_extends
       hPending, hProcessed, hSeen]
 
 theorem enqueueAll_extends
-    (oldSeen newNeighbors : List Nat) (local global : State)
+    (oldSeen newNeighbors : List Nat) (freshState global : State)
     (hFresh : ∀ v ∈ newNeighbors, v ∉ oldSeen)
-    (hExt : StateExtends oldSeen local global) :
+    (hExt : StateExtends oldSeen freshState global) :
     StateExtends oldSeen
-      (enqueueAll newNeighbors local) (enqueueAll newNeighbors global) := by
-  induction newNeighbors generalizing local global with
+      (enqueueAll newNeighbors freshState) (enqueueAll newNeighbors global) := by
+  induction newNeighbors generalizing freshState global with
   | nil => simpa [enqueueAll] using hExt
   | cons v rest ih =>
       have hv : v ∉ oldSeen := hFresh v (by simp)
@@ -243,26 +243,26 @@ theorem enqueueAll_extends
         intro w hw
         exact hFresh w (by simp [hw])
       simpa [enqueueAll] using
-        ih (enqueue v local) (enqueue v global) hRest
-          (enqueue_extends oldSeen v local global hv hExt)
+        ih (enqueue v freshState) (enqueue v global) hRest
+          (enqueue_extends oldSeen v freshState global hv hExt)
 
 theorem step_extends
     (oldSeen : List Nat) (neighbors : Nat → List Nat)
-    (local global : State)
-    (hExt : StateExtends oldSeen local global)
-    (hFresh : ∀ u ∈ local.pending, ∀ v ∈ neighbors u, v ∉ oldSeen) :
-    StateExtends oldSeen (step neighbors local) (step neighbors global) := by
+    (freshState global : State)
+    (hExt : StateExtends oldSeen freshState global)
+    (hFresh : ∀ u ∈ freshState.pending, ∀ v ∈ neighbors u, v ∉ oldSeen) :
+    StateExtends oldSeen (step neighbors freshState) (step neighbors global) := by
   rcases hExt with ⟨hPending, hProcessed, hSeen⟩
-  cases hp : local.pending with
+  cases hp : freshState.pending with
   | nil =>
       have hg : global.pending = [] := hPending.trans hp
       simpa [step, hp, hg] using
-        (show StateExtends oldSeen local global from
+        (show StateExtends oldSeen freshState global from
           ⟨hPending, hProcessed, hSeen⟩)
   | cons vertex rest =>
       have hg : global.pending = vertex :: rest := hPending.trans hp
       let localNext : State :=
-        { local with pending := rest, processed := vertex :: local.processed }
+        { freshState with pending := rest, processed := vertex :: freshState.processed }
       let globalNext : State :=
         { global with pending := rest, processed := vertex :: global.processed }
       have hNext : StateExtends oldSeen localNext globalNext := by
@@ -297,7 +297,7 @@ theorem reachable_avoids_preseen
       neighbors oldSeen hOldClosed v root hv hBack)
 
 /-- One DFS step is identical in active work under global old-seen
-    marking, provided the local state was generated from the fresh root. -/
+    marking, provided the freshState state was generated from the fresh root. -/
 theorem step_extends_closed_preseen
     (neighbors : Nat → List Nat) (vertices oldSeen : List Nat)
     (hUniverse : NeighborWithin neighbors vertices)
@@ -305,15 +305,15 @@ theorem step_extends_closed_preseen
     (hOldClosed : Witnora.G14DFSOuterScan.EdgeClosed neighbors oldSeen)
     (root : Nat) (hRoot : root ∈ vertices)
     (hFreshRoot : root ∉ oldSeen)
-    (local global : State)
-    (hExt : StateExtends oldSeen local global)
-    (hStrong : StrongSafe local)
-    (hReach : SeenReachable neighbors root local) :
+    (freshState global : State)
+    (hExt : StateExtends oldSeen freshState global)
+    (hStrong : StrongSafe freshState)
+    (hReach : SeenReachable neighbors root freshState) :
     StateExtends oldSeen
-      (step neighbors local) (step neighbors global) := by
-  apply step_extends oldSeen neighbors local global hExt
+      (step neighbors freshState) (step neighbors global) := by
+  apply step_extends oldSeen neighbors freshState global hExt
   intro u hu v hv
-  have hUSeen : u ∈ local.seen := hStrong.1.2.2 u hu
+  have hUSeen : u ∈ freshState.seen := hStrong.1.2.2 u hu
   have hUReach : Reachable neighbors root u := hReach u hUSeen
   have hVReach : Reachable neighbors root v :=
     Reachable.edge u v hUReach hv
@@ -327,22 +327,22 @@ theorem run_extends_closed_preseen
     (hOldClosed : Witnora.G14DFSOuterScan.EdgeClosed neighbors oldSeen)
     (root : Nat) (hRoot : root ∈ vertices)
     (hFreshRoot : root ∉ oldSeen)
-    (fuel : Nat) (local global : State)
-    (hExt : StateExtends oldSeen local global)
-    (hStrong : StrongSafe local)
-    (hReach : SeenReachable neighbors root local) :
+    (fuel : Nat) (freshState global : State)
+    (hExt : StateExtends oldSeen freshState global)
+    (hStrong : StrongSafe freshState)
+    (hReach : SeenReachable neighbors root freshState) :
     StateExtends oldSeen
-      (run neighbors fuel local) (run neighbors fuel global) := by
-  induction fuel generalizing local global with
+      (run neighbors fuel freshState) (run neighbors fuel global) := by
+  induction fuel generalizing freshState global with
   | zero => simpa [run] using hExt
   | succ n ih =>
       have hStep := step_extends_closed_preseen
         neighbors vertices oldSeen hUniverse hSymm hOldClosed
-        root hRoot hFreshRoot local global hExt hStrong hReach
+        root hRoot hFreshRoot freshState global hExt hStrong hReach
       simpa [run] using
-        ih (step neighbors local) (step neighbors global) hStep
-          (step_preserves_strong_safe neighbors local hStrong)
-          (step_preserves_seen_reachable neighbors root local hStrong hReach)
+        ih (step neighbors freshState) (step neighbors global) hStep
+          (step_preserves_strong_safe neighbors freshState hStrong)
+          (step_preserves_seen_reachable neighbors root freshState hStrong hReach)
 
 /-- Strong model-level bridge: for every fuel value, the global preseen
     DFS has exactly the fresh-root processed *list*, not just the same
