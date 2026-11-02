@@ -33,7 +33,7 @@ theorem canonical_witness_complete
     have hs := hexact
     unfold checkSemanticExactAffine at hs
     simp at hs
-    exact hs.1.1
+    exact List.all_eq_true.mpr hs.1.1
   have hperm : ∀ row ∈ rows,
       row.rhs = (canonicalizeRow bound row).rhs ∧
       row.coefficients.Perm (canonicalizeRow bound row).coefficients := by
@@ -41,8 +41,9 @@ theorem canonical_witness_complete
     have hrow : rowSupported r row = true :=
       List.all_eq_true.mp hrows row hr
     have hnodup : row.coefficients.Nodup := by
-      by_contra hnot
-      simp [rowSupported, hnot] at hrow
+      have hsupported := hrow
+      simp [rowSupported] at hsupported
+      exact hsupported.1.2
     refine ⟨rfl, ?_⟩
     change row.coefficients.Perm
       (Witnora.SparseBridge.canonicalSupport bound row.coefficients)
