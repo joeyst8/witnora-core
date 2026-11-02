@@ -1,5 +1,8 @@
 import Lean
 
+set_option maxHeartbeats 2000000
+set_option linter.unusedSimpArgs false
+
 /-!
   Kernel-only proof candidate for the 160-clause Dubois20 CNF as re-ordered
   by the archived 40-row source-exact XOR certificate. Variables are represented
@@ -793,10 +796,75 @@ theorem certificate_inconsistent (bits : BitVec 60) :
   rcases hs with ⟨h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22, h23, h24, h25, h26, h27, h28, h29, h30, h31, h32, h33, h34, h35, h36, h37, h38, h39⟩
   have hsum : paritySum bits = true := by
     simp [paritySum, h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15, h16, h17, h18, h19, h20, h21, h22, h23, h24, h25, h26, h27, h28, h29, h30, h31, h32, h33, h34, h35, h36, h37, h38, h39]
+  letI : Std.Associative (fun (x y : Bool) => x ^^ y) := ⟨Bool.xor_assoc⟩
+  letI : Std.Commutative (fun (x y : Bool) => x ^^ y) := ⟨Bool.xor_comm⟩
   have hcancel : paritySum bits = false := by
-    simp [paritySum, parity0, parity1, parity2, parity3, parity4, parity5, parity6, parity7, parity8, parity9, parity10, parity11, parity12, parity13, parity14, parity15, parity16, parity17, parity18, parity19, parity20, parity21, parity22, parity23, parity24, parity25, parity26, parity27, parity28, parity29, parity30, parity31, parity32, parity33, parity34, parity35, parity36, parity37, parity38, parity39,
-      Bool.xor_assoc, Bool.xor_left_comm, Bool.xor_comm,
-      Bool.xor_self, Bool.false_xor, Bool.xor_false]
+    calc
+      paritySum bits =
+        ((bits.getLsbD 0) ^^ (bits.getLsbD 0)) ^^
+        ((bits.getLsbD 1) ^^ (bits.getLsbD 1)) ^^
+        ((bits.getLsbD 2) ^^ (bits.getLsbD 2)) ^^
+        ((bits.getLsbD 3) ^^ (bits.getLsbD 3)) ^^
+        ((bits.getLsbD 4) ^^ (bits.getLsbD 4)) ^^
+        ((bits.getLsbD 5) ^^ (bits.getLsbD 5)) ^^
+        ((bits.getLsbD 6) ^^ (bits.getLsbD 6)) ^^
+        ((bits.getLsbD 7) ^^ (bits.getLsbD 7)) ^^
+        ((bits.getLsbD 8) ^^ (bits.getLsbD 8)) ^^
+        ((bits.getLsbD 9) ^^ (bits.getLsbD 9)) ^^
+        ((bits.getLsbD 10) ^^ (bits.getLsbD 10)) ^^
+        ((bits.getLsbD 11) ^^ (bits.getLsbD 11)) ^^
+        ((bits.getLsbD 12) ^^ (bits.getLsbD 12)) ^^
+        ((bits.getLsbD 13) ^^ (bits.getLsbD 13)) ^^
+        ((bits.getLsbD 14) ^^ (bits.getLsbD 14)) ^^
+        ((bits.getLsbD 15) ^^ (bits.getLsbD 15)) ^^
+        ((bits.getLsbD 16) ^^ (bits.getLsbD 16)) ^^
+        ((bits.getLsbD 17) ^^ (bits.getLsbD 17)) ^^
+        ((bits.getLsbD 18) ^^ (bits.getLsbD 18)) ^^
+        ((bits.getLsbD 19) ^^ (bits.getLsbD 19)) ^^
+        ((bits.getLsbD 20) ^^ (bits.getLsbD 20)) ^^
+        ((bits.getLsbD 21) ^^ (bits.getLsbD 21)) ^^
+        ((bits.getLsbD 22) ^^ (bits.getLsbD 22)) ^^
+        ((bits.getLsbD 23) ^^ (bits.getLsbD 23)) ^^
+        ((bits.getLsbD 24) ^^ (bits.getLsbD 24)) ^^
+        ((bits.getLsbD 25) ^^ (bits.getLsbD 25)) ^^
+        ((bits.getLsbD 26) ^^ (bits.getLsbD 26)) ^^
+        ((bits.getLsbD 27) ^^ (bits.getLsbD 27)) ^^
+        ((bits.getLsbD 28) ^^ (bits.getLsbD 28)) ^^
+        ((bits.getLsbD 29) ^^ (bits.getLsbD 29)) ^^
+        ((bits.getLsbD 30) ^^ (bits.getLsbD 30)) ^^
+        ((bits.getLsbD 31) ^^ (bits.getLsbD 31)) ^^
+        ((bits.getLsbD 32) ^^ (bits.getLsbD 32)) ^^
+        ((bits.getLsbD 33) ^^ (bits.getLsbD 33)) ^^
+        ((bits.getLsbD 34) ^^ (bits.getLsbD 34)) ^^
+        ((bits.getLsbD 35) ^^ (bits.getLsbD 35)) ^^
+        ((bits.getLsbD 36) ^^ (bits.getLsbD 36)) ^^
+        ((bits.getLsbD 37) ^^ (bits.getLsbD 37)) ^^
+        ((bits.getLsbD 38) ^^ (bits.getLsbD 38)) ^^
+        ((bits.getLsbD 39) ^^ (bits.getLsbD 39)) ^^
+        ((bits.getLsbD 40) ^^ (bits.getLsbD 40)) ^^
+        ((bits.getLsbD 41) ^^ (bits.getLsbD 41)) ^^
+        ((bits.getLsbD 42) ^^ (bits.getLsbD 42)) ^^
+        ((bits.getLsbD 43) ^^ (bits.getLsbD 43)) ^^
+        ((bits.getLsbD 44) ^^ (bits.getLsbD 44)) ^^
+        ((bits.getLsbD 45) ^^ (bits.getLsbD 45)) ^^
+        ((bits.getLsbD 46) ^^ (bits.getLsbD 46)) ^^
+        ((bits.getLsbD 47) ^^ (bits.getLsbD 47)) ^^
+        ((bits.getLsbD 48) ^^ (bits.getLsbD 48)) ^^
+        ((bits.getLsbD 49) ^^ (bits.getLsbD 49)) ^^
+        ((bits.getLsbD 50) ^^ (bits.getLsbD 50)) ^^
+        ((bits.getLsbD 51) ^^ (bits.getLsbD 51)) ^^
+        ((bits.getLsbD 52) ^^ (bits.getLsbD 52)) ^^
+        ((bits.getLsbD 53) ^^ (bits.getLsbD 53)) ^^
+        ((bits.getLsbD 54) ^^ (bits.getLsbD 54)) ^^
+        ((bits.getLsbD 55) ^^ (bits.getLsbD 55)) ^^
+        ((bits.getLsbD 56) ^^ (bits.getLsbD 56)) ^^
+        ((bits.getLsbD 57) ^^ (bits.getLsbD 57)) ^^
+        ((bits.getLsbD 58) ^^ (bits.getLsbD 58)) ^^
+        ((bits.getLsbD 59) ^^ (bits.getLsbD 59)) := by
+          unfold paritySum parity0 parity1 parity2 parity3 parity4 parity5 parity6 parity7 parity8 parity9 parity10 parity11 parity12 parity13 parity14 parity15 parity16 parity17 parity18 parity19 parity20 parity21 parity22 parity23 parity24 parity25 parity26 parity27 parity28 parity29 parity30 parity31 parity32 parity33 parity34 parity35 parity36 parity37 parity38 parity39
+          ac_rfl
+      _ = false := by
+        simp [Bool.xor_self, Bool.xor_false, Bool.false_xor]
   have impossible : false = true := hcancel.symm.trans hsum
   cases impossible
 
