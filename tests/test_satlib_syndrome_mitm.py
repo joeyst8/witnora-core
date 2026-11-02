@@ -9,7 +9,7 @@ from time import perf_counter
 from scripts.experiment_satlib_syndrome_mitm import (
     benchmark, candidate_natural_separators, exact_separator_counts,
     enumerate_side_syndromes, lift_original_xor_variables, parity_columns,
-    split_local_factors, xor_join,
+    source_local_global, split_local_factors, xor_join,
 )
 from witnora_core.xor import canonical_xor_cnf_clauses
 
@@ -91,6 +91,17 @@ class SyndromeMITMTests(unittest.TestCase):
         lifted = lift_original_xor_variables(
             clauses, 4, {1: True, 2: False, 4: True})
         self.assertFalse(lifted[3])
+
+    def test_reused_source_equations_match_fresh_recovery(self):
+        from scripts.experiment_satlib_residual_fourier import source_residual_parity_rows
+        clauses = sorted(canonical_xor_cnf_clauses((1, 2, 3), 1))
+        clauses += [(1, 4), (4, -2)]
+        equations = source_residual_parity_rows(
+            clauses, 4, return_source_equations=True)[4]
+        given = {1: True, 2: False, 4: True}
+        self.assertEqual(lift_original_xor_variables(clauses, 4, given),
+                         lift_original_xor_variables(clauses, 4, given,
+                                                     source_equations=equations))
 
     def test_archived_original_witness_digest_and_domain(self):
         path = (Path(__file__).resolve().parent.parent / "research" /

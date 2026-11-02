@@ -28,7 +28,7 @@ def _bits(mask):
         mask ^= lowest
 
 
-def source_residual_parity_rows(clauses, nvars):
+def source_residual_parity_rows(clauses, nvars, *, return_source_equations=False):
     """Eliminate XOR-only variables *first* to expose residual-only rows.
 
     Each output row follows by GF(2) row additions from exact source clauses.
@@ -67,7 +67,7 @@ def source_residual_parity_rows(clauses, nvars):
             raise AssertionError("residual row not fully projected")
         rows.append((mask, rhs))
     rows.sort(key=lambda pair: (pair[0].bit_count(), pair[0], pair[1]))
-    return residual, tuple(sorted(resvars)), rows, {
+    info = {
         "full_source_xor_rows": len(eqs),
         "independent_xor_rank": len(pivots),
         "residual_only_parity_row_count": len(rows),
@@ -75,6 +75,10 @@ def source_residual_parity_rows(clauses, nvars):
             mask.bit_count() for mask, _ in rows).items())),
         "residual_variables": len(resvars),
     }
+    if return_source_equations:
+        return (residual, tuple(sorted(resvars)), rows, info,
+                tuple((tuple(eq.variables), eq.rhs) for eq in eqs))
+    return residual, tuple(sorted(resvars)), rows, info
 
 
 def exact_parity_row_compatibility(residual, variables, order, mask, rhs,

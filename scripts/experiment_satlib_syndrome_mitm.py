@@ -23,12 +23,16 @@ from scripts.experiment_satlib_residual_geometry import (
 )
 
 
-def source_local_global(clauses, nvars):
-    residual, variables, rows, info = source_residual_parity_rows(clauses, nvars)
+def source_local_global(clauses, nvars, *, return_source_equations=False):
+    found = source_residual_parity_rows(
+        clauses, nvars, return_source_equations=return_source_equations)
+    residual, variables, rows, info = found[:4]
     local = [(tuple(_bits(mask)), rhs) for mask, rhs in rows if mask.bit_count() == 3]
     global_rows = [(tuple(_bits(mask)), rhs) for mask, rhs in rows if mask.bit_count() > 3]
     if len(local) != 186 or len(global_rows) != 32:
         raise ValueError("this operator is not preregistered for this structure")
+    if return_source_equations:
+        return residual, variables, local, global_rows, info, found[4]
     return residual, variables, local, global_rows, info
 
 
@@ -201,17 +205,22 @@ def xor_join(left, right, needed):
     return None
 
 
-def lift_original_xor_variables(clauses, nvars, residual_assignment):
+def lift_original_xor_variables(clauses, nvars, residual_assignment,
+                                *, source_equations=None):
     """Reconstruct XOR-only variables, then insist on the full raw CNF audit."""
     from witnora_core.cnf import CNFFormula
     from witnora_core.xor import detect_cnf_xor_patterns
-    source = detect_cnf_xor_patterns(CNFFormula(clauses))
-    equations = [eq for eq in source.equations if eq.safe_use and eq.exact_full_encoding]
+    if source_equations is None:
+        source = detect_cnf_xor_patterns(CNFFormula(clauses))
+        equations = [(eq.variables, eq.rhs) for eq in source.equations
+                     if eq.safe_use and eq.exact_full_encoding]
+    else:
+        equations = source_equations
     pivots = {}
-    for eq in equations:
-        rhs = eq.rhs
+    for variables_, rhs_original in equations:
+        rhs = rhs_original
         mask = 0
-        for var in eq.variables:
+        for var in variables_:
             if var in residual_assignment:
                 rhs ^= int(residual_assignment[var])
             else:
