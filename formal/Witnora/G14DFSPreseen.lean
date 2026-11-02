@@ -18,6 +18,7 @@ additional proof obligations.
 namespace Witnora.G14DFSPreseen
 
 open Witnora.G14DFSSeenEnqueue
+open Witnora.G14DFSOuterScan
 
 def startWithSeen (oldSeen : List Nat) (root : Nat) : State :=
   { pending := [root], seen := root :: oldSeen, processed := [] }
@@ -185,6 +186,210 @@ theorem preseen_terminates_on_finite_closed_graph
     change (startWithSeen oldSeen root).processed.length +
       (vertices.length + 1) ≤ state.processed.length at hCount
     omega
+
+/-!
+## Exact pre-marked versus fresh-root traversal refinement
+
+This is a lockstep simulation: the global pending and processed lists
+equal their fresh-root counterparts on every step, while global seen
+equals fresh seen appended with the previously completed components.
+Closure and symmetry ensure no reachable new vertex belongs to that old
+set, so every enqueue makes the same decision. No assumption about the
+number or representation order of old vertices is needed.
+-/
+
+/-- Global and local states have identical active work, with the old
+    component set only added to the global seen membership list. -/
+def StateExtends (oldSeen : List Nat)
+    (local global : State) : Prop :=
+  global.pending = local.pending ∧
+  global.processed = local.processed ∧
+  global.seen = local.seen ++ oldSeen
+
+theorem startWithSeen_extends (oldSeen : List Nat) (root : Nat) :
+    StateExtends oldSeen (start root) (startWithSeen oldSeen root) := by
+  simp [StateExtends, start, startWithSeen]
+
+theorem enqueue_extends
+    (oldSeen : List Nat) (v : Nat) (local global : State)
+    (hFresh : v ∉ oldSeen)
+    (hExt : StateExtends oldSeen local global) :
+    StateExtends oldSeen (enqueue v local) (enqueue v global) := by
+  rcases hExt with ⟨hPending, hProcessed, hSeen⟩
+  have hMem : v ∈ global.seen ↔ v ∈ local.seen := by
+    rw [hSeen, List.mem_append]
+    simp [hFresh]
+  by_cases hv : v ∈ local.seen
+  · have hg : v ∈ global.seen := hMem.mpr hv
+    simp [StateExtends, enqueue, hv, hg,
+      hPending, hProcessed, hSeen]
+  · have hg : v ∉ global.seen := by
+      intro h
+      exact hv (hMem.mp h)
+    simp [StateExtends, enqueue, hv, hg,
+      hPending, hProcessed, hSeen]
+
+theorem enqueueAll_extends
+    (oldSeen newNeighbors : List Nat) (local global : State)
+    (hFresh : ∀ v ∈ newNeighbors, v ∉ oldSeen)
+    (hExt : StateExtends oldSeen local global) :
+    StateExtends oldSeen
+      (enqueueAll newNeighbors local) (enqueueAll newNeighbors global) := by
+  induction newNeighbors generalizing local global with
+  | nil => simpa [enqueueAll] using hExt
+  | cons v rest ih =>
+      have hv : v ∉ oldSeen := hFresh v (by simp)
+      have hRest : ∀ w ∈ rest, w ∉ oldSeen := by
+        intro w hw
+        exact hFresh w (by simp [hw])
+      simpa [enqueueAll] using
+        ih (enqueue v local) (enqueue v global) hRest
+          (enqueue_extends oldSeen v local global hv hExt)
+
+theorem step_extends
+    (oldSeen : List Nat) (neighbors : Nat → List Nat)
+    (local global : State)
+    (hExt : StateExtends oldSeen local global)
+    (hFresh : ∀ u ∈ local.pending, ∀ v ∈ neighbors u, v ∉ oldSeen) :
+    StateExtends oldSeen (step neighbors local) (step neighbors global) := by
+  rcases hExt with ⟨hPending, hProcessed, hSeen⟩
+  cases hp : local.pending with
+  | nil =>
+      have hg : global.pending = [] := hPending.trans hp
+      simpa [step, hp, hg] using
+        (show StateExtends oldSeen local global from
+          ⟨hPending, hProcessed, hSeen⟩)
+  | cons vertex rest =>
+      have hg : global.pending = vertex :: rest := hPending.trans hp
+      let localNext : State :=
+        { local with pending := rest, processed := vertex :: local.processed }
+      let globalNext : State :=
+        { global with pending := rest, processed := vertex :: global.processed }
+      have hNext : StateExtends oldSeen localNext globalNext := by
+        refine ⟨?_, ?_, ?_⟩
+        · simp [localNext, globalNext]
+        · simpa [localNext, globalNext] using
+            congrArg (fun xs : List Nat => vertex :: xs) hProcessed
+        · simpa [localNext, globalNext] using hSeen
+      have hNeighbors : ∀ v ∈ neighbors vertex, v ∉ oldSeen :=
+        hFresh vertex (by simp [hp])
+      simpa [step, hp, hg, localNext, globalNext] using
+        enqueueAll_extends oldSeen (neighbors vertex)
+          localNext globalNext hNeighbors hNext
+
+/-- Previously completed, edge-closed components contain no vertex
+    reachable from a fresh root outside them, in an undirected graph. -/
+theorem reachable_avoids_preseen
+    (neighbors : Nat → List Nat) (vertices oldSeen : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : Witnora.G14DFSSeenEnqueue.SymmetricOn neighbors vertices)
+    (hOldClosed : Witnora.G14DFSOuterScan.EdgeClosed neighbors oldSeen)
+    (root v : Nat) (hRoot : root ∈ vertices)
+    (hFresh : root ∉ oldSeen)
+    (hReach : Reachable neighbors root v) :
+    v ∉ oldSeen := by
+  intro hv
+  have hBack : Reachable neighbors v root :=
+    reachable_reverse_on neighbors vertices hUniverse hSymm
+      root v hRoot hReach
+  exact hFresh
+    (Witnora.G14DFSOuterScan.edge_closed_reachable
+      neighbors oldSeen hOldClosed v root hv hBack)
+
+/-- One DFS step is identical in active work under global old-seen
+    marking, provided the local state was generated from the fresh root. -/
+theorem step_extends_closed_preseen
+    (neighbors : Nat → List Nat) (vertices oldSeen : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (hOldClosed : Witnora.G14DFSOuterScan.EdgeClosed neighbors oldSeen)
+    (root : Nat) (hRoot : root ∈ vertices)
+    (hFreshRoot : root ∉ oldSeen)
+    (local global : State)
+    (hExt : StateExtends oldSeen local global)
+    (hStrong : StrongSafe local)
+    (hReach : SeenReachable neighbors root local) :
+    StateExtends oldSeen
+      (step neighbors local) (step neighbors global) := by
+  apply step_extends oldSeen neighbors local global hExt
+  intro u hu v hv
+  have hUSeen : u ∈ local.seen := hStrong.1.2.2 u hu
+  have hUReach : Reachable neighbors root u := hReach u hUSeen
+  have hVReach : Reachable neighbors root v :=
+    Reachable.edge u v hUReach hv
+  exact reachable_avoids_preseen neighbors vertices oldSeen
+    hUniverse hSymm hOldClosed root v hRoot hFreshRoot hVReach
+
+theorem run_extends_closed_preseen
+    (neighbors : Nat → List Nat) (vertices oldSeen : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (hOldClosed : Witnora.G14DFSOuterScan.EdgeClosed neighbors oldSeen)
+    (root : Nat) (hRoot : root ∈ vertices)
+    (hFreshRoot : root ∉ oldSeen)
+    (fuel : Nat) (local global : State)
+    (hExt : StateExtends oldSeen local global)
+    (hStrong : StrongSafe local)
+    (hReach : SeenReachable neighbors root local) :
+    StateExtends oldSeen
+      (run neighbors fuel local) (run neighbors fuel global) := by
+  induction fuel generalizing local global with
+  | zero => simpa [run] using hExt
+  | succ n ih =>
+      have hStep := step_extends_closed_preseen
+        neighbors vertices oldSeen hUniverse hSymm hOldClosed
+        root hRoot hFreshRoot local global hExt hStrong hReach
+      simpa [run] using
+        ih (step neighbors local) (step neighbors global) hStep
+          (step_preserves_strong_safe neighbors local hStrong)
+          (step_preserves_seen_reachable neighbors root local hStrong hReach)
+
+/-- Strong model-level bridge: for every fuel value, the global preseen
+    DFS has exactly the fresh-root processed *list*, not just the same
+    reachable set. Its intermediate stack contents also agree. -/
+theorem preseen_processes_same_component
+    (neighbors : Nat → List Nat) (vertices oldSeen : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (hOldClosed : Witnora.G14DFSOuterScan.EdgeClosed neighbors oldSeen)
+    (root : Nat) (hRoot : root ∈ vertices)
+    (hFresh : root ∉ oldSeen)
+    (fuel : Nat) :
+    (run neighbors fuel (startWithSeen oldSeen root)).processed =
+      (run neighbors fuel (start root)).processed := by
+  have hExt := run_extends_closed_preseen
+    neighbors vertices oldSeen hUniverse hSymm hOldClosed
+    root hRoot hFresh fuel (start root) (startWithSeen oldSeen root)
+    (startWithSeen_extends oldSeen root)
+    (start_strong_safe root)
+    (start_seen_reachable neighbors root)
+  exact hExt.2.1
+
+/-- The shared-seen Python-style traversal and fresh-root model return
+    the same ordered processing list for any residual primal graph. -/
+theorem residual_preseen_processes_same_component
+    (source : Witnora.Concrete.CNF) (separator oldSeen : List Nat)
+    (root fuel : Nat)
+    (hRoot : root ∈ remainingVertices (sourceVertices source) separator)
+    (hOldClosed :
+      Witnora.G14DFSOuterScan.EdgeClosed
+        (separatedNeighbors (clauseNeighbors source) separator) oldSeen)
+    (hFresh : root ∉ oldSeen) :
+    (run (separatedNeighbors (clauseNeighbors source) separator)
+      fuel (startWithSeen oldSeen root)).processed =
+    (run (separatedNeighbors (clauseNeighbors source) separator)
+      fuel (start root)).processed := by
+  exact preseen_processes_same_component
+    (separatedNeighbors (clauseNeighbors source) separator)
+    (remainingVertices (sourceVertices source) separator)
+    oldSeen
+    (separatedNeighbors_closed (clauseNeighbors source)
+      (sourceVertices source) separator (clauseNeighbors_closed source))
+    (residual_primal_symmetric_on source separator)
+    hOldClosed root hRoot hFresh fuel
+
+#print axioms Witnora.G14DFSPreseen.preseen_processes_same_component
+#print axioms Witnora.G14DFSPreseen.residual_preseen_processes_same_component
 
 #print axioms Witnora.G14DFSPreseen.preseen_never_reprocesses_old
 #print axioms Witnora.G14DFSPreseen.preseen_terminates_on_finite_closed_graph
