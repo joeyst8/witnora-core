@@ -1,0 +1,45 @@
+name: Noisy Tseitin exact ASCII G5 Lean scaling gate
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - scripts/lean_noisy_tseitin_scale.py
+      - .github/workflows/noisy-tseitin-lean-scale.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kernel-size-ladder:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source generator dependency
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build source-subset G5 universal theorem
+        working-directory: formal
+        run: lake build Witnora.SourceSubsetG5
+      - name: Generate literal n16 noisy source and G5 certificate
+        run: python -m scripts.lean_noisy_tseitin_scale --vertices 16 --out noisy_tseitin_n16.lean
+      - name: Kernel-check full ASCII source n16 within 180 seconds
+        working-directory: formal
+        run: time timeout 180s lake env lean ../noisy_tseitin_n16.lean
+      - name: Archive exact generated Lean proof input
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: noisy-tseitin-lean-scale-${{ github.sha }}
+          path: noisy_tseitin_n16.lean
+          if-no-files-found: warn
