@@ -876,7 +876,7 @@ theorem traceStep40 (bits : BitVec 60)
     cases h2 : bits.getLsbD 19 <;>
     cases h3 : bits.getLsbD 20 <;>
     cases h4 : bits.getLsbD 57 <;>
-    simp [traceRow40, parity20, parity18]
+    simp [h0, h1, h2, h3, h4, traceRow40, parity20, parity18]
   simp [hxor, ha, hb]
 
 theorem traceStep41 (bits : BitVec 60)
@@ -888,7 +888,7 @@ theorem traceStep41 (bits : BitVec 60)
     cases h1 : bits.getLsbD 19 <;>
     cases h2 : bits.getLsbD 58 <;>
     cases h3 : bits.getLsbD 59 <;>
-    simp [traceRow41, parity21, parity19]
+    simp [h0, h1, h2, h3, traceRow41, parity21, parity19]
   simp [hxor, ha, hb]
 
 theorem traceStep42 (bits : BitVec 60)
@@ -901,7 +901,7 @@ theorem traceStep42 (bits : BitVec 60)
     cases h2 : bits.getLsbD 20 <;>
     cases h3 : bits.getLsbD 21 <;>
     cases h4 : bits.getLsbD 56 <;>
-    simp [traceRow42, parity22, parity17]
+    simp [h0, h1, h2, h3, h4, traceRow42, parity22, parity17]
   simp [hxor, ha, hb]
 
 theorem traceStep43 (bits : BitVec 60)
@@ -914,7 +914,7 @@ theorem traceStep43 (bits : BitVec 60)
     cases h2 : bits.getLsbD 21 <;>
     cases h3 : bits.getLsbD 22 <;>
     cases h4 : bits.getLsbD 55 <;>
-    simp [traceRow43, parity23, parity16]
+    simp [h0, h1, h2, h3, h4, traceRow43, parity23, parity16]
   simp [hxor, ha, hb]
 
 theorem traceStep44 (bits : BitVec 60)
@@ -927,7 +927,7 @@ theorem traceStep44 (bits : BitVec 60)
     cases h2 : bits.getLsbD 22 <;>
     cases h3 : bits.getLsbD 23 <;>
     cases h4 : bits.getLsbD 54 <;>
-    simp [traceRow44, parity24, parity15]
+    simp [h0, h1, h2, h3, h4, traceRow44, parity24, parity15]
   simp [hxor, ha, hb]
 
 theorem traceStep45 (bits : BitVec 60)
@@ -940,7 +940,7 @@ theorem traceStep45 (bits : BitVec 60)
     cases h2 : bits.getLsbD 23 <;>
     cases h3 : bits.getLsbD 24 <;>
     cases h4 : bits.getLsbD 53 <;>
-    simp [traceRow45, parity25, parity14]
+    simp [h0, h1, h2, h3, h4, traceRow45, parity25, parity14]
   simp [hxor, ha, hb]
 
 theorem traceStep46 (bits : BitVec 60)
@@ -953,7 +953,7 @@ theorem traceStep46 (bits : BitVec 60)
     cases h2 : bits.getLsbD 24 <;>
     cases h3 : bits.getLsbD 25 <;>
     cases h4 : bits.getLsbD 52 <;>
-    simp [traceRow46, parity26, parity13]
+    simp [h0, h1, h2, h3, h4, traceRow46, parity26, parity13]
   simp [hxor, ha, hb]
 
 theorem traceStep47 (bits : BitVec 60)
@@ -966,7 +966,7 @@ theorem traceStep47 (bits : BitVec 60)
     cases h2 : bits.getLsbD 25 <;>
     cases h3 : bits.getLsbD 26 <;>
     cases h4 : bits.getLsbD 51 <;>
-    simp [traceRow47, parity27, parity12]
+    simp [h0, h1, h2, h3, h4, traceRow47, parity27, parity12]
   simp [hxor, ha, hb]
 
 theorem traceStep48 (bits : BitVec 60)
@@ -979,7 +979,7 @@ theorem traceStep48 (bits : BitVec 60)
     cases h2 : bits.getLsbD 26 <;>
     cases h3 : bits.getLsbD 27 <;>
     cases h4 : bits.getLsbD 50 <;>
-    simp [traceRow48, parity28, parity11]
+    simp [h0, h1, h2, h3, h4, traceRow48, parity28, parity11]
   simp [hxor, ha, hb]
 
 theorem traceStep49 (bits : BitVec 60)
@@ -992,7 +992,7 @@ theorem traceStep49 (bits : BitVec 60)
     cases h2 : bits.getLsbD 27 <;>
     cases h3 : bits.getLsbD 28 <;>
     cases h4 : bits.getLsbD 49 <;>
-    simp [traceRow49, parity29, parity10]
+    simp [h0, h1, h2, h3, h4, traceRow49, parity29, parity10]
   simp [hxor, ha, hb]
 
 theorem traceStep50 (bits : BitVec 60)
@@ -1005,7 +1005,7 @@ theorem traceStep50 (bits : BitVec 60)
     cases h2 : bits.getLsbD 28 <;>
     cases h3 : bits.getLsbD 29 <;>
     cases h4 : bits.getLsbD 48 <;>
-    simp [traceRow50, parity30, parity9]
+    simp [h0, h1, h2, h3, h4, traceRow50, parity30, parity9]
   simp [hxor, ha, hb]
 
 theorem traceStep51 (bits : BitVec 60)
@@ -1018,7 +1018,7 @@ theorem traceStep51 (bits : BitVec 60)
     cases h2 : bits.getLsbD 29 <;>
     cases h3 : bits.getLsbD 30 <;>
     cases h4 : bits.getLsbD 47 <;>
-    simp [traceRow51, parity31, parity8]
+    simp [h0, h1, h2, h3, h4, traceRow51, parity31, parity8]
   simp [hxor, ha, hb]
 
 theorem traceStep52 (bits : BitVec 60)
@@ -1031,7 +1031,7 @@ theorem traceStep52 (bits : BitVec 60)
     cases h2 : bits.getLsbD 30 <;>
     cases h3 : bits.getLsbD 31 <;>
     cases h4 : bits.getLsbD 46 <;>
-    simp [traceRow52, parity32, parity7]
+    simp [h0, h1, h2, h3, h4, traceRow52, parity32, parity7]
   simp [hxor, ha, hb]
 
 theorem traceStep53 (bits : BitVec 60)
@@ -1044,7 +1044,7 @@ theorem traceStep53 (bits : BitVec 60)
     cases h2 : bits.getLsbD 31 <;>
     cases h3 : bits.getLsbD 32 <;>
     cases h4 : bits.getLsbD 45 <;>
-    simp [traceRow53, parity33, parity6]
+    simp [h0, h1, h2, h3, h4, traceRow53, parity33, parity6]
   simp [hxor, ha, hb]
 
 theorem traceStep54 (bits : BitVec 60)
@@ -1057,7 +1057,7 @@ theorem traceStep54 (bits : BitVec 60)
     cases h2 : bits.getLsbD 32 <;>
     cases h3 : bits.getLsbD 33 <;>
     cases h4 : bits.getLsbD 44 <;>
-    simp [traceRow54, parity34, parity5]
+    simp [h0, h1, h2, h3, h4, traceRow54, parity34, parity5]
   simp [hxor, ha, hb]
 
 theorem traceStep55 (bits : BitVec 60)
@@ -1070,7 +1070,7 @@ theorem traceStep55 (bits : BitVec 60)
     cases h2 : bits.getLsbD 33 <;>
     cases h3 : bits.getLsbD 34 <;>
     cases h4 : bits.getLsbD 43 <;>
-    simp [traceRow55, parity35, parity4]
+    simp [h0, h1, h2, h3, h4, traceRow55, parity35, parity4]
   simp [hxor, ha, hb]
 
 theorem traceStep56 (bits : BitVec 60)
@@ -1083,7 +1083,7 @@ theorem traceStep56 (bits : BitVec 60)
     cases h2 : bits.getLsbD 34 <;>
     cases h3 : bits.getLsbD 35 <;>
     cases h4 : bits.getLsbD 42 <;>
-    simp [traceRow56, parity36, parity3]
+    simp [h0, h1, h2, h3, h4, traceRow56, parity36, parity3]
   simp [hxor, ha, hb]
 
 theorem traceStep57 (bits : BitVec 60)
@@ -1096,7 +1096,7 @@ theorem traceStep57 (bits : BitVec 60)
     cases h2 : bits.getLsbD 35 <;>
     cases h3 : bits.getLsbD 36 <;>
     cases h4 : bits.getLsbD 41 <;>
-    simp [traceRow57, parity37, parity2]
+    simp [h0, h1, h2, h3, h4, traceRow57, parity37, parity2]
   simp [hxor, ha, hb]
 
 theorem traceStep58 (bits : BitVec 60)
@@ -1109,7 +1109,7 @@ theorem traceStep58 (bits : BitVec 60)
     cases h2 : bits.getLsbD 36 <;>
     cases h3 : bits.getLsbD 37 <;>
     cases h4 : bits.getLsbD 40 <;>
-    simp [traceRow58, parity38, parity0]
+    simp [h0, h1, h2, h3, h4, traceRow58, parity38, parity0]
   simp [hxor, ha, hb]
 
 theorem traceStep59 (bits : BitVec 60)
@@ -1121,7 +1121,7 @@ theorem traceStep59 (bits : BitVec 60)
     cases h1 : bits.getLsbD 37 <;>
     cases h2 : bits.getLsbD 38 <;>
     cases h3 : bits.getLsbD 39 <;>
-    simp [traceRow59, parity39, parity1]
+    simp [h0, h1, h2, h3, traceRow59, parity39, parity1]
   simp [hxor, ha, hb]
 
 theorem traceStep60 (bits : BitVec 60)
@@ -1133,7 +1133,7 @@ theorem traceStep60 (bits : BitVec 60)
     cases h1 : bits.getLsbD 1 <;>
     cases h2 : bits.getLsbD 36 <;>
     cases h3 : bits.getLsbD 37 <;>
-    simp [traceRow60, traceRow59, traceRow58]
+    simp [h0, h1, h2, h3, traceRow60, traceRow59, traceRow58]
   simp [hxor, ha, hb]
 
 theorem traceStep61 (bits : BitVec 60)
@@ -1145,7 +1145,7 @@ theorem traceStep61 (bits : BitVec 60)
     cases h1 : bits.getLsbD 2 <;>
     cases h2 : bits.getLsbD 35 <;>
     cases h3 : bits.getLsbD 36 <;>
-    simp [traceRow61, traceRow60, traceRow57]
+    simp [h0, h1, h2, h3, traceRow61, traceRow60, traceRow57]
   simp [hxor, ha, hb]
 
 theorem traceStep62 (bits : BitVec 60)
@@ -1157,7 +1157,7 @@ theorem traceStep62 (bits : BitVec 60)
     cases h1 : bits.getLsbD 3 <;>
     cases h2 : bits.getLsbD 34 <;>
     cases h3 : bits.getLsbD 35 <;>
-    simp [traceRow62, traceRow61, traceRow56]
+    simp [h0, h1, h2, h3, traceRow62, traceRow61, traceRow56]
   simp [hxor, ha, hb]
 
 theorem traceStep63 (bits : BitVec 60)
@@ -1169,7 +1169,7 @@ theorem traceStep63 (bits : BitVec 60)
     cases h1 : bits.getLsbD 4 <;>
     cases h2 : bits.getLsbD 33 <;>
     cases h3 : bits.getLsbD 34 <;>
-    simp [traceRow63, traceRow62, traceRow55]
+    simp [h0, h1, h2, h3, traceRow63, traceRow62, traceRow55]
   simp [hxor, ha, hb]
 
 theorem traceStep64 (bits : BitVec 60)
@@ -1181,7 +1181,7 @@ theorem traceStep64 (bits : BitVec 60)
     cases h1 : bits.getLsbD 5 <;>
     cases h2 : bits.getLsbD 32 <;>
     cases h3 : bits.getLsbD 33 <;>
-    simp [traceRow64, traceRow63, traceRow54]
+    simp [h0, h1, h2, h3, traceRow64, traceRow63, traceRow54]
   simp [hxor, ha, hb]
 
 theorem traceStep65 (bits : BitVec 60)
@@ -1193,7 +1193,7 @@ theorem traceStep65 (bits : BitVec 60)
     cases h1 : bits.getLsbD 6 <;>
     cases h2 : bits.getLsbD 31 <;>
     cases h3 : bits.getLsbD 32 <;>
-    simp [traceRow65, traceRow64, traceRow53]
+    simp [h0, h1, h2, h3, traceRow65, traceRow64, traceRow53]
   simp [hxor, ha, hb]
 
 theorem traceStep66 (bits : BitVec 60)
@@ -1205,7 +1205,7 @@ theorem traceStep66 (bits : BitVec 60)
     cases h1 : bits.getLsbD 7 <;>
     cases h2 : bits.getLsbD 30 <;>
     cases h3 : bits.getLsbD 31 <;>
-    simp [traceRow66, traceRow65, traceRow52]
+    simp [h0, h1, h2, h3, traceRow66, traceRow65, traceRow52]
   simp [hxor, ha, hb]
 
 theorem traceStep67 (bits : BitVec 60)
@@ -1217,7 +1217,7 @@ theorem traceStep67 (bits : BitVec 60)
     cases h1 : bits.getLsbD 8 <;>
     cases h2 : bits.getLsbD 29 <;>
     cases h3 : bits.getLsbD 30 <;>
-    simp [traceRow67, traceRow66, traceRow51]
+    simp [h0, h1, h2, h3, traceRow67, traceRow66, traceRow51]
   simp [hxor, ha, hb]
 
 theorem traceStep68 (bits : BitVec 60)
@@ -1229,7 +1229,7 @@ theorem traceStep68 (bits : BitVec 60)
     cases h1 : bits.getLsbD 9 <;>
     cases h2 : bits.getLsbD 28 <;>
     cases h3 : bits.getLsbD 29 <;>
-    simp [traceRow68, traceRow67, traceRow50]
+    simp [h0, h1, h2, h3, traceRow68, traceRow67, traceRow50]
   simp [hxor, ha, hb]
 
 theorem traceStep69 (bits : BitVec 60)
@@ -1241,7 +1241,7 @@ theorem traceStep69 (bits : BitVec 60)
     cases h1 : bits.getLsbD 10 <;>
     cases h2 : bits.getLsbD 27 <;>
     cases h3 : bits.getLsbD 28 <;>
-    simp [traceRow69, traceRow68, traceRow49]
+    simp [h0, h1, h2, h3, traceRow69, traceRow68, traceRow49]
   simp [hxor, ha, hb]
 
 theorem traceStep70 (bits : BitVec 60)
@@ -1253,7 +1253,7 @@ theorem traceStep70 (bits : BitVec 60)
     cases h1 : bits.getLsbD 11 <;>
     cases h2 : bits.getLsbD 26 <;>
     cases h3 : bits.getLsbD 27 <;>
-    simp [traceRow70, traceRow69, traceRow48]
+    simp [h0, h1, h2, h3, traceRow70, traceRow69, traceRow48]
   simp [hxor, ha, hb]
 
 theorem traceStep71 (bits : BitVec 60)
@@ -1265,7 +1265,7 @@ theorem traceStep71 (bits : BitVec 60)
     cases h1 : bits.getLsbD 12 <;>
     cases h2 : bits.getLsbD 25 <;>
     cases h3 : bits.getLsbD 26 <;>
-    simp [traceRow71, traceRow70, traceRow47]
+    simp [h0, h1, h2, h3, traceRow71, traceRow70, traceRow47]
   simp [hxor, ha, hb]
 
 theorem traceStep72 (bits : BitVec 60)
@@ -1277,7 +1277,7 @@ theorem traceStep72 (bits : BitVec 60)
     cases h1 : bits.getLsbD 13 <;>
     cases h2 : bits.getLsbD 24 <;>
     cases h3 : bits.getLsbD 25 <;>
-    simp [traceRow72, traceRow71, traceRow46]
+    simp [h0, h1, h2, h3, traceRow72, traceRow71, traceRow46]
   simp [hxor, ha, hb]
 
 theorem traceStep73 (bits : BitVec 60)
@@ -1289,7 +1289,7 @@ theorem traceStep73 (bits : BitVec 60)
     cases h1 : bits.getLsbD 14 <;>
     cases h2 : bits.getLsbD 23 <;>
     cases h3 : bits.getLsbD 24 <;>
-    simp [traceRow73, traceRow72, traceRow45]
+    simp [h0, h1, h2, h3, traceRow73, traceRow72, traceRow45]
   simp [hxor, ha, hb]
 
 theorem traceStep74 (bits : BitVec 60)
@@ -1301,7 +1301,7 @@ theorem traceStep74 (bits : BitVec 60)
     cases h1 : bits.getLsbD 15 <;>
     cases h2 : bits.getLsbD 22 <;>
     cases h3 : bits.getLsbD 23 <;>
-    simp [traceRow74, traceRow73, traceRow44]
+    simp [h0, h1, h2, h3, traceRow74, traceRow73, traceRow44]
   simp [hxor, ha, hb]
 
 theorem traceStep75 (bits : BitVec 60)
@@ -1313,7 +1313,7 @@ theorem traceStep75 (bits : BitVec 60)
     cases h1 : bits.getLsbD 16 <;>
     cases h2 : bits.getLsbD 21 <;>
     cases h3 : bits.getLsbD 22 <;>
-    simp [traceRow75, traceRow74, traceRow43]
+    simp [h0, h1, h2, h3, traceRow75, traceRow74, traceRow43]
   simp [hxor, ha, hb]
 
 theorem traceStep76 (bits : BitVec 60)
@@ -1325,7 +1325,7 @@ theorem traceStep76 (bits : BitVec 60)
     cases h1 : bits.getLsbD 17 <;>
     cases h2 : bits.getLsbD 20 <;>
     cases h3 : bits.getLsbD 21 <;>
-    simp [traceRow76, traceRow75, traceRow42]
+    simp [h0, h1, h2, h3, traceRow76, traceRow75, traceRow42]
   simp [hxor, ha, hb]
 
 theorem traceStep77 (bits : BitVec 60)
@@ -1337,7 +1337,7 @@ theorem traceStep77 (bits : BitVec 60)
     cases h1 : bits.getLsbD 18 <;>
     cases h2 : bits.getLsbD 19 <;>
     cases h3 : bits.getLsbD 20 <;>
-    simp [traceRow77, traceRow76, traceRow40]
+    simp [h0, h1, h2, h3, traceRow77, traceRow76, traceRow40]
   simp [hxor, ha, hb]
 
 theorem traceStep78 (bits : BitVec 60)
@@ -1347,7 +1347,7 @@ theorem traceStep78 (bits : BitVec 60)
   have hxor : traceRow78 bits = (traceRow77 bits ^^ traceRow41 bits) := by
     cases h0 : bits.getLsbD 18 <;>
     cases h1 : bits.getLsbD 19 <;>
-    simp [traceRow78, traceRow77, traceRow41]
+    simp [h0, h1, traceRow78, traceRow77, traceRow41]
   simp [hxor, ha, hb]
 
 theorem certificate_inconsistent (bits : BitVec 60) :
