@@ -146,6 +146,13 @@ class FirstUIP:
     def pick_branch(self):
         return next((v for v in self.order if v not in self.values), None)
 
+    def branch_literal(self, variable):
+        """Hook for phase saving; the original experimental policy is positive-first."""
+        return variable
+
+    def after_learning(self):
+        """Hook for controlled restarts; original baseline never restarts."""
+
     def backjump(self, target):
         if target >= len(self.trail_lim):
             return
@@ -188,13 +195,14 @@ class FirstUIP:
                 self.stats["learned"] += 1
                 if not self.enqueue(learnt[0], reason=ci):
                     raise AssertionError("learned asserting clause contradicts backjump")
+                self.after_learning()
             else:
                 var = self.pick_branch()
                 if var is None:
                     return True
                 self.stats["decisions"] += 1
                 self.trail_lim.append(len(self.trail))
-                if not self.enqueue(var):
+                if not self.enqueue(self.branch_literal(var)):
                     raise AssertionError("branch variable previously assigned")
 
 
