@@ -226,6 +226,193 @@ theorem scan_seen_exact_residual_source
     (separatedNeighbors_closed (clauseNeighbors source)
       (sourceVertices source) separator (clauseNeighbors_closed source)) v
 
+/-!
+## Exact component non-overlap
+
+A previously completed component is closed under all graph edges. In a
+symmetric graph, a root outside such a closed seen set cannot have any
+reachable vertex inside it: otherwise the path could be reversed and
+would place the root back in seen. This is the key invariant behind
+Python's global skip guard and duplicate-free component enumeration.
+-/
+
+def EdgeClosed (neighbors : Nat → List Nat) (seen : List Nat) : Prop :=
+  ∀ u ∈ seen, ∀ v ∈ neighbors u, v ∈ seen
+
+theorem edge_closed_reachable
+    (neighbors : Nat → List Nat) (seen : List Nat)
+    (hClosed : EdgeClosed neighbors seen)
+    (root v : Nat) (hRoot : root ∈ seen)
+    (hReach : Reachable neighbors root v) :
+    v ∈ seen := by
+  induction hReach with
+  | base => exact hRoot
+  | edge u w _ hEdge ih =>
+      exact hClosed u ih w hEdge
+
+theorem full_component_edge_closed
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (root : Nat) (hRoot : root ∈ vertices) :
+    EdgeClosed neighbors
+      (run neighbors vertices.length (start root)).processed := by
+  intro u hu v hv
+  have hReachU : Reachable neighbors root u :=
+    (start_run_exact_reachable neighbors vertices root u
+      hUniverse hRoot).mp hu
+  exact (start_run_exact_reachable neighbors vertices root v
+    hUniverse hRoot).mpr (Reachable.edge u v hReachU hv)
+
+theorem edge_closed_append
+    (neighbors : Nat → List Nat) (left right : List Nat)
+    (hLeft : EdgeClosed neighbors left)
+    (hRight : EdgeClosed neighbors right) :
+    EdgeClosed neighbors (left ++ right) := by
+  intro u hu v hv
+  rcases List.mem_append.mp hu with hL | hR
+  · exact List.mem_append.mpr (Or.inl (hLeft u hL v hv))
+  · exact List.mem_append.mpr (Or.inr (hRight u hR v hv))
+
+theorem full_component_disjoint_from_closed_seen
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (root : Nat) (hRoot : root ∈ vertices)
+    (seen : List Nat)
+    (hSeenClosed : EdgeClosed neighbors seen)
+    (hRootNotSeen : root ∉ seen) :
+    ∀ v ∈ (run neighbors vertices.length (start root)).processed,
+      v ∉ seen := by
+  intro v hv hvSeen
+  have hRootV : Reachable neighbors root v :=
+    (start_run_exact_reachable neighbors vertices root v
+      hUniverse hRoot).mp hv
+  have hVRoot : Reachable neighbors v root :=
+    reachable_reverse_on neighbors vertices hUniverse hSymm
+      root v hRoot hRootV
+  exact hRootNotSeen
+    (edge_closed_reachable neighbors seen hSeenClosed v root hvSeen hVRoot)
+
+/-- Pairwise non-overlap by list position, even if two component lists
+    happen to be syntactically equal. -/
+def PairwiseDisjoint : List (List Nat) → Prop
+  | [] => True
+  | current :: rest =>
+      PairwiseDisjoint rest ∧
+      ∀ other ∈ rest, ∀ v, v ∈ current → v ∉ other
+
+def ComponentsWithin (seen : List Nat) (components : List (List Nat)) : Prop :=
+  ∀ component ∈ components, ∀ v ∈ component, v ∈ seen
+
+def ScanSafe (neighbors : Nat → List Nat)
+    (result : List Nat × List (List Nat)) : Prop :=
+  EdgeClosed neighbors result.1 ∧
+  ComponentsWithin result.1 result.2 ∧
+  PairwiseDisjoint result.2
+
+theorem prepend_components_within
+    (seen found : List Nat) (components : List (List Nat))
+    (hWithin : ComponentsWithin seen components) :
+    ComponentsWithin (found ++ seen) (found :: components) := by
+  intro component hc v hv
+  rcases List.mem_cons.mp hc with hNew | hOld
+  · subst component
+    exact List.mem_append.mpr (Or.inl hv)
+  · exact List.mem_append.mpr
+      (Or.inr (hWithin component hOld v hv))
+
+theorem prepend_component_disjoint
+    (seen found : List Nat) (components : List (List Nat))
+    (hWithin : ComponentsWithin seen components)
+    (hPair : PairwiseDisjoint components)
+    (hFoundDisjoint : ∀ v ∈ found, v ∉ seen) :
+    PairwiseDisjoint (found :: components) := by
+  change PairwiseDisjoint components ∧
+    (∀ other ∈ components, ∀ v, v ∈ found → v ∉ other)
+  refine ⟨hPair, ?_⟩
+  intro other hOther v hv hInOther
+  exact hFoundDisjoint v hv (hWithin other hOther v hInOther)
+
+/-- The outer scan preserves closed seen membership and pairwise
+    disjointness of its recorded components. -/
+theorem scan_preserves_partition_safety
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (starts : List Nat) :
+    ∀ (seen : List Nat) (components : List (List Nat)),
+      (∀ v ∈ starts, v ∈ vertices) →
+      EdgeClosed neighbors seen →
+      ComponentsWithin seen components →
+      PairwiseDisjoint components →
+      ScanSafe neighbors (scanComponents neighbors vertices.length
+        starts seen components) := by
+  induction starts with
+  | nil =>
+      intro seen components _ hSeen hWithin hPair
+      exact ⟨hSeen, hWithin, hPair⟩
+  | cons root rest ih =>
+      intro seen components hStarts hSeen hWithin hPair
+      have hRoot : root ∈ vertices :=
+        hStarts root (by simp)
+      have hRest : ∀ w ∈ rest, w ∈ vertices := by
+        intro w hw
+        exact hStarts w (by simp [hw])
+      by_cases hr : root ∈ seen
+      · simpa [scanComponents, hr] using
+          ih seen components hRest hSeen hWithin hPair
+      · let found := (run neighbors vertices.length (start root)).processed
+        have hFoundClosed : EdgeClosed neighbors found :=
+          full_component_edge_closed neighbors vertices
+            hUniverse root hRoot
+        have hDisjoint : ∀ v ∈ found, v ∉ seen :=
+          full_component_disjoint_from_closed_seen
+            neighbors vertices hUniverse hSymm
+            root hRoot seen hSeen hr
+        have hNewSeen : EdgeClosed neighbors (found ++ seen) :=
+          edge_closed_append neighbors found seen hFoundClosed hSeen
+        have hNewWithin :
+            ComponentsWithin (found ++ seen) (found :: components) :=
+          prepend_components_within seen found components hWithin
+        have hNewPair : PairwiseDisjoint (found :: components) :=
+          prepend_component_disjoint seen found components
+            hWithin hPair hDisjoint
+        simpa [scanComponents, hr, found] using
+          ih (found ++ seen) (found :: components)
+            hRest hNewSeen hNewWithin hNewPair
+
+/-- The entire outer scan records pairwise disjoint components. -/
+theorem scan_components_pairwise_disjoint
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices) :
+    PairwiseDisjoint
+      (scanComponents neighbors vertices.length vertices [] []).2 := by
+  have hSafe := scan_preserves_partition_safety
+    neighbors vertices hUniverse hSymm vertices [] []
+    (by intro v hv; exact hv)
+    (by intro v hv; cases hv)
+    (by intro component hc; cases hc)
+    (by simp [PairwiseDisjoint])
+  exact hSafe.2.2
+
+theorem scan_residual_components_pairwise_disjoint
+    (source : Witnora.Concrete.CNF) (separator : List Nat) :
+    PairwiseDisjoint (scanComponents
+      (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (remainingVertices (sourceVertices source) separator)
+      [] []).2 := by
+  exact scan_components_pairwise_disjoint
+    (separatedNeighbors (clauseNeighbors source) separator)
+    (remainingVertices (sourceVertices source) separator)
+    (separatedNeighbors_closed (clauseNeighbors source)
+      (sourceVertices source) separator (clauseNeighbors_closed source))
+    (residual_primal_symmetric_on source separator)
+
+#print axioms Witnora.G14DFSOuterScan.scan_components_pairwise_disjoint
+#print axioms Witnora.G14DFSOuterScan.scan_residual_components_pairwise_disjoint
+
 #print axioms Witnora.G14DFSOuterScan.scan_seen_exact_finite_graph
 #print axioms Witnora.G14DFSOuterScan.scan_seen_exact_residual_source
 
