@@ -1,0 +1,55 @@
+name: TC-063 Python G14 canonical witness regression
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - witnora_core/python_g14_lean_artifact.py
+      - scripts/generate_g14_size_ladder_lean.py
+      - formal/Witnora/TC063CanonicalComplete.lean
+      - formal/Witnora/TC063ClausePermutation.lean
+      - .github/workflows/tc063-python-g14-canonical.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-python-canonical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test the actual Python G14 fixture builder
+        run: PYTHONPATH=. python -m unittest tests.test_g14_size_ladder -v
+      - name: Emit actual Python DIMACS and G14/G5 row fixtures
+        run: PYTHONPATH=. python scripts/generate_g14_size_ladder_lean.py
+      - name: Require source-to-canonical Lean obligations in all generated fixtures
+        run: |
+          for n in 2 3 4; do
+            grep -q 'theorem python_selected_canonical_witness' "formal/Witnora/GeneratedG14Size${n}.lean"
+          done
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/GeneratedG14Size{2,3,4}.lean; then
+            exit 1
+          fi
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build the unconditional TC-063 and Python source bridge
+        working-directory: formal
+        run: lake build Witnora.TC063CanonicalComplete Witnora.G14ConcreteBridge
+      - name: Lean-check actual Python source and canonical witness, 2 components
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG14Size2.lean
+      - name: Lean-check actual Python source and canonical witness, 3 components
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG14Size3.lean
+      - name: Lean-check actual Python source and canonical witness, 4 components
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG14Size4.lean
