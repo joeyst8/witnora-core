@@ -1,0 +1,38 @@
+name: Noisy Tseitin frozen XOR-aware CryptoMiniSat baseline
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - scripts/cryptominisat_noisy_tseitin_frozen.py
+      - .github/workflows/noisy-tseitin-cryptominisat.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frozen-cryptominisat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install native CryptoMiniSat5 XOR-aware solver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends cryptominisat
+          cryptominisat5 --version
+      - name: Install Python dependencies for native Witnora control
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Replay exact frozen CNF hashes against CryptoMiniSat
+        run: python -m scripts.cryptominisat_noisy_tseitin_frozen --timeout-s 3 --out noisy_tseitin_frozen_cryptominisat.json
+      - name: Archive per-case data including unknowns
+        uses: actions/upload-artifact@v4
+        with:
+          name: noisy-tseitin-frozen-cryptominisat-${{ github.sha }}
+          path: noisy_tseitin_frozen_cryptominisat.json
+          if-no-files-found: error
