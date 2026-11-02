@@ -161,7 +161,9 @@ theorem enqueue_preserves_strong_safe (v : Nat)
     · intro x hx
       have hxOld : x ∈ state.processed := by
         simpa [enqueue, hv] using hx
-      simpa [enqueue, hv] using hprocSeen x hxOld
+      have hmem : x ∈ v :: state.seen :=
+        List.mem_cons_of_mem _ (hprocSeen x hxOld)
+      simpa [enqueue, hv] using hmem
 
 theorem enqueueAll_preserves_strong_safe
     (neighbors : List Nat) (state : State)
@@ -196,7 +198,9 @@ theorem step_preserves_strong_safe
         refine ⟨?_, ?_, ?_, ?_⟩
         · refine ⟨hseen, hrest, ?_⟩
           intro x hx
-          exact hsubset x (by simp [hp, hx])
+          have hxRest : x ∈ rest := by
+            simpa [next] using hx
+          exact hsubset x (by simp [hp, hxRest])
         · exact List.nodup_cons.mpr ⟨hvertexOld, hproc⟩
         · intro x hx hxp
           have hxRest : x ∈ rest := by
