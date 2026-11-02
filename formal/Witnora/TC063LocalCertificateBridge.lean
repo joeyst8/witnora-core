@@ -107,7 +107,7 @@ theorem unsat_cover_complete_of_local_g5
           Witnora.SparseBridge.checkG5Closed
             (witness branch).bound (witness branch).selected
             (witness branch).rows (witness branch).steps)) = true
-  apply Bool.and_eq_true.mpr
+  simp only [Bool.and_eq_true]
   constructor
   · simp [hsize]
   · apply List.all_eq_true.mpr
