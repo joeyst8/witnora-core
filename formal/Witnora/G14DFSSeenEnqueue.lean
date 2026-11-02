@@ -1,4 +1,5 @@
 import Witnora.G14DFSFiniteFuel
+import Witnora.G14PrimalEdgeOwnership
 
 /-!
 # G14: seen-at-enqueue worklist safety
@@ -962,6 +963,125 @@ theorem run_processed_congr_neighbor_permutations
 #print axioms Witnora.G14DFSSeenEnqueue.reachable_congr_edges
 #print axioms Witnora.G14DFSSeenEnqueue.run_processed_congr_edges
 #print axioms Witnora.G14DFSSeenEnqueue.run_processed_congr_neighbor_permutations
+
+/-!
+## CNF primal adjacency and separator-removal bridge
+
+Python's `primal_graph` joins distinct variables that occur together in a
+source clause. The executable list graph below expresses that mathematical
+edge relation and then removes separator vertices from every adjacency
+list. These lemmas supply the finite-closure premise needed by the exact
+seen-at-enqueue theorem. Actual Python object/iteration refinement remains
+a separate proof obligation.
+-/
+
+/-- All variables appearing in the original signed-literal CNF. -/
+def sourceVertices (source : Witnora.Concrete.CNF) : List Nat :=
+  source.flatMap (fun clause => clause.map Prod.fst)
+
+/-- The distinct-variable primal neighbors witnessed by clauses.
+    Repeated occurrences are harmless because reachability uses membership. -/
+def clauseNeighbors (source : Witnora.Concrete.CNF)
+    (u : Nat) : List Nat :=
+  source.flatMap (fun clause =>
+    if u ∈ clause.map Prod.fst then
+      (clause.map Prod.fst).filter (fun w => decide (w ≠ u))
+    else [])
+
+theorem mem_clauseNeighbors_iff (source : Witnora.Concrete.CNF)
+    (u w : Nat) :
+    w ∈ clauseNeighbors source u ↔
+      Witnora.G14PrimalEdgeOwnership.SourceEdge source u w ∧ w ≠ u := by
+  constructor
+  · intro hw
+    obtain ⟨clause, hc, hmem⟩ := List.mem_flatMap.mp hw
+    by_cases hu : u ∈ clause.map Prod.fst
+    · have hwPair : w ∈ clause.map Prod.fst ∧ w ≠ u := by
+        simpa [hu] using hmem
+      exact ⟨⟨clause, hc, hu, hwPair.1⟩, hwPair.2⟩
+    · simp [hu] at hmem
+  · rintro ⟨⟨clause, hc, hu, hw⟩, hne⟩
+    apply List.mem_flatMap.mpr
+    refine ⟨clause, hc, ?_⟩
+    simp [hu, hw, hne]
+
+/-- Every primal adjacency entry is among the source variables. -/
+theorem clauseNeighbors_closed (source : Witnora.Concrete.CNF) :
+    NeighborWithin (clauseNeighbors source) (sourceVertices source) := by
+  intro u _ w hw
+  obtain ⟨⟨clause, hc, _, hwClause⟩, _⟩ :=
+    (mem_clauseNeighbors_iff source u w).mp hw
+  exact List.mem_flatMap.mpr ⟨clause, hc, hwClause⟩
+
+def remainingVertices (vertices separator : List Nat) : List Nat :=
+  vertices.filter (fun v => decide (v ∉ separator))
+
+def separatedNeighbors (neighbors : Nat → List Nat)
+    (separator : List Nat) (u : Nat) : List Nat :=
+  (neighbors u).filter (fun v => decide (v ∉ separator))
+
+theorem mem_remainingVertices_iff
+    (vertices separator : List Nat) (v : Nat) :
+    v ∈ remainingVertices vertices separator ↔
+      v ∈ vertices ∧ v ∉ separator := by
+  simp [remainingVertices]
+
+theorem mem_separatedNeighbors_iff
+    (neighbors : Nat → List Nat) (separator : List Nat)
+    (u v : Nat) :
+    v ∈ separatedNeighbors neighbors separator u ↔
+      v ∈ neighbors u ∧ v ∉ separator := by
+  simp [separatedNeighbors]
+
+theorem separatedNeighbors_closed
+    (neighbors : Nat → List Nat)
+    (vertices separator : List Nat)
+    (hClosed : NeighborWithin neighbors vertices) :
+    NeighborWithin (separatedNeighbors neighbors separator)
+      (remainingVertices vertices separator) := by
+  intro u hu w hw
+  have hU : u ∈ vertices :=
+    ((mem_remainingVertices_iff vertices separator u).mp hu).1
+  have hEdge :=
+    (mem_separatedNeighbors_iff neighbors separator u w).mp hw
+  exact (mem_remainingVertices_iff vertices separator w).mpr
+    ⟨hClosed u hU w hEdge.1, hEdge.2⟩
+
+/-- Source-level exact description of the post-separator primal graph. -/
+theorem mem_residualPrimalNeighbors_iff
+    (source : Witnora.Concrete.CNF)
+    (separator : List Nat) (u w : Nat) :
+    w ∈ separatedNeighbors (clauseNeighbors source) separator u ↔
+      Witnora.G14PrimalEdgeOwnership.SourceEdge source u w ∧
+        w ≠ u ∧ w ∉ separator := by
+  rw [mem_separatedNeighbors_iff, mem_clauseNeighbors_iff]
+  tauto
+
+/-- A root remaining after separator removal has exactly its reachable
+    residual primal component processed, with finite termination ensured
+    by the actual finite list of source variables. -/
+theorem residual_primal_exact_component
+    (source : Witnora.Concrete.CNF)
+    (separator : List Nat) (root v : Nat)
+    (hRoot : root ∈ sourceVertices source)
+    (hNotSeparator : root ∉ separator) :
+    v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (start root)).processed ↔
+      Reachable (separatedNeighbors (clauseNeighbors source) separator)
+        root v := by
+  apply start_run_exact_reachable
+    (separatedNeighbors (clauseNeighbors source) separator)
+    (remainingVertices (sourceVertices source) separator)
+    root v
+  · exact separatedNeighbors_closed (clauseNeighbors source)
+      (sourceVertices source) separator (clauseNeighbors_closed source)
+  · exact (mem_remainingVertices_iff
+      (sourceVertices source) separator root).mpr ⟨hRoot, hNotSeparator⟩
+
+#print axioms Witnora.G14DFSSeenEnqueue.mem_clauseNeighbors_iff
+#print axioms Witnora.G14DFSSeenEnqueue.mem_residualPrimalNeighbors_iff
+#print axioms Witnora.G14DFSSeenEnqueue.residual_primal_exact_component
 
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
