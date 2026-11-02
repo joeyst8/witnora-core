@@ -204,6 +204,63 @@ example :
     checkCanonicalRows 3 [{coefficients := [1, 2], rhs := false}] =
       true := by decide
 
+
+/-!
+## System-wide normalization semantics
+
+The source-bound extraction checker can accept rows in any variable
+order. This proves that sorting all those rows leaves the exact affine
+solution set unchanged. The remaining executable work is transporting
+the syntactic extraction acceptance and proving strict support checks.
+-/
+
+/-- Keep every row's RHS and deterministically sort its coefficient list. -/
+def sortAffineRow (row : Row) : Row :=
+  { row with coefficients :=
+      Witnora.FiniteXor.sortVariables row.coefficients }
+
+def sortAffineRows (rows : List Row) : List Row :=
+  rows.map sortAffineRow
+
+/-- Every row-model of the original system is exactly a model of the
+    sorted row system and conversely, for arbitrary coefficient lists. -/
+theorem sortAffineRows_models_iff
+    (rows : List Row) (a : Nat → Bool) :
+    (∀ row ∈ sortAffineRows rows,
+      Witnora.Extraction.parityVars row.coefficients a = row.rhs) ↔
+    (∀ row ∈ rows,
+      Witnora.Extraction.parityVars row.coefficients a = row.rhs) := by
+  constructor
+  · intro hSorted row hr
+    have hRow : Witnora.Extraction.parityVars
+        (sortAffineRow row).coefficients a =
+          (sortAffineRow row).rhs :=
+      hSorted (sortAffineRow row)
+        (List.mem_map.mpr ⟨row, hr, rfl⟩)
+    simpa [sortAffineRow, sorted_row_parity] using hRow
+  · intro hOriginal row hr
+    obtain ⟨old, hOld, hEq⟩ := List.mem_map.mp hr
+    subst row
+    have hRow := hOriginal old hOld
+    simpa [sortAffineRow, sorted_row_parity] using hRow
+
+/-- A fully checked exact affine source certificate remains semantically
+    equivalent to its sorted row-system representation for all assignments.
+    This deliberately does not yet claim the executable checker reaccepts
+    those sorted rows. -/
+theorem checked_affine_sorted_rows_models_iff
+    (r : Nat) (source : CNF) (rows : List Row)
+    (hCheck : checkSemanticExactAffine r source rows = true)
+    (a : Nat → Bool) :
+    CNFHolds source a ↔
+      ∀ row ∈ sortAffineRows rows,
+        Witnora.Extraction.parityVars row.coefficients a = row.rhs := by
+  exact (checkSemanticExactAffine_sound r source rows hCheck a).trans
+    (sortAffineRows_models_iff rows a).symm
+
+#print axioms Witnora.TC063CanonicalAffineBridge.sortAffineRows_models_iff
+#print axioms Witnora.TC063CanonicalAffineBridge.checked_affine_sorted_rows_models_iff
+
 #print axioms Witnora.TC063CanonicalAffineBridge.sorted_row_parity
 #print axioms Witnora.TC063CanonicalAffineBridge.checkClauseCoverage_perm_expected
 
