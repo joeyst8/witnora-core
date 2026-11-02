@@ -11,8 +11,8 @@ This mathematical outer-loop model computes each root's verified complete
 component using the seen-at-enqueue traversal. Subsequent theorems prove
 that the scan keeps all previously marked vertices and covers every input
 start vertex, regardless of scan order or duplicate start entries.
-Proving the list of output components contains no duplicates and directly
-refining Python's shared mutable `seen` set remain separate steps.
+This module also proves pairwise-disjoint and duplicate-free component
+records. Refinement of Python's shared mutable `seen` set remains open.
 -/
 
 namespace Witnora.G14DFSOuterScan
