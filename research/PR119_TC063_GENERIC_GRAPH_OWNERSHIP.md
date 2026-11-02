@@ -1,6 +1,14 @@
 # PR #119: generic TC-063 G14 graph-to-residual ownership
 
-Status: `LEAN_KERNEL_CHECK_PENDING`.
+Status: `LEAN_KERNEL_CHECKED_CONDITIONAL_GENERIC_GRAPH_OWNERSHIP`.
+
+Verified with pinned Lean 4.35.0 at
+[GitHub Actions run #41493331576](https://github.com/joeyst8/witnora-core/actions/runs/41493331576),
+commit `7d2d639edfe96e517d1a4c8469ae961c6a449cb4`.
+All three Dubois20 Lean proofs and their nine fixture tests passed again; the
+imported generic `SeparatorAgreement` foundation and the new generic graph
+ownership theorem compiled successfully. Lean reports the final graph-ownership
+theorem uses only standard axioms `[propext, Quot.sound]`, with **no `sorryAx`**.
 
 The preceding verified Dubois20 two-component result had a remaining trust
 gap: Python checked the graph separator and component ownership, whereas Lean
