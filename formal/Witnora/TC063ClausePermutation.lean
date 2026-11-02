@@ -172,6 +172,38 @@ theorem checkPattern_perm
           exact False.elim (h hback)
     simp [hl, hr]
 
+/-- A forbidden signed clause generated from a row stays present up
+    to literal ordering after any variable permutation. This is the
+    source-set bridge required to normalize full affine components. -/
+theorem generated_signed_clause_perm_exists
+    {vars other : List Nat} (hperm : vars.Perm other)
+    (rhs : Bool) (clause : List Literal)
+    (hmem : clause ∈ generateSignedClauses vars rhs) :
+    ∃ translated ∈ generateSignedClauses other rhs,
+      clause.Perm translated := by
+  change clause ∈ (generateForbiddenPatterns vars.length rhs).map
+    (fun bad => signForbiddenClause (List.zip vars bad)) at hmem
+  obtain ⟨bad, hbad, rfl⟩ := List.mem_map.mp hmem
+  have hbits : bad ∈ allBits vars.length :=
+    (List.mem_filter.mp hbad).1
+  have hwrong : parityBits bad ≠ rhs := by
+    simpa using (List.mem_filter.mp hbad).2
+  have hlen : bad.length = vars.length :=
+    Witnora.ExactSignedXorCNF.allBits_member_length vars.length bad hbits
+  obtain ⟨translatedBits, htranslatedLen, hpairs, hbitsPerm⟩ :=
+    zip_pattern_transport hperm.symm bad hlen
+  have htranslatedMember : translatedBits ∈ allBits other.length := by
+    simpa [htranslatedLen] using allBits_complete translatedBits
+  have htranslatedWrong : parityBits translatedBits ≠ rhs := by
+    rw [parityBits_perm hbitsPerm]
+    exact hwrong
+  have hbadOther :
+      translatedBits ∈ generateForbiddenPatterns other.length rhs := by
+    simp [generateForbiddenPatterns, htranslatedMember, htranslatedWrong]
+  refine ⟨signForbiddenClause (List.zip other translatedBits), ?_, ?_⟩
+  · exact List.mem_map.mpr ⟨translatedBits, hbadOther, rfl⟩
+  · exact (signForbiddenClause_perm _ _ hpairs).symm
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -186,5 +218,6 @@ example :
 #print axioms Witnora.TC063ClausePermutation.zip_pattern_transport
 #print axioms Witnora.TC063ClausePermutation.parityBits_perm
 #print axioms Witnora.TC063ClausePermutation.checkPattern_perm
+#print axioms Witnora.TC063ClausePermutation.generated_signed_clause_perm_exists
 
 end Witnora.TC063ClausePermutation
