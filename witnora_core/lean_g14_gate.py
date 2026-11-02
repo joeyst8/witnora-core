@@ -107,7 +107,10 @@ def _check_partitions_with_lean(
             timeout=timeout_seconds, check=False,
         )
     if result.returncode != 0:
-        raise ValueError("Lean rejected G14 conditioning or partition")
+        # Preserve Lean's concrete diagnostic while remaining fail-closed.
+        # The caller truncates the reported detail to a bounded length.
+        diagnostic = (result.stdout + "\n" + result.stderr).strip()
+        raise ValueError("Lean rejected G14 conditioning or partition: " + diagnostic[-1400:])
     return sha256(source_text.encode("utf-8")).hexdigest()
 
 
