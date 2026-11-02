@@ -66,10 +66,16 @@ def independent_pivots(vectors):
     return pivots
 
 
-def discover(formula, *, max_candidate_span=1 << 12):
+def discover(formula, *, max_candidate_span=1 << 12, require_source_rows=False):
     equations = detect_cnf_xor_patterns(formula, max_k=3).equations
     masks = tuple(sum(1 << (v - 1) for v in eq.variables)
                   for eq in equations if eq.exact_full_encoding and eq.safe_use)
+    if require_source_rows and not masks:
+        # Safe incomplete trigger: no expensive full-CNF sign-flip scan
+        # without any exact source-bound XOR row as a candidate hint.
+        return {"pivots": {}, "rank": 0, "source_rows": 0,
+                "candidate_span_tested": 0, "accepted_mask_count": 0,
+                "complete_candidate_span": False}
     kernel = kernel_basis(masks, formula.max_var)
     # Enumerate the entire small candidate span. For larger kernels use
     # only basis candidates (incomplete discovery, never unsound acceptance).
