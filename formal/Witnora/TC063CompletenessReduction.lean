@@ -126,7 +126,8 @@ theorem affine_g5_complete_implies_tc063_cover_complete
   intro branch hb
   obtain ⟨hSelected, hCheck⟩ :=
     (Classical.choose_spec (hWitness branch)) hb
-  simp [hPartition branch hb, hSelected, hCheck]
+  simpa [hPartition branch hb, data] using
+    (And.intro hSelected hCheck)
 
 /-- The conditional full TC-063 UNSAT iff accepted-cover theorem, with
     its sole remaining logical assumption displayed as AffineG5Complete. -/
