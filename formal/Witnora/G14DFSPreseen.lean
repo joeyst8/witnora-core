@@ -8,11 +8,11 @@ separate roots. To begin a formal refinement, this module introduces
 the same mark-at-enqueue DFS state initialized with all prior seen
 vertices, and a fresh root added to the stack.
 
-These invariants establish that previously marked vertices are never
-processed again and that the pre-marked traversal still terminates for
-every finite adjacency-closed graph. Exact equality with the fresh-root
-component list and CPython's mutable/set/sorting implementation remain
-additional proof obligations.
+Theorems here establish that previously marked vertices are never
+processed again and that pre-marked traversal terminates on finite closed
+graphs. The lockstep refinement additionally proves exact equality with
+the fresh-root processing list and complete outer-scan result. CPython
+object/set/sorting execution and final numeric IDs are not yet refined.
 -/
 
 namespace Witnora.G14DFSPreseen
