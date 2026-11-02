@@ -86,6 +86,18 @@ def discover_repaired_separator(
         for width in range(max_extra + 1):
             for extra in combinations(available, width):
                 if trials >= max_trials:
+                    if winners:
+                        # Preserve a valid audited discovery even when an
+                        # optional later candidate cannot be explored.
+                        best = min(winners, key=lambda w: (
+                            len(w["cut"]), len(w["extra"]), tuple(w["cut"])))
+                        return {
+                            "status": "FOUND",
+                            "candidate_count": candidate_count,
+                            "trials": trials,
+                            "budget_exhausted": True,
+                            **best,
+                        }
                     return {
                         "status": "BUDGET_EXHAUSTED",
                         "candidate_count": candidate_count,

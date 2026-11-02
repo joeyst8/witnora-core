@@ -1,5 +1,7 @@
 """Autonomous graph-separator discovery controls."""
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from witnora_core.cnf import CNFFormula
 from witnora_core.autonomous_parity_separator import (
@@ -10,6 +12,29 @@ from scripts.experiment_autonomous_parity_separator import run_experiment
 
 
 class AutonomousParitySeparatorTests(unittest.TestCase):
+    def test_budget_does_not_discard_previously_verified_cut(self):
+        # Candidate 1 succeeds at trial 1; candidate 2 would exceed budget.
+        # A found, audited separator must not be forgotten merely because
+        # a later optional candidate cannot be evaluated.
+        formula = CNFFormula.from_raw_clauses([[1], [2], [3], [4]])
+        candidates = {"candidate_cuts": [
+            {"variables": [3], "component_equation_indices": [[0], [1]]},
+            {"variables": [4], "component_equation_indices": [[0], [1]]},
+        ]}
+        equations = SimpleNamespace(equations=[
+            SimpleNamespace(variables=(1,), rhs=0),
+            SimpleNamespace(variables=(2,), rhs=0),
+        ])
+        with patch("witnora_core.autonomous_parity_separator.bounded_parity_separators",
+                   return_value=candidates), patch(
+                       "witnora_core.autonomous_parity_separator.detect_cnf_xor_patterns",
+                       return_value=equations):
+            result = discover_repaired_separator(formula, max_trials=1)
+        self.assertEqual(result["status"], "FOUND")
+        self.assertEqual(result["cut"], [3])
+        self.assertTrue(result["full_cnf_groups_separated"])
+        self.assertTrue(result["budget_exhausted"])
+
     def test_full_group_audit_rejects_nonxor_bridge(self):
         formula, m = make_hidden_separator(3, width=2, cross_noise=True)
         left = set(m["left_block"])
