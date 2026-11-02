@@ -10,6 +10,7 @@ on:
       - theory/TC063DuboisTwoComponentCover.lean
       - theory/SeparatorAgreement.lean
       - theory/TC063PrimalGraphOwnership.lean
+      - theory/TC063DuboisCheckedGraph.lean
       - lean-toolchain
       - lakefile.toml
       - lake-manifest.json
@@ -18,6 +19,7 @@ on:
       - tests/test_dubois_lean_bridge.py
       - tests/test_tc063_dubois_one_bit_cover.py
       - tests/test_tc063_dubois_two_component.py
+      - tests/test_tc063_dubois_checked_graph_fixture.py
       - .github/workflows/dubois20-lean-proof.yml
   workflow_dispatch:
 
@@ -36,6 +38,8 @@ jobs:
         run: python -m unittest tests.test_tc063_dubois_one_bit_cover -v
       - name: Audit actual two-vertex separator, ownership and XOR consequences
         run: python -m unittest tests.test_tc063_dubois_two_component -v
+      - name: Audit kernel-checked graph fixture against all 160 source clauses
+        run: python -m unittest tests.test_tc063_dubois_checked_graph_fixture -v
       - uses: leanprover/lean-action@v1
         with:
           auto-config: false
@@ -52,4 +56,6 @@ jobs:
       - name: Kernel-check generic G14 residual semantics foundation
         run: lean -o theory/SeparatorAgreement.olean theory/SeparatorAgreement.lean
       - name: Kernel-check generic primal-graph to residual owner theorem
-        run: LEAN_PATH=theory lean theory/TC063PrimalGraphOwnership.lean
+        run: LEAN_PATH=theory lean -o theory/TC063PrimalGraphOwnership.olean theory/TC063PrimalGraphOwnership.lean
+      - name: Kernel-check Dubois20 executable graph premises and all branches
+        run: LEAN_PATH=theory lean theory/TC063DuboisCheckedGraph.lean
