@@ -118,14 +118,15 @@ theorem affine_g5_complete_implies_tc063_cover_complete
           Witnora.SparseBridge.checkG5Closed
             (data branch).2.1 (data branch).1
             (data branch).2.2.1 (data branch).2.2.2)) = true
-  apply Bool.and_eq_true.mpr
-  constructor
-  · exact decide_eq_true hBound
-  · apply List.all_eq_true.mpr
-    intro branch hb
-    obtain ⟨hSelected, hCheck⟩ :=
-      (Classical.choose_spec (hWitness branch)) hb
-    simp [hPartition branch hb, hSelected, hCheck]
+  have hBoundBool : decide (separator.length ≤ c) = true := by
+    simp [hBound]
+  rw [hBoundBool]
+  simp only [Bool.true_and]
+  apply List.all_eq_true.mpr
+  intro branch hb
+  obtain ⟨hSelected, hCheck⟩ :=
+    (Classical.choose_spec (hWitness branch)) hb
+  simp [hPartition branch hb, hSelected, hCheck]
 
 /-- The conditional full TC-063 UNSAT iff accepted-cover theorem, with
     its sole remaining logical assumption displayed as AffineG5Complete. -/
