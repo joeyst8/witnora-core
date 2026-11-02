@@ -14,17 +14,22 @@ from .multicut_parity_separator import bounded_parity_separators
 from .xor import detect_cnf_xor_patterns
 
 
-def _cnf_component_labels(formula: CNFFormula, removed: set[int]):
-    """Independent whole-CNF graph traversal after removing cut variables."""
-    graph = {v: set() for v in formula.variables if v not in removed}
+def _cnf_primal_graph(formula: CNFFormula):
+    """Compute full-CNF adjacency once; cuts induce vertex-deleted graphs."""
+    graph = {v: set() for v in formula.variables}
     for clause in formula.clauses:
-        variables = set(clause.variables) - removed
+        variables = set(clause.variables)
         for u in variables:
             graph[u].update(variables - {u})
+    return graph
+
+
+def _component_labels_from_graph(graph, removed: set[int]):
+    """Traverse the vertex-deleted induced subgraph without rebuilding edges."""
     labels = {}
     component_id = 0
     for start in sorted(graph):
-        if start in labels:
+        if start in removed or start in labels:
             continue
         component_id += 1
         stack = [start]
@@ -32,10 +37,15 @@ def _cnf_component_labels(formula: CNFFormula, removed: set[int]):
         while stack:
             u = stack.pop()
             for v in sorted(graph[u]):
-                if v not in labels:
+                if v not in removed and v not in labels:
                     labels[v] = component_id
                     stack.append(v)
     return labels
+
+
+def _cnf_component_labels(formula: CNFFormula, removed: set[int]):
+    """Independent whole-CNF graph traversal after removing cut variables."""
+    return _component_labels_from_graph(_cnf_primal_graph(formula), removed)
 
 
 def full_cnf_groups_separated(formula: CNFFormula,
@@ -43,7 +53,11 @@ def full_cnf_groups_separated(formula: CNFFormula,
                               groups: list[set[int]]) -> bool:
     """Require each parity group to survive and no full-CNF component
     to contain variables from two distinct groups."""
-    labels = _cnf_component_labels(formula, set(cut))
+    return _groups_separated_on_graph(_cnf_primal_graph(formula), cut, groups)
+
+
+def _groups_separated_on_graph(graph, cut, groups):
+    labels = _component_labels_from_graph(graph, set(cut))
     occupied = []
     for group in groups:
         remaining = group - set(cut)
@@ -70,6 +84,7 @@ def discover_repaired_separator(
         detect_cnf_xor_patterns(formula, max_k=6).equations,
         key=lambda eq: (eq.variables, eq.rhs))
     supports = [set(eq.variables) for eq in equations]
+    primal_graph = _cnf_primal_graph(formula)
     trials = 0
     candidate_count = len(detected["candidate_cuts"])
     winners = []
@@ -106,7 +121,7 @@ def discover_repaired_separator(
                     }
                 trials += 1
                 cut = tuple(sorted((*parity_cut, *extra)))
-                if full_cnf_groups_separated(formula, cut, groups):
+                if _groups_separated_on_graph(primal_graph, cut, groups):
                     found = {
                         "cut": list(cut),
                         "parity_cut": list(parity_cut),

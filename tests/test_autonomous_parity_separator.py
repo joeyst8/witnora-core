@@ -1,17 +1,56 @@
 """Autonomous graph-separator discovery controls."""
 import unittest
+import random
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from witnora_core.cnf import CNFFormula
 from witnora_core.autonomous_parity_separator import (
     discover_repaired_separator, full_cnf_groups_separated,
+    _cnf_primal_graph, _component_labels_from_graph,
 )
 from witnora_core.hidden_separator_challenge import make_hidden_separator
 from scripts.experiment_autonomous_parity_separator import run_experiment
 
 
 class AutonomousParitySeparatorTests(unittest.TestCase):
+    def test_precomputed_graph_matches_independent_clause_deletion(self):
+        rng = random.Random(63119)
+        for _ in range(256):
+            raw = []
+            for _ in range(rng.randrange(0, 16)):
+                vars_in_clause = rng.sample(range(1, 13), rng.randrange(0, 5))
+                raw.append([v if rng.choice((False, True)) else -v
+                            for v in vars_in_clause])
+            formula = CNFFormula(raw)
+            variables = list(formula.variables)
+            removed = set(rng.sample(variables, rng.randrange(len(variables) + 1)))
+            cached = _component_labels_from_graph(_cnf_primal_graph(formula), removed)
+
+            # Independent oracle: derive adjacency after deletion from each
+            # original clause, then compute undirected reachability.
+            graph = {v: set() for v in variables if v not in removed}
+            for clause in formula.clauses:
+                surviving = set(clause.variables) - removed
+                for v in surviving:
+                    graph[v].update(surviving - {v})
+            oracle = {}
+            for start in sorted(graph):
+                if start in oracle:
+                    continue
+                reach = {start}
+                while True:
+                    expanded = reach | set().union(*(graph[v] for v in reach))
+                    if expanded == reach:
+                        break
+                    reach = expanded
+                for v in reach:
+                    oracle[v] = min(reach)
+            self.assertEqual(set(cached), set(oracle))
+            for u in oracle:
+                for v in oracle:
+                    self.assertEqual(cached[u] == cached[v], oracle[u] == oracle[v])
+
     def test_budget_does_not_discard_previously_verified_cut(self):
         # Candidate 1 succeeds at trial 1; candidate 2 would exceed budget.
         # A found, audited separator must not be forgotten merely because
