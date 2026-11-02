@@ -1,4 +1,4 @@
-import Witnora.ExactSignedXorCNF
+import Witnora.ExactAffineMembership
 
 /-!
 # TC-063 exact clause-coverage invariance under literal permutation
@@ -266,6 +266,91 @@ theorem checkClauseCoverage_source_transport
           simp [hy] at hc
       | true => rfl
 
+
+/-- Normalize only the representation order of a G5 row. -/
+def normalizeRow (row : Witnora.G5Trace.Row) : Witnora.G5Trace.Row :=
+  { row with coefficients := sortVariables row.coefficients }
+
+private theorem expanded_cons_iff
+    (row : Witnora.G5Trace.Row)
+    (rows : List Witnora.G5Trace.Row) (clause : List Literal) :
+    clause ∈ Witnora.ExactAffineMembership.expanded (row :: rows) ↔
+      clause ∈ Witnora.ExactAffineMembership.rowClauses row ∨
+      clause ∈ Witnora.ExactAffineMembership.expanded rows := by
+  simp [Witnora.ExactAffineMembership.expanded]
+
+theorem expanded_normalized_forward
+    (rows : List Witnora.G5Trace.Row) (clause : List Literal)
+    (hmem : clause ∈ Witnora.ExactAffineMembership.expanded rows) :
+    ∃ translated ∈ Witnora.ExactAffineMembership.expanded
+      (rows.map normalizeRow), clause.Perm translated := by
+  induction rows with
+  | nil =>
+      simp [Witnora.ExactAffineMembership.expanded] at hmem
+  | cons row rest ih =>
+      have hsplit := (expanded_cons_iff row rest clause).mp hmem
+      rcases hsplit with hrow | hrest
+      · have hp : row.coefficients.Perm
+            (sortVariables row.coefficients) :=
+          (sortVariables_perm row.coefficients).symm
+        obtain ⟨translated, htrans, hpClause⟩ :=
+          generated_signed_clause_perm_exists hp row.rhs clause
+            (by simpa [Witnora.ExactAffineMembership.rowClauses] using hrow)
+        refine ⟨translated, ?_, hpClause⟩
+        apply (expanded_cons_iff
+          (normalizeRow row) (rest.map normalizeRow) translated).mpr
+        left
+        simpa [Witnora.ExactAffineMembership.rowClauses, normalizeRow]
+          using htrans
+      · obtain ⟨translated, htrans, hpClause⟩ := ih hrest
+        refine ⟨translated, ?_, hpClause⟩
+        apply (expanded_cons_iff
+          (normalizeRow row) (rest.map normalizeRow) translated).mpr
+        exact Or.inr htrans
+
+theorem expanded_normalized_backward
+    (rows : List Witnora.G5Trace.Row) (clause : List Literal)
+    (hmem : clause ∈ Witnora.ExactAffineMembership.expanded
+      (rows.map normalizeRow)) :
+    ∃ translated ∈ Witnora.ExactAffineMembership.expanded rows,
+      clause.Perm translated := by
+  induction rows with
+  | nil =>
+      simp [Witnora.ExactAffineMembership.expanded] at hmem
+  | cons row rest ih =>
+      have hsplit : clause ∈ Witnora.ExactAffineMembership.rowClauses
+          (normalizeRow row) ∨
+          clause ∈ Witnora.ExactAffineMembership.expanded
+            (rest.map normalizeRow) :=
+        (expanded_cons_iff
+          (normalizeRow row) (rest.map normalizeRow) clause).mp hmem
+      rcases hsplit with hrow | hrest
+      · have hp : (normalizeRow row).coefficients.Perm row.coefficients := by
+          simpa [normalizeRow] using sortVariables_perm row.coefficients
+        obtain ⟨translated, htrans, hpClause⟩ :=
+          generated_signed_clause_perm_exists hp row.rhs clause
+            (by simpa [Witnora.ExactAffineMembership.rowClauses, normalizeRow]
+              using hrow)
+        refine ⟨translated, ?_, hpClause⟩
+        apply (expanded_cons_iff row rest translated).mpr
+        left
+        simpa [Witnora.ExactAffineMembership.rowClauses] using htrans
+      · obtain ⟨translated, htrans, hpClause⟩ := ih hrest
+        refine ⟨translated, ?_, hpClause⟩
+        exact (expanded_cons_iff row rest translated).mpr (Or.inr htrans)
+
+/-- The entire generated multirow CNF has the same Boolean source
+    coverage checks after row-variable normalization. -/
+theorem expanded_normalized_coverage
+    (rows : List Witnora.G5Trace.Row) (expected : List Literal) :
+    checkClauseCoverage (Witnora.ExactAffineMembership.expanded rows) expected =
+      checkClauseCoverage
+        (Witnora.ExactAffineMembership.expanded (rows.map normalizeRow))
+        expected := by
+  apply checkClauseCoverage_source_transport
+  · exact expanded_normalized_forward rows
+  · exact expanded_normalized_backward rows
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -282,5 +367,6 @@ example :
 #print axioms Witnora.TC063ClausePermutation.checkPattern_perm
 #print axioms Witnora.TC063ClausePermutation.generated_signed_clause_perm_exists
 #print axioms Witnora.TC063ClausePermutation.checkClauseCoverage_source_transport
+#print axioms Witnora.TC063ClausePermutation.expanded_normalized_coverage
 
 end Witnora.TC063ClausePermutation
