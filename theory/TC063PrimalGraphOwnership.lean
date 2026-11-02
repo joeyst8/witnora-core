@@ -61,7 +61,7 @@ theorem reduced_member_unassigned
   have hnone : (fixed lit.1).isNone = true :=
     (List.mem_filter.mp hfilter).2
   cases h : fixed lit.1 with
-  | none => exact h
+  | none => rfl
   | some b => simp [h] at hnone
 
 -- The graph invariant proves all literals in any surviving clause with
