@@ -1,7 +1,8 @@
 """Reproducible, read-only TC-063 separator-policy experiment.
 
-Three distinct policies on the SAME source formula:
-  production: current recognize_separator_affine_family (rebuilds graph)
+Four distinct policies on the SAME source formula:
+  production: archived pre-cache behavior (rebuild graph and test non-cuts)
+  production_cached: current production recognizer (one graph per invocation)
   cached_first: cache primal graph once, validate cuts in current order
   cached_balanced: cache graph, rank all actual cuts by largest component,
                    then apply the SAME exact-affine validation as first-valid
@@ -49,7 +50,7 @@ from witnora_core.obstruction_dual import stable_json
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "research" / "PR119_DUBOIS20_SOURCE_XOR_CERTIFICATE.json"
-POLICIES = ("production", "cached_first", "cached_balanced")
+POLICIES = ("production", "production_cached", "cached_first", "cached_balanced")
 
 
 def source_formula() -> CNFFormula:
@@ -90,6 +91,10 @@ def exact_affine_candidate(formula: CNFFormula, cut: tuple[int, ...], r: int) ->
     components = _component_dicts(formula, list(cut))
     if len(components) < 2:
         return False
+    return _exact_affine_residuals(formula, cut, components, r)
+
+
+def _exact_affine_residuals(formula: CNFFormula, cut: tuple[int, ...], components: list[dict], r: int) -> bool:
     for assignment in _all_assignments(cut):
         _, residuals, errors = _condition_by_separator(formula, assignment, components)
         if errors:
@@ -107,6 +112,29 @@ def exact_affine_candidate(formula: CNFFormula, cut: tuple[int, ...], r: int) ->
                     or coverage != expected or not witness_ok):
                 return False
     return True
+
+
+def legacy_uncached_cut(formula: CNFFormula, c: int, r: int) -> dict:
+    """Reproduce pre-cache selection: validate even candidates with one component.
+
+    Previously `ok = len(components) >= 2` was evaluated before the
+    expensive residual validation but did not prevent executing it.
+    """
+    seen = 0
+    graph_cuts = 0
+    for size in range(1, min(c, len(formula.variables)) + 1):
+        for cut in combinations(formula.variables, size):
+            seen += 1
+            components = _component_dicts(formula, list(cut))
+            is_cut = len(components) >= 2
+            if is_cut:
+                graph_cuts += 1
+            affine = _exact_affine_residuals(formula, cut, components, r)
+            if is_cut and affine:
+                return {"cut": list(cut), "candidate_count": seen,
+                        "graph_cuts": graph_cuts, "affine_attempts": graph_cuts}
+    return {"cut": [], "candidate_count": seen,
+            "graph_cuts": graph_cuts, "affine_attempts": graph_cuts}
 
 
 def cached_cut(formula: CNFFormula, policy: str, c: int, r: int) -> dict:
@@ -144,6 +172,9 @@ def cached_cut(formula: CNFFormula, policy: str, c: int, r: int) -> dict:
 def measure(formula: CNFFormula, label: str, policy: str, *, c: int, r: int) -> dict:
     start = time.perf_counter()
     if policy == "production":
+        detail = legacy_uncached_cut(formula, c, r)
+        selected = detail["cut"]
+    elif policy == "production_cached":
         recognition = recognize_separator_affine_family(formula, c=c, r=r)
         selected = list(recognition["separator_variables"])
         detail = {"cut": selected, "candidate_count": len(recognition["trace"]),
@@ -256,7 +287,7 @@ def main() -> None:
         "control_trial_count": args.control_trials if not args.no_control else 0,
         "permutation_count": args.permutations,
         "control_included": not args.no_control,
-        "note": "Single-machine wall-clock medians, no warm cache equivalence guarantee; selection cost is included. Cached policies use a graph snapshot and duplicate the production validator semantics. Built certificates are independently rechecked. Not a new algorithmic complexity result.",
+        "note": "Single-machine wall-clock medians; selection cost is included. Historical 'production' means the pre-cache rebuild-per-candidate path; 'production_cached' is the real current implementation. Built certificates are independently rechecked. This is an implementation speedup, not a new algorithmic complexity result.",
         "summary": summarize(measurements),
         "samples": measurements,
     }

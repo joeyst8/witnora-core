@@ -23,6 +23,8 @@ on:
       - research/pr119_separator_selection_benchmark.py
       - research/PR119_TC063_SEPARATOR_POLICY_BENCHMARK_RESULT.json
       - tests/test_pr119_separator_selection_benchmark.py
+      - tests/test_pr119_recognizer_graph_cache_equivalence.py
+      - witnora_core/separator_affine_family_theorem.py
       - .github/workflows/dubois20-lean-proof.yml
   workflow_dispatch:
 
@@ -45,6 +47,8 @@ jobs:
         run: python -m unittest tests.test_tc063_dubois_checked_graph_fixture -v
       - name: Regression-test cached separator policies and fail-closed G14 certificates
         run: python -m unittest tests.test_pr119_separator_selection_benchmark -v
+      - name: Check production graph-cache and non-cut pruning against the historical recognizer
+        run: python -m unittest tests.test_pr119_recognizer_graph_cache_equivalence -v
       - uses: leanprover/lean-action@v1
         with:
           auto-config: false

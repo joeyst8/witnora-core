@@ -190,9 +190,14 @@ def _components_after_removing(graph: dict[int, set[int]], separator: set[int]) 
     return sorted(components, key=lambda item: (item[0], len(item)))
 
 
-def _component_dicts(formula: CNFFormula, separator: list[int]) -> list[dict[str, Any]]:
+def _component_dicts(
+    formula: CNFFormula,
+    separator: list[int],
+    *,
+    graph: dict[int, set[int]] | None = None,
+) -> list[dict[str, Any]]:
     separator_set = set(separator)
-    raw = _components_after_removing(primal_graph(formula), separator_set)
+    raw = _components_after_removing(primal_graph(formula) if graph is None else graph, separator_set)
     components: list[dict[str, Any]] = []
     lookup: dict[int, str] = {}
     for idx, variables in enumerate(raw, start=1):
@@ -762,11 +767,18 @@ def check_separator_affine_certificate(
 
 def recognize_separator_affine_family(formula: CNFFormula, *, c: int = 1, r: int = 2) -> dict[str, Any]:
     variables = list(formula.variables)
+    graph = primal_graph(formula)
     trace: list[dict[str, Any]] = []
     for size in range(1, min(c, len(variables)) + 1):
         for candidate in combinations(variables, size):
-            components = _component_dicts(formula, list(candidate))
-            ok = len(components) >= 2
+            components = _component_dicts(formula, list(candidate), graph=graph)
+            if len(components) < 2:
+                # A true separator must leave at least two components.
+                # Avoid solving residuals for a candidate that cannot qualify.
+                trace.append({"separator": list(candidate), "component_count": len(components),
+                              "accepted": False, "reason": "fewer than two components"})
+                continue
+            ok = True
             reason = "candidate accepted"
             for assignment in _all_assignments(candidate):
                 _, component_formulas, localization_errors = _condition_by_separator(formula, assignment, components)
