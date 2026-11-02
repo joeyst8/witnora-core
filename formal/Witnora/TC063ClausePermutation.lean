@@ -88,10 +88,12 @@ theorem zip_pattern_transport
           cases rest with
           | nil => simp at hlen
           | cons d tail =>
-              refine ⟨d :: b :: tail, by simp, ?_, ?_⟩
-              · simpa using (List.Perm.swap (x, d) (y, b)
+              have htail : tail.length = xs.length := by
+                simpa using hlen
+              refine ⟨d :: b :: tail, by simp [htail], ?_, ?_⟩
+              · simpa using (List.Perm.swap (x, b) (y, d)
                   (List.zip xs tail))
-              · exact List.Perm.swap d b tail
+              · exact List.Perm.swap b d tail
   | @trans xs ys zs hxy hyz ihxy ihyz =>
       obtain ⟨mid, hmidlen, hmiddle, hmidbits⟩ :=
         ihyz bitsOther hlen
@@ -109,7 +111,7 @@ theorem parityBits_perm
   | cons b hp ih =>
       simpa only [parityBits] using congrArg (Bool.xor b) ih
   | swap b d xs =>
-      cases b <;> cases d <;> cases (parityBits xs) <;> decide
+      cases b <;> cases d <;> simp [parityBits, Bool.xor]
   | trans hp hq ihp ihq =>
       exact ihp.trans ihq
 
