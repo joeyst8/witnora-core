@@ -1,6 +1,12 @@
 # PR #119 — TC-063 G14 single-variable cover bridge (Dubois20)
 
-Status: `KERNEL_CHECK_PENDING` until the pinned Lean CI job passes.
+Status: `KERNEL_CHECKED_ONE_BIT_G14_FRAGMENT` (not full TC-063).
+
+Verified CI: [Dubois20 Lean proof experiment run #41489431338](https://github.com/joeyst8/witnora-core/actions/runs/41489431338),
+commit `27433faa768bcf8d53be2f2dbbaebb4023dc30ab`.
+Both Python fixture gates and both Lean compilation steps passed. Lean 4.35.0
+reported `Witnora.TC063.dubois20_one_bit_unsat_cover` depends only on
+`[propext]` (no `sorryAx` or solver-axiom assumptions).
 
 ## Exact mathematical statement
 
