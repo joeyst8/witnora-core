@@ -703,6 +703,82 @@ theorem checkSemanticExactAffine_map_perm
   simp only [Witnora.ExactAffineMembership.checkSemanticExactAffine]
   rw [hs, hi, hc]
 
+
+/-- The sparse constructor depends only on membership of variables
+    strictly below its exclusive bound. -/
+theorem canonicalSupport_ext_bounded
+    (bound : Nat) (left right : List Nat)
+    (h : ∀ v : Nat, v < bound → (v ∈ left ↔ v ∈ right)) :
+    Witnora.SparseBridge.canonicalSupport bound left =
+      Witnora.SparseBridge.canonicalSupport bound right := by
+  induction bound with
+  | zero => rfl
+  | succ n ih =>
+      have hsmall : ∀ v : Nat, v < n → (v ∈ left ↔ v ∈ right) := by
+        intro v hv
+        exact h v (Nat.lt_succ_of_lt hv)
+      have hn : decide (n ∈ left) = decide (n ∈ right) := by
+        simp [h n (Nat.lt_succ_self n)]
+      change Witnora.SparseBridge.canonicalSupport n left ++
+          (if decide (n ∈ left) then [n] else []) =
+        Witnora.SparseBridge.canonicalSupport n right ++
+          (if decide (n ∈ right) then [n] else [])
+      rw [ih hsmall, hn]
+
+/-- Re-running canonical sparse extraction is a genuine identity. -/
+theorem canonicalSupport_idempotent
+    (bound : Nat) (coeff : List Nat) :
+    Witnora.SparseBridge.canonicalSupport bound
+        (Witnora.SparseBridge.canonicalSupport bound coeff) =
+      Witnora.SparseBridge.canonicalSupport bound coeff := by
+  apply canonicalSupport_ext_bounded bound
+  intro v hv
+  constructor
+  · intro hm
+    exact ((canonicalSupport_mem_iff bound coeff v).mp hm).2
+  · intro hm
+    exact (canonicalSupport_mem_iff bound coeff v).mpr ⟨hv, hm⟩
+
+/-- A finite list of rows admits one exclusive bound shared by all
+    its coefficients, including empty lists and arbitrary variable IDs. -/
+theorem finite_rows_bound_exists (rows : List Witnora.G5Trace.Row) :
+    ∃ bound : Nat, ∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound := by
+  induction rows with
+  | nil =>
+      refine ⟨0, ?_⟩
+      intro row hmem
+      simp at hmem
+  | cons row rest ih =>
+      obtain ⟨headBound, hhead⟩ :=
+        finite_support_bound_exists row.coefficients
+      obtain ⟨tailBound, htail⟩ := ih
+      refine ⟨max headBound tailBound, ?_⟩
+      intro entry hentry v hv
+      rcases List.mem_cons.mp hentry with heq | hrest
+      · have hh : v < headBound := hhead v (by
+          simpa only [heq] using hv)
+        exact Nat.lt_of_lt_of_le hh (Nat.le_max_left headBound tailBound)
+      · exact Nat.lt_of_lt_of_le (htail entry hrest v hv)
+          (Nat.le_max_right headBound tailBound)
+
+def canonicalizeRow (bound : Nat) (row : Witnora.G5Trace.Row) :
+    Witnora.G5Trace.Row :=
+  { row with coefficients :=
+      Witnora.SparseBridge.canonicalSupport bound row.coefficients }
+
+/-- By construction, every row in the canonicalized list passes the
+    production sparse canonical-support gate. -/
+theorem checkCanonicalRows_canonicalized
+    (bound : Nat) (rows : List Witnora.G5Trace.Row) :
+    Witnora.SparseBridge.checkCanonicalRows
+      bound (rows.map (canonicalizeRow bound)) = true := by
+  unfold Witnora.SparseBridge.checkCanonicalRows
+  rw [List.all_map]
+  apply List.all_eq_true.mpr
+  intro row _
+  simp [Witnora.SparseBridge.checkCanonicalRow, canonicalizeRow,
+    canonicalSupport_idempotent]
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -725,5 +801,8 @@ example :
 #print axioms Witnora.TC063ClausePermutation.finite_support_bound_exists
 #print axioms Witnora.TC063ClausePermutation.expanded_map_perm_coverage
 #print axioms Witnora.TC063ClausePermutation.checkSemanticExactAffine_map_perm
+#print axioms Witnora.TC063ClausePermutation.canonicalSupport_idempotent
+#print axioms Witnora.TC063ClausePermutation.finite_rows_bound_exists
+#print axioms Witnora.TC063ClausePermutation.checkCanonicalRows_canonicalized
 
 end Witnora.TC063ClausePermutation
