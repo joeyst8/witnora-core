@@ -1,0 +1,34 @@
+name: G14 Python seen-at-enqueue refinement
+
+on:
+  push:
+    branches:
+      - formal/g14-python-seen-enqueue-v121
+  pull_request:
+    paths:
+      - "formal/Witnora/G14DFSSeenEnqueue.lean"
+      - ".github/workflows/g14-dfs-seen-enqueue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check seen-at-enqueue invariants
+        working-directory: formal
+        run: lake build Witnora.G14DFSSeenEnqueue
+      - name: Reject proof holes
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14DFSSeenEnqueue.lean; then
+            exit 1
+          fi
