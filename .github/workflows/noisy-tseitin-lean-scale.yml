@@ -15,7 +15,7 @@ permissions:
 jobs:
   kernel-size-ladder:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,10 +36,17 @@ jobs:
       - name: Kernel-check full ASCII source n16 within 180 seconds
         working-directory: formal
         run: time timeout 180s lake env lean ../noisy_tseitin_n16.lean
+      - name: Generate literal n32 noisy source and G5 certificate
+        run: python -m scripts.lean_noisy_tseitin_scale --vertices 32 --out noisy_tseitin_n32.lean
+      - name: Kernel-check full ASCII source n32 within 240 seconds
+        working-directory: formal
+        run: time timeout 240s lake env lean ../noisy_tseitin_n32.lean
       - name: Archive exact generated Lean proof input
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: noisy-tseitin-lean-scale-${{ github.sha }}
-          path: noisy_tseitin_n16.lean
+          path: |
+            noisy_tseitin_n16.lean
+            noisy_tseitin_n32.lean
           if-no-files-found: warn
