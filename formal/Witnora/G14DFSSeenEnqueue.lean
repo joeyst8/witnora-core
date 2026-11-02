@@ -1055,7 +1055,7 @@ theorem mem_residualPrimalNeighbors_iff
       Witnora.G14PrimalEdgeOwnership.SourceEdge source u w ∧
         w ≠ u ∧ w ∉ separator := by
   rw [mem_separatedNeighbors_iff, mem_clauseNeighbors_iff]
-  tauto
+  simp only [and_assoc]
 
 /-- A root remaining after separator removal has exactly its reachable
     residual primal component processed, with finite termination ensured
