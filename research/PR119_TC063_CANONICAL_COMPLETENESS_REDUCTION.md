@@ -1,6 +1,6 @@
 # TC-063 completeness work: exact remaining obligation (2026-11-02)
 
-Status: **INCOMPLETE, BUT REDUCED TO EXPLICIT NORMALIZATION WITNESS EXISTENCE**.
+Status: **INCOMPLETE: FULL BOOLEAN AFFINE-CHECKER SORT-INVARIANCE NOW PROVED; CANONICAL SPARSE-BOUND EXISTENCE REMAINS**.
 
 All new Lean theorems below passed Lean 4.19 GitHub Actions, with `#print axioms`
 showing only standard Lean foundations `propext`, `Classical.choice`, `Quot.sound`,
@@ -32,6 +32,19 @@ showing only standard Lean foundations `propext`, `Classical.choice`, `Quot.soun
    family-level UNSAT iff accepted bounded G14/G5 certificate theorem follows.
    [CI #41509936900](https://github.com/joeyst8/witnora-core/actions/runs/41509936900).
 
+4. `formal/Witnora/TC063ClausePermutation.lean`:
+   Lean now proves both-way literal and source-clause coverage invariance,
+   `generated_signed_clause_perm_exists`,
+   `checkPattern_perm`,
+   `expanded_normalized_coverage` for arbitrarily many rows, and finally
+   **`checkSemanticExactAffine_normalize`**: all three executable semantic
+   affine acceptance gates return the same Boolean value after
+   `FiniteXor.sortVariables` sorts every row's coefficient list.
+   [CI #41513106211](https://github.com/joeyst8/witnora-core/actions/runs/41513106211).
+   This is a genuine universal Boolean-checker proof, not merely
+   equality of parity semantics. Its `#print axioms` list contains only
+   `propext`, `Classical.choice`, and `Quot.sound`; no `sorryAx`.
+
 ## EXACT mathematical proof still needed
 
 ```lean
@@ -43,15 +56,17 @@ def CanonicalWitnessComplete (r : Nat) : Prop :=
       Witnora.SparseBridge.checkCanonicalRows bound rows = true
 ```
 
-`CertifiedAffine` presently allows distinct positive row coefficients in
-arbitrary order. The closed production checker also requires canonical
-ascending sparse support. Existing `FiniteXor.sortVariables_perm` and
-`Extraction.parityVars_perm` prove semantic invariance under sorting,
-but do **not yet** prove that the Boolean **source coverage** checker
-`checkSemanticExactAffine` accepts the transformed, sorted rows. This is
-a checker-specific exact extraction/normalization proof obligation.
-Do not assume semantic parity equivalence is by itself enough to pass the
-boolean clause-coverage gate.
+For every supported, distinct positive coefficient list, show there is a
+finite **shared exclusive upper bound** `bound` such that its sorted list
+equals `SparseBridge.canonicalSupport bound` of that same list. Then, using
+the already verified `checkSemanticExactAffine_normalize`, turn each
+`CertifiedAffine r component` witness into a witness additionally passing
+`checkCanonicalRows bound`. This discharges the precise
+`CanonicalWitnessComplete r` premise and composes the conditional
+family-level TC-063 theorem without assuming completeness.
+
+**Do not** identify Boolean semantic-affine checker invariance with finished
+TC-063; it is one key proven intermediate step.
 
 ## Remaining engineering/scientific gates after that theorem
 
@@ -63,8 +78,8 @@ boolean clause-coverage gate.
   algorithm or settle P vs NP.
 - Independent adversarial SAT controls, exact source hash, and certificate
   parser audit remain mandatory before publication.
-- TC-063 is **not complete today**, and Effort B structural discovery is held
-  until this proof and the required implementation/refinement gates close.
+- TC-063 is **not complete today**; Effort B structural discovery remains held
+  until the canonical sparse bound, full target proof, and required refinement gates close.
 
 Preserve the previous exact n64 frozen UNSAT Lean proof and all benchmark
 datasets; those are concrete successes but not evidence of family-level
