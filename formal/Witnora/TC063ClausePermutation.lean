@@ -1,4 +1,4 @@
-import Witnora.G5Extraction
+import Witnora.ExactSignedXorCNF
 
 /-!
 # TC-063 exact clause-coverage invariance under literal permutation
@@ -54,6 +54,64 @@ theorem checkClauseCoverage_permuted_forbidden
       checkClauseCoverage cnf (signForbiddenClause other) := by
   exact checkClauseCoverage_expected_perm cnf _ _
     (signForbiddenClause_perm fixed other hperm)
+
+/-- A permutation of variable positions can transport every same-length
+    Boolean pattern, keeping the zipped variable/bit pairs and the bits
+    themselves permuted. This requires no assignment enumeration. -/
+theorem zip_pattern_transport
+    {vars other : List Nat} (hperm : vars.Perm other)
+    (bitsOther : List Bool) (hlen : bitsOther.length = other.length) :
+    ∃ bits : List Bool,
+      bits.length = vars.length ∧
+      (List.zip vars bits).Perm (List.zip other bitsOther) ∧
+      bits.Perm bitsOther := by
+  induction hperm generalizing bitsOther with
+  | nil =>
+      cases bitsOther with
+      | nil => exact ⟨[], rfl, List.Perm.nil, List.Perm.nil⟩
+      | cons b rest => simp at hlen
+  | @cons v xs ys hp ih =>
+      cases bitsOther with
+      | nil => simp at hlen
+      | cons b bs =>
+          have htail : bs.length = ys.length := by
+            simpa using hlen
+          obtain ⟨bits, hbLen, hpairs, hbits⟩ := ih bs htail
+          refine ⟨b :: bits, ?_, ?_, ?_⟩
+          · simp [hbLen]
+          · simpa using (List.Perm.cons (v, b) hpairs)
+          · exact List.Perm.cons b hbits
+  | @swap x y xs =>
+      cases bitsOther with
+      | nil => simp at hlen
+      | cons b rest =>
+          cases rest with
+          | nil => simp at hlen
+          | cons d tail =>
+              refine ⟨d :: b :: tail, by simp, ?_, ?_⟩
+              · simpa using (List.Perm.swap (x, d) (y, b)
+                  (List.zip xs tail))
+              · exact List.Perm.swap d b tail
+  | @trans xs ys zs hxy hyz ihxy ihyz =>
+      obtain ⟨mid, hmidlen, hmiddle, hmidbits⟩ :=
+        ihyz bitsOther hlen
+      obtain ⟨bits, hbitsLen, hfirst, hfirstBits⟩ :=
+        ihxy mid hmidlen
+      exact ⟨bits, hbitsLen, hfirst.trans hmiddle,
+        hfirstBits.trans hmidbits⟩
+
+/-- XOR of forbidden Boolean patterns is invariant under any reordering. -/
+theorem parityBits_perm
+    {bits other : List Bool} (hperm : bits.Perm other) :
+    parityBits bits = parityBits other := by
+  induction hperm with
+  | nil => rfl
+  | cons b hp ih =>
+      simpa only [parityBits] using congrArg (Bool.xor b) ih
+  | swap b d xs =>
+      cases b <;> cases d <;> cases (parityBits xs) <;> decide
+  | trans hp hq ihp ihq =>
+      exact ihp.trans ihq
 
 example :
     checkClauseCoverage
