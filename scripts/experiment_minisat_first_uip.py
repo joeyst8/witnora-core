@@ -114,6 +114,7 @@ class FirstUIP:
                 if v == abs(pivot_lit or 0) or v in seen or self.level[v] == 0:
                     continue
                 seen.add(v)
+                self.note_conflict_var(v)
                 if self.level[v] == len(self.trail_lim):
                     pending += 1
                 else:
@@ -136,6 +137,15 @@ class FirstUIP:
         backlevel = max((self.level[abs(l)] for l in learnt[1:]), default=0)
         return tuple(learnt), backlevel
 
+    def note_conflict_var(self, variable):
+        """Hook for activity-based branching; fixed-order baseline does nothing."""
+
+    def finish_conflict(self):
+        """Hook for activity decay; no-op in fixed-order baseline."""
+
+    def pick_branch(self):
+        return next((v for v in self.order if v not in self.values), None)
+
     def backjump(self, target):
         if target >= len(self.trail_lim):
             return
@@ -149,7 +159,7 @@ class FirstUIP:
         del self.trail_lim[target:]
         self.qhead = min(self.qhead, len(self.trail))
 
-    def solve(self):
+    def solve(self, conflict_budget=None):
         if any(not c for c in self.original):
             return False
         for clause in self.original:
@@ -163,7 +173,11 @@ class FirstUIP:
                 self.stats["conflicts"] += 1
                 if not self.trail_lim:
                     return False
+                if conflict_budget is not None and self.stats["conflicts"] >= conflict_budget:
+                    self.stats["budget_exhausted"] += 1
+                    return None
                 learnt, backlevel = self.analyze(conflict)
+                self.finish_conflict()
                 oldlevel = len(self.trail_lim)
                 self.backjump(backlevel)
                 self.stats["backjump_levels"] += oldlevel - backlevel
@@ -175,7 +189,7 @@ class FirstUIP:
                 if not self.enqueue(learnt[0], reason=ci):
                     raise AssertionError("learned asserting clause contradicts backjump")
             else:
-                var = next((v for v in self.order if v not in self.values), None)
+                var = self.pick_branch()
                 if var is None:
                     return True
                 self.stats["decisions"] += 1
