@@ -32,6 +32,6 @@ jobs:
           test: false
       - name: Build full source G14 and indexed G5 checkers
         working-directory: formal
-        run: lake build Witnora.G14ConcreteBridge Witnora.G5IndexedBridge
+        run: lake build Witnora.G14NormalizedPartition Witnora.G14ConcreteBridge Witnora.G5IndexedBridge
       - name: Lean UNSAT proof and SAT rejection
         run: PYTHONPATH=. python scripts/check_g14_separator_only_lean.py
