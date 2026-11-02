@@ -1,0 +1,30 @@
+name: Dubois20 Lean proof experiment
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - theory/Dubois20SourceUnsat.lean
+      - lean-toolchain
+      - .github/workflows/dubois20-lean-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-certificate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+      - name: Kernel-check the pinned Dubois20 source-clause theorem
+        run: lean theory/Dubois20SourceUnsat.lean
