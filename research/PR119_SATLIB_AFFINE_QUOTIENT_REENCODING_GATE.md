@@ -4,6 +4,13 @@
 underlying transformation is standard GF(2) elimination and XOR re-encoding.
 It is being tested as a concrete, falsifiable SAT acceleration hypothesis.
 
+**Later strong-baseline update:** `PR119_CRYPTOMINISAT_STRONG_BASELINE_GATE.md`
+shows that CryptoMiniSat 5.17.0 also solves the unmodified original CNF in
+3.78–4.05 seconds; our quotient with the *same* backend takes 3.92–4.02
+seconds including preprocessing. The favorable MiniSat/CaDiCaL comparison
+below is **not a competitive breakthrough**. Preserve this earlier note for
+chronology, not as an independent speedup claim.
+
 ## Locked source and evaluation boundary
 
 - Development problem: historical `par32-1-c.cnf.Z` from the original Rutgers
