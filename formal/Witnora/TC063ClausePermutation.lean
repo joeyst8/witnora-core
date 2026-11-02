@@ -631,6 +631,78 @@ theorem expanded_map_perm_coverage
   · exact expanded_map_perm_forward rows transform hr
   · exact expanded_map_perm_backward rows transform hr
 
+
+/-- Arity, uniqueness, and positivity of a supported row are invariant
+    under an arbitrary permutation of its coefficient list. -/
+theorem rowSupported_coefficients_perm
+    (r : Nat) (left right : Witnora.G5Trace.Row)
+    (hp : left.coefficients.Perm right.coefficients) :
+    Witnora.ExactAffineMembership.rowSupported r left =
+      Witnora.ExactAffineMembership.rowSupported r right := by
+  have hlen : left.coefficients.length = right.coefficients.length := hp.length_eq
+  have hnodup : left.coefficients.Nodup ↔ right.coefficients.Nodup :=
+    hp.nodup_iff
+  have hall : left.coefficients.all (fun v => decide (v > 0)) =
+      right.coefficients.all (fun v => decide (v > 0)) :=
+    all_perm_local (fun v : Nat => decide (v > 0)) hp
+  simp [Witnora.ExactAffineMembership.rowSupported, hlen, hnodup, hall]
+
+private theorem all_mapped_rows
+    (rows : List Witnora.G5Trace.Row)
+    (transform : Witnora.G5Trace.Row → Witnora.G5Trace.Row)
+    (p : Witnora.G5Trace.Row → Bool)
+    (hp : ∀ row ∈ rows, p row = p (transform row)) :
+    rows.all p = (rows.map transform).all p := by
+  induction rows with
+  | nil => rfl
+  | cons row rest ih =>
+      have hhead := hp row (by simp)
+      have hrest : ∀ entry ∈ rest, p entry = p (transform entry) := by
+        intro entry he
+        exact hp entry (by simp [he])
+      simp only [List.all_cons, List.map_cons]
+      rw [hhead, ih hrest]
+
+/-- Crucial full-checker bridge: if each transformed row has the same
+    rhs and permuted coefficients, the Boolean equivalence checker accepts
+    precisely the same inputs. -/
+theorem checkSemanticExactAffine_map_perm
+    (r : Nat) (cnf : CNF) (rows : List Witnora.G5Trace.Row)
+    (transform : Witnora.G5Trace.Row → Witnora.G5Trace.Row)
+    (hr : ∀ row ∈ rows, row.rhs = (transform row).rhs ∧
+      row.coefficients.Perm (transform row).coefficients) :
+    Witnora.ExactAffineMembership.checkSemanticExactAffine r cnf rows =
+      Witnora.ExactAffineMembership.checkSemanticExactAffine
+        r cnf (rows.map transform) := by
+  have hs : rows.all (Witnora.ExactAffineMembership.rowSupported r) =
+      (rows.map transform).all (Witnora.ExactAffineMembership.rowSupported r) :=
+    all_mapped_rows rows transform _ (by
+      intro row hmem
+      exact rowSupported_coefficients_perm r row (transform row) (hr row hmem).2)
+  have hi : checkInitialRows cnf rows =
+      checkInitialRows cnf (rows.map transform) := by
+    unfold checkInitialRows
+    apply all_mapped_rows rows transform
+      (fun row => checkPattern cnf row.coefficients row.rhs)
+    intro row hmem
+    have hrow := hr row hmem
+    change checkPattern cnf row.coefficients row.rhs =
+      checkPattern cnf (transform row).coefficients (transform row).rhs
+    rw [← hrow.1]
+    exact checkPattern_perm cnf hrow.2 row.rhs
+  have hc : cnf.all
+      (checkClauseCoverage (Witnora.ExactAffineMembership.expanded rows)) =
+      cnf.all (checkClauseCoverage
+        (Witnora.ExactAffineMembership.expanded (rows.map transform))) := by
+    have hf : checkClauseCoverage (Witnora.ExactAffineMembership.expanded rows) =
+        checkClauseCoverage
+          (Witnora.ExactAffineMembership.expanded (rows.map transform)) := by
+      funext clause
+      exact expanded_map_perm_coverage rows transform hr clause
+    rw [hf]
+  simp only [Witnora.ExactAffineMembership.checkSemanticExactAffine]
+  rw [hs, hi, hc]
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -652,5 +724,6 @@ example :
 #print axioms Witnora.TC063ClausePermutation.canonicalSupport_perm_of_covered
 #print axioms Witnora.TC063ClausePermutation.finite_support_bound_exists
 #print axioms Witnora.TC063ClausePermutation.expanded_map_perm_coverage
+#print axioms Witnora.TC063ClausePermutation.checkSemanticExactAffine_map_perm
 
 end Witnora.TC063ClausePermutation
