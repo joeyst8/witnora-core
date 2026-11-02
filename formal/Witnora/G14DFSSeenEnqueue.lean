@@ -629,6 +629,276 @@ theorem start_run_processed_reachable
 #print axioms Witnora.G14DFSSeenEnqueue.start_run_seen_reachable
 #print axioms Witnora.G14DFSSeenEnqueue.start_run_processed_reachable
 
+/-!
+## Reachability completeness
+
+Once the stack is empty, every marked vertex has already been processed,
+and every outgoing edge from a processed vertex points to a marked vertex.
+Together these imply that the final processed set is *exactly* the
+root-reachable component. This closes the model-level reachability theorem.
+-/
+
+def SeenCovered (state : State) : Prop :=
+  ∀ v ∈ state.seen, v ∈ state.pending ∨ v ∈ state.processed
+
+theorem start_seen_covered (root : Nat) :
+    SeenCovered (start root) := by
+  intro v hv
+  left
+  simpa [start] using hv
+
+theorem enqueue_preserves_seen_covered
+    (v : Nat) (state : State) (h : SeenCovered state) :
+    SeenCovered (enqueue v state) := by
+  by_cases hv : v ∈ state.seen
+  · simpa [SeenCovered, enqueue, hv] using h
+  · intro x hx
+    have hx' : x = v ∨ x ∈ state.seen := by
+      simpa [enqueue, hv] using hx
+    rcases hx' with hEq | hOld
+    · subst x
+      left
+      simp [enqueue, hv]
+    · rcases h x hOld with hPending | hProcessed
+      · left
+        simp [enqueue, hv, hPending]
+      · right
+        simpa [enqueue, hv] using hProcessed
+
+theorem enqueueAll_preserves_seen_covered
+    (newNeighbors : List Nat) (state : State)
+    (h : SeenCovered state) :
+    SeenCovered (enqueueAll newNeighbors state) := by
+  induction newNeighbors generalizing state with
+  | nil => simpa [enqueueAll] using h
+  | cons v rest ih =>
+      simpa [enqueueAll] using
+        ih (enqueue v state) (enqueue_preserves_seen_covered v state h)
+
+theorem step_preserves_seen_covered
+    (neighbors : Nat → List Nat) (state : State)
+    (h : SeenCovered state) :
+    SeenCovered (step neighbors state) := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using h
+  | cons vertex rest =>
+      have hNext : SeenCovered
+          { state with pending := rest, processed := vertex :: state.processed } := by
+        intro x hx
+        have hOld : x ∈ state.seen := by simpa using hx
+        rcases h x hOld with hPending | hProcessed
+        · have hParts : x = vertex ∨ x ∈ rest := by
+            simpa [hp] using hPending
+          rcases hParts with hEq | hRest
+          · subst x
+            right
+            simp
+          · left
+            simpa using hRest
+        · right
+          simp [hProcessed]
+      simpa [step, hp] using
+        enqueueAll_preserves_seen_covered (neighbors vertex)
+          { state with pending := rest, processed := vertex :: state.processed }
+          hNext
+
+theorem run_preserves_seen_covered
+    (neighbors : Nat → List Nat) (fuel : Nat) (state : State)
+    (h : SeenCovered state) :
+    SeenCovered (run neighbors fuel state) := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      simpa [run] using
+        ih (step neighbors state)
+          (step_preserves_seen_covered neighbors state h)
+
+theorem start_run_seen_covered
+    (neighbors : Nat → List Nat) (root fuel : Nat) :
+    SeenCovered (run neighbors fuel (start root)) := by
+  exact run_preserves_seen_covered neighbors fuel (start root)
+    (start_seen_covered root)
+
+theorem enqueue_seen_monotone (v x : Nat) (state : State)
+    (h : x ∈ state.seen) :
+    x ∈ (enqueue v state).seen := by
+  by_cases hv : v ∈ state.seen
+  · simpa [enqueue, hv] using h
+  · simp [enqueue, hv, h]
+
+theorem enqueueAll_seen_monotone
+    (newNeighbors : List Nat) (state : State) (x : Nat)
+    (h : x ∈ state.seen) :
+    x ∈ (enqueueAll newNeighbors state).seen := by
+  induction newNeighbors generalizing state with
+  | nil => simpa [enqueueAll] using h
+  | cons v rest ih =>
+      simpa [enqueueAll] using
+        ih (enqueue v state) (enqueue_seen_monotone v x state h)
+
+theorem enqueue_marks_seen (v : Nat) (state : State) :
+    v ∈ (enqueue v state).seen := by
+  by_cases hv : v ∈ state.seen
+  · simpa [enqueue, hv] using hv
+  · simp [enqueue, hv]
+
+theorem enqueueAll_marks_neighbors
+    (newNeighbors : List Nat) (state : State) :
+    ∀ v ∈ newNeighbors, v ∈ (enqueueAll newNeighbors state).seen := by
+  induction newNeighbors generalizing state with
+  | nil => simp
+  | cons x rest ih =>
+      intro v hv
+      have hParts : v = x ∨ v ∈ rest := by
+        simpa using hv
+      rcases hParts with hEq | hRest
+      · subst v
+        exact enqueueAll_seen_monotone rest (enqueue x state) x
+          (enqueue_marks_seen x state)
+      · simpa [enqueueAll] using ih (enqueue x state) v hRest
+
+def ProcessedClosed (neighbors : Nat → List Nat) (state : State) : Prop :=
+  ∀ u ∈ state.processed, ∀ v ∈ neighbors u, v ∈ state.seen
+
+theorem start_processed_closed
+    (neighbors : Nat → List Nat) (root : Nat) :
+    ProcessedClosed neighbors (start root) := by
+  simp [ProcessedClosed, start]
+
+theorem step_preserves_processed_closed
+    (neighbors : Nat → List Nat) (state : State)
+    (h : ProcessedClosed neighbors state) :
+    ProcessedClosed neighbors (step neighbors state) := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using h
+  | cons vertex rest =>
+      intro u hu v hv
+      have hProcessed : u ∈ vertex :: state.processed := by
+        simpa [step, hp, enqueueAll_processed] using hu
+      rcases List.mem_cons.mp hProcessed with hNew | hOld
+      · subst u
+        simpa [step, hp] using
+          enqueueAll_marks_neighbors (neighbors vertex)
+            { state with pending := rest,
+              processed := vertex :: state.processed } v hv
+      · have hOldSeen : v ∈ state.seen := h u hOld v hv
+        have hNextSeen : v ∈
+            ({ state with pending := rest,
+                processed := vertex :: state.processed } : State).seen := by
+          simpa using hOldSeen
+        simpa [step, hp] using
+          enqueueAll_seen_monotone (neighbors vertex)
+            { state with pending := rest,
+              processed := vertex :: state.processed } v hNextSeen
+
+theorem run_preserves_processed_closed
+    (neighbors : Nat → List Nat) (fuel : Nat) (state : State)
+    (h : ProcessedClosed neighbors state) :
+    ProcessedClosed neighbors (run neighbors fuel state) := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      simpa [run] using
+        ih (step neighbors state)
+          (step_preserves_processed_closed neighbors state h)
+
+theorem start_run_processed_closed
+    (neighbors : Nat → List Nat) (root fuel : Nat) :
+    ProcessedClosed neighbors (run neighbors fuel (start root)) := by
+  exact run_preserves_processed_closed neighbors fuel (start root)
+    (start_processed_closed neighbors root)
+
+theorem step_seen_monotone
+    (neighbors : Nat → List Nat) (state : State) (v : Nat)
+    (h : v ∈ state.seen) :
+    v ∈ (step neighbors state).seen := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using h
+  | cons vertex rest =>
+      have hNext : v ∈
+          ({ state with pending := rest,
+              processed := vertex :: state.processed } : State).seen := by
+        simpa using h
+      simpa [step, hp] using
+        enqueueAll_seen_monotone (neighbors vertex)
+          { state with pending := rest,
+            processed := vertex :: state.processed } v hNext
+
+theorem run_seen_monotone
+    (neighbors : Nat → List Nat) (fuel : Nat)
+    (state : State) (v : Nat) (h : v ∈ state.seen) :
+    v ∈ (run neighbors fuel state).seen := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      simpa [run] using
+        ih (step neighbors state)
+          (step_seen_monotone neighbors state v h)
+
+theorem start_root_stays_seen
+    (neighbors : Nat → List Nat) (root fuel : Nat) :
+    root ∈ (run neighbors fuel (start root)).seen := by
+  exact run_seen_monotone neighbors fuel (start root) root
+    (by simp [start])
+
+theorem terminal_seen_closed
+    (neighbors : Nat → List Nat) (state : State)
+    (hCovered : SeenCovered state)
+    (hProcessed : ProcessedClosed neighbors state)
+    (hEmpty : state.pending = []) :
+    ∀ u ∈ state.seen, ∀ v ∈ neighbors u, v ∈ state.seen := by
+  intro u hu v hv
+  rcases hCovered u hu with hPending | hDone
+  · simp [hEmpty] at hPending
+  · exact hProcessed u hDone v hv
+
+theorem reachable_seen_of_closed
+    (neighbors : Nat → List Nat) (root : Nat) (state : State)
+    (hRoot : root ∈ state.seen)
+    (hClosed : ∀ u ∈ state.seen, ∀ v ∈ neighbors u, v ∈ state.seen)
+    (v : Nat) (hReach : Reachable neighbors root v) :
+    v ∈ state.seen := by
+  induction hReach with
+  | base => exact hRoot
+  | edge u v _ hEdge ih =>
+      exact hClosed u ih v hEdge
+
+/-- Every processed vertex is reachable, and every reachable vertex is
+    processed by the time the finite, adjacency-closed traversal finishes.
+    This is set equality (membership iff), without assuming list order. -/
+theorem start_run_exact_reachable
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (root v : Nat)
+    (hNeighbor : NeighborWithin neighbors vertices)
+    (hRoot : root ∈ vertices) :
+    v ∈ (run neighbors vertices.length (start root)).processed ↔
+      Reachable neighbors root v := by
+  constructor
+  · exact start_run_processed_reachable neighbors root vertices.length v
+  · intro hReach
+    let finalState := run neighbors vertices.length (start root)
+    have hEmpty : finalState.pending = [] :=
+      start_terminates_on_finite_closed_graph
+        neighbors vertices root hNeighbor hRoot
+    have hCovered : SeenCovered finalState :=
+      start_run_seen_covered neighbors root vertices.length
+    have hProcessed : ProcessedClosed neighbors finalState :=
+      start_run_processed_closed neighbors root vertices.length
+    have hRootSeen : root ∈ finalState.seen :=
+      start_root_stays_seen neighbors root vertices.length
+    have hClosed : ∀ u ∈ finalState.seen,
+        ∀ w ∈ neighbors u, w ∈ finalState.seen :=
+      terminal_seen_closed neighbors finalState hCovered hProcessed hEmpty
+    have hSeen : v ∈ finalState.seen :=
+      reachable_seen_of_closed neighbors root finalState
+        hRootSeen hClosed v hReach
+    rcases hCovered v hSeen with hPending | hDone
+    · have hFalse : False := by simpa [hEmpty] using hPending
+      exact False.elim hFalse
+    · exact hDone
+
+#print axioms Witnora.G14DFSSeenEnqueue.start_run_exact_reachable
+
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
     (enqueueAll [2, 2, 3, 2] (start 1)).seen.Nodup := by
