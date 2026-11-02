@@ -1,6 +1,13 @@
 # TC-063: executable source-clause graph cut gate for Dubois20
 
-Status: `LEAN_KERNEL_CHECK_PENDING`.
+Status: `LEAN_KERNEL_CHECKED_BOTH_CONCRETE_GRAPH_CUTS`.
+
+Final verified run: [GitHub Actions #41495709189](https://github.com/joeyst8/witnora-core/actions/runs/41495709189),
+commit `b55779a42d0465a17acef0b677a1df0ec1e87b3d`.
+All prior proof and fixture steps passed. The three new source/recognizer
+fixture checks and both explicit graph-ownership cut theorems passed Lean
+4.35.0. Each final ownership theorem reports only standard Lean axioms
+`[propext, Classical.choice, Quot.sound]`, with **no `sorryAx`**.
 
 The initial `{10,29}` graph gate passed all Lean compilation steps at
 [run #41494881662](https://github.com/joeyst8/witnora-core/actions/runs/41494881662),
