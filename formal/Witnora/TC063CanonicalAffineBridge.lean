@@ -132,6 +132,81 @@ theorem tc063_family_complete_of_canonical_witness
   exact affine_g5_complete_implies_tc063_cover_complete c r
     (affine_g5_complete_of_canonical_witness r hNormalize)
 
+
+/-!
+## Normalization under permutations: first universal certificates
+
+The finite XOR model already proves that sorting variables preserves
+list parity.  The CNF extraction checker, in addition, checks literal
+membership: we prove the local clause coverage checks do not change
+when the *expected* signed clause is merely reordered.  Transferring
+whole forbidden-pattern families across coefficient permutations is the
+next (separate) obligation.
+-/
+
+/-- Reordering row variables does not change the equation's parity
+    under any total Boolean assignment. -/
+theorem sorted_row_parity
+    (row : Row) (a : Nat → Bool) :
+    Witnora.Extraction.parityVars
+      (Witnora.FiniteXor.sortVariables row.coefficients) a =
+    Witnora.Extraction.parityVars row.coefficients a := by
+  exact Witnora.Extraction.parityVars_perm
+    (Witnora.FiniteXor.sortVariables_perm row.coefficients) a
+
+/-- Clause-subsumption evidence depends only on the membership of
+    expected signed literals, not their order. -/
+theorem clauseSubsumes_perm_expected
+    (source expected ordered : List Literal)
+    (hPerm : expected.Perm ordered) :
+    clauseSubsumes source expected =
+      clauseSubsumes source ordered := by
+  induction source with
+  | nil => rfl
+  | cons lit rest ih =>
+      have hBit : decide (lit ∈ expected) =
+          decide (lit ∈ ordered) := by
+        by_cases hm : lit ∈ expected
+        · have hn : lit ∈ ordered := (hPerm.mem_iff).mp hm
+          simp [hm, hn]
+        · have hn : lit ∉ ordered := by
+            intro h
+            exact hm ((hPerm.mem_iff).mpr h)
+          simp [hm, hn]
+      simp only [clauseSubsumes, List.all_cons] at ih ⊢
+      rw [hBit, ih]
+
+/-- The full source-CNF coverage checker accepts exactly the same
+    expected forbidden clause under any reordering of its literals. -/
+theorem checkClauseCoverage_perm_expected
+    (source : CNF) (expected ordered : List Literal)
+    (hPerm : expected.Perm ordered) :
+    checkClauseCoverage source expected =
+      checkClauseCoverage source ordered := by
+  induction source with
+  | nil => rfl
+  | cons clause rest ih =>
+      simp only [checkClauseCoverage, List.any_cons] at ih ⊢
+      rw [clauseSubsumes_perm_expected clause expected ordered hPerm, ih]
+
+/-- Deliberately unsorted affine extraction is accepted, even though
+    the strict sparse-row canonical check correctly rejects its order. -/
+example :
+    checkSemanticExactAffine 2
+      [[(1, true), (2, false)], [(1, false), (2, true)]]
+      [{coefficients := [2, 1], rhs := false}] = true := by decide
+
+example :
+    checkCanonicalRows 3 [{coefficients := [2, 1], rhs := false}] =
+      false := by decide
+
+example :
+    checkCanonicalRows 3 [{coefficients := [1, 2], rhs := false}] =
+      true := by decide
+
+#print axioms Witnora.TC063CanonicalAffineBridge.sorted_row_parity
+#print axioms Witnora.TC063CanonicalAffineBridge.checkClauseCoverage_perm_expected
+
 #print axioms Witnora.TC063CanonicalAffineBridge.unsat_exact_affine_has_closed_g5_certificate
 #print axioms Witnora.TC063CanonicalAffineBridge.affine_g5_complete_of_canonical_witness
 #print axioms Witnora.TC063CanonicalAffineBridge.tc063_family_complete_of_canonical_witness
