@@ -134,6 +134,101 @@ theorem scan_covers_residual_source_variables
       (clauseNeighbors source) (sourceVertices source)
       separator (clauseNeighbors_closed source))
 
+/-!
+## Exact global seen-set coverage
+
+Coverage alone does not establish that Python's global seen set has no
+spurious variables. We also prove closure of every discovered component
+under the finite universe, then prove that the outer scan preserves
+universe containment. Together the two directions yield exact membership.
+-/
+
+theorem full_component_within
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hClosed : NeighborWithin neighbors vertices)
+    (root v : Nat) (hRoot : root ∈ vertices)
+    (hProcessed :
+      v ∈ (run neighbors vertices.length (start root)).processed) :
+    v ∈ vertices := by
+  have hStrong :=
+    start_run_strong_safe neighbors vertices.length root
+  have hSeen : v ∈ (run neighbors vertices.length (start root)).seen :=
+    hStrong.2.2.2 v hProcessed
+  have hWithin :=
+    run_preserves_seen_within neighbors vertices vertices.length
+      (start root) hClosed (start_strong_safe root)
+      (start_seen_within vertices root hRoot)
+  exact hWithin v hSeen
+
+theorem scan_seen_within
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hClosed : NeighborWithin neighbors vertices)
+    (starts : List Nat) :
+    ∀ (seen : List Nat) (components : List (List Nat)),
+      (∀ v ∈ seen, v ∈ vertices) →
+      (∀ v ∈ starts, v ∈ vertices) →
+      ∀ v ∈ (scanComponents neighbors vertices.length
+        starts seen components).1, v ∈ vertices := by
+  induction starts with
+  | nil =>
+      intro seen components hSeen _ v hv
+      exact hSeen v (by simpa [scanComponents] using hv)
+  | cons root rest ih =>
+      intro seen components hSeen hStarts v hv
+      have hRoot : root ∈ vertices :=
+        hStarts root (by simp)
+      have hRest : ∀ w ∈ rest, w ∈ vertices := by
+        intro w hw
+        exact hStarts w (by simp [hw])
+      by_cases hr : root ∈ seen
+      · have hTail :=
+          ih seen components hSeen hRest v
+        exact hTail (by simpa [scanComponents, hr] using hv)
+      · let found := (run neighbors vertices.length (start root)).processed
+        have hNewSeen : ∀ w ∈ found ++ seen, w ∈ vertices := by
+          intro w hw
+          rcases List.mem_append.mp hw with hFound | hOld
+          · exact full_component_within
+              neighbors vertices hClosed root w hRoot hFound
+          · exact hSeen w hOld
+        have hTail :=
+          ih (found ++ seen) (found :: components) hNewSeen hRest v
+        exact hTail (by simpa [scanComponents, hr, found] using hv)
+
+/-- Full scan of a finite closed graph sets `seen` to exactly that
+    graph's vertex set as a membership predicate. -/
+theorem scan_seen_exact_finite_graph
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hClosed : NeighborWithin neighbors vertices)
+    (v : Nat) :
+    v ∈ (scanComponents neighbors vertices.length
+      vertices [] []).1 ↔ v ∈ vertices := by
+  constructor
+  · intro hv
+    exact scan_seen_within neighbors vertices hClosed
+      vertices [] [] (by intro w hw; cases hw)
+      (by intro w hw; exact hw) v hv
+  · intro hv
+    exact scan_covers_finite_graph neighbors vertices hClosed v hv
+
+theorem scan_seen_exact_residual_source
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (v : Nat) :
+    v ∈ (scanComponents
+      (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (remainingVertices (sourceVertices source) separator)
+      [] []).1 ↔
+        v ∈ remainingVertices (sourceVertices source) separator := by
+  exact scan_seen_exact_finite_graph
+    (separatedNeighbors (clauseNeighbors source) separator)
+    (remainingVertices (sourceVertices source) separator)
+    (separatedNeighbors_closed (clauseNeighbors source)
+      (sourceVertices source) separator (clauseNeighbors_closed source)) v
+
+#print axioms Witnora.G14DFSOuterScan.scan_seen_exact_finite_graph
+#print axioms Witnora.G14DFSOuterScan.scan_seen_exact_residual_source
+
 #print axioms Witnora.G14DFSOuterScan.scan_seen_monotone
 #print axioms Witnora.G14DFSOuterScan.scan_covers_starts
 #print axioms Witnora.G14DFSOuterScan.scan_covers_residual_source_variables
