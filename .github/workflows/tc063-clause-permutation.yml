@@ -6,6 +6,7 @@ on:
       - research/autonomous-parity-separator-repair-v118
     paths:
       - formal/Witnora/TC063ClausePermutation.lean
+      - formal/Witnora/TC063CanonicalComplete.lean
       - .github/workflows/tc063-clause-permutation.yml
   workflow_dispatch:
 
@@ -26,3 +27,6 @@ jobs:
       - name: Kernel-check source clause coverage is invariant under literal order
         working-directory: formal
         run: lake build Witnora.TC063ClausePermutation
+      - name: Kernel-check unconditional TC-063 canonical completeness
+        working-directory: formal
+        run: lake build Witnora.TC063CanonicalComplete
