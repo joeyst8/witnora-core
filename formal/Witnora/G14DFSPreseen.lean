@@ -221,12 +221,12 @@ theorem enqueue_extends
     simp [hFresh]
   by_cases hv : v ∈ freshState.seen
   · have hg : v ∈ global.seen := hMem.mpr hv
-    simp [StateExtends, enqueue, hv, hg,
+    simp [StateExtends, enqueue, hv, hg, hFresh,
       hPending, hProcessed, hSeen]
   · have hg : v ∉ global.seen := by
       intro h
       exact hv (hMem.mp h)
-    simp [StateExtends, enqueue, hv, hg,
+    simp [StateExtends, enqueue, hv, hg, hFresh,
       hPending, hProcessed, hSeen]
 
 theorem enqueueAll_extends
