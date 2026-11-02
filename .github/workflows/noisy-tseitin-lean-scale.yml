@@ -15,7 +15,7 @@ permissions:
 jobs:
   kernel-size-ladder:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,6 +41,11 @@ jobs:
       - name: Kernel-check full ASCII source n32 within 240 seconds
         working-directory: formal
         run: time timeout 240s lake env lean ../noisy_tseitin_n32.lean
+      - name: Generate literal n64 original frozen source and G5 certificate
+        run: python -m scripts.lean_noisy_tseitin_scale --vertices 64 --seed 47 --noise 1 --out noisy_tseitin_frozen_n64.lean
+      - name: Kernel-check complete frozen n64 ASCII source within 360 seconds
+        working-directory: formal
+        run: time timeout 360s lake env lean ../noisy_tseitin_frozen_n64.lean
       - name: Archive exact generated Lean proof input
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,4 +54,5 @@ jobs:
           path: |
             noisy_tseitin_n16.lean
             noisy_tseitin_n32.lean
+            noisy_tseitin_frozen_n64.lean
           if-no-files-found: warn
