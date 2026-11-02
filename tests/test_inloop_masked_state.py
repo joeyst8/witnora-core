@@ -5,16 +5,25 @@ from scripts.experiment_inloop_masked_state import (
     clauses_with_masks, simplify_masked, components_masked,
 )
 from scripts.benchmark_separator_decomposition import simplify, components
+from scripts.benchmark_inloop_vs_minisat import benchmark as native_gate_benchmark
 
 
 class MaskedStateTests(unittest.TestCase):
+    def test_native_solver_gate_reports_answers_and_no_unearned_advantage(self):
+        result = native_gate_benchmark(seed_count=1, repeats=2)
+        self.assertEqual(result["summary"]["formulas"], 5)
+        self.assertEqual(result["summary"]["answers_agree"], 5)
+        self.assertFalse(result["summary"]["native_solver_advantage_established"])
+
     def test_masked_simplify_matches_literal_simplification(self):
         rows = [[1, -2, 3], [-1, 4], [2, 5], [-3, -4, 6]]
         for assignment in ({1: True}, {2: False}, {3: True, 4: False}):
             expected = simplify(rows, assignment)
             actual = simplify_masked(clauses_with_masks(rows), assignment)
             self.assertEqual(
-                expected, None if actual is None else [list(r) for r, _ in actual])
+                None if expected is None else [list(r) for r in expected],
+                None if actual is None else [list(r) for r, _ in actual],
+            )
 
     def test_masked_components_match_primal_graph(self):
         rows = [[1, 2], [2, 3], [5, 6], [8], [8, 9]]
