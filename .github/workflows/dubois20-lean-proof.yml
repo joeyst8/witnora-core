@@ -8,6 +8,8 @@ on:
       - theory/Dubois20SourceUnsat.lean
       - theory/TC063DuboisOneBitCover.lean
       - theory/TC063DuboisTwoComponentCover.lean
+      - theory/SeparatorAgreement.lean
+      - theory/TC063PrimalGraphOwnership.lean
       - lean-toolchain
       - lakefile.toml
       - lake-manifest.json
@@ -47,3 +49,7 @@ jobs:
         run: LEAN_PATH=theory lean theory/TC063DuboisOneBitCover.lean
       - name: Kernel-check actual two-component G5/G14 separator UNSAT cover
         run: LEAN_PATH=theory lean theory/TC063DuboisTwoComponentCover.lean
+      - name: Kernel-check generic G14 residual semantics foundation
+        run: lean -o theory/SeparatorAgreement.olean theory/SeparatorAgreement.lean
+      - name: Kernel-check generic primal-graph to residual owner theorem
+        run: LEAN_PATH=theory lean theory/TC063PrimalGraphOwnership.lean
