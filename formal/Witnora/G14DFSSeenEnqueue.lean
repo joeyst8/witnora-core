@@ -1208,6 +1208,161 @@ theorem conditioned_clause_dfs_bit_consistent
     fixed clause residual hSource hCondition
     u v hu hv hunsep hvnsep
 
+/-!
+## Global component geometry for Python's outer DFS loop
+
+Python scans all remaining vertices and skips a starting vertex if it is
+already seen. To justify this optimization, we prove that every two full
+root-reachable components of the residual primal graph are either identical
+or disjoint. The proof only assumes symmetry on the remaining vertices,
+which matters: separator vertices themselves are intentionally excluded
+from the graph's accessible traversal domain.
+-/
+
+def SymmetricOn (neighbors : Nat → List Nat)
+    (vertices : List Nat) : Prop :=
+  ∀ u ∈ vertices, ∀ v ∈ vertices,
+    v ∈ neighbors u → u ∈ neighbors v
+
+theorem residual_primal_symmetric_on
+    (source : Witnora.Concrete.CNF) (separator : List Nat) :
+    SymmetricOn
+      (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator) := by
+  intro u hu v _ hEdge
+  have huOutside :
+      u ∉ separator :=
+    ((mem_remainingVertices_iff
+      (sourceVertices source) separator u).mp hu).2
+  have hPair :=
+    (mem_residualPrimalNeighbors_iff source separator u v).mp hEdge
+  exact (mem_residualPrimalNeighbors_iff source separator v u).mpr
+    ⟨sourceEdge_symm source u v hPair.1,
+      Ne.symm hPair.2.1, huOutside⟩
+
+theorem reachable_within
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hClosed : NeighborWithin neighbors vertices)
+    (root v : Nat)
+    (hRoot : root ∈ vertices)
+    (hReach : Reachable neighbors root v) :
+    v ∈ vertices := by
+  induction hReach with
+  | base => exact hRoot
+  | edge u w _ hEdge ih =>
+      exact hClosed u ih w hEdge
+
+theorem reachable_trans
+    (neighbors : Nat → List Nat) (root u v : Nat)
+    (hRootU : Reachable neighbors root u)
+    (hUV : Reachable neighbors u v) :
+    Reachable neighbors root v := by
+  induction hUV with
+  | base => exact hRootU
+  | edge x y _ hEdge ih =>
+      exact Reachable.edge x y ih hEdge
+
+theorem reachable_reverse_on
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hClosed : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (root v : Nat) (hRoot : root ∈ vertices)
+    (hReach : Reachable neighbors root v) :
+    Reachable neighbors v root := by
+  induction hReach with
+  | base => exact Reachable.base
+  | edge u w hPrev hEdge ih =>
+      have hU : u ∈ vertices :=
+        reachable_within neighbors vertices hClosed root u hRoot hPrev
+      have hW : w ∈ vertices := hClosed u hU w hEdge
+      have hWU : Reachable neighbors w u :=
+        Reachable.edge w u Reachable.base (hSymm u hU w hW hEdge)
+      exact reachable_trans neighbors w u root hWU ih
+
+theorem reachable_components_equal_of_overlap
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hClosed : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (root₁ root₂ common v : Nat)
+    (hRoot₁ : root₁ ∈ vertices) (hRoot₂ : root₂ ∈ vertices)
+    (h₁ : Reachable neighbors root₁ common)
+    (h₂ : Reachable neighbors root₂ common) :
+    Reachable neighbors root₁ v ↔
+      Reachable neighbors root₂ v := by
+  have hCommonRoot₂ : Reachable neighbors common root₂ :=
+    reachable_reverse_on neighbors vertices hClosed hSymm
+      root₂ common hRoot₂ h₂
+  have hRoot₁Root₂ : Reachable neighbors root₁ root₂ :=
+    reachable_trans neighbors root₁ common root₂ h₁ hCommonRoot₂
+  have hRoot₂Root₁ : Reachable neighbors root₂ root₁ :=
+    reachable_reverse_on neighbors vertices hClosed hSymm
+      root₁ root₂ hRoot₁ hRoot₁Root₂
+  constructor
+  · intro h
+    exact reachable_trans neighbors root₂ root₁ v hRoot₂Root₁ h
+  · intro h
+    exact reachable_trans neighbors root₁ root₂ v hRoot₁Root₂ h
+
+/-- Every two complete root components are identical as membership
+    predicates, or have no common vertices. This proves the partition
+    geometry required by the global Python `seen` guard. -/
+theorem residual_primal_components_equal_or_disjoint
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (root₁ root₂ : Nat)
+    (hRoot₁ : root₁ ∈ remainingVertices (sourceVertices source) separator)
+    (hRoot₂ : root₂ ∈ remainingVertices (sourceVertices source) separator) :
+    (∀ v,
+      (v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+        (remainingVertices (sourceVertices source) separator).length
+        (start root₁)).processed ↔
+       v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+        (remainingVertices (sourceVertices source) separator).length
+        (start root₂)).processed)) ∨
+    (∀ v,
+      v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+        (remainingVertices (sourceVertices source) separator).length
+        (start root₁)).processed →
+      v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+        (remainingVertices (sourceVertices source) separator).length
+        (start root₂)).processed → False) := by
+  classical
+  let graph := separatedNeighbors (clauseNeighbors source) separator
+  let vertices := remainingVertices (sourceVertices source) separator
+  have hClosed : NeighborWithin graph vertices :=
+    separatedNeighbors_closed (clauseNeighbors source) (sourceVertices source)
+      separator (clauseNeighbors_closed source)
+  have hSymm : SymmetricOn graph vertices :=
+    residual_primal_symmetric_on source separator
+  by_cases hOverlap :
+      ∃ common,
+        common ∈ (run graph vertices.length (start root₁)).processed ∧
+        common ∈ (run graph vertices.length (start root₂)).processed
+  · obtain ⟨common, hC₁, hC₂⟩ := hOverlap
+    left
+    intro v
+    have hReach₁ : Reachable graph root₁ common :=
+      (start_run_exact_reachable graph vertices root₁ common
+        hClosed hRoot₁).mp hC₁
+    have hReach₂ : Reachable graph root₂ common :=
+      (start_run_exact_reachable graph vertices root₂ common
+        hClosed hRoot₂).mp hC₂
+    calc
+      v ∈ (run graph vertices.length (start root₁)).processed ↔
+          Reachable graph root₁ v :=
+        start_run_exact_reachable graph vertices root₁ v hClosed hRoot₁
+      _ ↔ Reachable graph root₂ v :=
+        reachable_components_equal_of_overlap graph vertices
+          hClosed hSymm root₁ root₂ common v hRoot₁ hRoot₂ hReach₁ hReach₂
+      _ ↔ v ∈ (run graph vertices.length (start root₂)).processed :=
+        (start_run_exact_reachable graph vertices root₂ v hClosed hRoot₂).symm
+  · right
+    intro v h₁ h₂
+    exact hOverlap ⟨v, h₁, h₂⟩
+
+#print axioms Witnora.G14DFSSeenEnqueue.residual_primal_symmetric_on
+#print axioms Witnora.G14DFSSeenEnqueue.reachable_components_equal_of_overlap
+#print axioms Witnora.G14DFSSeenEnqueue.residual_primal_components_equal_or_disjoint
+
 #print axioms Witnora.G14DFSSeenEnqueue.residual_primal_edge_processed_iff
 #print axioms Witnora.G14DFSSeenEnqueue.dfs_component_bit_edge_consistent
 #print axioms Witnora.G14DFSSeenEnqueue.conditioned_clause_dfs_bit_consistent
