@@ -34,14 +34,10 @@ theorem checkSourceSubsetG5_unsat
     ¬ ∃ a, CNFHolds source a := by
   have hsplit := h
   simp [checkSourceSubsetG5] at hsplit
-  have hs : subset.all (fun clause => decide (clause ∈ source)) = true :=
+  have hi : ∀ clause, clause ∈ subset → clause ∈ source :=
     hsplit.1
   have hc : Witnora.SparseBridge.checkG5Closed bound subset rows steps = true :=
     hsplit.2
-  have hi : ∀ clause, clause ∈ subset → clause ∈ source := by
-    intro clause hmem
-    have hm := List.all_eq_true.mp hs clause hmem
-    simpa only [decide_eq_true_eq] using hm
   have hunsat := Witnora.SparseBridge.checkG5Closed_unsat
     bound subset rows steps hc
   intro ⟨a, hsource⟩
