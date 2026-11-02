@@ -1,0 +1,45 @@
+name: Noisy Tseitin source-subset G5 prototype
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - formal/Witnora/SourceSubsetG5.lean
+      - scripts/experiment_noisy_tseitin_source_subset.py
+      - .github/workflows/noisy-tseitin-subset.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  noisy-subset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT oracles
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Falsify exact-source subset G5 with guarded non-affine noise
+        run: python -m scripts.experiment_noisy_tseitin_source_subset --trials 1 --limit-s 1.5 --out noisy_tseitin_result.json --lean-smoke noisy_tseitin_smoke.lean
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check universal source-subset G5 soundness
+        working-directory: formal
+        run: lake build Witnora.SourceSubsetG5
+      - name: Kernel-check actual mixed-CNF source and extracted G5 trace
+        working-directory: formal
+        run: lake env lean ../noisy_tseitin_smoke.lean
+      - name: Archive all hard-control and independent baseline outcomes
+        uses: actions/upload-artifact@v4
+        with:
+          name: noisy-tseitin-source-subset-${{ github.sha }}
+          path: noisy_tseitin_result.json
+          if-no-files-found: error
