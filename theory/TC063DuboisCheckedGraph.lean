@@ -292,8 +292,8 @@ theorem recognizedOwnerComplete (s1 s38 : Bool) :
     · simp [recognizedFixed, h1] at hx
     · simp [recognizedFixed, h38] at hx
   · by_cases hsmall : x.val = 38 ∨ x.val = 39
-    · exact ⟨true, by simp [recognizedOwner, hsep, hsmall]⟩
-    · exact ⟨false, by simp [recognizedOwner, hsep, hsmall]⟩
+    · exact ⟨true, by simp only [recognizedOwner, if_neg hsep, if_pos hsmall]⟩
+    · exact ⟨false, by simp only [recognizedOwner, if_neg hsep, if_neg hsmall]⟩
 
 theorem recognizedNoEmptyResidual (s1 s38 : Bool) :
     ([] : Clause (Fin 60)) ∉
