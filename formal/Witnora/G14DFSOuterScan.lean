@@ -410,6 +410,122 @@ theorem scan_residual_components_pairwise_disjoint
       (sourceVertices source) separator (clauseNeighbors_closed source))
     (residual_primal_symmetric_on source separator)
 
+/-!
+## No duplicate component records
+
+Each newly discovered component contains its initiating root, and thus
+is nonempty. Pairwise-disjoint nonempty component lists cannot contain
+duplicate list entries, even if their traversal orders differ.
+-/
+
+def ComponentsNonempty (components : List (List Nat)) : Prop :=
+  ∀ component ∈ components, component ≠ []
+
+theorem scan_preserves_nonempty
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (starts : List Nat) :
+    ∀ (seen : List Nat) (components : List (List Nat)),
+      (∀ root ∈ starts, root ∈ vertices) →
+      ComponentsNonempty components →
+      ComponentsNonempty (scanComponents neighbors vertices.length
+        starts seen components).2 := by
+  induction starts with
+  | nil =>
+      intro seen components _ hNonempty
+      simpa [scanComponents] using hNonempty
+  | cons root rest ih =>
+      intro seen components hStarts hNonempty
+      have hRoot : root ∈ vertices := hStarts root (by simp)
+      have hRest : ∀ w ∈ rest, w ∈ vertices := by
+        intro w hw
+        exact hStarts w (by simp [hw])
+      by_cases hr : root ∈ seen
+      · simpa [scanComponents, hr] using
+          ih seen components hRest hNonempty
+      · let found := (run neighbors vertices.length (start root)).processed
+        have hFound : root ∈ found :=
+          root_in_full_component neighbors vertices hUniverse root hRoot
+        have hFoundNonempty : found ≠ [] := by
+          intro hEmpty
+          simp [hEmpty] at hFound
+        have hNextNonempty :
+            ComponentsNonempty (found :: components) := by
+          intro component hc
+          rcases List.mem_cons.mp hc with hNew | hOld
+          · subst component
+            exact hFoundNonempty
+          · exact hNonempty component hOld
+        simpa [scanComponents, hr, found] using
+          ih (found ++ seen) (found :: components)
+            hRest hNextNonempty
+
+theorem pairwise_disjoint_nonempty_nodup
+    (components : List (List Nat)) :
+    PairwiseDisjoint components →
+    ComponentsNonempty components →
+    components.Nodup := by
+  induction components with
+  | nil =>
+      intro _ _
+      simp
+  | cons component rest ih =>
+      intro hPair hNonempty
+      have hParts :
+          PairwiseDisjoint rest ∧
+          (∀ other ∈ rest, ∀ v,
+            v ∈ component → v ∉ other) := by
+        simpa [PairwiseDisjoint] using hPair
+      have hCurrentNonempty : component ≠ [] :=
+        hNonempty component (by simp)
+      have hNotAlready : component ∉ rest := by
+        intro hAlready
+        cases component with
+        | nil => exact hCurrentNonempty rfl
+        | cons v tail =>
+            have hNo : v ∉ (v :: tail) :=
+              hParts.2 (v :: tail) hAlready v (by simp)
+            exact hNo (by simp)
+      have hRestNonempty : ComponentsNonempty rest := by
+        intro other hOther
+        exact hNonempty other (by simp [hOther])
+      exact List.nodup_cons.mpr
+        ⟨hNotAlready, ih hParts.1 hRestNonempty⟩
+
+theorem scan_components_nodup
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices) :
+    (scanComponents neighbors vertices.length vertices [] []).2.Nodup := by
+  have hPair := scan_components_pairwise_disjoint
+    neighbors vertices hUniverse hSymm
+  have hNonempty := scan_preserves_nonempty
+    neighbors vertices hUniverse vertices [] []
+    (by intro root hRoot; exact hRoot)
+    (by intro component hc; cases hc)
+  exact pairwise_disjoint_nonempty_nodup
+    (scanComponents neighbors vertices.length vertices [] []).2
+    hPair hNonempty
+
+/-- Python-style global root skipping produces unique, nonoverlapping
+    residual-primal component records in the mathematical outer model. -/
+theorem scan_residual_components_nodup
+    (source : Witnora.Concrete.CNF) (separator : List Nat) :
+    (scanComponents
+      (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (remainingVertices (sourceVertices source) separator)
+      [] []).2.Nodup := by
+  exact scan_components_nodup
+    (separatedNeighbors (clauseNeighbors source) separator)
+    (remainingVertices (sourceVertices source) separator)
+    (separatedNeighbors_closed (clauseNeighbors source)
+      (sourceVertices source) separator (clauseNeighbors_closed source))
+    (residual_primal_symmetric_on source separator)
+
+#print axioms Witnora.G14DFSOuterScan.scan_components_nodup
+#print axioms Witnora.G14DFSOuterScan.scan_residual_components_nodup
+
 #print axioms Witnora.G14DFSOuterScan.scan_components_pairwise_disjoint
 #print axioms Witnora.G14DFSOuterScan.scan_residual_components_pairwise_disjoint
 
