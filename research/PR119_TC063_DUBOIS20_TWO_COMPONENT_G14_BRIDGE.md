@@ -1,6 +1,15 @@
 # TC-063 G5/G14: genuine two-component separator on archived Dubois20
 
-Status: `LEAN_KERNEL_CHECK_PENDING` pending GitHub Actions verification.
+Status: `LEAN_KERNEL_CHECKED_CONCRETE_G5_G14_TWO_COMPONENT_COVER`.
+
+Verified on Lean 4.35.0 by
+[GitHub Actions run #41492185033](https://github.com/joeyst8/witnora-core/actions/runs/41492185033),
+commit `35411f1bcab7ac9e27284beb248352467d252164`.
+All nine source/fixture Python tests passed, including the four new structural
+audits. The source theorem, one-bit bridge, and two-component bridge each
+compiled successfully. Lean reported
+`Witnora.TC063.dubois20_two_component_unsat_cover` depends on **`[propext]`
+only**, not `sorryAx` or native-solver axioms.
 
 ## Structure found without supplying a separator
 
