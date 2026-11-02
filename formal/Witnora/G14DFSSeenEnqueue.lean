@@ -893,6 +893,76 @@ theorem start_run_exact_reachable
 
 #print axioms Witnora.G14DFSSeenEnqueue.start_run_exact_reachable
 
+/-!
+## Neighbor-order and duplicate independence
+
+The Python implementation traverses `sorted(graph[node] - separator)`.
+Our model is deliberately parametric in adjacency-list order. Since the
+completed result is exactly a reachability set, it is invariant under
+*all* changes that preserve edge membership, including sorted order and
+duplicate suppression. This avoids an artificial assumption that the
+intermediate Python stack order matches a chosen Lean adjacency order.
+It does not yet prove CPython's sort or set semantics themselves.
+-/
+
+/-- Reachability depends on edges, never on adjacency order or multiplicity. -/
+theorem reachable_congr_edges
+    (neighbors₁ neighbors₂ : Nat → List Nat) (root v : Nat)
+    (hEdges : ∀ u w, w ∈ neighbors₁ u ↔ w ∈ neighbors₂ u) :
+    Reachable neighbors₁ root v ↔ Reachable neighbors₂ root v := by
+  constructor
+  · intro hReach
+    induction hReach with
+    | base => exact Reachable.base
+    | edge u w _ hEdge ih =>
+        exact Reachable.edge u w ih ((hEdges u w).mp hEdge)
+  · intro hReach
+    induction hReach with
+    | base => exact Reachable.base
+    | edge u w _ hEdge ih =>
+        exact Reachable.edge u w ih ((hEdges u w).mpr hEdge)
+
+/-- Two list representations of the same finite graph produce exactly
+    the same final component membership, even if their DFS traces differ. -/
+theorem run_processed_congr_edges
+    (neighbors₁ neighbors₂ : Nat → List Nat)
+    (vertices : List Nat) (root v : Nat)
+    (hRoot : root ∈ vertices)
+    (hWithin : NeighborWithin neighbors₁ vertices)
+    (hEdges : ∀ u w, w ∈ neighbors₁ u ↔ w ∈ neighbors₂ u) :
+    v ∈ (run neighbors₁ vertices.length (start root)).processed ↔
+      v ∈ (run neighbors₂ vertices.length (start root)).processed := by
+  have hWithin₂ : NeighborWithin neighbors₂ vertices := by
+    intro u hu w hw
+    exact hWithin u hu w ((hEdges u w).mpr hw)
+  calc
+    v ∈ (run neighbors₁ vertices.length (start root)).processed ↔
+        Reachable neighbors₁ root v :=
+      start_run_exact_reachable neighbors₁ vertices root v hWithin hRoot
+    _ ↔ Reachable neighbors₂ root v :=
+      reachable_congr_edges neighbors₁ neighbors₂ root v hEdges
+    _ ↔ v ∈ (run neighbors₂ vertices.length (start root)).processed :=
+      (start_run_exact_reachable neighbors₂ vertices root v hWithin₂ hRoot).symm
+
+/-- A direct specialization for Python's sorted-neighbor traversal:
+    any per-vertex permutation leaves component membership unchanged. -/
+theorem run_processed_congr_neighbor_permutations
+    (neighbors₁ neighbors₂ : Nat → List Nat)
+    (vertices : List Nat) (root v : Nat)
+    (hRoot : root ∈ vertices)
+    (hWithin : NeighborWithin neighbors₁ vertices)
+    (hPerm : ∀ u, (neighbors₁ u).Perm (neighbors₂ u)) :
+    v ∈ (run neighbors₁ vertices.length (start root)).processed ↔
+      v ∈ (run neighbors₂ vertices.length (start root)).processed := by
+  apply run_processed_congr_edges neighbors₁ neighbors₂
+    vertices root v hRoot hWithin
+  intro u w
+  exact (hPerm u).mem_iff
+
+#print axioms Witnora.G14DFSSeenEnqueue.reachable_congr_edges
+#print axioms Witnora.G14DFSSeenEnqueue.run_processed_congr_edges
+#print axioms Witnora.G14DFSSeenEnqueue.run_processed_congr_neighbor_permutations
+
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
     (enqueueAll [2, 2, 3, 2] (start 1)).seen.Nodup := by
