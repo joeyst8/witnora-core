@@ -150,15 +150,18 @@ theorem enqueue_preserves_strong_safe (v : Nat)
   · refine ⟨enqueue_preserves_safe v state hsafe, ?_, ?_, ?_⟩
     · simpa [enqueue, hv] using hproc
     · intro x hx hxp
+      have hxpOld : x ∈ state.processed := by
+        simpa [enqueue, hv] using hxp
       have hx' : x = v ∨ x ∈ state.pending := by
         simpa [enqueue, hv] using hx
       rcases hx' with hEq | hOld
       · subst x
-        exact hv (hprocSeen v hxp)
-      · exact hdisjoint x hOld hxp
+        exact hv (hprocSeen v hxpOld)
+      · exact hdisjoint x hOld hxpOld
     · intro x hx
-      simpa [enqueue, hv] using
-        (show x ∈ state.seen from hprocSeen x hx)
+      have hxOld : x ∈ state.processed := by
+        simpa [enqueue, hv] using hx
+      simpa [enqueue, hv] using hprocSeen x hxOld
 
 theorem enqueueAll_preserves_strong_safe
     (neighbors : List Nat) (state : State)
@@ -196,10 +199,12 @@ theorem step_preserves_strong_safe
           exact hsubset x (by simp [hp, hx])
         · exact List.nodup_cons.mpr ⟨hvertexOld, hproc⟩
         · intro x hx hxp
+          have hxRest : x ∈ rest := by
+            simpa [next] using hx
           rcases List.mem_cons.mp hxp with hEq | hOld
           · subst x
-            exact hvertexRest hx
-          · exact hdisjoint x (by simp [hp, hx]) hOld
+            exact hvertexRest hxRest
+          · exact hdisjoint x (by simp [hp, hxRest]) hOld
         · intro x hxp
           rcases List.mem_cons.mp hxp with hEq | hOld
           · subst x
