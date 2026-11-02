@@ -772,24 +772,20 @@ theorem step_preserves_processed_closed
   cases hp : state.pending with
   | nil => simpa [step, hp] using h
   | cons vertex rest =>
+      let next : State :=
+        { state with pending := rest, processed := vertex :: state.processed }
       intro u hu v hv
       have hProcessed : u ∈ vertex :: state.processed := by
-        simpa [step, hp, enqueueAll_processed] using hu
+        simpa [step, hp, next, enqueueAll_processed] using hu
       rcases List.mem_cons.mp hProcessed with hNew | hOld
       · subst u
-        simpa [step, hp] using
-          enqueueAll_marks_neighbors (neighbors vertex)
-            { state with pending := rest,
-              processed := vertex :: state.processed } v hv
+        simpa [step, hp, next] using
+          enqueueAll_marks_neighbors (neighbors vertex) next v hv
       · have hOldSeen : v ∈ state.seen := h u hOld v hv
-        have hNextSeen : v ∈
-            ({ state with pending := rest,
-                processed := vertex :: state.processed } : State).seen := by
-          simpa using hOldSeen
-        simpa [step, hp] using
-          enqueueAll_seen_monotone (neighbors vertex)
-            { state with pending := rest,
-              processed := vertex :: state.processed } v hNextSeen
+        have hNextSeen : v ∈ next.seen := by
+          simpa [next] using hOldSeen
+        simpa [step, hp, next] using
+          enqueueAll_seen_monotone (neighbors vertex) next v hNextSeen
 
 theorem run_preserves_processed_closed
     (neighbors : Nat → List Nat) (fuel : Nat) (state : State)
@@ -815,14 +811,12 @@ theorem step_seen_monotone
   cases hp : state.pending with
   | nil => simpa [step, hp] using h
   | cons vertex rest =>
-      have hNext : v ∈
-          ({ state with pending := rest,
-              processed := vertex :: state.processed } : State).seen := by
-        simpa using h
-      simpa [step, hp] using
-        enqueueAll_seen_monotone (neighbors vertex)
-          { state with pending := rest,
-            processed := vertex :: state.processed } v hNext
+      let next : State :=
+        { state with pending := rest, processed := vertex :: state.processed }
+      have hNext : v ∈ next.seen := by
+        simpa [next] using h
+      simpa [step, hp, next] using
+        enqueueAll_seen_monotone (neighbors vertex) next v hNext
 
 theorem run_seen_monotone
     (neighbors : Nat → List Nat) (fuel : Nat)
