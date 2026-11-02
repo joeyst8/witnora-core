@@ -1,6 +1,6 @@
 # TC-063 completeness work: exact remaining obligation (2026-11-02)
 
-Status: **INCOMPLETE: FULL BOOLEAN AFFINE-CHECKER SORT-INVARIANCE NOW PROVED; CANONICAL SPARSE-BOUND EXISTENCE REMAINS**.
+Status: **INCOMPLETE: BOOLEAN AFFINE-CHECKER NORMALIZATION AND SPARSE SUPPORT PERMUTATION PROVED; THEIR CANONICAL WITNESS COMPOSITION REMAINS**.
 
 All new Lean theorems below passed Lean 4.19 GitHub Actions, with `#print axioms`
 showing only standard Lean foundations `propext`, `Classical.choice`, `Quot.sound`,
@@ -45,6 +45,17 @@ showing only standard Lean foundations `propext`, `Classical.choice`, `Quot.soun
    equality of parity semantics. Its `#print axioms` list contains only
    `propext`, `Classical.choice`, and `Quot.sound`; no `sorryAx`.
 
+5. `formal/Witnora/TC063ClausePermutation.lean`:
+   `canonicalSupport_mem_iff` proves that sparse canonical support contains
+   precisely the original coefficients below its exclusive bound;
+   `canonicalSupport_nodup` proves it contains no duplicates;
+   `canonicalSupport_perm_of_covered` proves it is a **permutation** of any
+   duplicate-free coefficient list fully covered by the bound; and
+   `finite_support_bound_exists` proves every finite list admits such a
+   bound. [CI #41514574196](https://github.com/joeyst8/witnora-core/actions/runs/41514574196).
+   No `sorryAx`. These theorems provide the finite-support half of the
+   final normalization bridge.
+
 ## EXACT mathematical proof still needed
 
 ```lean
@@ -56,14 +67,15 @@ def CanonicalWitnessComplete (r : Nat) : Prop :=
       Witnora.SparseBridge.checkCanonicalRows bound rows = true
 ```
 
-For every supported, distinct positive coefficient list, show there is a
-finite **shared exclusive upper bound** `bound` such that its sorted list
-equals `SparseBridge.canonicalSupport bound` of that same list. Then, using
-the already verified `checkSemanticExactAffine_normalize`, turn each
-`CertifiedAffine r component` witness into a witness additionally passing
-`checkCanonicalRows bound`. This discharges the precise
-`CanonicalWitnessComplete r` premise and composes the conditional
-family-level TC-063 theorem without assuming completeness.
+The separate Boolean affine checker accepts each row's sorted variable
+order (proved in milestone 4), and sparse canonical support is a bounded,
+duplicate-free permutation of the original coefficient list (proved in
+milestone 5). Still required: a **single shared bound for all witness
+rows**, plus a checked bridge proving either that the sorted list equals its
+bounded canonical support, or directly that the entire executable affine
+checker accepts row-wise canonical-support permutation. Compose this with
+`CertifiedAffine` to establish **`CanonicalWitnessComplete r`** and then
+discharge the conditional family-level TC-063 theorem.
 
 **Do not** identify Boolean semantic-affine checker invariance with finished
 TC-063; it is one key proven intermediate step.
