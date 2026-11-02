@@ -512,6 +512,123 @@ theorem start_terminates_on_finite_closed_graph
   exact start_terminates_under_seen_cap
     neighbors vertices.length root hBound
 
+/-!
+## Reachability soundness
+
+The visited-set discipline is not enough to identify the correct component:
+we also need to show that a vertex may only enter the seen set by following
+a genuine adjacency edge from a previously reachable vertex. This section
+proves that direction, for arbitrary finite or infinite adjacency functions.
+-/
+
+/-- Ordinary directed graph reachability, starting from the DFS root. -/
+inductive Reachable (neighbors : Nat → List Nat) (root : Nat) : Nat → Prop where
+  | base : Reachable neighbors root root
+  | edge (u v : Nat) :
+      Reachable neighbors root u →
+      v ∈ neighbors u →
+      Reachable neighbors root v
+
+def SeenReachable (neighbors : Nat → List Nat) (root : Nat)
+    (state : State) : Prop :=
+  ∀ v ∈ state.seen, Reachable neighbors root v
+
+theorem start_seen_reachable (neighbors : Nat → List Nat) (root : Nat) :
+    SeenReachable neighbors root (start root) := by
+  intro v hv
+  have heq : v = root := by simpa [start] using hv
+  subst v
+  exact Reachable.base
+
+theorem enqueue_preserves_seen_reachable
+    (neighbors : Nat → List Nat) (root v : Nat) (state : State)
+    (hV : Reachable neighbors root v)
+    (h : SeenReachable neighbors root state) :
+    SeenReachable neighbors root (enqueue v state) := by
+  by_cases hv : v ∈ state.seen
+  · simpa [SeenReachable, enqueue, hv] using h
+  · intro x hx
+    have hx' : x = v ∨ x ∈ state.seen := by
+      simpa [enqueue, hv] using hx
+    rcases hx' with hEq | hOld
+    · subst x
+      exact hV
+    · exact h x hOld
+
+theorem enqueueAll_preserves_seen_reachable
+    (neighbors : Nat → List Nat) (root : Nat)
+    (newNeighbors : List Nat) (state : State)
+    (hNeighbors : ∀ v ∈ newNeighbors, Reachable neighbors root v)
+    (h : SeenReachable neighbors root state) :
+    SeenReachable neighbors root (enqueueAll newNeighbors state) := by
+  induction newNeighbors generalizing state with
+  | nil =>
+      simpa [enqueueAll] using h
+  | cons v rest ih =>
+      have hv : Reachable neighbors root v :=
+        hNeighbors v (by simp)
+      have hRest : ∀ w ∈ rest, Reachable neighbors root w := by
+        intro w hw
+        exact hNeighbors w (by simp [hw])
+      simpa [enqueueAll] using
+        ih (enqueue v state) hRest
+          (enqueue_preserves_seen_reachable neighbors root v state hv h)
+
+theorem step_preserves_seen_reachable
+    (neighbors : Nat → List Nat) (root : Nat) (state : State)
+    (hStrong : StrongSafe state)
+    (h : SeenReachable neighbors root state) :
+    SeenReachable neighbors root (step neighbors state) := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using h
+  | cons vertex rest =>
+      have hPending : vertex ∈ state.seen :=
+        hStrong.1.2.2 vertex (by simp [hp])
+      have hVertex : Reachable neighbors root vertex :=
+        h vertex hPending
+      have hNext : SeenReachable neighbors root
+          { state with pending := rest, processed := vertex :: state.processed } := by
+        simpa [SeenReachable] using h
+      have hNeighbors :
+          ∀ v ∈ neighbors vertex, Reachable neighbors root v := by
+        intro v hv
+        exact Reachable.edge vertex v hVertex hv
+      simpa [step, hp] using
+        enqueueAll_preserves_seen_reachable neighbors root
+          (neighbors vertex)
+          { state with pending := rest, processed := vertex :: state.processed }
+          hNeighbors hNext
+
+theorem run_preserves_seen_reachable
+    (neighbors : Nat → List Nat) (root fuel : Nat)
+    (state : State)
+    (hStrong : StrongSafe state)
+    (h : SeenReachable neighbors root state) :
+    SeenReachable neighbors root (run neighbors fuel state) := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      simpa [run] using
+        ih (step neighbors state)
+          (step_preserves_strong_safe neighbors state hStrong)
+          (step_preserves_seen_reachable neighbors root state hStrong h)
+
+theorem start_run_seen_reachable
+    (neighbors : Nat → List Nat) (root fuel : Nat) :
+    SeenReachable neighbors root (run neighbors fuel (start root)) := by
+  exact run_preserves_seen_reachable neighbors root fuel (start root)
+    (start_strong_safe root) (start_seen_reachable neighbors root)
+
+theorem start_run_processed_reachable
+    (neighbors : Nat → List Nat) (root fuel v : Nat)
+    (hProcessed : v ∈ (run neighbors fuel (start root)).processed) :
+    Reachable neighbors root v := by
+  have hSeen := (start_run_strong_safe neighbors fuel root).2.2.2
+  exact start_run_seen_reachable neighbors root fuel v (hSeen v hProcessed)
+
+#print axioms Witnora.G14DFSSeenEnqueue.start_run_seen_reachable
+#print axioms Witnora.G14DFSSeenEnqueue.start_run_processed_reachable
+
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
     (enqueueAll [2, 2, 3, 2] (start 1)).seen.Nodup := by
