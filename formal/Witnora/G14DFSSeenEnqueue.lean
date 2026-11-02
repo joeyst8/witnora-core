@@ -1079,6 +1079,139 @@ theorem residual_primal_exact_component
   · exact (mem_remainingVertices_iff
       (sourceVertices source) separator root).mpr ⟨hRoot, hNotSeparator⟩
 
+/-!
+## Source-clause ownership bridge
+
+An original source-clause edge cannot cross a completed DFS component.
+This is the missing logical connection between executable graph traversal
+and the existing G14 residual-clause ownership theorem. Component bits
+are a one-root membership indicator; the entire Python outer-loop label
+assignment is still a separate refinement obligation.
+-/
+
+theorem sourceEdge_symm (source : Witnora.Concrete.CNF)
+    (u v : Nat)
+    (h : Witnora.G14PrimalEdgeOwnership.SourceEdge source u v) :
+    Witnora.G14PrimalEdgeOwnership.SourceEdge source v u := by
+  obtain ⟨clause, hc, hu, hv⟩ := h
+  exact ⟨clause, hc, hv, hu⟩
+
+/-- An original source edge outside the separator connects the same
+    root-reachable residual component in both directions. -/
+theorem residual_primal_edge_reachable_iff
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (root u v : Nat)
+    (hEdge : Witnora.G14PrimalEdgeOwnership.SourceEdge source u v)
+    (hu : u ∉ separator) (hv : v ∉ separator) :
+    Reachable (separatedNeighbors (clauseNeighbors source) separator)
+      root u ↔
+    Reachable (separatedNeighbors (clauseNeighbors source) separator)
+      root v := by
+  by_cases huv : u = v
+  · subst v
+    rfl
+  · constructor
+    · intro hReach
+      exact Reachable.edge u v hReach
+        ((mem_residualPrimalNeighbors_iff source separator u v).mpr
+          ⟨hEdge, Ne.symm huv, hv⟩)
+    · intro hReach
+      exact Reachable.edge v u hReach
+        ((mem_residualPrimalNeighbors_iff source separator v u).mpr
+          ⟨sourceEdge_symm source u v hEdge, huv, hu⟩)
+
+/-- No original nonseparator clause-edge crosses the DFS output set. -/
+theorem residual_primal_edge_processed_iff
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (root u v : Nat)
+    (hRoot : root ∈ sourceVertices source)
+    (hRootNotSep : root ∉ separator)
+    (hEdge : Witnora.G14PrimalEdgeOwnership.SourceEdge source u v)
+    (hu : u ∉ separator) (hv : v ∉ separator) :
+    u ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (start root)).processed ↔
+    v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (start root)).processed := by
+  calc
+    u ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (start root)).processed ↔
+        Reachable (separatedNeighbors (clauseNeighbors source) separator)
+          root u :=
+      residual_primal_exact_component source separator root u hRoot hRootNotSep
+    _ ↔ Reachable (separatedNeighbors (clauseNeighbors source) separator)
+          root v :=
+      residual_primal_edge_reachable_iff source separator root u v
+        hEdge hu hv
+    _ ↔ v ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (start root)).processed :=
+      (residual_primal_exact_component
+        source separator root v hRoot hRootNotSep).symm
+
+/-- A computable bit identifying membership in a particular root's
+    mathematically completed DFS component. -/
+def dfsComponentBit (source : Witnora.Concrete.CNF)
+    (separator : List Nat) (root u : Nat) : Nat :=
+  if u ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (start root)).processed then 1 else 0
+
+theorem dfs_component_bit_edge_consistent
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (root : Nat)
+    (hRoot : root ∈ sourceVertices source)
+    (hRootNotSep : root ∉ separator) :
+    Witnora.G14PrimalEdgeOwnership.EdgeConsistent source separator
+      (dfsComponentBit source separator root) := by
+  intro u v hEdge hu hv
+  have hIff := residual_primal_edge_processed_iff
+    source separator root u v hRoot hRootNotSep hEdge hu hv
+  by_cases hU :
+      u ∈ (run (separatedNeighbors (clauseNeighbors source) separator)
+        (remainingVertices (sourceVertices source) separator).length
+        (start root)).processed
+  · have hV := hIff.mp hU
+    simp [dfsComponentBit, hU, hV]
+  · have hV :
+        v ∉ (run (separatedNeighbors (clauseNeighbors source) separator)
+          (remainingVertices (sourceVertices source) separator).length
+          (start root)).processed := by
+      intro hvMem
+      exact hU (hIff.mpr hvMem)
+    simp [dfsComponentBit, hU, hV]
+
+/-- A conditioned residual clause cannot straddle the boundary of
+    any complete root-reachable DFS component. Reuses the existing
+    universally proved G14 clause-ownership theorem. -/
+theorem conditioned_clause_dfs_bit_consistent
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (root : Nat)
+    (hRoot : root ∈ sourceVertices source)
+    (hRootNotSep : root ∉ separator)
+    (fixed : Nat → Option Bool)
+    (clause residual : List Witnora.Concrete.Literal)
+    (hSource : clause ∈ source)
+    (hCondition : Witnora.Conditioning.conditionClause fixed clause =
+      some residual)
+    (u v : Witnora.Concrete.Literal)
+    (hu : u ∈ residual) (hv : v ∈ residual)
+    (hunsep : u.1 ∉ separator) (hvnsep : v.1 ∉ separator) :
+    dfsComponentBit source separator root u.1 =
+      dfsComponentBit source separator root v.1 := by
+  exact Witnora.G14PrimalEdgeOwnership.conditioned_residual_has_one_component
+    source separator (dfsComponentBit source separator root)
+    (dfs_component_bit_edge_consistent source separator
+      root hRoot hRootNotSep)
+    fixed clause residual hSource hCondition
+    u v hu hv hunsep hvnsep
+
+#print axioms Witnora.G14DFSSeenEnqueue.residual_primal_edge_processed_iff
+#print axioms Witnora.G14DFSSeenEnqueue.dfs_component_bit_edge_consistent
+#print axioms Witnora.G14DFSSeenEnqueue.conditioned_clause_dfs_bit_consistent
+
 #print axioms Witnora.G14DFSSeenEnqueue.mem_clauseNeighbors_iff
 #print axioms Witnora.G14DFSSeenEnqueue.mem_residualPrimalNeighbors_iff
 #print axioms Witnora.G14DFSSeenEnqueue.residual_primal_exact_component
