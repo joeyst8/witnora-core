@@ -1,0 +1,28 @@
+name: TC-063 canonical normalization completeness reduction
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - formal/Witnora/TC063CanonicalNormalizationReduction.lean
+      - .github/workflows/tc063-canonical-normalization-reduction.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-normalization-reduction:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check TC-063 reduction to canonical affine witness completeness
+        working-directory: formal
+        run: lake build Witnora.TC063CanonicalNormalizationReduction

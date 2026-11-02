@@ -1,0 +1,70 @@
+name: Dubois20 Lean proof experiment
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - theory/Dubois20SourceUnsat.lean
+      - theory/TC063DuboisOneBitCover.lean
+      - theory/TC063DuboisTwoComponentCover.lean
+      - theory/SeparatorAgreement.lean
+      - theory/TC063PrimalGraphOwnership.lean
+      - theory/TC063DuboisCheckedGraph.lean
+      - lean-toolchain
+      - lakefile.toml
+      - lake-manifest.json
+      - research/PR119_DUBOIS20_SOURCE_XOR_CERTIFICATE.json
+      - research/PR119_DUBOIS20_GF2_39_STEP_TRACE.json
+      - tests/test_dubois_lean_bridge.py
+      - tests/test_tc063_dubois_one_bit_cover.py
+      - tests/test_tc063_dubois_two_component.py
+      - tests/test_tc063_dubois_checked_graph_fixture.py
+      - research/pr119_separator_selection_benchmark.py
+      - research/PR119_TC063_SEPARATOR_POLICY_BENCHMARK_RESULT.json
+      - tests/test_pr119_separator_selection_benchmark.py
+      - tests/test_pr119_recognizer_graph_cache_equivalence.py
+      - witnora_core/separator_affine_family_theorem.py
+      - .github/workflows/dubois20-lean-proof.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-certificate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit Lean fixture against the source and indexed trace
+        run: python -m unittest tests.test_dubois_lean_bridge -v
+      - name: Audit TC-063 one-bit substitution fixture
+        run: python -m unittest tests.test_tc063_dubois_one_bit_cover -v
+      - name: Audit actual two-vertex separator, ownership and XOR consequences
+        run: python -m unittest tests.test_tc063_dubois_two_component -v
+      - name: Audit kernel-checked graph fixture against all 160 source clauses
+        run: python -m unittest tests.test_tc063_dubois_checked_graph_fixture -v
+      - name: Regression-test cached separator policies and fail-closed G14 certificates
+        run: python -m unittest tests.test_pr119_separator_selection_benchmark -v
+      - name: Check production graph-cache and non-cut pruning against the historical recognizer
+        run: python -m unittest tests.test_pr119_recognizer_graph_cache_equivalence -v
+      - uses: leanprover/lean-action@v1
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+      - name: Kernel-check the pinned Dubois20 source-clause theorem
+        run: lean -o theory/Dubois20SourceUnsat.olean theory/Dubois20SourceUnsat.lean
+      - name: Kernel-check the TC-063 Boolean cover and exact substitution bridge
+        run: LEAN_PATH=theory lean theory/TC063DuboisOneBitCover.lean
+      - name: Kernel-check actual two-component G5/G14 separator UNSAT cover
+        run: LEAN_PATH=theory lean theory/TC063DuboisTwoComponentCover.lean
+      - name: Kernel-check generic G14 residual semantics foundation
+        run: lean -o theory/SeparatorAgreement.olean theory/SeparatorAgreement.lean
+      - name: Kernel-check generic primal-graph to residual owner theorem
+        run: LEAN_PATH=theory lean -o theory/TC063PrimalGraphOwnership.olean theory/TC063PrimalGraphOwnership.lean
+      - name: Kernel-check Dubois20 executable graph premises and all branches
+        run: LEAN_PATH=theory lean theory/TC063DuboisCheckedGraph.lean

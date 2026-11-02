@@ -1,0 +1,70 @@
+name: Autonomous parity separator OOD experiment
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+  pull_request:
+    paths:
+      - "witnora_core/autonomous_parity_separator.py"
+      - "scripts/experiment_autonomous_parity_separator.py"
+      - "tests/test_autonomous_parity_separator.py"
+      - "scripts/benchmark_separator_decomposition.py"
+      - "tests/test_separator_solver_comparison.py"
+      - "scripts/benchmark_scaled_minisat_separator.py"
+      - "scripts/benchmark_incremental_minisat_separator.py"
+      - "scripts/benchmark_adaptive_separator_holdout.py"
+      - "scripts/benchmark_repeated_query_separator.py"
+      - "scripts/experiment_inloop_support_hints.py"
+      - "scripts/experiment_inloop_dynamic_split.py"
+      - "scripts/experiment_event_cached_ood.py"
+      - "scripts/experiment_inloop_masked_state.py"
+      - "witnora_core/component_equivalence.py"
+      - "tests/test_component_equivalence.py"
+      - ".github/workflows/autonomous-parity-separator.yml"
+  workflow_dispatch:
+jobs:
+  blind-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Autonomous detector regressions
+        run: python -m unittest tests.test_autonomous_parity_separator tests.test_separator_solver_comparison tests.test_component_equivalence -v
+      - name: Blind OOD experiment
+        run: python -m scripts.experiment_autonomous_parity_separator
+      - name: Compare DPLL with discovered-cut decomposition
+        run: python -m scripts.benchmark_separator_decomposition
+      - name: Install independent MiniSat baseline
+        run: python -m pip install "python-sat>=1.8.dev13,<2"
+      - name: Scaled and cached MiniSat comparison
+        run: python -m scripts.benchmark_scaled_minisat_separator
+      - name: Single-solver incremental separator comparison
+        run: python -m scripts.benchmark_incremental_minisat_separator
+      - name: Held-out adaptive policy comparison
+        run: python -m scripts.benchmark_adaptive_separator_holdout
+      - name: Repeated queries with cheap pre-screen
+        run: python -m scripts.benchmark_repeated_query_separator
+      - name: In-loop clause-support hint comparison
+        run: python -m scripts.experiment_inloop_support_hints
+      - name: Dynamic component factoring during DPLL
+        run: python -m scripts.experiment_inloop_dynamic_split
+      - name: OOD event-cached solver versus MiniSat
+        run: python -m scripts.experiment_event_cached_ood
+      - name: Persistent clause-support mask DPLL comparison
+        run: python -m scripts.experiment_inloop_masked_state
+      - name: Archive every positive and negative result
+        uses: actions/upload-artifact@v4
+        with:
+          name: autonomous-separator-ood-results
+          path: |
+            research/autonomous_parity_separator_results.json
+            research/solver_decomposition_benchmark.json
+            research/scaled_minisat_separator_benchmark.json
+            research/incremental_minisat_separator_benchmark.json
+            research/adaptive_separator_holdout_benchmark.json
+            research/repeated_query_separator_benchmark.json
+            research/inloop_support_hint_results.json
+            research/inloop_dynamic_split_results.json
+            research/event_cached_ood_results.json
+            research/inloop_masked_state_results.json
+          retention-days: 30

@@ -1,0 +1,28 @@
+name: TC-063 local G5 completeness bridge
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - formal/Witnora/TC063LocalCertificateBridge.lean
+      - .github/workflows/tc063-local-certificate-bridge.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tc063-local-bridge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check G14 semantic cover to accepted G5 local-completeness reduction
+        working-directory: formal
+        run: lake build Witnora.TC063LocalCertificateBridge

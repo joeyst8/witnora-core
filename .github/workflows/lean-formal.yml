@@ -261,6 +261,9 @@ jobs:
           build: true
           test: false
 
+      - name: Build G14 normalized partition dependency for runtime Lean proofs
+        working-directory: formal
+        run: lake build Witnora.G14NormalizedPartition
       - name: Kernel-check Python/Lean CNF normalization correspondence
         working-directory: formal
         run: lake env lean Witnora/CNFCanonicalGenerated.lean

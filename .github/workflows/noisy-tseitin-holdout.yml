@@ -1,0 +1,33 @@
+name: Noisy Tseitin source-subset frozen holdout
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - scripts/holdout_noisy_tseitin_source_subset.py
+      - .github/workflows/noisy-tseitin-holdout.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frozen-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent solver controls
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Run untouched larger-graph holdout and SAT attacks
+        run: python -m scripts.holdout_noisy_tseitin_source_subset --timeout-s 3 --out noisy_tseitin_frozen_holdout.json
+      - name: Preserve full per-instance timings
+        uses: actions/upload-artifact@v4
+        with:
+          name: noisy-tseitin-frozen-holdout-${{ github.sha }}
+          path: noisy_tseitin_frozen_holdout.json
+          if-no-files-found: error

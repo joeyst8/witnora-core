@@ -158,6 +158,7 @@ def emit_python_g14_lean(instance_id=None):
     lines = [
         "import Witnora.G14ConcreteBridge",
         "import Witnora.ExactAffineMembership",
+        "import Witnora.TC063CanonicalComplete",
         "namespace Witnora.GeneratedPythonG14",
         "open Witnora.Concrete",
         "open Witnora.G14ConcreteBridge",
@@ -224,6 +225,20 @@ def emit_python_g14_lean(instance_id=None):
         """∀ branch ∈ enumerate [1],
       checkSemanticExactAffine 2 (pythonSelected branch)
         (pythonRows branch) = true"""))
+    # Turn actual Python-selected G5 rows into a canonical sparse witness
+    # using the universal Lean theorem; no assumption about Python row order.
+    lines.append("""theorem python_selected_canonical_witness :
+    ∀ branch ∈ enumerate [1],
+      ∃ (bound : Nat) (rows : List Witnora.G5Trace.Row),
+        checkSemanticExactAffine 2 (pythonSelected branch) rows = true ∧
+        checkCanonicalRows bound rows = true := by
+  intro branch hb
+  exact Witnora.TC063CanonicalComplete.canonical_witness_complete 2
+    (pythonSelected branch)
+    ⟨pythonRows branch, python_selected_semantic_affine_pass branch hb⟩""")
+    lines.append(
+        "#print axioms Witnora.GeneratedPythonG14.python_selected_canonical_witness"
+    )
     # Length equality prevents zipWith from silently skipping a residual.
     lines.append(premise("python_all_component_lengths_pass",
         """∀ branch ∈ enumerate [1],

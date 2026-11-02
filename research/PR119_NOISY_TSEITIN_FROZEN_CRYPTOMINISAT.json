@@ -1,0 +1,234 @@
+{
+  "kind": "FROZEN_NOISY_TSEITIN_XOR_AWARE_POSTHOC_BASELINE",
+  "limitation": "native certificate check excludes Lean and process startup; CryptoMiniSat wall includes process and DIMACS parsing; not a controlled same-boundary timing comparison",
+  "prior_art": "CryptoMiniSat Gaussian elimination / XOR reasoning is established; no novelty claim",
+  "rows": [
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 354.99165
+      },
+      "native": {
+        "elapsed_ms": 95.186257,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 1,
+      "seed": 47,
+      "source_sha256": "0eec2fad66e671abfa9c03901c05295adc3923f4cb1c2030afb85f87354c3d9d",
+      "vertices": 64
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1169.271096
+      },
+      "native": {
+        "elapsed_ms": 103.081578,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 4,
+      "seed": 47,
+      "source_sha256": "298b9ad6005e02eeaeb6b7bbca04608a3f26a3a99cc5bc12aecfc94200c64335",
+      "vertices": 64
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 341.678129
+      },
+      "native": {
+        "elapsed_ms": 89.123154,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 1,
+      "seed": 73,
+      "source_sha256": "1ddb30bfee9632997766e58404141262cf85a3a782cd451f9955681f1efd831d",
+      "vertices": 64
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1384.340946
+      },
+      "native": {
+        "elapsed_ms": 102.709711,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 4,
+      "seed": 73,
+      "source_sha256": "7fad95cbd80b59e25273185ea620946260f93f9735bf7485015da51e565d67ec",
+      "vertices": 64
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1068.659902
+      },
+      "native": {
+        "elapsed_ms": 195.709001,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 1,
+      "seed": 47,
+      "source_sha256": "b7872ce4921ce3ecb0aad3d0d911d1991160d39d4102e47c3cbddcc2151c308d",
+      "vertices": 96
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1092.669876
+      },
+      "native": {
+        "elapsed_ms": 211.481518,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 4,
+      "seed": 47,
+      "source_sha256": "be06eefd3b97a2810a63b8125c0731f6f8bb86435c1530b8e1c6ebb97d17dcef",
+      "vertices": 96
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1106.533321
+      },
+      "native": {
+        "elapsed_ms": 194.394248,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 1,
+      "seed": 73,
+      "source_sha256": "5fc8913b5ceb6c444e9b25bdfa4d7054a255404c880624201c0cca4fb66e6b9f",
+      "vertices": 96
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1053.584473
+      },
+      "native": {
+        "elapsed_ms": 222.074907,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 4,
+      "seed": 73,
+      "source_sha256": "a6629b1282403d0f3ada0e6cae9d7b7366bc7f481cf0804eeddc84cb47e30c5f",
+      "vertices": 96
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1002.964913
+      },
+      "native": {
+        "elapsed_ms": 311.24501,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 1,
+      "seed": 47,
+      "source_sha256": "974e3a7bdadd66ad467542d2d71d92a3453e4ddb0900316a30049a512c3b2338",
+      "vertices": 128
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 983.082693
+      },
+      "native": {
+        "elapsed_ms": 349.442584,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 4,
+      "seed": 47,
+      "source_sha256": "00455281f75649cbf8e29dbb8261bccf4f2eb94be5e4105935f002646372f1e0",
+      "vertices": 128
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 1051.089704
+      },
+      "native": {
+        "elapsed_ms": 344.172954,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 1,
+      "seed": 73,
+      "source_sha256": "318df66f91952934570d08362104dceb3813ea10ac8d945f2d85593c7e1742f7",
+      "vertices": 128
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 20,
+        "status": "UNSAT",
+        "wall_ms": 962.753687
+      },
+      "native": {
+        "elapsed_ms": 367.61914,
+        "lean_formal_status": "NOT_LEAN_VERIFIED",
+        "status": "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE"
+      },
+      "noise_per_vertex": 4,
+      "seed": 73,
+      "source_sha256": "ad326ff5dd501c9f9f916a581c5acd81dcdd0af468c6788a774d5990fdd25a90",
+      "vertices": 128
+    }
+  ],
+  "sat_controls": [
+    {
+      "cryptominisat5": {
+        "return_code": 10,
+        "status": "SAT",
+        "wall_ms": 4.378671
+      },
+      "name": "sat_even64",
+      "native_status": "DIAGNOSTIC_ONLY",
+      "source_sha256": "cb466b08d47f3da5c173f3a22617259c26c7fb9bdd73c068b763c4d2883d40fe"
+    },
+    {
+      "cryptominisat5": {
+        "return_code": 10,
+        "status": "SAT",
+        "wall_ms": 4.241424
+      },
+      "name": "sat_missing_xor_clause64",
+      "native_status": "DIAGNOSTIC_ONLY",
+      "source_sha256": "9bd0b4b297a69955189a7cf298957cbf878251d3b7669a3e20c0e7a9582eab06"
+    }
+  ],
+  "scope": "same 12 source hashes as frozen holdout; direct plain-DIMACS CryptoMiniSat5",
+  "solver_timeout_s": 3,
+  "summary": {
+    "cases": 12,
+    "cms_timeout": 0,
+    "cms_unknown_solver": 0,
+    "cms_unsat": 12,
+    "median_cms_matched_solved_wall_ms": 1052.337088,
+    "median_native_all_ms": 203.595259,
+    "median_native_matched_cms_solved_ms": 203.595259,
+    "native_certified": 12,
+    "native_wins_on_cms_solved_unbalanced_timing": 12
+  }
+}

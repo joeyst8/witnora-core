@@ -1,0 +1,32 @@
+name: TC-063 literal-permutation source-coverage proof
+
+on:
+  push:
+    branches:
+      - research/autonomous-parity-separator-repair-v118
+    paths:
+      - formal/Witnora/TC063ClausePermutation.lean
+      - formal/Witnora/TC063CanonicalComplete.lean
+      - .github/workflows/tc063-clause-permutation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clause-permutation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check source clause coverage is invariant under literal order
+        working-directory: formal
+        run: lake build Witnora.TC063ClausePermutation
+      - name: Kernel-check unconditional TC-063 canonical completeness
+        working-directory: formal
+        run: lake build Witnora.TC063CanonicalComplete
