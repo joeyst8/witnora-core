@@ -16,6 +16,7 @@ import re
 import shutil
 from statistics import median
 import subprocess
+import sys
 import tempfile
 from time import perf_counter_ns
 
@@ -84,6 +85,37 @@ def cryptominisat_plain_cnf(formula, timeout_s):
         return {"status": label, "wall_ms": elapsed, "return_code": run.returncode}
 
 
+
+def native_fresh_process_plain_cnf(formula, timeout_s):
+    """Time Python launch + DIMACS parse + native certificate work, like CLI solver."""
+    with tempfile.TemporaryDirectory(prefix="witnora-native-") as folder:
+        dimacs = Path(folder) / "source.cnf"
+        dimacs.write_text(formula.canonical_dimacs(), encoding="ascii")
+        start = perf_counter_ns()
+        try:
+            run = subprocess.run(
+                [sys.executable, "-m", "scripts.noisy_tseitin_native_cli",
+                 "--source", str(dimacs), "--expected-hash", formula.formula_hash],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                timeout=timeout_s, check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return {"status": "UNKNOWN_TIMEOUT",
+                    "wall_ms": round((perf_counter_ns() - start) / 1e6, 6)}
+        elapsed = round((perf_counter_ns() - start) / 1e6, 6)
+        if run.returncode != 0:
+            raise AssertionError(f"fresh-process native checker exited {run.returncode}: {run.stderr[-500:]}")
+        try:
+            report = json.loads(run.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"fresh-process native output invalid: {run.stdout[-500:]}") from exc
+        if report["source_hash"] != formula.formula_hash:
+            raise AssertionError("fresh-process native check read a different formula")
+        return {"status": report["status"], "wall_ms": elapsed,
+                "native_internal_ms": report["native_internal_ms"],
+                "lean_formal_status": "NOT_LEAN_VERIFIED"}
+
+
 def median_or_none(values):
     return round(median(values), 6) if values else None
 
@@ -99,6 +131,9 @@ def run_experiment(timeout_s):
         if candidate["status"] != "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE":
             raise AssertionError("native source-subset contradiction failed")
         cms = cryptominisat_plain_cnf(source, timeout_s)
+        fresh = native_fresh_process_plain_cnf(source, timeout_s)
+        if fresh["status"] != "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE":
+            raise AssertionError(f"fresh-process native contradiction failed: {fresh}")
         if cms["status"] not in ("UNSAT", "UNKNOWN_TIMEOUT", "UNKNOWN_SOLVER"):
             raise AssertionError(f"CryptoMiniSat contradicts frozen UNSAT or errored: {cms}")
         rows.append({
@@ -110,6 +145,7 @@ def run_experiment(timeout_s):
                 "lean_formal_status": "NOT_LEAN_VERIFIED",
             },
             "cryptominisat5": cms,
+            "native_fresh_process": fresh,
         })
     controls = []
     sat_formulas = (
@@ -121,19 +157,25 @@ def run_experiment(timeout_s):
         check_frozen_hash(source, FROZEN_CONTROLS[name], name)
         native, _, _ = source_subset_candidate(source, name)
         cms = cryptominisat_plain_cnf(source, timeout_s)
-        if native["status"] != "DIAGNOSTIC_ONLY" or cms["status"] != "SAT":
+        fresh = native_fresh_process_plain_cnf(source, timeout_s)
+        if native["status"] != "DIAGNOSTIC_ONLY" or cms["status"] != "SAT" or fresh["status"] != "DIAGNOSTIC_ONLY":
             raise AssertionError(f"SAT control failed closed: {name}, {native['status']}, {cms}")
         controls.append({"name": name, "source_sha256": source.formula_hash,
-                         "native_status": native["status"], "cryptominisat5": cms})
+                         "native_status": native["status"], "cryptominisat5": cms,
+                         "native_fresh_process": fresh})
     solved = [r for r in rows if r["cryptominisat5"]["status"] == "UNSAT"]
     return {
-        "kind": "FROZEN_NOISY_TSEITIN_XOR_AWARE_POSTHOC_BASELINE",
+        "kind": "FROZEN_NOISY_TSEITIN_MATCHED_PROCESS_AND_XOR_AWARE_BASELINE",
         "scope": "same 12 source hashes as frozen holdout; direct plain-DIMACS CryptoMiniSat5",
         "prior_art": "CryptoMiniSat Gaussian elimination / XOR reasoning is established; no novelty claim",
-        "limitation": "native certificate check excludes Lean and process startup; CryptoMiniSat wall includes process and DIMACS parsing; not a controlled same-boundary timing comparison",
+        "limitation": "fresh-process native and CryptoMiniSat include process startup/DIMACS parse; Python/compiled-language overheads differ; both exclude per-instance Lean kernel runtime",
         "solver_timeout_s": timeout_s, "rows": rows, "sat_controls": controls,
         "summary": {
             "cases": len(rows), "native_certified": len(rows),
+            "native_fresh_process_certified": sum(r["native_fresh_process"]["status"] == "SOURCE_SUBSET_G5_NATIVE_UNSAT_CANDIDATE" for r in rows),
+            "native_fresh_process_timeout": sum(r["native_fresh_process"]["status"] == "UNKNOWN_TIMEOUT" for r in rows),
+            "native_fresh_process_wins_matched_input_boundary": sum(r["native_fresh_process"]["wall_ms"] < r["cryptominisat5"]["wall_ms"] for r in solved),
+            "median_native_fresh_process_wall_ms": median_or_none([r["native_fresh_process"]["wall_ms"] for r in rows]),
             "cms_unsat": len(solved),
             "cms_timeout": sum(r["cryptominisat5"]["status"] == "UNKNOWN_TIMEOUT" for r in rows),
             "cms_unknown_solver": sum(r["cryptominisat5"]["status"] == "UNKNOWN_SOLVER" for r in rows),

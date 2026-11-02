@@ -6,6 +6,7 @@ on:
       - research/autonomous-parity-separator-repair-v118
     paths:
       - scripts/cryptominisat_noisy_tseitin_frozen.py
+      - scripts/noisy_tseitin_native_cli.py
       - .github/workflows/noisy-tseitin-cryptominisat.yml
   workflow_dispatch:
 
@@ -28,7 +29,7 @@ jobs:
           cryptominisat5 --version
       - name: Install Python dependencies for native Witnora control
         run: python -m pip install 'python-sat==1.8.dev24'
-      - name: Replay exact frozen CNF hashes against CryptoMiniSat
+      - name: Replay exact frozen hashes under both fresh-process DIMACS boundaries
         run: python -m scripts.cryptominisat_noisy_tseitin_frozen --timeout-s 3 --out noisy_tseitin_frozen_cryptominisat.json
       - name: Archive per-case data including unknowns
         uses: actions/upload-artifact@v4
