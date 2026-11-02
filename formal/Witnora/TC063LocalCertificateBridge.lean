@@ -114,7 +114,8 @@ theorem unsat_cover_complete_of_local_g5
     intro branch hb
     have hselected := Classical.choose_spec (perBranch branch hb)
     have heq : witness branch = Classical.choose (perBranch branch hb) := by
-      simp [witness, hb]
+      have hb' : branch ∈ branches := hb
+      simp only [witness, dif_pos hb']
     have hpart := (hbranches branch hb).1
     rw [heq]
     simp [hpart, hselected.1, hselected.2]
