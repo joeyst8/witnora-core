@@ -1,5 +1,8 @@
 import Witnora.SparseBridge
 import Witnora.SignedSerialization
+import Witnora.DIMACSDocument
+import Witnora.DIMACSTokens
+import Witnora.CNFSorted
 
 /-!
 # Source-subset G5 UNSAT bridge
@@ -61,6 +64,42 @@ example :
       [[(1, true)], [(1, false)]]
       [⟨[1], true⟩, ⟨[1], false⟩]
       [(0, 1)] = false := by decide
+
+/-- Exact original ASCII DIMACS source -> canonical CNF -> contained G5
+    contradiction, all checked by one Lean proof. -/
+theorem checked_ascii_dimacs_source_subset_g5_unsat
+    (sourceBytes : List Nat) (tokens : List Int)
+    (raw canonical : List (List Int))
+    (hdocument : Witnora.DIMACSDocument.checkDocument sourceBytes tokens = true)
+    (hstream : Witnora.DIMACSTokens.checkStream tokens raw = true)
+    (hcanonical : Witnora.CNFSorted.canonicalize
+        (Witnora.SignedSerialization.decodeCNF raw) =
+      Witnora.SignedSerialization.decodeCNF canonical)
+    (bound : Nat) (subset : CNF) (rows : List Row) (steps : List XorRef)
+    (hsubset : checkSourceSubsetG5 bound
+        (Witnora.SignedSerialization.decodeCNF canonical)
+        subset rows steps = true) :
+    Witnora.DIMACSDocument.parseDocument sourceBytes =
+      some (Witnora.DIMACSTokens.serialize raw) ∧
+    ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds raw a := by
+  constructor
+  · have hd :=
+      Witnora.DIMACSDocument.checkDocument_sound sourceBytes tokens hdocument
+    have hs :=
+      (Witnora.DIMACSTokens.checkStream_sound tokens raw hstream).1
+    simpa [hs] using hd
+  · have hun := checkSourceSubsetG5_unsat bound
+      (Witnora.SignedSerialization.decodeCNF canonical)
+      subset rows steps hsubset
+    intro ⟨a, ha⟩
+    apply hun
+    refine ⟨a, ?_⟩
+    rw [← hcanonical]
+    apply (Witnora.CNFSorted.canonicalize_correct
+      (Witnora.SignedSerialization.decodeCNF raw) a).mpr
+    exact (Witnora.SignedSerialization.signedCNFHolds_iff raw a).mp ha
+
+#print axioms Witnora.SourceSubsetG5.checked_ascii_dimacs_source_subset_g5_unsat
 
 #print axioms Witnora.SourceSubsetG5.checkSourceSubsetG5_unsat
 

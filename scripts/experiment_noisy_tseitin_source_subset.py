@@ -215,6 +215,26 @@ def lean_source_for(formula: CNFFormula, subset: CNFFormula, certificate) -> str
         + " " + _serialize_rows(rows) + " " + _compile_dag(rows, payload.get("row_operations"))
         + " (by decide)",
     ]
+    raw = formula.to_clause_lists()
+    token_stream = [lit for clause in raw for lit in (*clause, 0)]
+    source_bytes = [ord(ch) for ch in formula.canonical_dimacs()]
+    source_example = (
+        "example : Witnora.DIMACSDocument.parseDocument " + str(source_bytes)
+        + " = some (Witnora.DIMACSTokens.serialize " + str(raw) + ")"
+        + " ∧ ¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds "
+        + str(raw) + " a := by"
+    )
+    source_proof = (
+        "  exact Witnora.SourceSubsetG5.checked_ascii_dimacs_source_subset_g5_unsat "
+        + str(source_bytes) + " " + str(token_stream)
+        + " " + str(raw) + " " + str(raw)
+        + " (by decide) (by decide) (by decide) "
+        + str(bound) + " " + chosen
+        + " " + _serialize_rows(rows) + " "
+        + _compile_dag(rows, payload.get("row_operations"))
+        + " (by decide)"
+    )
+    body.extend([source_example, source_proof])
     return "\n".join(body) + "\n"
 
 
@@ -270,7 +290,7 @@ def main():
         "kind": "NOISY_TSEITIN_SOURCE_SUBSET_G5_PROTOTYPE",
         "scope": "random Hamiltonian cubic graphs; exact XOR subset; satisfiability-preserving guarded non-affine noise",
         "prior_art": "Tseitin contradictions and Gaussian elimination are established techniques; no novelty claim",
-        "lean_claim": "small generated fixture must be separately kernel-checked in CI; native rows alone are not Lean status",
+        "lean_claim": "a small exact ASCII DIMACS source-subset proof must pass Lean in CI; all large benchmark cases remain NOT_LEAN_VERIFIED",
         "trials": args.trials, "solver_limit_s": args.limit_s,
         "rows": rows, "controls": controls,
         "summary": {
