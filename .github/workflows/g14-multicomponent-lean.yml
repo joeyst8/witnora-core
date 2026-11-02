@@ -32,7 +32,7 @@ jobs:
           test: false
       - name: Build checked G14 theorem
         working-directory: formal
-        run: lake build Witnora.G14ConcreteBridge
+        run: lake build Witnora.G14ConcreteBridge Witnora.TC063CanonicalComplete
       - name: Kernel-check native multi-component G14 branches, G5 traces, and UNSAT
         working-directory: formal
         run: /usr/bin/time -f 'LEAN_G14_MULTI_SECONDS=%e PEAK_MEMORY_KB=%M' lake env lean Witnora/GeneratedPythonG14Multi.lean

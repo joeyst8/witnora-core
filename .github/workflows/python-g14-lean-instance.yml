@@ -32,7 +32,7 @@ jobs:
           test: false
       - name: Build G14 concrete kernel checker
         working-directory: formal
-        run: lake build Witnora.G14ConcreteBridge
+        run: lake build Witnora.G14ConcreteBridge Witnora.TC063CanonicalComplete
       - name: Verify Python-generated two-branch G14 to G5 UNSAT source
         working-directory: formal
         run: /usr/bin/time -f 'LEAN_G14_SECONDS=%e PEAK_MEMORY_KB=%M' lake env lean Witnora/GeneratedPythonG14.lean

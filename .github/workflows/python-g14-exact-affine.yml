@@ -31,7 +31,7 @@ jobs:
           test: false
       - name: Build strict affine and G14 proof checkers
         working-directory: formal
-        run: lake build Witnora.ExactAffineMembership Witnora.G14ConcreteBridge
+        run: lake build Witnora.ExactAffineMembership Witnora.G14ConcreteBridge Witnora.TC063CanonicalComplete
       - name: Lean-check actual selected G5 rows on two-component instance
         working-directory: formal
         run: lake env lean Witnora/GeneratedG14Size2.lean
