@@ -115,6 +115,63 @@ theorem parityBits_perm
   | trans hp hq ihp ihq =>
       exact ihp.trans ihq
 
+/-- Every forbidden assignment of the permuted variable row has an
+    equally forbidden assignment of the original row with identical
+    signed-literal coverage. Thus the actual Boolean extraction checker
+    is sound under arbitrary variable-order permutations. -/
+theorem checkPattern_true_of_perm
+    (cnf : CNF) {vars other : List Nat}
+    (hperm : vars.Perm other) (rhs : Bool)
+    (hcheck : checkPattern cnf vars rhs = true) :
+    checkPattern cnf other rhs = true := by
+  unfold checkPattern at hcheck ⊢
+  apply List.all_eq_true.mpr
+  intro bitsOther hbadOther
+  have hmemberOther : bitsOther ∈ allBits other.length :=
+    (List.mem_filter.mp hbadOther).1
+  have hwrongOther : parityBits bitsOther ≠ rhs := by
+    simpa using (List.mem_filter.mp hbadOther).2
+  have hlen : bitsOther.length = other.length :=
+    Witnora.ExactSignedXorCNF.allBits_member_length
+      other.length bitsOther hmemberOther
+  obtain ⟨bits, hbitsLen, hpair, hbitsPerm⟩ :=
+    zip_pattern_transport hperm bitsOther hlen
+  have hmember : bits ∈ allBits vars.length := by
+    simpa [hbitsLen] using allBits_complete bits
+  have hwrong : parityBits bits ≠ rhs := by
+    rw [parityBits_perm hbitsPerm]
+    exact hwrongOther
+  have hbad : bits ∈ generateForbiddenPatterns vars.length rhs := by
+    simp [generateForbiddenPatterns, hmember, hwrong]
+  have hcovered :
+      checkClauseCoverage cnf
+        (signForbiddenClause (List.zip vars bits)) = true :=
+    List.all_eq_true.mp hcheck bits hbad
+  rw [← checkClauseCoverage_permuted_forbidden cnf
+    (List.zip vars bits) (List.zip other bitsOther) hpair]
+  exact hcovered
+
+/-- The source checker verdict itself is invariant under any variable
+    permutation, not merely the mathematical parity equation. -/
+theorem checkPattern_perm
+    (cnf : CNF) {vars other : List Nat}
+    (hperm : vars.Perm other) (rhs : Bool) :
+    checkPattern cnf vars rhs = checkPattern cnf other rhs := by
+  by_cases h : checkPattern cnf vars rhs = true
+  · have hr := checkPattern_true_of_perm cnf hperm rhs h
+    simp [h, hr]
+  · have hl : checkPattern cnf vars rhs = false := by
+      cases hx : checkPattern cnf vars rhs with
+      | false => rfl
+      | true => exact False.elim (h hx)
+    have hr : checkPattern cnf other rhs = false := by
+      cases hx : checkPattern cnf other rhs with
+      | false => rfl
+      | true =>
+          have hback := checkPattern_true_of_perm cnf hperm.symm rhs hx
+          exact False.elim (h hback)
+    simp [hl, hr]
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -126,5 +183,8 @@ example :
 #print axioms Witnora.TC063ClausePermutation.clauseSubsumes_expected_perm
 #print axioms Witnora.TC063ClausePermutation.checkClauseCoverage_expected_perm
 #print axioms Witnora.TC063ClausePermutation.signForbiddenClause_perm
+#print axioms Witnora.TC063ClausePermutation.zip_pattern_transport
+#print axioms Witnora.TC063ClausePermutation.parityBits_perm
+#print axioms Witnora.TC063ClausePermutation.checkPattern_perm
 
 end Witnora.TC063ClausePermutation
