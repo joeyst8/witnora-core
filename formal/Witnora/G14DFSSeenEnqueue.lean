@@ -123,6 +123,107 @@ theorem start_run_safe (neighbors : Nat → List Nat)
     Safe (run neighbors fuel (start root)) :=
   run_preserves_safe neighbors fuel (start root) (start_safe root)
 
+
+/--
+The stronger Python-specific invariant: processed vertices are unique,
+the pending frontier is disjoint from processed vertices, and every
+processed vertex remains in seen.
+-/
+def StrongSafe (state : State) : Prop :=
+  Safe state ∧
+  state.processed.Nodup ∧
+  (∀ v ∈ state.pending, v ∉ state.processed) ∧
+  (∀ v ∈ state.processed, v ∈ state.seen)
+
+theorem start_strong_safe (root : Nat) :
+    StrongSafe (start root) := by
+  simp [StrongSafe, Safe, start]
+
+theorem enqueue_preserves_strong_safe (v : Nat)
+    (state : State) (h : StrongSafe state) :
+    StrongSafe (enqueue v state) := by
+  rcases h with ⟨hsafe, hproc, hdisjoint, hprocSeen⟩
+  by_cases hv : v ∈ state.seen
+  · simpa [StrongSafe, enqueue, hv] using
+      (show StrongSafe state from
+        ⟨hsafe, hproc, hdisjoint, hprocSeen⟩)
+  · refine ⟨enqueue_preserves_safe v state hsafe, ?_, ?_, ?_⟩
+    · simpa [enqueue, hv] using hproc
+    · intro x hx hxp
+      have hx' : x = v ∨ x ∈ state.pending := by
+        simpa [enqueue, hv] using hx
+      rcases hx' with hEq | hOld
+      · subst x
+        exact hv (hprocSeen v hxp)
+      · exact hdisjoint x hOld hxp
+    · intro x hx
+      simpa [enqueue, hv] using
+        (show x ∈ state.seen from hprocSeen x hx)
+
+theorem enqueueAll_preserves_strong_safe
+    (neighbors : List Nat) (state : State)
+    (h : StrongSafe state) :
+    StrongSafe (enqueueAll neighbors state) := by
+  induction neighbors generalizing state with
+  | nil => simpa [enqueueAll] using h
+  | cons v rest ih =>
+      simpa [enqueueAll] using
+        ih (enqueue v state)
+          (enqueue_preserves_strong_safe v state h)
+
+theorem step_preserves_strong_safe
+    (neighbors : Nat → List Nat) (state : State)
+    (h : StrongSafe state) :
+    StrongSafe (step neighbors state) := by
+  cases hp : state.pending with
+  | nil => simpa [step, hp] using h
+  | cons vertex rest =>
+      rcases h with ⟨hsafe, hproc, hdisjoint, hprocSeen⟩
+      rcases hsafe with ⟨hseen, hpending, hsubset⟩
+      have hpn : (vertex :: rest).Nodup := by
+        simpa [hp] using hpending
+      have hrest : rest.Nodup := (List.nodup_cons.mp hpn).2
+      have hvertexRest : vertex ∉ rest :=
+        (List.nodup_cons.mp hpn).1
+      have hvertexOld : vertex ∉ state.processed :=
+        hdisjoint vertex (by simp [hp])
+      let next : State :=
+        { state with pending := rest, processed := vertex :: state.processed }
+      have hnext : StrongSafe next := by
+        refine ⟨?_, ?_, ?_, ?_⟩
+        · refine ⟨hseen, hrest, ?_⟩
+          intro x hx
+          exact hsubset x (by simp [hp, hx])
+        · exact List.nodup_cons.mpr ⟨hvertexOld, hproc⟩
+        · intro x hx hxp
+          rcases List.mem_cons.mp hxp with hEq | hOld
+          · subst x
+            exact hvertexRest hx
+          · exact hdisjoint x (by simp [hp, hx]) hOld
+        · intro x hxp
+          rcases List.mem_cons.mp hxp with hEq | hOld
+          · subst x
+            exact hsubset vertex (by simp [hp])
+          · exact hprocSeen x hOld
+      simpa [step, hp, next] using
+        enqueueAll_preserves_strong_safe (neighbors vertex) next hnext
+
+theorem run_preserves_strong_safe
+    (neighbors : Nat → List Nat) (fuel : Nat)
+    (state : State) (h : StrongSafe state) :
+    StrongSafe (run neighbors fuel state) := by
+  induction fuel generalizing state with
+  | zero => simpa [run] using h
+  | succ n ih =>
+      simpa [run] using ih (step neighbors state)
+        (step_preserves_strong_safe neighbors state h)
+
+theorem start_run_strong_safe (neighbors : Nat → List Nat)
+    (fuel root : Nat) :
+    StrongSafe (run neighbors fuel (start root)) :=
+  run_preserves_strong_safe neighbors fuel (start root)
+    (start_strong_safe root)
+
 /-- Even a repeated neighbor appears only once on the initial frontier. -/
 example :
     (enqueueAll [2, 2, 3, 2] (start 1)).seen.Nodup := by
@@ -132,5 +233,6 @@ example :
 #print axioms Witnora.G14DFSSeenEnqueue.enqueue_preserves_safe
 #print axioms Witnora.G14DFSSeenEnqueue.step_preserves_safe
 #print axioms Witnora.G14DFSSeenEnqueue.run_preserves_safe
+#print axioms Witnora.G14DFSSeenEnqueue.run_preserves_strong_safe
 
 end Witnora.G14DFSSeenEnqueue
