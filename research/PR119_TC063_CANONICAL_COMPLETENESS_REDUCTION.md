@@ -1,10 +1,10 @@
-# TC-063 completeness work: exact remaining obligation (2026-11-02)
+# TC-063: unconditional family-level Lean theorem and remaining implementation gates (2026-11-02)
 
-Status: **INCOMPLETE: BOOLEAN AFFINE-CHECKER NORMALIZATION AND SPARSE SUPPORT PERMUTATION PROVED; THEIR CANONICAL WITNESS COMPOSITION REMAINS**.
+Status: **MATHEMATICAL TC-063 FAMILY THEOREM KERNEL-VERIFIED; PYTHON REFINEMENT, RESOURCE BOUNDS AND SCIENTIFIC AUDIT REMAIN OPEN**.
 
 All new Lean theorems below passed Lean 4.19 GitHub Actions, with `#print axioms`
 showing only standard Lean foundations `propext`, `Classical.choice`, `Quot.sound`,
-**no `sorryAx`**. They do **not** prove the stated conditional premise.
+**no `sorryAx`**. The formerly conditional normalization premise is now proved for the explicitly defined `CertifiedAffine` family; it is not a theorem about arbitrary CNFs.
 
 ## New kernel-checked milestones
 
@@ -56,31 +56,50 @@ showing only standard Lean foundations `propext`, `Classical.choice`, `Quot.soun
    No `sorryAx`. These theorems provide the finite-support half of the
    final normalization bridge.
 
-## EXACT mathematical proof still needed
+6. `formal/Witnora/TC063ClausePermutation.lean`:
+   `expanded_map_perm_coverage` proves CNF source-clause coverage remains
+   unchanged under potentially different permutations for each G5 row.
+   `checkSemanticExactAffine_map_perm` extends this to *all three* Boolean
+   exact-affine checker gates. `finite_rows_bound_exists` provides a single
+   finite exclusive bound for all rows, `canonicalSupport_idempotent`
+   shows canonicalizing twice gives the same sparse support, and
+   `checkCanonicalRows_canonicalized` proves that those rows pass the
+   production sparse gate.
+   [CI #41515197256](https://github.com/joeyst8/witnora-core/actions/runs/41515197256)
+   and [CI #41515719251](https://github.com/joeyst8/witnora-core/actions/runs/41515719251).
 
-```lean
-def CanonicalWitnessComplete (r : Nat) : Prop :=
-  ∀ component : CNF, CertifiedAffine r component →
-    ∃ (bound : Nat) (rows : List Witnora.G5Trace.Row),
-      Witnora.ExactAffineMembership.checkSemanticExactAffine
-        r component rows = true ∧
-      Witnora.SparseBridge.checkCanonicalRows bound rows = true
-```
+7. `formal/Witnora/TC063CanonicalComplete.lean`:
+   **`canonical_witness_complete`** proves the former
+   `CanonicalWitnessComplete r` premise without hypotheses beyond
+   `CertifiedAffine r`: every accepted affine witness can be converted to
+   canonical sparse rows that still pass `checkSemanticExactAffine`.
+   **`tc063_family_unsat_iff_checked_cover`** then composes the existing
+   G5 and G14 proofs into the unconditional statement
 
-The separate Boolean affine checker accepts each row's sorted variable
-order (proved in milestone 4), and sparse canonical support is a bounded,
-duplicate-free permutation of the original coefficient list (proved in
-milestone 5). Still required: a **single shared bound for all witness
-rows**, plus a checked bridge proving either that the sorted list equals its
-bounded canonical support, or directly that the entire executable affine
-checker accepts row-wise canonical-support permutation. Compose this with
-`CertifiedAffine` to establish **`CanonicalWitnessComplete r`** and then
-discharge the conditional family-level TC-063 theorem.
+   ```lean
+   (¬ ∃ a, signedCNFHolds raw a) ↔
+     ∃ cert : CoverData, cert.accepts c raw = true
+   ```
 
-**Do not** identify Boolean semantic-affine checker invariance with finished
-TC-063; it is one key proven intermediate step.
+   for all `c r raw` satisfying `SemanticSAF.Family c r raw`.
+   [CI #41516289553](https://github.com/joeyst8/witnora-core/actions/runs/41516289553).
+   `#print axioms` lists `propext`, `Classical.choice`,
+   `Quot.sound` only. **No `sorryAx`.**
 
-## Remaining engineering/scientific gates after that theorem
+## What was closed, and what this does not say
+
+The family-level mathematical proof gap is closed. It establishes that
+unsatisfiability and existence of a checked G14/G5 certificate coincide
+for the **specifically defined certified-affine SAF family**, whose membership
+already asserts the existence of accepted semantic-affine local witnesses.
+
+It does **not** show that all CNF formulas admit such representations,
+that witnesses can be efficiently discovered, that Python faithfully produces
+them for every supported input, or that general SAT can be solved in
+polynomial time. The theorem is an existential correctness/completeness
+statement for a restricted checkable family, not a P-vs-NP result.
+
+## Remaining engineering/scientific gates
 
 - Link verified Lean checker acceptance and normalization unconditionally to
   Python emitted traces and original source serialization for supported inputs;
@@ -90,8 +109,9 @@ TC-063; it is one key proven intermediate step.
   algorithm or settle P vs NP.
 - Independent adversarial SAT controls, exact source hash, and certificate
   parser audit remain mandatory before publication.
-- TC-063 is **not complete today**; Effort B structural discovery remains held
-  until the canonical sparse bound, full target proof, and required refinement gates close.
+- The **mathematical family theorem is proved**. TC-063's wider end-to-end
+  implementation and performance claims remain unverified; Effort B stays
+  on hold until the agreed verification and independent validation gates close.
 
 Preserve the previous exact n64 frozen UNSAT Lean proof and all benchmark
 datasets; those are concrete successes but not evidence of family-level
