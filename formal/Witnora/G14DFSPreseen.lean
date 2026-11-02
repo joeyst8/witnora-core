@@ -388,6 +388,114 @@ theorem residual_preseen_processes_same_component
     (residual_primal_symmetric_on source separator)
     hOldClosed root hRoot hFresh fuel
 
+/-!
+## Entire shared-seen outer-loop simulation
+
+The functional reference scan uses a fresh-root DFS for each unseen
+vertex. The Python-style scan below carries earlier seen entries into
+each new DFS. The pointwise lockstep theorem composes across every outer
+scan iteration, because completed components remain edge-closed.
+Both models therefore produce the exact same ordered list of component
+lists and the same final global seen list. Sorting and numeric component
+IDs can be applied after this equality without changing it.
+-/
+
+/-- Mathematical counterpart of Python's shared-seen outer component
+    loop. Unlike `scanComponents`, each inner run starts with the
+    previously collected global seen entries. -/
+def scanComponentsShared (neighbors : Nat → List Nat) (fuel : Nat) :
+    List Nat → List Nat → List (List Nat) → List Nat × List (List Nat)
+  | [], seen, components => (seen, components)
+  | root :: rest, seen, components =>
+      if root ∈ seen then
+        scanComponentsShared neighbors fuel rest seen components
+      else
+        let found := (run neighbors fuel (startWithSeen seen root)).processed
+        scanComponentsShared neighbors fuel rest
+          (found ++ seen) (found :: components)
+
+/-- Exact list-level refinement of the complete shared-seen outer scan
+    to the previously verified fresh-root model. -/
+theorem shared_scan_eq_fresh_scan
+    (neighbors : Nat → List Nat) (vertices : List Nat)
+    (hUniverse : NeighborWithin neighbors vertices)
+    (hSymm : SymmetricOn neighbors vertices)
+    (starts : List Nat) :
+    ∀ (seen : List Nat) (components : List (List Nat)),
+      (∀ root ∈ starts, root ∈ vertices) →
+      EdgeClosed neighbors seen →
+      scanComponentsShared neighbors vertices.length
+        starts seen components =
+      scanComponents neighbors vertices.length
+        starts seen components := by
+  induction starts with
+  | nil =>
+      intro seen components _ _
+      rfl
+  | cons root rest ih =>
+      intro seen components hStarts hSeenClosed
+      have hRoot : root ∈ vertices :=
+        hStarts root (by simp)
+      have hRest : ∀ w ∈ rest, w ∈ vertices := by
+        intro w hw
+        exact hStarts w (by simp [hw])
+      by_cases hr : root ∈ seen
+      · simpa [scanComponentsShared, scanComponents, hr] using
+          ih seen components hRest hSeenClosed
+      · let found := (run neighbors vertices.length (start root)).processed
+        have hFoundEq :
+            (run neighbors vertices.length
+              (startWithSeen seen root)).processed = found :=
+          preseen_processes_same_component
+            neighbors vertices seen hUniverse hSymm hSeenClosed
+            root hRoot hr vertices.length
+        have hFoundClosed : EdgeClosed neighbors found :=
+          full_component_edge_closed neighbors vertices
+            hUniverse root hRoot
+        have hNewClosed : EdgeClosed neighbors (found ++ seen) :=
+          edge_closed_append neighbors found seen hFoundClosed hSeenClosed
+        calc
+          scanComponentsShared neighbors vertices.length
+              (root :: rest) seen components =
+            scanComponentsShared neighbors vertices.length
+              rest (found ++ seen) (found :: components) := by
+                simp [scanComponentsShared, hr, hFoundEq, found]
+          _ = scanComponents neighbors vertices.length
+              rest (found ++ seen) (found :: components) :=
+            ih (found ++ seen) (found :: components) hRest hNewClosed
+          _ = scanComponents neighbors vertices.length
+              (root :: rest) seen components := by
+                simp [scanComponents, hr, found]
+
+/-- Applied to any source CNF and separator, the Python-style shared
+    seen model produces exactly the verified mathematical outer scan
+    result: both final global seen and component lists match. -/
+theorem residual_shared_scan_eq_fresh_scan
+    (source : Witnora.Concrete.CNF) (separator : List Nat) :
+    scanComponentsShared
+      (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (remainingVertices (sourceVertices source) separator)
+      [] [] =
+    scanComponents
+      (separatedNeighbors (clauseNeighbors source) separator)
+      (remainingVertices (sourceVertices source) separator).length
+      (remainingVertices (sourceVertices source) separator)
+      [] [] := by
+  exact shared_scan_eq_fresh_scan
+    (separatedNeighbors (clauseNeighbors source) separator)
+    (remainingVertices (sourceVertices source) separator)
+    (separatedNeighbors_closed (clauseNeighbors source)
+      (sourceVertices source) separator (clauseNeighbors_closed source))
+    (residual_primal_symmetric_on source separator)
+    (remainingVertices (sourceVertices source) separator)
+    [] []
+    (by intro root hRoot; exact hRoot)
+    (by intro u hu; cases hu)
+
+#print axioms Witnora.G14DFSPreseen.shared_scan_eq_fresh_scan
+#print axioms Witnora.G14DFSPreseen.residual_shared_scan_eq_fresh_scan
+
 #print axioms Witnora.G14DFSPreseen.preseen_processes_same_component
 #print axioms Witnora.G14DFSPreseen.residual_preseen_processes_same_component
 
