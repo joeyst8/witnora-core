@@ -871,12 +871,13 @@ theorem traceStep40 (bits : BitVec 60)
     (hb : parity18 bits = true) :
     traceRow40 bits = false := by
   have hxor : traceRow40 bits = (parity20 bits ^^ parity18 bits) := by
+    unfold traceRow40 parity20 parity18
     cases h0 : bits.getLsbD 17 <;>
     cases h1 : bits.getLsbD 18 <;>
     cases h2 : bits.getLsbD 19 <;>
     cases h3 : bits.getLsbD 20 <;>
     cases h4 : bits.getLsbD 57 <;>
-    simp [h0, h1, h2, h3, h4, traceRow40, parity20, parity18]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep41 (bits : BitVec 60)
@@ -884,11 +885,12 @@ theorem traceStep41 (bits : BitVec 60)
     (hb : parity19 bits = true) :
     traceRow41 bits = false := by
   have hxor : traceRow41 bits = (parity21 bits ^^ parity19 bits) := by
+    unfold traceRow41 parity21 parity19
     cases h0 : bits.getLsbD 18 <;>
     cases h1 : bits.getLsbD 19 <;>
     cases h2 : bits.getLsbD 58 <;>
     cases h3 : bits.getLsbD 59 <;>
-    simp [h0, h1, h2, h3, traceRow41, parity21, parity19]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep42 (bits : BitVec 60)
@@ -896,12 +898,13 @@ theorem traceStep42 (bits : BitVec 60)
     (hb : parity17 bits = true) :
     traceRow42 bits = false := by
   have hxor : traceRow42 bits = (parity22 bits ^^ parity17 bits) := by
+    unfold traceRow42 parity22 parity17
     cases h0 : bits.getLsbD 16 <;>
     cases h1 : bits.getLsbD 17 <;>
     cases h2 : bits.getLsbD 20 <;>
     cases h3 : bits.getLsbD 21 <;>
     cases h4 : bits.getLsbD 56 <;>
-    simp [h0, h1, h2, h3, h4, traceRow42, parity22, parity17]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep43 (bits : BitVec 60)
@@ -909,12 +912,13 @@ theorem traceStep43 (bits : BitVec 60)
     (hb : parity16 bits = true) :
     traceRow43 bits = false := by
   have hxor : traceRow43 bits = (parity23 bits ^^ parity16 bits) := by
+    unfold traceRow43 parity23 parity16
     cases h0 : bits.getLsbD 15 <;>
     cases h1 : bits.getLsbD 16 <;>
     cases h2 : bits.getLsbD 21 <;>
     cases h3 : bits.getLsbD 22 <;>
     cases h4 : bits.getLsbD 55 <;>
-    simp [h0, h1, h2, h3, h4, traceRow43, parity23, parity16]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep44 (bits : BitVec 60)
@@ -922,12 +926,13 @@ theorem traceStep44 (bits : BitVec 60)
     (hb : parity15 bits = true) :
     traceRow44 bits = false := by
   have hxor : traceRow44 bits = (parity24 bits ^^ parity15 bits) := by
+    unfold traceRow44 parity24 parity15
     cases h0 : bits.getLsbD 14 <;>
     cases h1 : bits.getLsbD 15 <;>
     cases h2 : bits.getLsbD 22 <;>
     cases h3 : bits.getLsbD 23 <;>
     cases h4 : bits.getLsbD 54 <;>
-    simp [h0, h1, h2, h3, h4, traceRow44, parity24, parity15]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep45 (bits : BitVec 60)
@@ -935,12 +940,13 @@ theorem traceStep45 (bits : BitVec 60)
     (hb : parity14 bits = true) :
     traceRow45 bits = false := by
   have hxor : traceRow45 bits = (parity25 bits ^^ parity14 bits) := by
+    unfold traceRow45 parity25 parity14
     cases h0 : bits.getLsbD 13 <;>
     cases h1 : bits.getLsbD 14 <;>
     cases h2 : bits.getLsbD 23 <;>
     cases h3 : bits.getLsbD 24 <;>
     cases h4 : bits.getLsbD 53 <;>
-    simp [h0, h1, h2, h3, h4, traceRow45, parity25, parity14]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep46 (bits : BitVec 60)
@@ -948,12 +954,13 @@ theorem traceStep46 (bits : BitVec 60)
     (hb : parity13 bits = true) :
     traceRow46 bits = false := by
   have hxor : traceRow46 bits = (parity26 bits ^^ parity13 bits) := by
+    unfold traceRow46 parity26 parity13
     cases h0 : bits.getLsbD 12 <;>
     cases h1 : bits.getLsbD 13 <;>
     cases h2 : bits.getLsbD 24 <;>
     cases h3 : bits.getLsbD 25 <;>
     cases h4 : bits.getLsbD 52 <;>
-    simp [h0, h1, h2, h3, h4, traceRow46, parity26, parity13]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep47 (bits : BitVec 60)
@@ -961,12 +968,13 @@ theorem traceStep47 (bits : BitVec 60)
     (hb : parity12 bits = true) :
     traceRow47 bits = false := by
   have hxor : traceRow47 bits = (parity27 bits ^^ parity12 bits) := by
+    unfold traceRow47 parity27 parity12
     cases h0 : bits.getLsbD 11 <;>
     cases h1 : bits.getLsbD 12 <;>
     cases h2 : bits.getLsbD 25 <;>
     cases h3 : bits.getLsbD 26 <;>
     cases h4 : bits.getLsbD 51 <;>
-    simp [h0, h1, h2, h3, h4, traceRow47, parity27, parity12]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep48 (bits : BitVec 60)
@@ -974,12 +982,13 @@ theorem traceStep48 (bits : BitVec 60)
     (hb : parity11 bits = true) :
     traceRow48 bits = false := by
   have hxor : traceRow48 bits = (parity28 bits ^^ parity11 bits) := by
+    unfold traceRow48 parity28 parity11
     cases h0 : bits.getLsbD 10 <;>
     cases h1 : bits.getLsbD 11 <;>
     cases h2 : bits.getLsbD 26 <;>
     cases h3 : bits.getLsbD 27 <;>
     cases h4 : bits.getLsbD 50 <;>
-    simp [h0, h1, h2, h3, h4, traceRow48, parity28, parity11]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep49 (bits : BitVec 60)
@@ -987,12 +996,13 @@ theorem traceStep49 (bits : BitVec 60)
     (hb : parity10 bits = true) :
     traceRow49 bits = false := by
   have hxor : traceRow49 bits = (parity29 bits ^^ parity10 bits) := by
+    unfold traceRow49 parity29 parity10
     cases h0 : bits.getLsbD 9 <;>
     cases h1 : bits.getLsbD 10 <;>
     cases h2 : bits.getLsbD 27 <;>
     cases h3 : bits.getLsbD 28 <;>
     cases h4 : bits.getLsbD 49 <;>
-    simp [h0, h1, h2, h3, h4, traceRow49, parity29, parity10]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep50 (bits : BitVec 60)
@@ -1000,12 +1010,13 @@ theorem traceStep50 (bits : BitVec 60)
     (hb : parity9 bits = true) :
     traceRow50 bits = false := by
   have hxor : traceRow50 bits = (parity30 bits ^^ parity9 bits) := by
+    unfold traceRow50 parity30 parity9
     cases h0 : bits.getLsbD 8 <;>
     cases h1 : bits.getLsbD 9 <;>
     cases h2 : bits.getLsbD 28 <;>
     cases h3 : bits.getLsbD 29 <;>
     cases h4 : bits.getLsbD 48 <;>
-    simp [h0, h1, h2, h3, h4, traceRow50, parity30, parity9]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep51 (bits : BitVec 60)
@@ -1013,12 +1024,13 @@ theorem traceStep51 (bits : BitVec 60)
     (hb : parity8 bits = true) :
     traceRow51 bits = false := by
   have hxor : traceRow51 bits = (parity31 bits ^^ parity8 bits) := by
+    unfold traceRow51 parity31 parity8
     cases h0 : bits.getLsbD 7 <;>
     cases h1 : bits.getLsbD 8 <;>
     cases h2 : bits.getLsbD 29 <;>
     cases h3 : bits.getLsbD 30 <;>
     cases h4 : bits.getLsbD 47 <;>
-    simp [h0, h1, h2, h3, h4, traceRow51, parity31, parity8]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep52 (bits : BitVec 60)
@@ -1026,12 +1038,13 @@ theorem traceStep52 (bits : BitVec 60)
     (hb : parity7 bits = true) :
     traceRow52 bits = false := by
   have hxor : traceRow52 bits = (parity32 bits ^^ parity7 bits) := by
+    unfold traceRow52 parity32 parity7
     cases h0 : bits.getLsbD 6 <;>
     cases h1 : bits.getLsbD 7 <;>
     cases h2 : bits.getLsbD 30 <;>
     cases h3 : bits.getLsbD 31 <;>
     cases h4 : bits.getLsbD 46 <;>
-    simp [h0, h1, h2, h3, h4, traceRow52, parity32, parity7]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep53 (bits : BitVec 60)
@@ -1039,12 +1052,13 @@ theorem traceStep53 (bits : BitVec 60)
     (hb : parity6 bits = true) :
     traceRow53 bits = false := by
   have hxor : traceRow53 bits = (parity33 bits ^^ parity6 bits) := by
+    unfold traceRow53 parity33 parity6
     cases h0 : bits.getLsbD 5 <;>
     cases h1 : bits.getLsbD 6 <;>
     cases h2 : bits.getLsbD 31 <;>
     cases h3 : bits.getLsbD 32 <;>
     cases h4 : bits.getLsbD 45 <;>
-    simp [h0, h1, h2, h3, h4, traceRow53, parity33, parity6]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep54 (bits : BitVec 60)
@@ -1052,12 +1066,13 @@ theorem traceStep54 (bits : BitVec 60)
     (hb : parity5 bits = true) :
     traceRow54 bits = false := by
   have hxor : traceRow54 bits = (parity34 bits ^^ parity5 bits) := by
+    unfold traceRow54 parity34 parity5
     cases h0 : bits.getLsbD 4 <;>
     cases h1 : bits.getLsbD 5 <;>
     cases h2 : bits.getLsbD 32 <;>
     cases h3 : bits.getLsbD 33 <;>
     cases h4 : bits.getLsbD 44 <;>
-    simp [h0, h1, h2, h3, h4, traceRow54, parity34, parity5]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep55 (bits : BitVec 60)
@@ -1065,12 +1080,13 @@ theorem traceStep55 (bits : BitVec 60)
     (hb : parity4 bits = true) :
     traceRow55 bits = false := by
   have hxor : traceRow55 bits = (parity35 bits ^^ parity4 bits) := by
+    unfold traceRow55 parity35 parity4
     cases h0 : bits.getLsbD 3 <;>
     cases h1 : bits.getLsbD 4 <;>
     cases h2 : bits.getLsbD 33 <;>
     cases h3 : bits.getLsbD 34 <;>
     cases h4 : bits.getLsbD 43 <;>
-    simp [h0, h1, h2, h3, h4, traceRow55, parity35, parity4]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep56 (bits : BitVec 60)
@@ -1078,12 +1094,13 @@ theorem traceStep56 (bits : BitVec 60)
     (hb : parity3 bits = true) :
     traceRow56 bits = false := by
   have hxor : traceRow56 bits = (parity36 bits ^^ parity3 bits) := by
+    unfold traceRow56 parity36 parity3
     cases h0 : bits.getLsbD 2 <;>
     cases h1 : bits.getLsbD 3 <;>
     cases h2 : bits.getLsbD 34 <;>
     cases h3 : bits.getLsbD 35 <;>
     cases h4 : bits.getLsbD 42 <;>
-    simp [h0, h1, h2, h3, h4, traceRow56, parity36, parity3]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep57 (bits : BitVec 60)
@@ -1091,12 +1108,13 @@ theorem traceStep57 (bits : BitVec 60)
     (hb : parity2 bits = true) :
     traceRow57 bits = false := by
   have hxor : traceRow57 bits = (parity37 bits ^^ parity2 bits) := by
+    unfold traceRow57 parity37 parity2
     cases h0 : bits.getLsbD 1 <;>
     cases h1 : bits.getLsbD 2 <;>
     cases h2 : bits.getLsbD 35 <;>
     cases h3 : bits.getLsbD 36 <;>
     cases h4 : bits.getLsbD 41 <;>
-    simp [h0, h1, h2, h3, h4, traceRow57, parity37, parity2]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep58 (bits : BitVec 60)
@@ -1104,12 +1122,13 @@ theorem traceStep58 (bits : BitVec 60)
     (hb : parity0 bits = true) :
     traceRow58 bits = false := by
   have hxor : traceRow58 bits = (parity38 bits ^^ parity0 bits) := by
+    unfold traceRow58 parity38 parity0
     cases h0 : bits.getLsbD 0 <;>
     cases h1 : bits.getLsbD 1 <;>
     cases h2 : bits.getLsbD 36 <;>
     cases h3 : bits.getLsbD 37 <;>
     cases h4 : bits.getLsbD 40 <;>
-    simp [h0, h1, h2, h3, h4, traceRow58, parity38, parity0]
+    simp [h0, h1, h2, h3, h4]
   simp [hxor, ha, hb]
 
 theorem traceStep59 (bits : BitVec 60)
@@ -1117,11 +1136,12 @@ theorem traceStep59 (bits : BitVec 60)
     (hb : parity1 bits = true) :
     traceRow59 bits = true := by
   have hxor : traceRow59 bits = (parity39 bits ^^ parity1 bits) := by
+    unfold traceRow59 parity39 parity1
     cases h0 : bits.getLsbD 0 <;>
     cases h1 : bits.getLsbD 37 <;>
     cases h2 : bits.getLsbD 38 <;>
     cases h3 : bits.getLsbD 39 <;>
-    simp [h0, h1, h2, h3, traceRow59, parity39, parity1]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep60 (bits : BitVec 60)
@@ -1129,11 +1149,12 @@ theorem traceStep60 (bits : BitVec 60)
     (hb : traceRow58 bits = false) :
     traceRow60 bits = true := by
   have hxor : traceRow60 bits = (traceRow59 bits ^^ traceRow58 bits) := by
+    unfold traceRow60 traceRow59 traceRow58
     cases h0 : bits.getLsbD 0 <;>
     cases h1 : bits.getLsbD 1 <;>
     cases h2 : bits.getLsbD 36 <;>
     cases h3 : bits.getLsbD 37 <;>
-    simp [h0, h1, h2, h3, traceRow60, traceRow59, traceRow58]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep61 (bits : BitVec 60)
@@ -1141,11 +1162,12 @@ theorem traceStep61 (bits : BitVec 60)
     (hb : traceRow57 bits = false) :
     traceRow61 bits = true := by
   have hxor : traceRow61 bits = (traceRow60 bits ^^ traceRow57 bits) := by
+    unfold traceRow61 traceRow60 traceRow57
     cases h0 : bits.getLsbD 1 <;>
     cases h1 : bits.getLsbD 2 <;>
     cases h2 : bits.getLsbD 35 <;>
     cases h3 : bits.getLsbD 36 <;>
-    simp [h0, h1, h2, h3, traceRow61, traceRow60, traceRow57]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep62 (bits : BitVec 60)
@@ -1153,11 +1175,12 @@ theorem traceStep62 (bits : BitVec 60)
     (hb : traceRow56 bits = false) :
     traceRow62 bits = true := by
   have hxor : traceRow62 bits = (traceRow61 bits ^^ traceRow56 bits) := by
+    unfold traceRow62 traceRow61 traceRow56
     cases h0 : bits.getLsbD 2 <;>
     cases h1 : bits.getLsbD 3 <;>
     cases h2 : bits.getLsbD 34 <;>
     cases h3 : bits.getLsbD 35 <;>
-    simp [h0, h1, h2, h3, traceRow62, traceRow61, traceRow56]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep63 (bits : BitVec 60)
@@ -1165,11 +1188,12 @@ theorem traceStep63 (bits : BitVec 60)
     (hb : traceRow55 bits = false) :
     traceRow63 bits = true := by
   have hxor : traceRow63 bits = (traceRow62 bits ^^ traceRow55 bits) := by
+    unfold traceRow63 traceRow62 traceRow55
     cases h0 : bits.getLsbD 3 <;>
     cases h1 : bits.getLsbD 4 <;>
     cases h2 : bits.getLsbD 33 <;>
     cases h3 : bits.getLsbD 34 <;>
-    simp [h0, h1, h2, h3, traceRow63, traceRow62, traceRow55]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep64 (bits : BitVec 60)
@@ -1177,11 +1201,12 @@ theorem traceStep64 (bits : BitVec 60)
     (hb : traceRow54 bits = false) :
     traceRow64 bits = true := by
   have hxor : traceRow64 bits = (traceRow63 bits ^^ traceRow54 bits) := by
+    unfold traceRow64 traceRow63 traceRow54
     cases h0 : bits.getLsbD 4 <;>
     cases h1 : bits.getLsbD 5 <;>
     cases h2 : bits.getLsbD 32 <;>
     cases h3 : bits.getLsbD 33 <;>
-    simp [h0, h1, h2, h3, traceRow64, traceRow63, traceRow54]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep65 (bits : BitVec 60)
@@ -1189,11 +1214,12 @@ theorem traceStep65 (bits : BitVec 60)
     (hb : traceRow53 bits = false) :
     traceRow65 bits = true := by
   have hxor : traceRow65 bits = (traceRow64 bits ^^ traceRow53 bits) := by
+    unfold traceRow65 traceRow64 traceRow53
     cases h0 : bits.getLsbD 5 <;>
     cases h1 : bits.getLsbD 6 <;>
     cases h2 : bits.getLsbD 31 <;>
     cases h3 : bits.getLsbD 32 <;>
-    simp [h0, h1, h2, h3, traceRow65, traceRow64, traceRow53]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep66 (bits : BitVec 60)
@@ -1201,11 +1227,12 @@ theorem traceStep66 (bits : BitVec 60)
     (hb : traceRow52 bits = false) :
     traceRow66 bits = true := by
   have hxor : traceRow66 bits = (traceRow65 bits ^^ traceRow52 bits) := by
+    unfold traceRow66 traceRow65 traceRow52
     cases h0 : bits.getLsbD 6 <;>
     cases h1 : bits.getLsbD 7 <;>
     cases h2 : bits.getLsbD 30 <;>
     cases h3 : bits.getLsbD 31 <;>
-    simp [h0, h1, h2, h3, traceRow66, traceRow65, traceRow52]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep67 (bits : BitVec 60)
@@ -1213,11 +1240,12 @@ theorem traceStep67 (bits : BitVec 60)
     (hb : traceRow51 bits = false) :
     traceRow67 bits = true := by
   have hxor : traceRow67 bits = (traceRow66 bits ^^ traceRow51 bits) := by
+    unfold traceRow67 traceRow66 traceRow51
     cases h0 : bits.getLsbD 7 <;>
     cases h1 : bits.getLsbD 8 <;>
     cases h2 : bits.getLsbD 29 <;>
     cases h3 : bits.getLsbD 30 <;>
-    simp [h0, h1, h2, h3, traceRow67, traceRow66, traceRow51]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep68 (bits : BitVec 60)
@@ -1225,11 +1253,12 @@ theorem traceStep68 (bits : BitVec 60)
     (hb : traceRow50 bits = false) :
     traceRow68 bits = true := by
   have hxor : traceRow68 bits = (traceRow67 bits ^^ traceRow50 bits) := by
+    unfold traceRow68 traceRow67 traceRow50
     cases h0 : bits.getLsbD 8 <;>
     cases h1 : bits.getLsbD 9 <;>
     cases h2 : bits.getLsbD 28 <;>
     cases h3 : bits.getLsbD 29 <;>
-    simp [h0, h1, h2, h3, traceRow68, traceRow67, traceRow50]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep69 (bits : BitVec 60)
@@ -1237,11 +1266,12 @@ theorem traceStep69 (bits : BitVec 60)
     (hb : traceRow49 bits = false) :
     traceRow69 bits = true := by
   have hxor : traceRow69 bits = (traceRow68 bits ^^ traceRow49 bits) := by
+    unfold traceRow69 traceRow68 traceRow49
     cases h0 : bits.getLsbD 9 <;>
     cases h1 : bits.getLsbD 10 <;>
     cases h2 : bits.getLsbD 27 <;>
     cases h3 : bits.getLsbD 28 <;>
-    simp [h0, h1, h2, h3, traceRow69, traceRow68, traceRow49]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep70 (bits : BitVec 60)
@@ -1249,11 +1279,12 @@ theorem traceStep70 (bits : BitVec 60)
     (hb : traceRow48 bits = false) :
     traceRow70 bits = true := by
   have hxor : traceRow70 bits = (traceRow69 bits ^^ traceRow48 bits) := by
+    unfold traceRow70 traceRow69 traceRow48
     cases h0 : bits.getLsbD 10 <;>
     cases h1 : bits.getLsbD 11 <;>
     cases h2 : bits.getLsbD 26 <;>
     cases h3 : bits.getLsbD 27 <;>
-    simp [h0, h1, h2, h3, traceRow70, traceRow69, traceRow48]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep71 (bits : BitVec 60)
@@ -1261,11 +1292,12 @@ theorem traceStep71 (bits : BitVec 60)
     (hb : traceRow47 bits = false) :
     traceRow71 bits = true := by
   have hxor : traceRow71 bits = (traceRow70 bits ^^ traceRow47 bits) := by
+    unfold traceRow71 traceRow70 traceRow47
     cases h0 : bits.getLsbD 11 <;>
     cases h1 : bits.getLsbD 12 <;>
     cases h2 : bits.getLsbD 25 <;>
     cases h3 : bits.getLsbD 26 <;>
-    simp [h0, h1, h2, h3, traceRow71, traceRow70, traceRow47]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep72 (bits : BitVec 60)
@@ -1273,11 +1305,12 @@ theorem traceStep72 (bits : BitVec 60)
     (hb : traceRow46 bits = false) :
     traceRow72 bits = true := by
   have hxor : traceRow72 bits = (traceRow71 bits ^^ traceRow46 bits) := by
+    unfold traceRow72 traceRow71 traceRow46
     cases h0 : bits.getLsbD 12 <;>
     cases h1 : bits.getLsbD 13 <;>
     cases h2 : bits.getLsbD 24 <;>
     cases h3 : bits.getLsbD 25 <;>
-    simp [h0, h1, h2, h3, traceRow72, traceRow71, traceRow46]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep73 (bits : BitVec 60)
@@ -1285,11 +1318,12 @@ theorem traceStep73 (bits : BitVec 60)
     (hb : traceRow45 bits = false) :
     traceRow73 bits = true := by
   have hxor : traceRow73 bits = (traceRow72 bits ^^ traceRow45 bits) := by
+    unfold traceRow73 traceRow72 traceRow45
     cases h0 : bits.getLsbD 13 <;>
     cases h1 : bits.getLsbD 14 <;>
     cases h2 : bits.getLsbD 23 <;>
     cases h3 : bits.getLsbD 24 <;>
-    simp [h0, h1, h2, h3, traceRow73, traceRow72, traceRow45]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep74 (bits : BitVec 60)
@@ -1297,11 +1331,12 @@ theorem traceStep74 (bits : BitVec 60)
     (hb : traceRow44 bits = false) :
     traceRow74 bits = true := by
   have hxor : traceRow74 bits = (traceRow73 bits ^^ traceRow44 bits) := by
+    unfold traceRow74 traceRow73 traceRow44
     cases h0 : bits.getLsbD 14 <;>
     cases h1 : bits.getLsbD 15 <;>
     cases h2 : bits.getLsbD 22 <;>
     cases h3 : bits.getLsbD 23 <;>
-    simp [h0, h1, h2, h3, traceRow74, traceRow73, traceRow44]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep75 (bits : BitVec 60)
@@ -1309,11 +1344,12 @@ theorem traceStep75 (bits : BitVec 60)
     (hb : traceRow43 bits = false) :
     traceRow75 bits = true := by
   have hxor : traceRow75 bits = (traceRow74 bits ^^ traceRow43 bits) := by
+    unfold traceRow75 traceRow74 traceRow43
     cases h0 : bits.getLsbD 15 <;>
     cases h1 : bits.getLsbD 16 <;>
     cases h2 : bits.getLsbD 21 <;>
     cases h3 : bits.getLsbD 22 <;>
-    simp [h0, h1, h2, h3, traceRow75, traceRow74, traceRow43]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep76 (bits : BitVec 60)
@@ -1321,11 +1357,12 @@ theorem traceStep76 (bits : BitVec 60)
     (hb : traceRow42 bits = false) :
     traceRow76 bits = true := by
   have hxor : traceRow76 bits = (traceRow75 bits ^^ traceRow42 bits) := by
+    unfold traceRow76 traceRow75 traceRow42
     cases h0 : bits.getLsbD 16 <;>
     cases h1 : bits.getLsbD 17 <;>
     cases h2 : bits.getLsbD 20 <;>
     cases h3 : bits.getLsbD 21 <;>
-    simp [h0, h1, h2, h3, traceRow76, traceRow75, traceRow42]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep77 (bits : BitVec 60)
@@ -1333,11 +1370,12 @@ theorem traceStep77 (bits : BitVec 60)
     (hb : traceRow40 bits = false) :
     traceRow77 bits = true := by
   have hxor : traceRow77 bits = (traceRow76 bits ^^ traceRow40 bits) := by
+    unfold traceRow77 traceRow76 traceRow40
     cases h0 : bits.getLsbD 17 <;>
     cases h1 : bits.getLsbD 18 <;>
     cases h2 : bits.getLsbD 19 <;>
     cases h3 : bits.getLsbD 20 <;>
-    simp [h0, h1, h2, h3, traceRow77, traceRow76, traceRow40]
+    simp [h0, h1, h2, h3]
   simp [hxor, ha, hb]
 
 theorem traceStep78 (bits : BitVec 60)
@@ -1345,9 +1383,10 @@ theorem traceStep78 (bits : BitVec 60)
     (hb : traceRow41 bits = false) :
     traceRow78 bits = true := by
   have hxor : traceRow78 bits = (traceRow77 bits ^^ traceRow41 bits) := by
+    unfold traceRow78 traceRow77 traceRow41
     cases h0 : bits.getLsbD 18 <;>
     cases h1 : bits.getLsbD 19 <;>
-    simp [h0, h1, traceRow78, traceRow77, traceRow41]
+    simp [h0, h1]
   simp [hxor, ha, hb]
 
 theorem certificate_inconsistent (bits : BitVec 60) :
