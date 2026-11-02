@@ -351,6 +351,70 @@ theorem expanded_normalized_coverage
   · exact expanded_normalized_forward rows
   · exact expanded_normalized_backward rows
 
+
+/-- The supported-row gate is invariant under representation sorting.
+    Sorting cannot evade the arity, distinctness or positivity checks. -/
+theorem rowSupported_normalize
+    (r : Nat) (row : Witnora.G5Trace.Row) :
+    Witnora.ExactAffineMembership.rowSupported r row =
+      Witnora.ExactAffineMembership.rowSupported r (normalizeRow row) := by
+  have hp := sortVariables_perm row.coefficients
+  have hlen : (sortVariables row.coefficients).length =
+      row.coefficients.length := hp.length_eq
+  have hnodup : (sortVariables row.coefficients).Nodup ↔
+      row.coefficients.Nodup := hp.nodup_iff
+  have hall : (sortVariables row.coefficients).all
+      (fun v => decide (v > 0)) =
+      row.coefficients.all (fun v => decide (v > 0)) :=
+    all_perm_local (fun v : Nat => decide (v > 0)) hp
+  simp [Witnora.ExactAffineMembership.rowSupported, normalizeRow,
+    hlen, hnodup, hall]
+
+private theorem all_normalized_rows (p : Witnora.G5Trace.Row → Bool)
+    (hp : ∀ row, p row = p (normalizeRow row))
+    (rows : List Witnora.G5Trace.Row) :
+    rows.all p = (rows.map normalizeRow).all p := by
+  induction rows with
+  | nil => rfl
+  | cons row rest ih =>
+      simp [List.all_cons, hp row, ih]
+
+theorem checkInitialRows_normalize
+    (cnf : CNF) (rows : List Witnora.G5Trace.Row) :
+    checkInitialRows cnf rows =
+      checkInitialRows cnf (rows.map normalizeRow) := by
+  exact all_normalized_rows
+    (fun row => checkPattern cnf row.coefficients row.rhs)
+    (fun row => by
+      simpa [normalizeRow] using checkPattern_perm cnf
+        ((sortVariables_perm row.coefficients).symm) row.rhs)
+    rows
+
+/-- All three executable semantic-affine validation gates agree
+    before and after sorting each row's variables. -/
+theorem checkSemanticExactAffine_normalize
+    (r : Nat) (cnf : CNF) (rows : List Witnora.G5Trace.Row) :
+    Witnora.ExactAffineMembership.checkSemanticExactAffine r cnf rows =
+      Witnora.ExactAffineMembership.checkSemanticExactAffine
+        r cnf (rows.map normalizeRow) := by
+  have hs : rows.all (Witnora.ExactAffineMembership.rowSupported r) =
+      (rows.map normalizeRow).all (Witnora.ExactAffineMembership.rowSupported r) :=
+    all_normalized_rows _ (rowSupported_normalize r) rows
+  have hi := checkInitialRows_normalize cnf rows
+  have hc : cnf.all
+      (checkClauseCoverage (Witnora.ExactAffineMembership.expanded rows)) =
+      cnf.all (checkClauseCoverage
+        (Witnora.ExactAffineMembership.expanded (rows.map normalizeRow))) := by
+    have hf : (checkClauseCoverage
+        (Witnora.ExactAffineMembership.expanded rows)) =
+        (checkClauseCoverage
+          (Witnora.ExactAffineMembership.expanded (rows.map normalizeRow))) := by
+      funext clause
+      exact expanded_normalized_coverage rows clause
+    rw [hf]
+  simp only [Witnora.ExactAffineMembership.checkSemanticExactAffine]
+  rw [hs, hi, hc]
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -368,5 +432,6 @@ example :
 #print axioms Witnora.TC063ClausePermutation.generated_signed_clause_perm_exists
 #print axioms Witnora.TC063ClausePermutation.checkClauseCoverage_source_transport
 #print axioms Witnora.TC063ClausePermutation.expanded_normalized_coverage
+#print axioms Witnora.TC063ClausePermutation.checkSemanticExactAffine_normalize
 
 end Witnora.TC063ClausePermutation
