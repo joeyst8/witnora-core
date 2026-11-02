@@ -9,6 +9,12 @@ import re
 import unittest
 from pathlib import Path
 
+from witnora_core.cnf import CNFFormula
+from witnora_core.separator_affine_family_theorem import (
+    SEPARATOR_AFFINE_FAMILY_RECOGNIZED,
+    recognize_separator_affine_family,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 LEAN = (ROOT / "theory" / "TC063DuboisCheckedGraph.lean").read_text()
@@ -51,6 +57,19 @@ class CheckedGraphFixtureTests(unittest.TestCase):
         self.assertEqual(set.union(*components.values()), set(range(60)))
         for x, sx in [("A", "B"), ("A", "S"), ("B", "S")]:
             self.assertFalse(components[x] & components[sx])
+
+    def test_actual_python_recognizer_output_has_a_kernel_checked_graph_fixture(self):
+        formula = CNFFormula.from_raw_clauses(
+            clause for eq in ARCHIVE["proof_equations"]
+            for clause in eq["source_clauses"]
+        )
+        result = recognize_separator_affine_family(formula, c=2, r=3)
+        self.assertEqual(result["status"], SEPARATOR_AFFINE_FAMILY_RECOGNIZED)
+        self.assertEqual(result["separator_variables"], [1, 38])
+        self.assertEqual(len(result["components"]), 2)
+        self.assertIn("v.val = 0 ∨ v.val = 37", LEAN)
+        self.assertIn("v.val = 38 ∨ v.val = 39", LEAN)
+        self.assertIn("recognizedOwnedResidualCover", LEAN)
 
 
 if __name__ == "__main__":

@@ -262,6 +262,55 @@ theorem duboisOwnedResidualCover (s10 s29 : Bool) :
     duboisGraphInvariant (duboisOwnerComplete s10 s29)
     (duboisNoEmptyResidual s10 s29)
 
+-- The current Python recognizer (c=2,r=3) returns DIMACS variables 1 and
+-- 38 as its first valid separator. Removing them yields one 56-variable
+-- component and one two-variable component {39,40}. We kernel-check that
+-- actual recognizer-shaped labeling separately from the balanced 29/29 cut.
+def recognizedOwner (v : Fin 60) : Option Bool :=
+  if v.val = 0 ∨ v.val = 37 then none
+  else if v.val = 38 ∨ v.val = 39 then some true
+  else some false
+
+def recognizedFixed (s1 s38 : Bool) (v : Fin 60) : Option Bool :=
+  if v.val = 0 then some s1
+  else if v.val = 37 then some s38
+  else none
+
+theorem recognizedGraphCheck :
+    checkNoCrossEdges dubois20Clauses recognizedOwner = true := by
+  decide
+
+theorem recognizedGraphInvariant :
+    NoCrossEdges dubois20Clauses recognizedOwner :=
+  checkNoCrossEdges_sound dubois20Clauses recognizedOwner recognizedGraphCheck
+
+theorem recognizedOwnerComplete (s1 s38 : Bool) :
+    AllUnassignedOwned (recognizedFixed s1 s38) recognizedOwner := by
+  intro x hx
+  by_cases hsep : x.val = 0 ∨ x.val = 37
+  · rcases hsep with h1 | h38
+    · simp [recognizedFixed, h1] at hx
+    · simp [recognizedFixed, h38] at hx
+  · by_cases hsmall : x.val = 38 ∨ x.val = 39
+    · exact ⟨true, by simp [recognizedOwner, hsep, hsmall]⟩
+    · exact ⟨false, by simp [recognizedOwner, hsep, hsmall]⟩
+
+theorem recognizedNoEmptyResidual (s1 s38 : Bool) :
+    ([] : Clause (Fin 60)) ∉
+      ReduceCNF (recognizedFixed s1 s38) dubois20Clauses := by
+  cases s1 <;> cases s38 <;> decide
+
+theorem recognizedOwnedResidualCover (s1 s38 : Bool) :
+    ∀ r, r ∈ ReduceCNF (recognizedFixed s1 s38) dubois20Clauses →
+      r ∈ OwnerComponent (ResidualOwner recognizedOwner) false
+            (ReduceCNF (recognizedFixed s1 s38) dubois20Clauses) ∨
+      r ∈ OwnerComponent (ResidualOwner recognizedOwner) true
+            (ReduceCNF (recognizedFixed s1 s38) dubois20Clauses) :=
+  graph_implies_complete_component_cover
+    recognizedGraphInvariant (recognizedOwnerComplete s1 s38)
+    (recognizedNoEmptyResidual s1 s38)
+
 end Witnora.TC063.CheckedGraph
 
 #print axioms Witnora.TC063.CheckedGraph.duboisOwnedResidualCover
+#print axioms Witnora.TC063.CheckedGraph.recognizedOwnedResidualCover

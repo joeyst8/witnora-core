@@ -2,6 +2,12 @@
 
 Status: `LEAN_KERNEL_CHECK_PENDING`.
 
+The initial `{10,29}` graph gate passed all Lean compilation steps at
+[run #41494881662](https://github.com/joeyst8/witnora-core/actions/runs/41494881662),
+commit `3716addf09174515ce9b7dda0e2331fca2cda3c5`.
+Its final theorem printed standard axioms `[propext, Classical.choice,
+Quot.sound]` with no `sorryAx`.
+
 This experiment targets the last concrete graph trust boundary from the
 previous two-component proof. A new Lean file,
 `theory/TC063DuboisCheckedGraph.lean`, represents **every one of the 160
@@ -28,6 +34,29 @@ kernel reduction (using `decide`, **not `native_decide`**):
 - `duboisOwnedResidualCover`: every reduced clause for every separator
   assignment is covered by exactly one of the two ownership classes using
   the previously kernel-checked generic graph-to-owner soundness theorem.
+
+## The actual Python recognizer output
+
+Running `recognize_separator_affine_family` on the exact archived 160 clauses
+with `(c=2,r=3)` returned `SEPARATOR_AFFINE_FAMILY_RECOGNIZED` and its *first*
+valid cut `{DIMACS variables 1,38}` in approximately 3.5 seconds (97
+candidates examined). This is a correct cut but it splits the graph into
+**56 and 2** variable components, instead of the **29 and 29** yielded by
+our chosen cut `{10,29}`.
+
+The Lean fixture now includes both cuts. Its additional
+`recognizedGraphCheck`, `recognizedOwnerComplete`,
+`recognizedNoEmptyResidual`, and `recognizedOwnedResidualCover` theorems
+kernel-check the exact graph premise and all four residual assignments for
+the recognizer's actual selected separator. A separate Python regression
+test reconstructs the full formula through the real recognizer and asserts
+the recognized cut matches the Lean fixture; if the recognizer's selection
+policy changes, the fixture must be re-audited.
+
+Potential performance experiment: compare first-valid separator versus a
+balanced-cut policy under **full recognizer time plus all residual component
+certificate checks**. No speed claim is justified by the balance difference
+alone; searching additional candidates could cost more than it saves.
 
 An independent regression test,
 `tests/test_tc063_dubois_checked_graph_fixture.py`, verifies the Lean clause
