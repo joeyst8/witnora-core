@@ -195,6 +195,123 @@ theorem permuted_dfs_component_index_edge_consistent
       (rawResidualComponents source separator) ordered
       (raw_residual_components_edge_homogeneous source separator) hPerm)
 
+
+/-!
+## Component coverage and actual index lookup
+
+A label is only useful for the G14 residual partition when it points to
+an emitted component containing the vertex.  We first show that every
+marked vertex appears in a recorded component, then combine this invariant
+with the existing exact seen-set coverage theorem.
+-/
+
+/-- Every vertex marked by the scan belongs to a recorded component. -/
+def SeenRepresented (seen : List Nat)
+    (components : List (List Nat)) : Prop :=
+  ∀ v ∈ seen, ∃ component, component ∈ components ∧ v ∈ component
+
+theorem scan_preserves_seen_represented
+    (neighbors : Nat → List Nat) (fuel : Nat)
+    (starts seen : List Nat) (components : List (List Nat))
+    (hRepresented : SeenRepresented seen components) :
+    SeenRepresented
+      (scanComponents neighbors fuel starts seen components).1
+      (scanComponents neighbors fuel starts seen components).2 := by
+  induction starts generalizing seen components with
+  | nil =>
+      simpa [scanComponents] using hRepresented
+  | cons root rest ih =>
+      by_cases hr : root ∈ seen
+      · simpa [scanComponents, hr] using
+          ih seen components hRepresented
+      · let found := (run neighbors fuel (start root)).processed
+        have hNew : SeenRepresented
+            (found ++ seen) (found :: components) := by
+          intro v hv
+          rcases List.mem_append.mp hv with hFound | hOld
+          · exact ⟨found, by simp, hFound⟩
+          · rcases hRepresented v hOld with ⟨component, hc, hvc⟩
+            exact ⟨component, by simp [hc], hvc⟩
+        simpa [scanComponents, hr, found] using
+          ih (found ++ seen) (found :: components) hNew
+
+/-- Every nonseparator source variable belongs to a completed
+    residual DFS component, not merely to the global seen set. -/
+theorem raw_residual_components_cover
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (v : Nat) (hv : v ∈ residualVertices source separator) :
+    ∃ component, component ∈ rawResidualComponents source separator ∧
+      v ∈ component := by
+  have hSeen :
+      v ∈ (scanComponents
+        (residualNeighbors source separator)
+        (residualVertices source separator).length
+        (residualVertices source separator) [] []).1 :=
+    (scan_seen_exact_residual_source source separator v).mpr hv
+  have hRepresented := scan_preserves_seen_represented
+    (residualNeighbors source separator)
+    (residualVertices source separator).length
+    (residualVertices source separator) [] []
+    (by intro w hw; cases hw)
+  exact hRepresented v hSeen
+
+/-- If a vertex is contained in one of the component records, its
+    computed index retrieves a component that contains the vertex. -/
+theorem componentIndex_selects_member
+    (components : List (List Nat)) (v : Nat)
+    (hCovered : ∃ component, component ∈ components ∧ v ∈ component) :
+    ∃ component,
+      components.get? (componentIndex components v) = some component ∧
+      v ∈ component := by
+  induction components with
+  | nil =>
+      rcases hCovered with ⟨component, hc, _⟩
+      cases hc
+  | cons first rest ih =>
+      by_cases hv : v ∈ first
+      · exact ⟨first, by simp [componentIndex, hv], hv⟩
+      · have hRest : ∃ component, component ∈ rest ∧
+            v ∈ component := by
+          rcases hCovered with ⟨component, hc, hMember⟩
+          rcases List.mem_cons.mp hc with hEq | hTail
+          · subst component
+            exact False.elim (hv hMember)
+          · exact ⟨component, hTail, hMember⟩
+        rcases ih hRest with ⟨component, hGet, hMember⟩
+        refine ⟨component, ?_, hMember⟩
+        simpa [componentIndex, hv] using hGet
+
+theorem raw_component_index_selects_member
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (v : Nat) (hv : v ∈ residualVertices source separator) :
+    ∃ component,
+      (rawResidualComponents source separator).get?
+        (componentIndex (rawResidualComponents source separator) v) =
+          some component ∧
+      v ∈ component := by
+  exact componentIndex_selects_member
+    (rawResidualComponents source separator) v
+    (raw_residual_components_cover source separator v hv)
+
+/-- Any permutation, including the final Python-style component ordering,
+    still assigns every residual variable to an actual containing record. -/
+theorem permuted_dfs_component_index_selects_member
+    (source : Witnora.Concrete.CNF) (separator : List Nat)
+    (ordered : List (List Nat))
+    (hPerm : (rawResidualComponents source separator).Perm ordered)
+    (v : Nat) (hv : v ∈ residualVertices source separator) :
+    ∃ component,
+      ordered.get? (componentIndex ordered v) = some component ∧
+      v ∈ component := by
+  apply componentIndex_selects_member ordered v
+  rcases raw_residual_components_cover source separator v hv with
+    ⟨component, hc, hMember⟩
+  exact ⟨component, (hPerm.mem_iff).mp hc, hMember⟩
+
+#print axioms Witnora.G14DFSOwnerLabels.raw_residual_components_cover
+#print axioms Witnora.G14DFSOwnerLabels.raw_component_index_selects_member
+#print axioms Witnora.G14DFSOwnerLabels.permuted_dfs_component_index_selects_member
+
 #print axioms Witnora.G14DFSOwnerLabels.raw_component_index_edge_consistent
 #print axioms Witnora.G14DFSOwnerLabels.conditioned_residual_owner_from_dfs
 #print axioms Witnora.G14DFSOwnerLabels.permuted_dfs_component_index_edge_consistent
