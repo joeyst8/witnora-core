@@ -386,19 +386,23 @@ theorem two_bit_assignment_cover (bits : BitVec 60) (s10 s29 : Bool)
   · left
     intro hr
     have h := componentA_separator_parity bits (hA.mpr hr)
-    simp [h10, h29] at h
+    rw [h10, h29] at h
+    cases h
   · right
     intro hr
     have h := componentB_separator_parity bits (hB.mpr hr)
-    simp [h10, h29] at h
+    rw [h10, h29] at h
+    cases h
   · right
     intro hr
     have h := componentB_separator_parity bits (hB.mpr hr)
-    simp [h10, h29] at h
+    rw [h10, h29] at h
+    cases h
   · left
     intro hr
     have h := componentA_separator_parity bits (hA.mpr hr)
-    simp [h10, h29] at h
+    rw [h10, h29] at h
+    cases h
 
 theorem dubois20_two_component_unsat_cover (bits : BitVec 60) :
     ¬ sourceCNF bits := by
