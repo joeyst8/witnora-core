@@ -235,7 +235,14 @@ theorem duboisGraphInvariant :
 -- just those visited by a selected residual clause.
 theorem duboisOwnerComplete (s10 s29 : Bool) :
     AllUnassignedOwned (duboisFixed s10 s29) duboisOwner := by
-  cases s10 <;> cases s29 <;> decide
+  intro x hx
+  by_cases hsep : x.val = 9 ∨ x.val = 28
+  · rcases hsep with h10 | h29
+    · simp [duboisFixed, h10] at hx
+    · simp [duboisFixed, h29] at hx
+  · by_cases hA : x.val < 9 ∨ (29 ≤ x.val ∧ x.val ≤ 48)
+    · exact ⟨false, by simp [duboisOwner, hsep, hA]⟩
+    · exact ⟨true, by simp [duboisOwner, hsep, hA]⟩
 
 -- Each source clause has three distinct variables and at most one fixed
 -- separator variable; none reduces to the empty clause.
