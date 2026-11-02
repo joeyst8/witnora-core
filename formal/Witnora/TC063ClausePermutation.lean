@@ -541,6 +541,96 @@ theorem finite_support_bound_exists (coeff : List Nat) :
       · exact Nat.lt_of_lt_of_le (hb v hv)
           (Nat.le_max_right (x + 1) bound)
 
+
+/-- Row-wise equivalent reordering induces source-clause transport,
+    even if each row chooses a different permutation. -/
+theorem expanded_map_perm_forward
+    (rows : List Witnora.G5Trace.Row)
+    (transform : Witnora.G5Trace.Row → Witnora.G5Trace.Row)
+    (hr : ∀ row ∈ rows, row.rhs = (transform row).rhs ∧
+      row.coefficients.Perm (transform row).coefficients) :
+    ∀ clause ∈ Witnora.ExactAffineMembership.expanded rows,
+      ∃ translated ∈ Witnora.ExactAffineMembership.expanded (rows.map transform),
+        clause.Perm translated := by
+  induction rows with
+  | nil =>
+      intro clause hmem
+      simp [Witnora.ExactAffineMembership.expanded] at hmem
+  | cons row rest ih =>
+      have hrow := hr row (by simp)
+      have hrest : ∀ entry ∈ rest,
+          entry.rhs = (transform entry).rhs ∧
+          entry.coefficients.Perm (transform entry).coefficients := by
+        intro entry hentry
+        exact hr entry (by simp [hentry])
+      intro clause hmem
+      rcases (expanded_cons_iff row rest clause).mp hmem with hsource | htail
+      · obtain ⟨translated, hgenerated, hpClause⟩ :=
+          generated_signed_clause_perm_exists hrow.2 row.rhs clause
+            (by simpa [Witnora.ExactAffineMembership.rowClauses] using hsource)
+        refine ⟨translated, ?_, hpClause⟩
+        apply (expanded_cons_iff
+          (transform row) (rest.map transform) translated).mpr
+        left
+        simpa [Witnora.ExactAffineMembership.rowClauses, ← hrow.1]
+          using hgenerated
+      · obtain ⟨translated, htranslated, hpClause⟩ :=
+          ih hrest clause htail
+        refine ⟨translated, ?_, hpClause⟩
+        exact (expanded_cons_iff
+          (transform row) (rest.map transform) translated).mpr
+          (Or.inr htranslated)
+
+theorem expanded_map_perm_backward
+    (rows : List Witnora.G5Trace.Row)
+    (transform : Witnora.G5Trace.Row → Witnora.G5Trace.Row)
+    (hr : ∀ row ∈ rows, row.rhs = (transform row).rhs ∧
+      row.coefficients.Perm (transform row).coefficients) :
+    ∀ clause ∈ Witnora.ExactAffineMembership.expanded (rows.map transform),
+      ∃ translated ∈ Witnora.ExactAffineMembership.expanded rows,
+        clause.Perm translated := by
+  induction rows with
+  | nil =>
+      intro clause hmem
+      simp [Witnora.ExactAffineMembership.expanded] at hmem
+  | cons row rest ih =>
+      have hrow := hr row (by simp)
+      have hrest : ∀ entry ∈ rest,
+          entry.rhs = (transform entry).rhs ∧
+          entry.coefficients.Perm (transform entry).coefficients := by
+        intro entry hentry
+        exact hr entry (by simp [hentry])
+      intro clause hmem
+      rcases (expanded_cons_iff
+        (transform row) (rest.map transform) clause).mp hmem with
+        hsource | htail
+      · obtain ⟨translated, hgenerated, hpClause⟩ :=
+          generated_signed_clause_perm_exists
+            hrow.2.symm (transform row).rhs clause
+            (by simpa [Witnora.ExactAffineMembership.rowClauses] using hsource)
+        refine ⟨translated, ?_, hpClause⟩
+        apply (expanded_cons_iff row rest translated).mpr
+        left
+        simpa [Witnora.ExactAffineMembership.rowClauses, hrow.1]
+          using hgenerated
+      · obtain ⟨translated, htranslated, hpClause⟩ :=
+          ih hrest clause htail
+        refine ⟨translated, ?_, hpClause⟩
+        exact (expanded_cons_iff row rest translated).mpr (Or.inr htranslated)
+
+theorem expanded_map_perm_coverage
+    (rows : List Witnora.G5Trace.Row)
+    (transform : Witnora.G5Trace.Row → Witnora.G5Trace.Row)
+    (hr : ∀ row ∈ rows, row.rhs = (transform row).rhs ∧
+      row.coefficients.Perm (transform row).coefficients)
+    (expected : List Literal) :
+    checkClauseCoverage (Witnora.ExactAffineMembership.expanded rows) expected =
+      checkClauseCoverage
+        (Witnora.ExactAffineMembership.expanded (rows.map transform)) expected := by
+  apply checkClauseCoverage_source_transport
+  · exact expanded_map_perm_forward rows transform hr
+  · exact expanded_map_perm_backward rows transform hr
+
 example :
     checkClauseCoverage
       [[(1, true), (2, false)]]
@@ -561,5 +651,6 @@ example :
 #print axioms Witnora.TC063ClausePermutation.checkSemanticExactAffine_normalize
 #print axioms Witnora.TC063ClausePermutation.canonicalSupport_perm_of_covered
 #print axioms Witnora.TC063ClausePermutation.finite_support_bound_exists
+#print axioms Witnora.TC063ClausePermutation.expanded_map_perm_coverage
 
 end Witnora.TC063ClausePermutation
