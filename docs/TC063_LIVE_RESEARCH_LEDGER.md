@@ -317,3 +317,46 @@ Full 28-step CI passed including adversarial controls and previous
 general-CNF Lean regressions:
 https://github.com/joeyst8/witnora-core/actions/runs/41646810807 .
 [Detailed sparse parity and contraction geometry report](SPARSE_ODD_COLUMN_PARITY_GEOMETRY.md).
+
+
+## 2026-11-03 geometry-aware parity and direct-scope containment (CI green)
+
+A new nonenumerative `witnora_core/geometry_aware_parity.py` groups
+source clauses into overlapping source-variable-local buckets, with
+each 3-variable clause assigned to three rows and a duplicate-column
+repair. It meets the same structural sparse-coding conditions that
+detect violation supports of weight 1–3. New exhaustive controls
+passed on six previously frozen 8/54, 10/66 and 12/84 formulas,
+including UNSAT and planted SAT; **large-instance equivalence has
+not been proved**.
+
+A new Lean module `formal/Witnora/GeometryScope.lean` proves
+`all_source_pairs_preserved`: with source-clause coverage,
+every variable pair in an original source clause survives in a
+direct parity factor whose scope is the union of selected source
+clauses. For that precise direct encoding, the parity primal graph
+contains the source primal graph. Consequently, optimal graph
+treewidth cannot decrease through this direct regrouping. Lean
+checks the edge/pair containment theorem, **not** a standalone
+formal treewidth library theorem; the result does not rule out
+auxiliary-variable tensor factorizations or algebraic reductions.
+
+Min-degree induced-width heuristic on planted 3-CNFs,
+source / previous random sparse / geometry-aware width-5:
+32/224 → 26/31/30; 96/576 → 73/93/90;
+256/1536 → 191/246/241. The larger 256/1536
+geometry frontier row-width caps 1,2,3,4,5 gave
+(row counts, heuristic width) (4608,191), (2370,219),
+(1620,232), (1254,234), (1022,241).
+These are not actual tensor-contraction timings or complexity
+guarantees.
+
+Full General-resolution universal UNSAT bridge CI passed Lean proof,
+five Python unit tests, benchmark, and previous regressions:
+https://github.com/joeyst8/witnora-core/actions/runs/41649224809 .
+[Detailed geometry-aware parity research report](GEOMETRY_AWARE_PARITY_FRONTIER.md).
+
+Next: **auxiliary clause-violation variable tensor bridge**,
+with exact model/count correspondence formalized and direct
+time/memory benchmarks against source CNF and CDCL. No general
+polynomial SAT or P-vs-NP result is claimed.
