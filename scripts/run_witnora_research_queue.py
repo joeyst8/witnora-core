@@ -32,6 +32,16 @@ ALLOWED_TASKS = {
         ("-m", "unittest", "tests.test_crc_conflict_oracle", "-v"),
     "wcrc006_conflict_ganak":
         ("-m", "scripts.benchmark_crc_conflict"),
+    "wcrc008_fourier_unit":
+        ("-m", "unittest", "tests.test_crc_independence_audit", "-v"),
+    "wcrc009_structural_unit":
+        ("-m", "unittest", "tests.test_crc_structural_independence", "-v"),
+    "wcrc010_conditional_unit":
+        ("-m", "unittest", "tests.test_crc_conditional_independence", "-v"),
+    "wcrc011_separator_unit":
+        ("-m", "unittest", "tests.test_crc_separator_discovery", "-v"),
+    "wcrc011_separator_benchmark":
+        ("-m", "scripts.benchmark_crc_separator_discovery"),
     "wcrc004_orbit_unit":
         ("-m", "unittest", "tests.test_crc_orbit_oracle", "-v"),
     "wcrc004_orbit_benchmark":
