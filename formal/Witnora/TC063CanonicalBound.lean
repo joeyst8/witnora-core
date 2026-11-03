@@ -253,6 +253,62 @@ theorem checkInitialRows_boundedCanonRows
       simp [boundedCanonRows, boundedCanonRow, checkInitialRows,
         hHeadEq, hTailEq]
 
+/-- Reverse CNF clause coverage is invariant for the entire family
+    of per-row bounded canonical supports. -/
+theorem checkClauseCoverage_expanded_boundedCanonRows
+    (bound : Nat) (rows : List Row) (expected : List Literal) :
+    (∀ row ∈ rows, row.coefficients.Nodup) →
+    (∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound) →
+    checkClauseCoverage (expanded (boundedCanonRows bound rows)) expected =
+      checkClauseCoverage (expanded rows) expected := by
+  induction rows with
+  | nil =>
+      intro _ _
+      rfl
+  | cons row rest ih =>
+      intro hNodup hBound
+      have hHead : row.coefficients.Nodup :=
+        hNodup row (by simp)
+      have hHeadBound : ∀ v ∈ row.coefficients, v < bound :=
+        hBound row (by simp)
+      have hTailNo : ∀ r ∈ rest, r.coefficients.Nodup := by
+        intro r hr
+        exact hNodup r (by simp [hr])
+      have hTailBound : ∀ r ∈ rest, ∀ v ∈ r.coefficients, v < bound := by
+        intro r hr
+        exact hBound r (by simp [hr])
+      change checkClauseCoverage
+          (generateSignedClauses (canonicalSupport bound row.coefficients)
+            row.rhs ++ expanded (boundedCanonRows bound rest)) expected =
+        checkClauseCoverage
+          (generateSignedClauses row.coefficients row.rhs ++
+            expanded rest) expected
+      rw [checkClauseCoverage_append, checkClauseCoverage_append]
+      have hPerm := canonicalSupport_perm_of_bounded bound
+        row.coefficients hHead hHeadBound
+      have hRow :=
+        checkClauseCoverage_signedClauses_perm
+          row.coefficients (canonicalSupport bound row.coefficients)
+          row.rhs expected hPerm.symm hHead
+      rw [← hRow, ih hTailNo hTailBound]
+
+/-- Preserve source coverage of all clauses, not only individually
+    extracted XOR patterns. -/
+theorem reverseCoverage_boundedCanonRows
+    (bound : Nat) (source : CNF) (rows : List Row)
+    (hNodup : ∀ row ∈ rows, row.coefficients.Nodup)
+    (hBound : ∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound) :
+    source.all (checkClauseCoverage (expanded (boundedCanonRows bound rows))) =
+      source.all (checkClauseCoverage (expanded rows)) := by
+  induction source with
+  | nil => rfl
+  | cons clause rest ih =>
+      simp only [List.all_cons]
+      rw [checkClauseCoverage_expanded_boundedCanonRows
+        bound rows clause hNodup hBound, ih]
+
+#print axioms Witnora.TC063CanonicalBound.reverseCoverage_boundedCanonRows
+
 #print axioms Witnora.TC063CanonicalBound.checkInitialRows_boundedCanonRows
 
 #print axioms Witnora.TC063CanonicalBound.canonicalSupport_idempotent
