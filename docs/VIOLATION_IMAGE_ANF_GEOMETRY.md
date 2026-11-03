@@ -229,11 +229,14 @@ but the benefit comes from **explicit component independence**.
 This is a valuable operator for decomposable formulas, not evidence
 for polynomial-time counting on arbitrary connected 3-SAT.
 
-The six new unit tests passed, as did the counter comparison and all
-earlier Lean/CDCL regression steps in
-[CI run #41681763613](https://github.com/joeyst8/witnora-core/actions/runs/41681763613).
-The separate Lean factorization proof is CI-gated in a subsequent commit.
-Next priorities: confirm that Lean proof, measure separators with
-small overlaps (conditioning / component reformation),
-separately benchmark SAT/#SAT against independent solvers,
-and retain a strict TC-063 restricted-family/general-CNF distinction.
+The six new unit tests, counter comparison, universal Lean
+independent-component theorem and all earlier Lean/CDCL regression
+steps passed the final [CI run #41682758248](https://github.com/joeyst8/witnora-core/actions/runs/41682758248).
+Lean reported only the standard `[propext]` axiom for
+`Witnora.ANFComponentFactor.splitCount_mul`, with no project-specific
+axioms or `sorry`. The theorem proves the universal count identity,
+not the correctness of the Python scope-detection algorithm.
+Next priorities: test separators with small overlaps (conditioning /
+component reformation), separately benchmark SAT/#SAT against
+independent solvers, and retain a strict TC-063 restricted-family /
+general-CNF distinction.
