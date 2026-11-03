@@ -368,6 +368,77 @@ theorem reverseCoverage_sortAffineRows
       simp only [List.all_cons]
       rw [checkClauseCoverage_expanded_sortAffineRows rows clause hNodup, ih]
 
+/-- Row arity, duplicate-free support, and positivity are all
+    preserved by coefficient sorting, so the actual row validator agrees. -/
+theorem rowSupported_sortAffineRow
+    (r : Nat) (row : Witnora.G5Trace.Row) :
+    rowSupported r (sortAffineRow row) = rowSupported r row := by
+  have hp := sortVariables_perm row.coefficients
+  have hLen := hp.length_eq
+  have hNodup := hp.nodup_iff
+  have hPos := all_perm (fun v => decide (v > 0)) hp
+  simp [rowSupported, sortAffineRow, hLen, hNodup, hPos]
+
+/-- Every row support validator returns the same result after sorting. -/
+theorem rowsSupported_sortAffineRows
+    (r : Nat) (rows : List Witnora.G5Trace.Row) :
+    (sortAffineRows rows).all (rowSupported r) =
+      rows.all (rowSupported r) := by
+  induction rows with
+  | nil => rfl
+  | cons row rest ih =>
+      simp [sortAffineRows, rowSupported_sortAffineRow, ih]
+
+/-- All three booleans in the full semantic affine-extraction check
+    are now invariant under deterministic sorting of Nodup supports. -/
+theorem checkSemanticExactAffine_sortAffineRows_of_nodup
+    (r : Nat) (source : CNF) (rows : List Witnora.G5Trace.Row)
+    (hNodup : ∀ row ∈ rows, row.coefficients.Nodup) :
+    checkSemanticExactAffine r source (sortAffineRows rows) =
+      checkSemanticExactAffine r source rows := by
+  unfold checkSemanticExactAffine
+  rw [rowsSupported_sortAffineRows r rows,
+      checkInitialRows_sortAffineRows source rows hNodup,
+      reverseCoverage_sortAffineRows source rows hNodup]
+
+/-- The executable arity/positive-ID/Nodup validator itself certifies
+    duplicate-freedom of every accepted row. -/
+theorem rowSupported_implies_nodup
+    (r : Nat) (row : Witnora.G5Trace.Row)
+    (h : rowSupported r row = true) :
+    row.coefficients.Nodup := by
+  unfold rowSupported at h
+  have hBoth := (Bool.and_eq_true.mp h).1
+  have hDup := (Bool.and_eq_true.mp hBoth).2
+  simpa using hDup
+
+/-- Exact source-bound affine acceptance supplies all Nodup premises
+    needed to apply permutation invariance to every row. -/
+theorem semanticAffine_rows_nodup
+    (r : Nat) (source : CNF) (rows : List Witnora.G5Trace.Row)
+    (h : checkSemanticExactAffine r source rows = true) :
+    ∀ row ∈ rows, row.coefficients.Nodup := by
+  have hSupport : rows.all (rowSupported r) = true := by
+    unfold checkSemanticExactAffine at h
+    exact (Bool.and_eq_true.mp (Bool.and_eq_true.mp h).1).1
+  intro row hr
+  exact rowSupported_implies_nodup r row
+    (List.all_eq_true.mp hSupport row hr)
+
+/-- Main syntactic normalization theorem: *every* accepted semantic
+    affine witness stays accepted by the original complete source checker
+    after canonically sorting all row coefficients. -/
+theorem checkSemanticExactAffine_sortAffineRows
+    (r : Nat) (source : CNF) (rows : List Witnora.G5Trace.Row)
+    (h : checkSemanticExactAffine r source rows = true) :
+    checkSemanticExactAffine r source (sortAffineRows rows) = true := by
+  have hNodup := semanticAffine_rows_nodup r source rows h
+  rw [checkSemanticExactAffine_sortAffineRows_of_nodup
+    r source rows hNodup]
+  exact h
+
+#print axioms Witnora.TC063PatternPermutation.checkSemanticExactAffine_sortAffineRows
+
 #print axioms Witnora.TC063PatternPermutation.reverseCoverage_sortAffineRows
 
 #print axioms Witnora.TC063PatternPermutation.signedClause_permutation_match
