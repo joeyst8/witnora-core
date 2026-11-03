@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "description": "Finite reviewed W-CRC-012/013 bounded exact source-counting and adversarial experiments. Completion-driven, no arbitrary commands or task invention.",
+  "description": "Finite approved W-CRC-013/014 signed source-count controls and width-bounded VE benchmark, immediately chained on completion.",
   "tasks": [
-    "wcrc012_cutset_unit",
     "wcrc013_adversarial_unit",
-    "wcrc013_adversarial_ganak"
+    "wcrc014_ve_unit",
+    "wcrc014_ve_ganak"
   ]
 }
