@@ -155,6 +155,61 @@ theorem checkPattern_iff_patternCovered
   · exact checkPattern_implies_patternCovered source vars rhs
   · exact patternCovered_implies_checkPattern source vars rhs hNodup
 
+/-- Assignment-based source-clause coverage is invariant under
+    permutation of the row's coefficient variables. -/
+theorem patternCovered_of_perm
+    (source : CNF) (vars ordered : List Nat) (rhs : Bool)
+    (hPerm : vars.Perm ordered)
+    (hCovered : PatternCovered source vars rhs) :
+    PatternCovered source ordered rhs := by
+  intro a hWrong
+  have hWrongOriginal : parityVars vars a ≠ rhs := by
+    rw [parityVars_perm hPerm a]
+    exact hWrong
+  have hOld := hCovered a hWrongOriginal
+  have hClausePerm :
+      (vars.map (fun v => (v, !(a v)))).Perm
+      (ordered.map (fun v => (v, !(a v)))) :=
+    hPerm.map (fun v => (v, !(a v)))
+  have hEq := checkClauseCoverage_perm_expected source
+    (vars.map (fun v => (v, !(a v))))
+    (ordered.map (fun v => (v, !(a v)))) hClausePerm
+  simpa only [hEq] using hOld
+
+/-- The *executable* source-bound pattern checker is invariant under
+    coefficient permutations whenever variables are duplicate-free. -/
+theorem checkPattern_perm_of_nodup
+    (source : CNF) (vars ordered : List Nat) (rhs : Bool)
+    (hPerm : vars.Perm ordered) (hNodup : vars.Nodup) :
+    checkPattern source vars rhs =
+      checkPattern source ordered rhs := by
+  have hOrderedNodup : ordered.Nodup :=
+    (hPerm.nodup_iff).mp hNodup
+  apply Bool.eq_iff_iff.mpr
+  constructor
+  · intro h
+    apply patternCovered_implies_checkPattern source ordered rhs hOrderedNodup
+    exact patternCovered_of_perm source vars ordered rhs hPerm
+      (checkPattern_implies_patternCovered source vars rhs h)
+  · intro h
+    apply patternCovered_implies_checkPattern source vars rhs hNodup
+    exact patternCovered_of_perm source ordered vars rhs hPerm.symm
+      (checkPattern_implies_patternCovered source ordered rhs h)
+
+/-- Deterministic insertion sorting leaves the exact source-bound
+    forbidden-pattern acceptance boolean unchanged. -/
+theorem checkPattern_sortVariables
+    (source : CNF) (vars : List Nat) (rhs : Bool)
+    (hNodup : vars.Nodup) :
+    checkPattern source (sortVariables vars) rhs =
+      checkPattern source vars rhs := by
+  exact (checkPattern_perm_of_nodup source vars
+    (sortVariables vars) rhs
+    (sortVariables_perm vars).symm hNodup).symm
+
+#print axioms Witnora.TC063PatternPermutation.checkPattern_perm_of_nodup
+#print axioms Witnora.TC063PatternPermutation.checkPattern_sortVariables
+
 #print axioms Witnora.TC063PatternPermutation.allBits_member_length
 #print axioms Witnora.TC063PatternPermutation.nodup_vars_realize_bits
 #print axioms Witnora.TC063PatternPermutation.checkPattern_iff_patternCovered
