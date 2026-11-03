@@ -176,3 +176,23 @@ Lean-accepted yet. Full details in
 [General CDCL/RUP bridge](GENERAL_RUP_CDCL_BRIDGE.md). Next: verified
 row-index reason certificates, industrial proof formats and held-out
 performance analysis, without inflating TC-063 restricted-family claims.
+
+
+## 2026-11-03 indexed RUP reason theorem closed (arbitrary CNF)
+
+`GeneralRUPIndexed.lean` universally proves that explicitly checked
+zero-based unit-reason and conflict row IDs preserve RUP soundness. Its
+`signedIndexedRup_unsat` theorem has axiom audit
+`[propext, Quot.sound]`, no project-specific axioms or `sorry`.
+`GeneralRUPIndexedAscii.lean` binds the exact supported DIMACS source
+bytes and signed clauses to this indexed proof, also with only standard
+axioms. Untrusted Python row-reference annotation was tested against real
+Glucose DRUP: indexed PHP(3,2), PHP(4,3), PHP(5,4), and dense random
+3-CNF (8 variables, 54 clauses) proofs were **Lean accepted**. Modified
+source header and forged/future row ID examples were rejected. The complete
+new gate is green: https://github.com/joeyst8/witnora-core/actions/runs/41602608726 .
+
+This closes the next *soundness* milestone, **not** the industrial speed
+milestone: Lean still uses list indexing/append, so an Array-backed
+implementation with a proved reference correspondence is next. See
+[the universal CDCL/RUP research report](GENERAL_RUP_CDCL_BRIDGE.md).
