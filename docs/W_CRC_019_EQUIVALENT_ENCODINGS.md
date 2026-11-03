@@ -1,10 +1,13 @@
 # W-CRC-019: Identical satisfying sets, different CNF encodings
 
-Status: **28/28 independently checked Ganak exact counts of two models**;
-**25/28 Witnora source counts exact**, **3/28 safely incomplete**;
-small-case full truth-table equivalence for each source variant;
-dedicated sequential research queue passed all tasks.
-The full W-CRC regression suite is a separate final gate.
+Status: **105 green Python regression tests**, **28/28 independently
+checked Ganak exact counts of two models**; **25/28 Witnora source
+counts exact**, **3/28 safely incomplete**; small-case full
+truth-table equivalence for each source variant. Both the full
+W-CRC CI and dedicated sequential research queue passed.
+
+Full green W-CRC CI:
+https://github.com/joeyst8/witnora-core/actions/runs/41727822505
 
 Dedicated queue and raw logs:
 https://github.com/joeyst8/witnora-core/actions/runs/41727817224
