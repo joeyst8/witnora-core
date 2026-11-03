@@ -140,7 +140,6 @@ def _check_complete_g14_with_lean(
     branch_patterns = []
     component_values = []
     chosen_values = []
-    bound_values = []
     row_values = []
     step_values = []
     for (assignment, parts), (_branch_id, _selected_id, chosen, certificate) in zip(
@@ -163,7 +162,6 @@ def _check_complete_g14_with_lean(
         initial = trace[0].get("rows")
         row_values.append(_serialize_rows(initial))
         step_values.append(_compile_dag(initial, payload.get("row_operations")))
-        bound_values.append(str(chosen.max_var + 1))
 
     if len(set(branch_patterns)) != len(branch_patterns):
         raise ValueError("duplicate separator branches")
@@ -174,12 +172,11 @@ def _check_complete_g14_with_lean(
         return f"def {name} (branch : List (Nat × Bool)) : {result_type} := {expression}"
 
     lines = [
-        "import Witnora.G14NormalizedPartition",
+        "import Witnora.TC063SparseCover",
         "set_option maxRecDepth 16384",
         "set_option maxHeartbeats 0",
         definition("certComponents", "List Witnora.Concrete.CNF", component_values, "[]"),
         definition("certSelected", "Witnora.Concrete.CNF", chosen_values, "[]"),
-        definition("certBound", "Nat", bound_values, "0"),
         definition("certRows", "List Witnora.G5Trace.Row", row_values, "[]"),
         definition("certSteps", "List Witnora.G5Dag.XorRef", step_values, "[]"),
     ]
@@ -218,14 +215,14 @@ def _check_complete_g14_with_lean(
         "certSelected branch ∈ certComponents branch")
     proof_for("hcert",
         f"∀ branch ∈ Witnora.SeparatorAssignments.enumerate {sorted_vars}, "
-        "Witnora.SparseBridge.checkG5Closed "
-        "(certBound branch) (certSelected branch) "
+        "Witnora.TC063SparseDirectChecker.checkSparseG5 "
+        "(certSelected branch) "
         "(certRows branch) (certSteps branch) = true")
     lines.append(
-        "  exact Witnora.G14NormalizedPartition.checked_ascii_dimacs_g14_canonical_normalized_unsat "
+        "  exact Witnora.TC063SparseCover.checked_ascii_dimacs_g14_canonical_sparse_unsat "
         f"{source_bytes} {token_data} {raw} {canonical} "
         f"(by decide) (by decide) (by decide) {sorted_vars} "
-        "certComponents hpart certSelected hselected certBound certRows certSteps hcert"
+        "certComponents hpart certSelected hselected certRows certSteps hcert"
     )
     proof_source = "\n".join(lines) + "\n"
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
@@ -346,7 +343,7 @@ def verify_g14_unsat_cover_with_lean(
             result = verify_g5_certificate_with_lean(
                 component_formula, affine_certificate,
                 timeout_seconds=timeout_seconds, max_arity=arity,
-                project_root=project_root,
+                project_root=project_root, use_sparse_checker=True,
             )
             branches.append({"assignment_id": branch_id, "component_id": selected,
                              "lean_check": result})
