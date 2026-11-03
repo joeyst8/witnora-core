@@ -434,3 +434,28 @@ theorem, post to a closed ChatGPT conversation, merge into main or
 modify TC-063 Lean proofs. The remaining Rust migration requires
 adversarial gating, expanded held-out controls and independent formal
 checking if transformation certificates become part of the trust base.
+
+
+## Verified R-004 adaptive native admission — 2026-11-03
+
+Native Rust now exposes an opt-in `rust_adaptive` source-preprocessing
+mode using an inexpensive polarity-pattern screen on 2-CNF clause
+supports. If that screen rejects, the original clauses pass through
+unchanged; if admitted, the already verified R-003 exact simplifier
+runs. The screen is a **performance heuristic**, not a novel
+complexity measure or proof of irreducibility.
+
+[Dedicated R-004 workflow #41737533969](https://github.com/joeyst8/witnora-core/actions/runs/41737533969)
+passed **10 native Rust tests**, **5 Python native integration
+tests** (including 120 new randomized full-assignment-set
+checks) and **12/12 independent Ganak matches**. It bypassed all
+four parity negative controls while admitting all eight forcing
+cases. In the n=64 forcing sample it cut source-to-count time
+257.01 to 3.82 ms including admission and preprocessing; on
+n=64 parity 27.27 ms raw versus 28.15 ms adaptive, still a
+small overhead. Full analysis:
+`docs/RUST_004_ADAPTIVE_SOURCE_ADMISSION.md`.
+
+This feature is built and tested automatically on vetted commits
+but it **does not** start a self-modifying research loop, post to
+the user's closed chat, modify Lean TC-063 or merge draft PR #122.
