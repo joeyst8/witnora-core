@@ -39,12 +39,39 @@ def lean_example(source: list[list[int]], report: dict) -> None:
     print(f"    ({witness} : List RupStep) = true := by decide")
 
 
+def lean_ascii_example(source: list[list[int]], report: dict) -> None:
+    nvars = max(abs(lit) for row in source for lit in row)
+    source_text = ("p cnf " + str(nvars) + " " + str(len(source)) + "\n"
+                   + "".join(" ".join(map(str, row)) + " 0\n" for row in source))
+    source_bytes = "[" + ", ".join(str(ord(ch)) for ch in source_text) + "]"
+    tokens = [lit for row in source for lit in (*row, 0)]
+    signed_tokens = "[" + ", ".join(str(lit) for lit in tokens) + "]"
+    signed_source = "[" + ", ".join(lean_signed(row) for row in source) + "]"
+    witness = "[\n  " + ",\n  ".join(
+        lean_witness(step) for step in report["additions"]) + "\n]"
+    print("example : checkAsciiRup")
+    print(f"    ({source_bytes} : List Nat)")
+    print(f"    ({signed_tokens} : List Int)")
+    print(f"    ({signed_source} : List (List Int))")
+    print(f"    ({witness} : List RupStep) = true := by decide")
+    tampered = source_text.replace(
+        "p cnf " + str(nvars) + " " + str(len(source)),
+        "p cnf " + str(nvars) + " " + str(len(source) - 1), 1)
+    bad_bytes = "[" + ", ".join(str(ord(ch)) for ch in tampered) + "]"
+    print("example : checkAsciiRup")
+    print(f"    ({bad_bytes} : List Nat)")
+    print(f"    ({signed_tokens} : List Int)")
+    print(f"    ({signed_source} : List (List Int))")
+    print(f"    ({witness} : List RupStep) = false := by decide")
+
+
 def main() -> None:
-    print("import Witnora.GeneralRUP")
+    print("import Witnora.GeneralRUPAscii")
     print("open Witnora.GeneralRUP")
+    print("open Witnora.GeneralRUPAscii")
     print("set_option maxRecDepth 65536")
     print("set_option maxHeartbeats 8000000")
-    for pigeons, holes in [(3, 2), (4, 3)]:
+    for pigeons, holes in [(3, 2), (4, 3), (5, 4)]:
         source, report = glucose_drup_witness(pigeons, holes)
         if len(report["additions"]) > 300:
             raise AssertionError("proof size exceeded the frozen Lean smoke cap")
@@ -55,7 +82,10 @@ def main() -> None:
               f"{report['deletions_ignored']} deletions safely retained.")
         print(f"-- Untrusted solver proof SHA-256: {report['proof_sha256']}")
         lean_example(source, report)
+        if pigeons == 3:
+            lean_ascii_example(source, report)
     print("#print axioms Witnora.GeneralRUP.signedRup_unsat")
+    print("#print axioms Witnora.GeneralRUPAscii.checkAsciiRup_sound")
 
 
 if __name__ == "__main__":
