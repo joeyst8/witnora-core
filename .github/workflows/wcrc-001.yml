@@ -39,6 +39,8 @@ on:
       - "tests/test_crc_variable_elimination.py"
       - "tests/test_crc_variable_elimination_indexed.py"
       - "tests/test_crc_heldout.py"
+      - "tests/test_crc_dense_semantics.py"
+      - "scripts/benchmark_crc_dense_semantics.py"
       - "scripts/benchmark_crc_orbit.py"
       - "scripts/benchmark_crc_symmetry_stress.py"
       - "scripts/benchmark_crc_defect.py"
@@ -97,7 +99,7 @@ jobs:
       - name: Install PySAT and Ganak independent counting baselines
         run: python -m pip install --disable-pip-version-check python-sat pyganak==2.8.0
       - name: Exact source and coefficient controls
-        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration tests.test_crc_scaling_benchmark tests.test_crc_highcount_benchmark tests.test_crc_orbit_oracle tests.test_crc_defect_oracle tests.test_crc_conflict_oracle tests.test_crc_independence_audit tests.test_crc_structural_independence tests.test_crc_conditional_independence tests.test_crc_separator_discovery tests.test_crc_cutset_count tests.test_crc_adversarial_benchmark tests.test_crc_variable_elimination tests.test_crc_variable_elimination_indexed tests.test_crc_heldout tests.test_research_queue -v
+        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration tests.test_crc_scaling_benchmark tests.test_crc_highcount_benchmark tests.test_crc_orbit_oracle tests.test_crc_defect_oracle tests.test_crc_conflict_oracle tests.test_crc_independence_audit tests.test_crc_structural_independence tests.test_crc_conditional_independence tests.test_crc_separator_discovery tests.test_crc_cutset_count tests.test_crc_adversarial_benchmark tests.test_crc_variable_elimination tests.test_crc_variable_elimination_indexed tests.test_crc_heldout tests.test_crc_dense_semantics tests.test_research_queue -v
       - name: Source-bound CRC versus structured ANF pilot
         run: python -m scripts.benchmark_crc_vs_anf
       - name: W-CRC-002 dense and mixed scaling pilot
@@ -132,3 +134,5 @@ jobs:
         run: python -m scripts.benchmark_crc_variable_elimination_indexed
       - name: W-CRC-016 held-out signed trees, ladders and dense controls
         run: python -m scripts.benchmark_crc_heldout
+      - name: W-CRC-017 same primal graph, different source algebra
+        run: python -m scripts.benchmark_crc_dense_semantics
