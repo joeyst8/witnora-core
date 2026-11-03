@@ -72,7 +72,7 @@ def emit() -> str:
             f"{_pairs([*pairs, (9999, 10000)])} = false := by decide",
         ])
         if count == 0:
-            commented = list(b"c verified-source-input\\n") + source_bytes
+            commented = list(b"c verified-source-input\n") + source_bytes
             lines.append(
                 f"example : checkAsciiTwoCuts {_list(commented)} "
                 f"{token_text} {raw} {claims} = true := by decide"
