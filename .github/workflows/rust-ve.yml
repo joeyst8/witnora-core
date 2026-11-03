@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-005)
+name: Rust native Witnora migration differential gate (R-001 through R-006)
 
 on:
   push:
@@ -17,6 +17,10 @@ on:
       - "witnora_core/crc_rust_xor.py"
       - "tests/test_crc_rust_xor.py"
       - "scripts/benchmark_rust_xor.py"
+      - "witnora_core/crc_boundary.py"
+      - "witnora_core/crc_rust_walsh.py"
+      - "tests/test_crc_rust_walsh.py"
+      - "scripts/benchmark_rust_walsh.py"
       - ".github/workflows/rust-ve.yml"
   pull_request:
     paths:
@@ -32,6 +36,10 @@ on:
       - "witnora_core/crc_rust_xor.py"
       - "tests/test_crc_rust_xor.py"
       - "scripts/benchmark_rust_xor.py"
+      - "witnora_core/crc_boundary.py"
+      - "witnora_core/crc_rust_walsh.py"
+      - "tests/test_crc_rust_walsh.py"
+      - "scripts/benchmark_rust_walsh.py"
   workflow_dispatch:
 
 concurrency:
@@ -89,3 +97,11 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m scripts.benchmark_rust_xor
+      - name: Verify exact native right Walsh coefficient spectra
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_crc_rust_walsh -v
+      - name: Benchmark right coefficient engine versus independent Ganak
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m scripts.benchmark_rust_walsh
