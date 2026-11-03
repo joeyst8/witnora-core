@@ -23,23 +23,33 @@ We now have an **orthogonal, unrestricted proof-checking interface**:
   reference checker.
 - `GeneralResolutionIndexed.signedIndexed_unsat` proves this indexed
   interface is sound for every signed source CNF.
+- `formal/Witnora/GeneralResolutionStream.lean` checks the indexed instructions
+  directly without materializing a by-value trace; `signedStream_unsat` proves
+  that accepted streaming results exclude every source model.
+- `formal/Witnora/GeneralResolutionAscii.lean` composes the streaming checker
+  with independent ASCII DIMACS parsing and zero-delimited signed-clause
+  verification. `checkAsciiStream_sound` proves both exact source-document
+  identity and UNSAT of the parsed clauses.
 
-Both theorem axiom audits report exactly **[propext, Quot.sound]**. No `sorry`,
+All four relevant theorem axiom audits report exactly **[propext, Quot.sound]**. No `sorry`,
 admitted SAT-oracle result, project axiom or exhaustive original-assignment
 enumeration is used by either theorem.
 
-The **source parser/document-byte correspondence remains a separate trust
-boundary**: these generic theorems start from signed clause lists. We can
-compose them with the existing verified DIMACS document interface, but that
-composition is not part of this milestone.
+The source parser/document-byte correspondence is **now composed** for
+supported ASCII DIMACS documents. The actual byte list, not merely a
+Python-supplied clause list, is an input to the Lean checker. For external
+files, the caller still has to faithfully supply the real bytes to Lean;
+only the parser's documented ASCII DIMACS subset is supported.
 
 ## Real non-affine adversarial fixture
 
 `scripts/generate_general_resolution_lean.py` generates a full ordinary
 resolution refutation of the pigeonhole CNF with three pigeons and two holes,
 an UNSAT example whose obstruction is not an exact affine residual. It prints
-**two independent Lean acceptance examples** for the same Python-generated
-trace: by-value and indexed. The Lean checker re-evaluates the entire trace
+**four independent Lean acceptance examples** for the same Python-generated
+trace: by-value, compact indexed, direct streaming, and source-ASCII-bound.
+A fifth Lean example alters the source DIMACS header count while keeping the
+same proposed clauses and refutation; it is **rejected**. The Lean checker re-evaluates the entire trace
 from source clauses, without trusting a Python UNSAT verdict.
 
 `tests/test_general_resolution_trace.py` checks:
@@ -51,10 +61,10 @@ from source clauses, without trusting a Python UNSAT verdict.
 4. A satisfiable two-pigeon/two-hole source produces no refutation.
 5. Noninteger/zero source literals are rejected.
 
-The targeted workflow passed all five tests, universal Lean theorem build and
-**both generated Lean examples**:
+The targeted workflow passed all five native tests, the universal Lean theorem
+build and **all five generated Lean acceptance/rejection examples**:
 
-- https://github.com/joeyst8/witnora-core/actions/runs/41597633004
+- https://github.com/joeyst8/witnora-core/actions/runs/41598267471
 
 The initial by-value version also passed its earlier independent workflow run:
 https://github.com/joeyst8/witnora-core/actions/runs/41597376744 .
@@ -66,9 +76,11 @@ This result proves **verification soundness**, **not proof-search efficiency**.
 - The saturation-based Python proof producer is a deliberately tiny reference
   enumerator. It can produce exponentially many clauses and is inappropriate
   as a general industrial SAT engine.
-- The indexed certificate reduces serialized row duplication, but the current
-  Lean prototype expands to a full by-value trace and replays it. This is **not
-  yet a streaming linear/near-linear checker**.
+- The compact indexed format reduces serialized parent-clause duplication.
+  The *reference* indexed checker expands to a full by-value trace; the new
+  **direct-streaming checker avoids that full-trace expansion**. Its persistent
+  list row table still makes indexing and append potentially linear in the
+  current row count: this is not yet a linear/near-linear total verifier.
 - The checker accepts **pure binary-resolution additions**, not arbitrary
   RUP/LRAT/DRAT/FRAT. A direct CDCL proof import requires a carefully checked
   proof-format bridge and its own universal soundness theorem.
@@ -79,9 +91,11 @@ This result proves **verification soundness**, **not proof-search efficiency**.
 
 ## Next falsifiable experiments: bigger fish
 
-1. **Proof-stream bridge**: implement a streaming indexed checker and a source-
+1. **CDCL proof import**: replace the tiny saturation emitter with a source-
    bound RUP/LRAT proof importer. Verify every addition, deletion, reference
-   and final empty clause in Lean, preserving exact original DIMACS identity.
+   and final empty clause in Lean; retain exact original DIMACS identity.
+   Upgrade the streaming row table from lists to an efficiently indexed data
+   structure with a proved semantics-preserving refinement.
 2. **Non-affine hard families**: frozen held-out pigeonhole, graph-coloring,
    random 3-SAT near threshold and Tseitin graph CNFs with no useful 2-cut.
    Increase sizes until the proof importer is stressed; record `TIMEOUT` and
