@@ -39,6 +39,7 @@ def count_source_by_separator(
     max_primal_edges: int = 10000,
     max_component_variables: int = 14,
     max_assignment_states: int = 1000000,
+    max_separator_branches: int = 64,
 ) -> CutsetModelCount | None:
     """Exact source #SAT with strict cut, component and state caps.
 
@@ -50,7 +51,9 @@ def count_source_by_separator(
     if (not isinstance(max_component_variables, int) or
         max_component_variables < 1 or
         not isinstance(max_assignment_states, int) or
-        max_assignment_states < 1):
+        max_assignment_states < 1 or
+        not isinstance(max_separator_branches, int) or
+        not 1 <= max_separator_branches <= 256):
         raise ValueError("invalid component/state cap")
     source = tuple(tuple(c) for c in source_clauses)
     cut = discover_source_separator(
@@ -63,6 +66,8 @@ def count_source_by_separator(
     if normalized is None:
         raise AssertionError("checked source became unsatisfiable")
     separator = cut.separator
+    if (1 << len(separator)) > max_separator_branches:
+        return None
     separator_mask = sum(1 << (v - 1) for v in separator)
     remaining = tuple(v for v in boundary_variables
                       if v not in set(separator))
