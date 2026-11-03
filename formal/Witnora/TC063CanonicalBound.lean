@@ -69,11 +69,11 @@ theorem mem_canonicalSupport_idempotent
     (bound v : Nat) (coeff : List Nat) :
     v ∈ canonicalSupport bound (canonicalSupport bound coeff) ↔
       v ∈ canonicalSupport bound coeff := by
-  rw [mem_canonicalSupport_iff, mem_canonicalSupport_iff]
+  rw [mem_canonicalSupport_iff]
   constructor
   · exact And.right
   · intro h
-    exact ⟨(mem_canonicalSupport_iff bound v coeff).mp h |>.1, h⟩
+    exact ⟨((mem_canonicalSupport_iff bound v coeff).mp h).1, h⟩
 
 #print axioms Witnora.TC063CanonicalBound.mem_canonicalSupport_iff
 #print axioms Witnora.TC063CanonicalBound.mem_canonicalSupport_idempotent
