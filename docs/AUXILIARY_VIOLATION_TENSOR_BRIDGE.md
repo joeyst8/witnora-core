@@ -90,3 +90,29 @@ representation. Benchmark *actual* counting or coefficient computation
 direct CNF factor elimination and independently sourced CDCL/model
 counting solvers. No polynomial-time SAT, general exact sparse-sketch
 equivalence, or P versus NP claim is established.
+
+
+## Measured bridge geometry and verified gate (2026-11-03)
+
+Full CI passed: [General-resolution universal UNSAT bridge
+run #41650939175](https://github.com/joeyst8/witnora-core/actions/runs/41650939175).
+That includes Lean checking of both auxiliary theorems, all five
+Python bridge tests, benchmarks and the existing general-CNF
+RUP/Glucose/Lean regressions.
+
+| Source (n/m) | Source factor width | Flat parity factor width | Auxiliary factor width | Auxiliary vertices |
+|---|---:|---:|---:|---:|
+| 32/224 | 26 | 30 | 94 | 256 |
+| 96/576 | 73 | 90 | 310 | 672 |
+| 256/1536 | 191 | 241 | 921 | 1792 |
+
+All widths are min-degree heuristic induced widths, upper bounds
+on treewidth for the stated orders rather than exact treewidth or
+a measured SAT/counting runtime. The 256-variable auxiliary width
+measurement took ~31 seconds as a Python graph diagnostic alone.
+
+This is a **negative outcome** for naive generic elimination:
+while local factor scopes shrink from up to 11 original variables
+to at most five mixed source/violation variables, source-auxiliary
+connections create even harder global fill under the tested order.
+An exact bridge alone did not create a computational advantage.
