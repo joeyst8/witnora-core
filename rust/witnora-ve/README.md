@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-001/R-002/R-003/R-004/R-005/R-006
+# Witnora Rust migration — R-001/R-002/R-003/R-004/R-005/R-006/R-007
 
 The `witnora-ve` executable **and optional PyO3 in-process extension**
 are a native, bounded, exact #SAT **component counter**, ported from Python's W-CRC-015 indexed
@@ -176,6 +176,47 @@ also verified all three opt-in Rust source stages together against
 the original all-Python source path and analytic counts on nine
 n=12/24/60 source families.
 See `docs/RUST_006_RIGHT_WALSH_COEFFICIENTS.md`.
+
+## Exact affine projection and sparse left Fourier (R-007)
+
+The native `affine_spectrum_native` kernel performs sorted-pivot
+GF(2) elimination of internal variables and then an exact
+boundary Walsh/Fourier expansion. It returns projected rows,
+the number of free internal variables, and arbitrary-precision
+dyadic coefficients. The Python adapter
+`witnora_core/crc_rust_affine.py` converts these to exact
+`fractions.Fraction` objects; the Python implementation remains
+the default/reference.
+
+The source and boundary counters opt in with
+`left_backend="rust"`. This can be combined with
+`source_preprocessor="rust_adaptive"`,
+`source_extractor="rust"`, and
+`coefficient_backend="rust_inclusion_exclusion"`.
+Exceeding the original Fourier term cap returns incomplete, never
+a guessed model count.
+
+After installing the native wheel, run:
+
+```sh
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m unittest tests.test_crc_rust_affine -v
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m scripts.benchmark_rust_affine
+```
+
+[Green R-007 CI](https://github.com/joeyst8/witnora-core/actions/runs/41741754634)
+passed **20 Rust tests**, four Python integration tests including
+280 exact projection/full-Fourier comparisons and 160 full-count
+differentials, 12 combined-native source checks, and **15/15**
+independent Ganak and analytic counts. With n=60 and six projected
+XOR blocks, complete affine-plus-coefficient time was 1.0272 ms
+with Python left side versus 0.6572 ms using native Rust
+(~1.56x), right Rust fixed in both comparisons. Some trivial
+instances were slower with Rust: the PyO3 boundary still costs time.
+These are three-repeat, family-specific pilot measurements, not
+a general #SAT breakthrough. Full report:
+`docs/RUST_007_LEFT_AFFINE_FOURIER.md`.
 
 ## Migration policy
 
