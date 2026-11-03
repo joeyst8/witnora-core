@@ -11,10 +11,9 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-017 dense-semantic signed CNF regression controls.
-2. W-CRC-018 matched graph/clause/model-count exact semantic tests.
-3. W-CRC-018 10-case matched study versus Ganak, including a
-   three-way XOR negative control for pairwise dependence.
+1. W-CRC-018 matched graph/clause/model-count semantic unit controls.
+2. W-CRC-019 exact source-equivalence regression tests.
+3. W-CRC-019 28-case encoding-sensitivity pilot versus Ganak.
 
 These are the **current** three approved queue tasks. Earlier task
 configurations described chronologically below are historical.
@@ -359,3 +358,32 @@ limits. This does not establish a novel invariant or a general
 The queue remains finite, source-triggered by new reviewed
 commits, and read-only. It cannot create W-CRC-019 on its own,
 auto-merge a proof, or send closed-chat notifications.
+
+
+## Verified W-CRC-019 exact same-solution encoding pilot — 2026-11-03
+
+The current finite, reviewed tasks are `wcrc018_matched_unit`,
+`wcrc019_encoding_unit`, `wcrc019_encoding_ganak`. Dedicated
+[queue run #41727817224](https://github.com/joeyst8/witnora-core/actions/runs/41727817224)
+succeeded with all three task processes and uploaded JSON results.
+Independent [full W-CRC gate #41727822505](https://github.com/joeyst8/witnora-core/actions/runs/41727822505)
+passed **105 Python tests**, including full truth-table checks that
+all alternative CNF encodings of each n-variable family have precisely
+its original set of satisfying assignments at n=6/8/10.
+
+Across 28 cases n=8/16/32/64, Ganak returned 28/28 exact 2-model
+counts; Witnora returned 25 exact 2-model counts and 3 honest
+`INCOMPLETE_BUDGET` statuses on the logically implied-unit variants.
+The cause was identified: n-1 independent explicit affine unit rows
+expand into 2^(n-1) Fourier modes while the sparse spectrum is capped
+at 4,096. At n=64, an equivalent 63-unit encoding counted in 0.5453
+ms versus 336.0094 ms for the original 4,032-clause encoding,
+**without counting the cost of deriving that simpler encoding**.
+This is encoding sensitivity, not a new intrinsic complexity theorem
+or an end-to-end solver speedup. Full evidence and limitations:
+`docs/W_CRC_019_EQUIVALENT_ENCODINGS.md`.
+
+The bounded read-only queue still cannot invent its own next
+experiment or notify a closed ChatGPT chat. A future approved
+W-CRC-020 could test source-level consensus normalization with its
+preprocessing time included, maintaining independent Ganak crosschecks.
