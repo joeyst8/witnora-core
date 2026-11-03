@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "description": "Finite reviewed W-CRC-010/011 conditional independence and bounded separator experiments; each launches immediately on successful completion of predecessor. No arbitrary commands or autonomous task generation.",
+  "description": "Finite reviewed W-CRC-012/013 bounded exact source-counting and adversarial experiments. Completion-driven, no arbitrary commands or task invention.",
   "tasks": [
-    "wcrc010_conditional_unit",
-    "wcrc011_separator_unit",
-    "wcrc011_separator_benchmark"
+    "wcrc012_cutset_unit",
+    "wcrc013_adversarial_unit",
+    "wcrc013_adversarial_ganak"
   ]
 }
