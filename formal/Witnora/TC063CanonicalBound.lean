@@ -45,7 +45,7 @@ theorem mem_canonicalSupport_iff
           · exact Or.inr hv
           · exact Or.inl (ih.mpr ⟨by omega, hCoeff⟩)
       · have hFlag : decide (n ∈ coeff) = false := by simp [hn]
-        simp only [hFlag, ite_false, List.not_mem_nil, or_false]
+        simp only [hFlag, Bool.false_eq_true, ite_false, List.not_mem_nil, or_false]
         constructor
         · intro h
           obtain ⟨hLt, hCoeff⟩ := (ih.mp h)
