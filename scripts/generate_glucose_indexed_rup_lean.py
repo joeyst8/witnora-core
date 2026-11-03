@@ -29,10 +29,7 @@ def lean_indexed_step(step: IndexedRUPWitness) -> str:
 
 
 def lean_trace(proof: list[IndexedRUPWitness]) -> str:
-    return "[
-  " + ",
-  ".join(lean_indexed_step(step) for step in proof) + "
-]"
+    return "[\n  " + ",\n  ".join(lean_indexed_step(step) for step in proof) + "\n]"
 
 
 def lean_acceptance(source: list[list[int]], proof: list[IndexedRUPWitness],
