@@ -74,6 +74,44 @@ class TestRustSourcePreprocessing(unittest.TestCase):
             self.assertEqual(base.models, 2)
             self.assertEqual(rust.models, base.models)
 
+    def test_adaptive_gate_skips_parity_and_preserves_models(self):
+        for n in (8, 16, 32, 64):
+            for family, expect_skip in (("pairwise_parity", True),
+                                        ("pairwise_forcing", False)):
+                source = equivalent_encoding(n, family, "base")
+                adapted = simplify_source_in_rust(source, n, adaptive=True)
+                self.assertIsNotNone(adapted)
+                self.assertEqual(adapted.skipped, expect_skip)
+                if expect_skip:
+                    self.assertEqual(adapted.passes, 0)
+                    self.assertEqual(adapted.clauses, tuple(source))
+                else:
+                    self.assertGreater(adapted.passes, 0)
+                    self.assertLess(len(adapted.clauses), len(source))
+                counted = count_signed_cnf_crc(
+                    source, n, max_inclusion_subsets=2,
+                    max_coefficient_states=20000,
+                    source_preprocessor="rust_adaptive")
+                self.assertIsNotNone(counted)
+                self.assertEqual(counted.models, 2)
+
+        rng = random.Random(420042)
+        for n in (3, 5, 7):
+            for _ in range(40):
+                clauses = [
+                    [rng.choice((-1, 1)) * rng.randrange(1, n + 1)
+                     for _ in range(rng.randrange(4))]
+                    for _ in range(rng.randrange(10))
+                ]
+                adapted = simplify_source_in_rust(clauses, n, adaptive=True)
+                self.assertIsNotNone(adapted)
+                self.assertEqual(satisfying_masks(clauses, n),
+                                 satisfying_masks(adapted.clauses, n))
+
+        parity = equivalent_encoding(16, "pairwise_parity", "base")
+        self.assertIsNone(simplify_source_in_rust(
+            parity, 16, adaptive=True, max_clause_visits=1))
+
     def test_fail_closed_limits_and_invalid_input(self):
         source = [(1, 2), (1, -2)]
         self.assertIsNone(simplify_source_in_rust(
