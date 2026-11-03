@@ -95,3 +95,72 @@ Simply shrinking the expression is insufficient.
 Numerical measurements and CI status will be appended after
 verification. No completion of general-purpose SAT or P vs NP
 is claimed.
+
+
+## Verified results (2026-11-03)
+
+[Full CI run #41669844135](https://github.com/joeyst8/witnora-core/actions/runs/41669844135)
+passed the universal Lean signed-clause product lemmas, five
+symbolic ANF tests, the actual bounded counting benchmark,
+and previous general-CNF Lean/CDCL regressions.
+
+Lean kernel output:
+- `falseProduct_eq_not_any` depends on standard `[propext]`.
+- `productViolations_eq_violationVector` depends on
+  standard `[propext, Quot.sound]`.
+No project-specific axiom or `sorry` remains in this module.
+
+### Exact small counting with the same symbolic search algorithm
+
+| Frozen source | Source ANF exact count ms | Parity ANF survivor count ms | Exact answer |
+|---|---:|---:|---:|
+| 4v/5c planted | 0.443 | 0.879 | 8 |
+| 5v/7c planted | 0.726 | 1.031 | 13 |
+| 6v/9c planted | 1.357 | 1.391 | 27 |
+| 8v/54c UNSAT | 5.863 | 7.265 | 0 |
+| 8v/54c planted SAT | 5.237 | 10.024 | 1 |
+| 10v/66c UNSAT | 14.584 | 20.896 | 0 |
+| 10v/66c planted SAT | 12.346 | 18.724 | 1 |
+
+Each source count matched an independent exhaustive
+small-instance model oracle. Each parity count matched the
+independently evaluated number of sketch-surviving assignments.
+On these frozen examples, the geometry-aware sketch happened
+to be exact; the prior adversarial collision test separately
+shows this is **not universal**.
+
+These are single-run prototype Python wall times for
+Shannon/memoized ANF equation counting, with `max_states=10,000`.
+They are **not** industrial SAT solver benchmarks, and do not
+include source generation in the timing. In some cases parity
+used fewer states (8v/54c UNSAT: 17 vs 34) but took longer
+because each nonlinear state was more expensive to simplify.
+
+### Symbolic construction, no assignment enumeration
+
+| Frozen planted 3-CNF | Rows | Raw monomial occurrences | Reduced ANF occurrences | Reduction | Max degree | Build ms |
+|---|---:|---:|---:|---:|---:|---:|
+| 32v/224c | 150 | 2,502 | 2,118 | 15.3% | 3 | 2.436 |
+| 96v/576c | 385 | 6,492 | 5,896 | 9.2% | 3 | 6.593 |
+| 256v/1536c | 1,022 | 17,286 | 15,856 | 8.3% | 3 | 19.229 |
+
+No zero or duplicate nonzero ANF row appeared on any of
+these three large constructions. Exact counting was **not**
+attempted for large n.
+
+For smaller frozen controls, cancellation was stronger
+(e.g. 8v/54c planted: 600→364; 10v/66c planted: 708→498)
+but still did not make parity-ANF counting faster than
+source-clause ANF counting.
+
+### Decision
+
+This closes a useful semantic bridge: the low-degree
+source-to-violation polynomial map can be built without
+enumerating assignments, and Lean verifies the underlying
+clause-product meaning. But term cancellation alone does
+not reduce observed counting time. The next operator should
+use shared subexpression structure, compiled polynomial
+evaluation or elimination, variable-order selection and
+independent total-cost comparisons. A universal
+Python-monomial-to-Lean refinement remains unfinished.
