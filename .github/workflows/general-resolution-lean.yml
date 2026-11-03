@@ -50,6 +50,7 @@ on:
       - "tests/test_violation_image_anf.py"
       - "scripts/benchmark_violation_image_anf.py"
       - "witnora_core/anf_structured_counter.py"
+      - "formal/Witnora/ANFComponentFactor.lean"
       - "tests/test_anf_structured_counter.py"
       - "scripts/benchmark_anf_structured_counter.py"
       - "formal/Witnora/GF2RowParity.lean"
@@ -111,6 +112,7 @@ on:
       - "tests/test_violation_image_anf.py"
       - "scripts/benchmark_violation_image_anf.py"
       - "witnora_core/anf_structured_counter.py"
+      - "formal/Witnora/ANFComponentFactor.lean"
       - "tests/test_anf_structured_counter.py"
       - "scripts/benchmark_anf_structured_counter.py"
       - "formal/Witnora/GF2RowParity.lean"
@@ -216,6 +218,10 @@ jobs:
 
       - name: Benchmark nonlinear violation-image ANF versus original CNF constraints
         run: python -m scripts.benchmark_violation_image_anf
+
+      - name: Kernel-check universal independent-component counting identity
+        working-directory: formal
+        run: lake build Witnora.ANFComponentFactor
 
       - name: Verify shared-cofactor ANF counter, independent scopes and collisions
         run: python -m unittest tests.test_anf_structured_counter -v
