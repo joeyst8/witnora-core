@@ -210,3 +210,67 @@ exponential cost into extraction, oracle lookup or proof generation.
 **Claim boundary:** no Lean correctness proof for this Python module,
 no universal CPython refinement, no industrial SAT benchmark advantage,
 no general runtime upper bound, and no P-vs-NP conclusion.
+
+## 2026-11-03 overlapping nonlinear clause experiment: exact Shannon oracle
+
+Added witnora_core/crc_shannon_oracle.py. It computes requested
+**unnormalized signed model counts**:
+
+    W_F(T) = SUM_(x in {0,1}^S) [F(x)] (-1)^parity(T & x).
+
+For pivot variable v, exact Shannon expansion is
+
+    W_F(T) = W_(F|v=0)(T \ {v})
+             + (-1)^[v in T] W_(F|v=1)(T \ {v}).
+
+All requested Fourier modes share the same recursive clause
+simplification and memoization state. The result is divided by 2^|S|
+using exact fractions. Unit clauses are selected before general pivots.
+The recursion has a strict unique-state budget: exhaustion returns None,
+never a SAT/UNSAT classification.
+
+The source adapter exposes this as an **opt-in**
+max_coefficient_states parameter. By default the previous bounded
+component inclusion-exclusion behavior is unchanged. On exceeding the
+inclusion-exclusion limit, a caller that explicitly opts in may use
+the Shannon oracle; both oracle forms are exact if they finish.
+
+This is **standard weighted model counting / Shannon recursion**,
+not a new mathematical operator. It can still require exponential
+work on dense difficult formulas, and does not have a general
+polynomial bound.
+
+### Verification and dense numerical controls
+
+- Three independent oracle tests: 120 seeded random overlapping
+  CNFs with all their small-boundary Walsh coefficients checked
+  against independent exhaustive sums; free, contradiction and
+  state-budget checks.
+- Four source-integration tests: 200 additional randomly generated
+  original signed CNFs checked against exhaustive model counting;
+  exactly two requested Fourier modes on a mixed parity/nonlinear
+  instance; previous dense controls; fail-closed budget.
+- **23 Python test methods passed** in GitHub Actions:
+  https://github.com/joeyst8/witnora-core/actions/runs/41696067577
+
+Controlled source-to-count medians (three repeated Python calls on
+the same CI runner, including source extraction):
+
+| Dense random 3-CNF | Original IE CRC | Optional Shannon CRC | Existing ANF |
+| --- | --- | ---: | ---: |
+| 10 vars/42 clauses, 0 models | INCOMPLETE_BUDGET | 0.8792 ms / 40 states | 1.2322 ms / 40 states |
+| 12 vars/51 clauses, 4 models | INCOMPLETE_BUDGET | 1.5142 ms / 114 states | 1.7533 ms / 56 states |
+
+The speed ratios 1.40x and 1.16x are **preliminary small-instance
+comparisons**, not independently benchmarked solver advantages. On
+the previously easy XOR-chain-plus-disjoint-OR family, the new
+optional code stayed on the original inclusion-exclusion backend;
+any timing differences there are measurement noise, not evidence
+that Shannon improved that family.
+
+**Next falsification gate:** test multiple random and structured
+high-overlap CNFs with 16, 20, 24+ variables, independent solving
+baselines, separate preprocessing/memory measurement, and honest
+budget-exhaustion reporting. If the fallback fails to outperform
+existing counters consistently, keep it as a correctness-safe option
+and prioritize a different algebraic hypothesis.
