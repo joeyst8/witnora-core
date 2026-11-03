@@ -1,0 +1,3376 @@
+{
+  "schema": "witnora-rust-migration-v1",
+  "source_revision": "c348c708e4dae460f6edd191ea9c930e4f105ac4",
+  "branch": "research/w-crc-001-asymmetric-v1",
+  "scope": "Entire Python source, script and test suite; preserve original until Rust equivalence and Lean trust are checked",
+  "created_on": "2026-11-03",
+  "total_python_files": 560,
+  "counts": {
+    "core": 148,
+    "scripts": 117,
+    "tests": 295
+  },
+  "migration_policy": "Do not remove/disable Python or alter Lean proof artifacts until new Rust tests, independent baselines and complete workflow coverage are verified.",
+  "entries": [
+    {
+      "path": "scripts/adversarial_compression_validation.py",
+      "sha": "aaccb8ae221c1d8bb35c33f846f88b848014f8bd",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/analyze_lookahead_failures.py",
+      "sha": "98af820750e28e5ced7a384757dde1d3c456cc4e",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/attach_release_trust_card.py",
+      "sha": "625b7daeccdee9c63d836c933bf57f618a4befc3",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/attack_tc063_small_separator.py",
+      "sha": "886558c989ee3851a37a33b3b1b0329f8dd5f824",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/audit_compressed_g14_proof.py",
+      "sha": "ed16476586532ec49903aa6a5082d6bc2629487c",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_adaptive_lookahead.py",
+      "sha": "5c3548f22d3d1d340e607b1c5181bee574a4d3b8",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_affine_sat.py",
+      "sha": "6522a5adff9ec4a05b6b2ce5ca7512a807b327bd",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_anf_separator_conditioning.py",
+      "sha": "9bc81233d375a636189361960dfad33db356e7d8",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_anf_structured_counter.py",
+      "sha": "07b0f726a1f7d508339d70a2c8be382413f2ca11",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_aux_violation_tensors.py",
+      "sha": "a7509626b417c0c53e37724b1823cae372bf2ef5",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_cdcl_rup_scaling.py",
+      "sha": "7c8ca17305da5aedf4772188a4a9666b3022d526",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_compressed_g14_cost.py",
+      "sha": "c6904819f471db743ec4796f15e81e6d7ae57c95",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_cost_sensitive_gate.py",
+      "sha": "b3a4432669ab32cb5dd100f4258d2f775824e877",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_adversarial.py",
+      "sha": "2ab37a55cacebf79358ddd49c8cfc406f5a41883",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_conditional_independence.py",
+      "sha": "4127a1fa0fe372c16eabdde08cdb3622a18ef17d",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_conflict.py",
+      "sha": "18b0c31e4624b0153620a4d3347448f3148c0433",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_cutset_count.py",
+      "sha": "919505dfdc26cc0d5b027584c2e85a73861a9899",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_defect.py",
+      "sha": "03221496f8f3bdce372892468e2026c39c4e13ff",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_dense_semantics.py",
+      "sha": "1cbaab1c9966e15c3deeb5a1008e205bd35e86a8",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_equivalent_encodings.py",
+      "sha": "ecc2a68af3f067d7189b142001b9bd4e739cde7d",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_heldout.py",
+      "sha": "f4499382fd487048ed1ba04bc23ef7f2db3482c6",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_highcount.py",
+      "sha": "5d175b66445a38f05607f078e948e6bff2e6570d",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_independence.py",
+      "sha": "b230709f78067bb3bfbc24be08a9344a25200422",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_matched_semantics.py",
+      "sha": "927bc20782b47428cddca16f56183917807d0a17",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_orbit.py",
+      "sha": "589038e4202c8ed6246d6394882f6584fee9995a",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_scaling.py",
+      "sha": "2aff4c888bbd3b22e110f4299b3d7c9f71757a95",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_separator_discovery.py",
+      "sha": "f333433cfbfda806a9fbcd2fee0045be3e2a32eb",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_structural_independence.py",
+      "sha": "3495d8768b106f834d5c30373f26c53634266c76",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_symmetry_stress.py",
+      "sha": "2c8cbd553b371403a558205e31b2746ea1e04c32",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_variable_elimination_indexed.py",
+      "sha": "bd43ff781cb2ec3c9156c96609522722fb39635b",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_variable_elimination.py",
+      "sha": "d1b4c07245d8dbedd38166e47a8b32bd143d26b8",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_crc_vs_anf.py",
+      "sha": "be9126a26b172327eaa6b2c8c74bb5ec8512bb57",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_cycle_discovery.py",
+      "sha": "e318c0a83b1f800ef92f4309ccbc91006bb240f6",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_eth_constraint_geometry.py",
+      "sha": "5808d5bf8657b64b45e9131d1e8f82c9253622a7",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_exact_tensor_counting.py",
+      "sha": "5dd0c41862f13644908f00694ea2728967318468",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_factor_elimination_orders.py",
+      "sha": "6842eb7298df755686ff4c33678990ed287ad767",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_forced_relation_probe.py",
+      "sha": "92fb41dfc4137971f17b00e098c20e9d99dcb1ad",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_geometry_aware_parity.py",
+      "sha": "5f47fc9fbf0542c62051e845f1c4c2e487b373d7",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_gf2_sparse_basis_counting.py",
+      "sha": "0dbf86cf04004cd3bcadaad9a77a0e3d35a4aef9",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_hard_separator_stress.py",
+      "sha": "3321923d6596a55a20bf66183b2a6956355b8047",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_hidden_separator_challenge.py",
+      "sha": "1c193cf875ae0199c8d677434e7ca5b4b3acc748",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_incremental_separator.py",
+      "sha": "b0a6ccb658fb54cb2aa46408c5c5b0e760733cf3",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_multicut_parity_separator.py",
+      "sha": "9d58b3bb2ecf93b9eb14e821bf42a687b8a56a01",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_ood_larger.py",
+      "sha": "7cfcd26e071723bcff728e1927151a426e02f96c",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_operator_ood.py",
+      "sha": "a28e9d814c37de69b6402681b08b7f5e3c4bc06f",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_parity_separator_fingerprint.py",
+      "sha": "7c48f38f304aeb2e93ec6056998af98adcb5bd86",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_rup_indexed_propagation.py",
+      "sha": "71016aa514ba3286aa092597b57f5ffed8c797f9",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_rust_affine.py",
+      "sha": "9256497be93c3d4e77c6b1531cafd0b2eb4f97be",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_rust_preprocess.py",
+      "sha": "f9cc228d51cf40d36ccab61f22a024f885e63e63",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_rust_ve.py",
+      "sha": "e12c85d8f8fadbf938102dab7d50274ae7fd0513",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_rust_walsh.py",
+      "sha": "dae3d7d9b0b74ed19052258b7f1046d16a6e2720",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_rust_xor.py",
+      "sha": "9802a57b87a8f371ef853d2f8390a08fad40dee5",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_satlib_external.py",
+      "sha": "f5abe098cca9919809a3d916183b5521772a3d42",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_selective_lookahead.py",
+      "sha": "faa1472f8d75a0ff3027bf373c737fc5340bf6d3",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_separator_conditioned_solve.py",
+      "sha": "700eeec768f146fa6873c390c4e05c4aed6dbdc7",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_separator_scaling.py",
+      "sha": "9918436c085c198b82b05d7def20bc1d87ece777",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_sparse_parity.py",
+      "sha": "a188355efaca0daf7566087db5e5b17e5a7809d4",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_spoke_collapse.py",
+      "sha": "cf469142e758ec8b27baa76f68d42895647b79ce",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_spoke_lean_gate.py",
+      "sha": "90c90f562c2cdaadb60c9b71a8c48b87fb9e58e4",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_verified_compression.py",
+      "sha": "f2086255e9a4c2eeb830e38c5f9dd414aa601618",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/benchmark_violation_image_anf.py",
+      "sha": "94f85a673e1516a43d21e412011c386bad5857cc",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/check_g14_separator_only_lean.py",
+      "sha": "285cfbd9c3ddadead1aa3a299f565e94a2a30e29",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/check_g14_zero_separator_lean.py",
+      "sha": "2ff50ee56c60e1b28f0b671aa4a52c4bda008fce",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/check_low_arity_g5_lean.py",
+      "sha": "fa560ac47c427b65f4ae180ccd2cfcc60aa737ac",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/docker_action_smoke_test.py",
+      "sha": "cc376bced7e1ce74eb5d7bfcce0c708ecfb06585",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/emit_lean_cnf_canonical.py",
+      "sha": "59552d47ece1ec549418f159b8eb5097b4f3c782",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/emit_lean_g5_traces.py",
+      "sha": "214432abf05b6728d8c35d14a16df1cee5fedbb1",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/emit_lean_separator_fixtures.py",
+      "sha": "6a499fe8195fb7b23fe393e7c5c40223616f52d9",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/emit_lean_xor_encoding.py",
+      "sha": "bd21964e81aed729ee1720631ff33b5885d7a629",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_color_repair.py",
+      "sha": "44da44ab2cdcc0414759885295c0b927304ae591",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_color_selector.py",
+      "sha": "5c28f19f50295756d618434de2df49a00a6f9df8",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_conditional_graph_conjectures.py",
+      "sha": "e2415f499036234d0f85231e1f144e091ae6e069",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_conjecture_triage.py",
+      "sha": "a8613d7120e94baf7224fa35778eedf5cf6f3262",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_double_kempe.py",
+      "sha": "a45c3449f50a7ec507ac31c2a6213333f6901ee1",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_dsatur_adversarial.py",
+      "sha": "188666aca6f480e8c014a7471bfead1dadb11f1c",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_dsatur_bipartite_audit.py",
+      "sha": "cdb706358b03dd85de55af0a252f201a612fd28d",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_expression_conjectures.py",
+      "sha": "013d7fd278727d94bf34083019b512eeda903913",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_graph_conjectures.py",
+      "sha": "19d2893709af2b8639b98c27bc59453d86732e97",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_kempe_repair.py",
+      "sha": "8f8da89bac31da6e955f8c4e07a2ec329bcd722a",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_nonedge_matching_bound.py",
+      "sha": "a391a2aa16b3d7f67cdb6a08c86d3121c708162f",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_operator_discovery.py",
+      "sha": "afffe914400fcbc319c7c77e2c43f759ce46babb",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_structured_coloring.py",
+      "sha": "2c3f599a4914708c56d3c67cbf8fea5aa5076db2",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_symbolic_implication.py",
+      "sha": "6497d69d5d1d79bf2b0df8e8bd05fb51cce2496a",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/experiment_targeted_graph_theorems.py",
+      "sha": "8b28a3f998ba179fd8effc30f1baad5e7e041d28",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/find_operator_counterexamples.py",
+      "sha": "6c115e103ddfdeff9c15a7bf8e698b47ce9be63a",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_adversarial_ascii_lean.py",
+      "sha": "8844b773d587577f146eeb368964ab5ed2778c82",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_ascii_lean_certificates.py",
+      "sha": "d074b6210e1f0a1f5c1f345d016ac068450d12ad",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_eth_clause_violation_parity_lean.py",
+      "sha": "ec6ca4f7b64c1c994080a04aa14fc6138b93f30d",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_g14_adversarial_matrix_lean.py",
+      "sha": "ab727c9d0f7cdd108727f26fc15be91d90780fe9",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_g14_dfs_labels_lean.py",
+      "sha": "2fb858c355e488b66de5c0c9f837c7ef9b0d4a36",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_g14_size_ladder_lean.py",
+      "sha": "3052848bfca0f59ee41b8f3ea9217e87076a8a6b",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_general_resolution_lean.py",
+      "sha": "6a143a1f0ebe9e79577f5bd078ef9048ee60b205",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_general_rup_lean.py",
+      "sha": "c7c5a5d79e1ac9bd1e7ed257079ddcf4437de651",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_glucose_dense_3sat_lean.py",
+      "sha": "4593ef61ece3b8db84846706227b53343fd60e08",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_glucose_drup_rup_lean.py",
+      "sha": "7d1416c71fb7094b9b705b05204dafd159f54c1c",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_glucose_indexed_rup_lean.py",
+      "sha": "1a692fab4d60dedc9a2c49cc419ae10b1cb96057",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_lean_color_certificates.py",
+      "sha": "62c53a251b2e96e27c5d2ea680feaeaa6e456ca9",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_numeric_lean_certificates.py",
+      "sha": "8a1eff125e3c1200c4f71ed260169f12f50b1151",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_ascii_source_vertex_cuts_lean.py",
+      "sha": "6acf912de2e1b35974357cf0dfe074d33ac8ae70",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_canonical_sort_differential_lean.py",
+      "sha": "3f0bfa0ce72950080cb4d2e18a80bf0287d066bc",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_dimacs_xor_lean.py",
+      "sha": "be479954e66e2f12208d086bf8492e157f37e1ed",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_g14_lean.py",
+      "sha": "ce4d1dd0f33c1d1de96cfca9a0edb8c437f505a7",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_g14_multicomponent_lean.py",
+      "sha": "29cb54786729d56642db95ccacf2b5ef2a0b7b8e",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_g14_sat_model_lean.py",
+      "sha": "d3d390d9371505c086074305f0212d872c1701f4",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_g5_compiler_differential_lean.py",
+      "sha": "1dc957d606bcc49a5e6dae698399ee7d506fd10e",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_g5_path_two_cut_lean.py",
+      "sha": "a10a19afd24794a9968a18f35e6a966062610346",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_source_vertex_cuts_differential_lean.py",
+      "sha": "ff8b2820c55ef5fec17738282243b68c912e6d93",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_python_vertex_coupling_differential_lean.py",
+      "sha": "892fdfd051fe5dbb8499ccec9d4d760979c6fa98",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/generate_tc063_ascii_smoke_identity_lean.py",
+      "sha": "d9fc1f14862964da4783b222d53337fc303b2bee",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/prepare_github_release_assets.py",
+      "sha": "f5b9f8bae7a3fdb7c0d385afcce1adfadc787f5b",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/prepare_marketplace_action_repo.py",
+      "sha": "780077be941225a7ddd409c2ceb020d4e22e7ed2",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/prototype_lookahead_pivot.py",
+      "sha": "0be341806b5806940369a1e5b802f01edf9bfeef",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/reproduce_v2_12_package.py",
+      "sha": "181e6903c2fd107b00f5070f76f971651037e290",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/run_witnora_research_queue.py",
+      "sha": "6ddba573a273e92900e16d64eca1403e3051de41",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/screen_ood_candidates.py",
+      "sha": "5c987668439a25eda15f7bbe6d4b94d8e8b8eb1a",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/validate_v2_12_package.py",
+      "sha": "6d75af25e337ec56d28a1db04626b2f77886e250",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "scripts/validate_v2_13_paper_package.py",
+      "sha": "234af75fdfc7cfdc227db4efca5ca207912e349e",
+      "group": "scripts",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha": "678e80b53488274a33e336e85fa87e3a32a376b4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_2sat_scc_drat.py",
+      "sha": "237704753930323b172fc7f4a2acbcada72f2108",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_adaptive_lookahead_prototype.py",
+      "sha": "f6df1cb3e295e47026fce652ffef0d2a9575f53f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_adversarial_correctness.py",
+      "sha": "efffe0bfe64c647d1b5b5b90594d24cc8049b60c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_affine_residue_certificate.py",
+      "sha": "605e64e0a1abe50e45937a35fe4b5ad7b9d5752f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_affine_residue_checker.py",
+      "sha": "e323e8084d352a6dcaaa59976548c3d855a46bfc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_affine_residue_extraction.py",
+      "sha": "a1a3b7ee6746fa9b34b8d528a24cfa4b69a652b9",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_affine_residue_g5_operator.py",
+      "sha": "31bb15ca4e2c15bd8a44d8eebdcae585655ebe61",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_anf_separator_conditioning.py",
+      "sha": "0889d87eaa28aaac1bc2082915e33dbb39e04806",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_anf_structured_counter.py",
+      "sha": "6022d8e1e2f677ce2b9102c798011fd5da5f32d0",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_ascii_certificate_adversarial.py",
+      "sha": "598f913e4da971a5e14d880da36ee28f849ac367",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_aux_violation_tensors.py",
+      "sha": "4499befb009cbea3b59c12927695724ceeef3678",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_bce_demo.py",
+      "sha": "dde9f2e025342abef4d8f77c0e1b674eb2227260",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_benchmark_artifact.py",
+      "sha": "eff9d7c3b9de937cff2679c622547324ef47a075",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_benchmark.py",
+      "sha": "3dd243ce8ee09da82a79d50f38ef373ae46d50bf",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_bibliography_v226.py",
+      "sha": "50a895349e36714617ac8d15942a4bac6f1e9fe9",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_cardinality_detection.py",
+      "sha": "6dfb021a6a1644a56cca04bbd76372c6f51e4f07",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_cardinality_pb_diagnostic.py",
+      "sha": "fbe349e69588310385f521f1b13b44d267f31417",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_certificate_export.py",
+      "sha": "29d8580854ca962582d89f1cfad28daf12531fe7",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_certificate_obligation_matrix.py",
+      "sha": "85c8599f015011a360d48e2360ffa20f7166f2f9",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_certified_symmetry_operator.py",
+      "sha": "15b03cd89afeac984081e1ec56a236bdadb79ebc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_ci_fail_policies.py",
+      "sha": "a9351e787a3f85591ef36b49a2ea5167b08fbd02",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_circuit_projection_certificate.py",
+      "sha": "4343ffc2a5ffda2768f82fa493f2b7f0a29b696b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_circuit_projection_checker.py",
+      "sha": "3b84f018584834af56b61550735d0f4dc276391c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_circuit_projection_controls.py",
+      "sha": "28d95aa76a4ce7bf28d802b2a99747df392e75bb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_circuit_projection_detection.py",
+      "sha": "8bdbe8b00a34e1d6f2200c4c9e3a86cee915090b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_circuit_projection_g10_operator.py",
+      "sha": "5faf6f8317fd89bbfe4591ba64e5333ef90ebd43",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_citation_coverage_v226.py",
+      "sha": "e9781385c5a595a2844c908ef1eebfce691da411",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_claim_boundary_table.py",
+      "sha": "25d8093c07a0dbeb8d574351c821f2c6a77034eb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_claim_boundary.py",
+      "sha": "8f5ade08a1e5fb2adaf3328f028c3aadaa8ba2d8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_cnfgen_matrix.py",
+      "sha": "ab05799861d353ffbf59868b143e09d22c1af463",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_cost_model.py",
+      "sha": "2c221f681c70f12125e16701e473fa612e7aa512",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_planner_certificate.py",
+      "sha": "b57202d14ee75ea767aabd3b0c429fb75ec83cee",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_planner_checker.py",
+      "sha": "b6e4296bc89d0d21e0c52b43f8fc50c59185885b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_planner_controls.py",
+      "sha": "c9450a3b22b01efff5cdbd3b12fc153cc337445a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_planner_g12.py",
+      "sha": "7278d0c4891225ecf089d1eabe3aec8da55ec8b8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_planner_rules.py",
+      "sha": "888697d43e83976c1ac1f9b47a48ef3e6ebe6bdd",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_collapse_theory.py",
+      "sha": "1591987fe2ef5c4be85feb546afa2e938eb015fb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_color_repair_lab.py",
+      "sha": "67dc84d31d0cd3d99791e81b904241ed21cce46a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_color_selector_lab.py",
+      "sha": "982c5778027fcc918c1f320c73399443db2d1bee",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_components.py",
+      "sha": "3fbc0acea8c8510c4e86dce018d16c4477a909ff",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_composed_orchestration_certificate.py",
+      "sha": "fddf9309626152d6f241cc32425b43eb894bb02e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_composed_orchestration_checker.py",
+      "sha": "994fa689c308cc60b4dedffe2e22c2e82cf75091",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_composed_orchestration_controls.py",
+      "sha": "ae03e844ba67710376fced92697d6422c96540e7",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_composed_orchestration_g9_operator.py",
+      "sha": "65d87188d5ce31adcad679191c8ca8ee0fffef9d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_composed_orchestration_lift.py",
+      "sha": "eb422da9f708475688486d0fe7268b1f53e39803",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_conditional_graph_conjectures.py",
+      "sha": "b69ee62752d5a58a9ab774bfa1d5f9a4ad603866",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_conjecture_triage.py",
+      "sha": "cabae3d48b8b6f1d40b103aad4e391bb5d0657c2",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_constraint_geometry.py",
+      "sha": "08637313a5b472638764f328e481ebf8136363f9",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_cost_sensitive_gate.py",
+      "sha": "9dc2075b4f771581bb6e47ec9420a97af970d6f3",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_adversarial_benchmark.py",
+      "sha": "87af0126afb898fb8b8cc9f84b2ddbb26a576e75",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_boundary.py",
+      "sha": "ccdacc5e1618eb91fe21e27b2b678c2b1ab06cbe",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_conditional_independence.py",
+      "sha": "f27e4fef76947604707b08344f2578504bdaa752",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_conflict_oracle.py",
+      "sha": "6df9576eb284ac257391cc3362f4839f0a9e1d0b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_cutset_count.py",
+      "sha": "e494aeeed90942af7f3634da772deb961d3bda6f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_defect_oracle.py",
+      "sha": "84cd575f96cc2d1dc8599e2339bf16773c2ace66",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_dense_semantics.py",
+      "sha": "90edd043639ff1cb2ebdcb716e81327f4fde792e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_equivalent_encodings.py",
+      "sha": "64106778de903a8e442f86710ba5712441ede53c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_heldout.py",
+      "sha": "56476d9a2184389a3f4fd7157a9f1bfa16feafe8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_highcount_benchmark.py",
+      "sha": "280e45870906635b11a5f6bd6ce56c1b7639151d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_independence_audit.py",
+      "sha": "eaef0f60882f1f563fb21d7a4ca7fbfb44de6cca",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_matched_semantics.py",
+      "sha": "b0255388238dec1b2722630fb3641107dfc6672f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_orbit_oracle.py",
+      "sha": "4761d0c02461b90396a3b123de826667c9518fea",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_rust_affine.py",
+      "sha": "1ae3928d16ab11f49592eaf8e430a18b4ee3a996",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_rust_backend.py",
+      "sha": "e27509856611d708a099db1150a581803f3deb67",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_rust_preprocess.py",
+      "sha": "9a5c12e80de51c11f0d7f8c5bb630e82f82b58c4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_rust_walsh.py",
+      "sha": "4331bc1464bccfec388ff47e25bb88e089564614",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_rust_xor.py",
+      "sha": "0791109ca45c1c4e93b89521044f78344d4cbbb2",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_scaling_benchmark.py",
+      "sha": "1916e66a5feccff8b423df1e0496c86d9e143e84",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_separator_discovery.py",
+      "sha": "a53b5224ccc18d57e3ffd094a9270c24ab8d6057",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_shannon_integration.py",
+      "sha": "8dd1e2da4655c108b27c90f8ac739078eecd8b02",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_shannon_oracle.py",
+      "sha": "e0f6b75d4cdb1d01c7b8ecb1ab6e3dae9246c989",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_source.py",
+      "sha": "70961291e02def01ce6ea7da6ebf7e508058bf62",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_structural_independence.py",
+      "sha": "bef56ed51da8928c6904ca9ecc8325daafbbecf4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_variable_elimination_indexed.py",
+      "sha": "636b7136ec21661be697cbfdf78fed5796724514",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_crc_variable_elimination.py",
+      "sha": "9012f058c8598b1a605e9cc77008f9990d728303",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_cycle_benchmark.py",
+      "sha": "203a614f0f5772f0e1983677c2167b626c6b3c58",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_cycle_discovery.py",
+      "sha": "de6b9f6d302a4711ada37dc77d4478021116a4bc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_determinism.py",
+      "sha": "6bf9a0641fb3ec40b6378d3127b8b77f832c0685",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_dimacs_refinement.py",
+      "sha": "23834fd951fa2a0cf07aedb6c78cff6a2d9c638e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_docker_action_runner.py",
+      "sha": "2bdd222b08b576f0f23c23cb34dd6af0b4dea629",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_double_kempe_lab.py",
+      "sha": "141699382240589b6e0a4ce34de02c9d193e883e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_drat_bridge.py",
+      "sha": "f1843696b9cbe67cc769c0f1c70c6e41a104d847",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_drat_coverage_hardening.py",
+      "sha": "2bc6fd99618947d9169ce3d2949463cacd1a2454",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_drat_trim_integration.py",
+      "sha": "1efa5a02a3e7b57d398acfdf3267597b377719ed",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_dsatur_adversarial_lab.py",
+      "sha": "080874972f2725298de9dff3e240a81debfae7f7",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_dsatur_bipartite_audit.py",
+      "sha": "3a325a5dfcf775bf950bffa322f075afcd3d17c0",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_eth_clause_violation_parity.py",
+      "sha": "9c701cb7e0464364dae719d3c6e0c5445546af6c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_evidence_summary.py",
+      "sha": "cfd13a21daefb0d20534bf430dffa7140c66b2f3",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_exact_tensor_counting.py",
+      "sha": "877206745fc1e4f9a44ec5c4cfb66abcb8ea2173",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_experimental_operator_search.py",
+      "sha": "a2e6775ad97266651ad258a4a23d389deeb83ef0",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_expression_conjecture_search.py",
+      "sha": "9d67c39b8da839e569de53ba23f21c414ae81dc6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_external_paper_draft.py",
+      "sha": "58f39ff0459c800b2cbb5e1a3864e2864941519f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_external_review_claim_boundaries_v224.py",
+      "sha": "86360d7b7b5a8736e68a375c1a993ecbe09bf241",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_external_review_manifest_v224.py",
+      "sha": "c00851c836d36158bbb81159ddd11916447bbdd0",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_external_review_package_v224.py",
+      "sha": "6dbcabdac7b93d5c4bf03279cd8ca55766d10590",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_external_review_paper_v224.py",
+      "sha": "e3cdfa15d5293e81a92b0c4b1b295750d58cfd30",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_external_review_reproducibility_v224.py",
+      "sha": "a0d413f921e3ce7dab055bcafe359d4861d47750",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_factor_elimination_orders.py",
+      "sha": "3a14bc27ab8cfb389b5a181ff3999fb9e3265c83",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_final_claims_v226.py",
+      "sha": "bcde9270ffa7ff28016db12ffb171a9fc44728ab",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_edge_delta_certificate.py",
+      "sha": "709b90358668acdab1822875463c7cb03862fa33",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_edge_delta_checker.py",
+      "sha": "d63d6ed83ddd5e9e7e3e5fa6b1c6f77c42e27e27",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_edge_delta_g1_g2.py",
+      "sha": "4f731cd997eea4e78f771906141eb16c544200e8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_edge_delta_no_overclaim.py",
+      "sha": "1abccd52916666df4ef79d0c942ba82183793200",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_edge_delta_reports.py",
+      "sha": "971f7bdeed26477d0f38a563f8535c87fa89b955",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_strictness_certificate.py",
+      "sha": "763cd7668629cbf5e331baf19b07e5eddfb26133",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_strictness_checker.py",
+      "sha": "abf52587a07150833dcece9772513bca2d155452",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_strictness_instances.py",
+      "sha": "f9f38491a88e055d0744fdbc2f8c0da169ad1909",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_strictness_no_overclaim.py",
+      "sha": "872d86f67bcdbebb82caa33451f5d482f52a9334",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_finite_strictness_reports.py",
+      "sha": "d5c056e4246a38381adcdcefb4ac1be02fcd2dcd",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_forced_relation_probe.py",
+      "sha": "f51a960484b8a4be33784edf9d7ffbd058573016",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_formal_differential.py",
+      "sha": "9d039c38cc579604dfd9c5bf8c10e99a72d594e1",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_full_tseitin_minfill_diagnostic.py",
+      "sha": "e9ae442d905e2abecdb537d588c3a6aba9f6f2c0",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g14_adversarial_matrix_lean.py",
+      "sha": "807ee09b2f52d8be425e8a1335b5984e476fefa1",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g14_dfs_labels_lean.py",
+      "sha": "ecc170e89cb68eb87eaf1a9b08dee06071a1e641",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g14_normalized_gate_real.py",
+      "sha": "53f94513f67217f6e9fbf0cdb19fc0d5ba73f20a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g14_separator_only.py",
+      "sha": "461220355070f7f0a2827ce8a6085c3675ad4f7b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g14_size_ladder.py",
+      "sha": "d1672d0ac40d01f7849ca32bdcecb0ebef1c407b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g14_zero_separator.py",
+      "sha": "df0b75de3cde6d1ba9e79572bcb644cbc1e08a3f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g5_activity_hybrid_heldout.py",
+      "sha": "057395bf2db673b80d5dcb91a557c92e1b2912a8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g5_boundary_path_signal.py",
+      "sha": "3ce58867cc244060da37fb7c5d9434fea7b3e71e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g5_elimination_activity_crossfamilies.py",
+      "sha": "1f9742494ad5130ad0c6414e9708b8f478c29072",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g5_elimination_activity_robustness.py",
+      "sha": "1825dca1ff507f286a93b9a13938dd1dda7290bc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g5_elimination_activity.py",
+      "sha": "6317c0da0645935583d598ae21ded45f91e41b38",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_g5_pairwise_dense_bridge.py",
+      "sha": "ae7715c5e1105ebdada100a8c77e1e2cf88acdd1",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_gap_analysis.py",
+      "sha": "11be8ee90c4534ce63537a0c13de456c7baa0c45",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_general_resolution_trace.py",
+      "sha": "73dc56293a8df0960735bbf6fafa7d9088e80745",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_general_rup_indexed.py",
+      "sha": "2b1b833253450eac61e75b851abc1da1012e14e5",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_general_rup_trace.py",
+      "sha": "cbfa3e463f4cbd2cad5495758c3264b877435957",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_geometry_aware_parity.py",
+      "sha": "9e1291badbcb943db2a15f691cdaebd839dc6cdc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_gf2_sparse_row_basis.py",
+      "sha": "c4d7450b2d70e8617874136bdeb1625db79a6a14",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_github_action_integration.py",
+      "sha": "2c2f4ab55ef89e22ea7cb1cd55fdd75c37b52fa2",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_global_coupling_separator.py",
+      "sha": "2a9d9b0c21dd4772296bab5ffbb36e4345f4395f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_glucose_dense_3sat.py",
+      "sha": "996d034b65b37b3c5e97809a2a56d53acf427582",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_glucose_drup_import.py",
+      "sha": "548f812c7bd4718dab53d27454388fd8ebf5c359",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_graph_conjecture_lab.py",
+      "sha": "1f0678eec7e6aa6f0be86638c68c4b4380183341",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_graph_separator_certificate.py",
+      "sha": "31231239fb99b51a2291bb9108a4479c6eb97990",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_graph_separator_checker.py",
+      "sha": "b1045039b49f845a452125deba7ef1e4365c41f9",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_graph_separator_controls.py",
+      "sha": "7ccc9a5a6a73ec4500aab7b96a87f8eb102be6ea",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_graph_separator_detection.py",
+      "sha": "f4ec2617ff79bf04bab52c02ad68a413df6c8e69",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_graph_separator_g8_operator.py",
+      "sha": "98edbb556818a8cc0c507fe6641514d70584f141",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_hall_deficit_detection.py",
+      "sha": "21cb65f9d441d8fa336fd40c781bb7dd4cda7511",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_hard_separator_families.py",
+      "sha": "76df3ae12289574798bcbdb30e5203faaca53694",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_hidden_separator_challenge.py",
+      "sha": "e17ea613375d354be0a56e741e8c217474bdc63d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_hierarchy_evidence.py",
+      "sha": "cbba87e3d02ca40b6bf95fce158699d04e54b507",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_hierarchy_formalization.py",
+      "sha": "52b4f950cab48a701a93490ba435279ea5b983e8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_incremental_separator.py",
+      "sha": "181059cc244f01ebbceefe30e475cfc1f952dded",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_independent_checker.py",
+      "sha": "8367760bcc37b066ea9c4fcc7a1795320d9dc988",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_kempe_repair_lab.py",
+      "sha": "867351cfc741a7d920091709deba9a565b6db233",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_ascii_certificate_export.py",
+      "sha": "80e4ff51e5256c498d3bda5a0c07aa6129d6f180",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_cnf_gate.py",
+      "sha": "8060bb6bcf595500d3c7b56031aba5632515dff3",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_color_certificate_export.py",
+      "sha": "e06cf1eee3669579a057570198824033e943b655",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_compressed_g14_gate.py",
+      "sha": "b2860ba1067b9edb69e7e8ceb1b3dbbfd8a05bc1",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_g14_adversarial_real.py",
+      "sha": "70035e76aa3a54f32d216baf096993115d62d327",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_g14_gate.py",
+      "sha": "6f08c5769773b736de7a5cb00b91cab42e73ee0f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_g5_gate.py",
+      "sha": "336276303ef3dc58435fee6bd3bbd8672baeb88a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_g5_wire_real.py",
+      "sha": "f91388937c9106e6a7830f6d6f78f0f94506e772",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_numeric_certificate_export.py",
+      "sha": "db52f1477f7fe76a794a29b62ea8976d4e291b4e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_parity_compression_gate.py",
+      "sha": "0bd7be276e9f01a71110059d35b908b3717e32a8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lean_spoke_gate.py",
+      "sha": "3270513b5bc029a6576cafee18b644f0147c0e37",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lookahead_failure_analysis.py",
+      "sha": "f68fe0906ad76ce7df112c1faa7f0bdd26353817",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_lookahead_pivot_prototype.py",
+      "sha": "d9794d448b45d5a796b4ef52b7262bf4a506addc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_marketplace_action_package.py",
+      "sha": "71b8a2b8ef7f38dd6a324758b16fa73a1121bc0f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_marketplace_repo_package.py",
+      "sha": "6c435de99184af3e5823a4fc01b1995c45e92594",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_modular_residue_controls.py",
+      "sha": "96d0d92dfa5c3089a5c40716e1c0967f988b3710",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_multicut_parity_separator.py",
+      "sha": "01d55d6941f44c5af9b762bbe58555f1ebc28f4a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_no_collapse.py",
+      "sha": "7ee670c0428d8f5db23d265f59f22463f0513ea6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_no_full_g0_overclaim.py",
+      "sha": "cd92b20677b4820f6eae400a7058c4f7e423ec06",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_nonedge_matching_bound.py",
+      "sha": "e25c006cee14ab1376f1126362c84968bb9a0c51",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_obstruction_dual_certificate.py",
+      "sha": "1c9b9fe0fb1bfc5690e50a193ef974ff17533df5",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_official_public_benchmarks.py",
+      "sha": "349dcf3bd48df07bb053113d0b78186a0dbe1b35",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_ood_candidate_screen.py",
+      "sha": "5bab6d15d846c93d931926fff33fac9dbc109f08",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_ood_larger.py",
+      "sha": "f5c7058d2cb7609d78139b351694638ed2ad2538",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_ood_sat_families.py",
+      "sha": "60abf07bc33b619f56ce8b70f476692b04224930",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_candidate_generation.py",
+      "sha": "474c908d9f35808d641d9596e5cd0503d33415a4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_discovery_engine.py",
+      "sha": "85afcc9e81d3f094c9a530846927bccdfdf1b4b5",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_frontier.py",
+      "sha": "c4dcd703dcf3e8aa75e0bed41e0c9ef42edfcdc2",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_genesis_fingerprints.py",
+      "sha": "0d34451561bfd71374b35d0fc96fde800e61bfc8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_genesis_promotion_to_prototype.py",
+      "sha": "ba59d0e835c8f348c140ac3abed07159c952ad23",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_genesis_reports.py",
+      "sha": "1fb0eda6e6f170b3b74d08d6b81854a96bdc112e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_promotion_pipeline.py",
+      "sha": "b3276da0ed04821917af346ad92e65b41a08f2de",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_operator_promotion.py",
+      "sha": "ebc77a6ccb3ff2f96a15e7d2650b33434e76f05c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_orbit_capacity_certificate.py",
+      "sha": "7c9767b9dc05abaf600781f9d0524e73c8f844c4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_orbit_capacity_checker.py",
+      "sha": "5ed64e517a600ff9a12084a89e06cf75a098efa6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_orbit_capacity_g4_operator.py",
+      "sha": "0fc91f394c92ab35728ae92c4c6e5e678456f712",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_parity_compression.py",
+      "sha": "7336ab69009730efee9b8cc30e81e2c25c6633d9",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_parity_separator_fingerprint.py",
+      "sha": "cffee3564c19e701508496a923f8b66e37dd748a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_partial_replay_kernel.py",
+      "sha": "5fc7afbcad7655efddecb9d531bb99b553cdcbb5",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_pigeonhole_g3_operator.py",
+      "sha": "8c3f2259d42168abfaacaaefb82cd9b167c5123d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_pigeonhole_native_certificate.py",
+      "sha": "51841d951fc7f16ae0b25d466e5e23ac3dd4b170",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_pigeonhole_structure.py",
+      "sha": "916f1261e44b5da3ad4c37b99aa64b0a4a2e0468",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_planner_execution_certificate.py",
+      "sha": "56e869c71ac08a16cd4ff7cd3acb771bbe80904e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_planner_execution_checker.py",
+      "sha": "1d79830f0c57a7c6d0b444504d0194555451e8f8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_planner_execution_controls.py",
+      "sha": "8ec85fe63446049997161338b40830845d1aa7fa",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_planner_execution_g13.py",
+      "sha": "9c9d31414f116c7131dca933a5bc3a75d9791ea5",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_planner_execution_matching.py",
+      "sha": "5ed2ae728933125db44deceec73a98fb9f2bb02c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_certificate.py",
+      "sha": "af28860b4147c163dc72157ea08838e5fb04016e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_checker.py",
+      "sha": "3d5b5b4127cf7da5c21588a454bf1cd021c80702",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_controls.py",
+      "sha": "70c74303e78e2cb9aea35d017e03eca1521a21b8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_detection.py",
+      "sha": "9a0f83b1eea6fe8c2031caab90ec97e285b92e10",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_g6_operator.py",
+      "sha": "dccb1d453403c296f9ce9913f5ede0dcf95add97",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_generalization_certificate.py",
+      "sha": "bc24f2c02dc0e3d3c932e39d2d9878a012e40dc7",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_generalization_checker.py",
+      "sha": "c3a65113dd3011dba348f66ed48ff419ad32b173",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_generalization_controls.py",
+      "sha": "34337f795d1afd63633bb3dee77e47ce8fe6d056",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_generalization_detection.py",
+      "sha": "348291288e6ec8bfa0bd2ed796b4525ad23c2474",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_motif_generalization_g11_operator.py",
+      "sha": "286d4a8d2ae9c427208c3210190b28ee479ff3bb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_obligation_matrix.py",
+      "sha": "cc05dd4b730fafb4e9288ff4cdad3cac1e91ee94",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_proof_trace.py",
+      "sha": "47d2b9ad99f14c6bdaae7f6dd9d765ee51cdfbcb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_public_benchmark.py",
+      "sha": "f1054a20fdd78aaed4a7ddab4ded85a441457981",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_public_preprint_claims_v225.py",
+      "sha": "484de2775f9714b7bf96f6d04660df5325be5370",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_public_preprint_limitations_v225.py",
+      "sha": "966e38713d1f273f8735dd899f6d9b3916f7ba0a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_public_preprint_prep_v225.py",
+      "sha": "a38dceb5fe0c2e8ebda0a46fa8180ed6f27424be",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_public_preprint_related_work_v225.py",
+      "sha": "a3337addc2e1a6bfbdedd739f733b3ddbc1de6ac",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_public_preprint_submission_v225.py",
+      "sha": "fc1505bc71602e904938fac89c62c8b3105804d2",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_python_dimacs_xor_lean_export.py",
+      "sha": "66e977d64b4053ae582c94a99f014b183f63814f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_python_g14_lean_artifact.py",
+      "sha": "1fbfd797312fb96775f7f5315801ea3874556c8f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_python_g14_multicomponent.py",
+      "sha": "a26c628be588e30e60b741129bb9cf88b1767816",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_python_g14_sat_model_lean.py",
+      "sha": "08684488f9c70e6ef476b3ddabb15d1cf10a2a38",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_real_drat_trim_smoke.py",
+      "sha": "7b355d1640abd99d6350da0a770dbee34d0114f4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_reconstruction.py",
+      "sha": "1e47cbd490f4b00419bfea4671b5b11b73ec8ebe",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_release_manifest.py",
+      "sha": "6fe1b0ab4939669293e57c20f25e7a86f08da19f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_release_readiness_v226.py",
+      "sha": "1809e720bfb2b8b7a6573a76eb6c8b1d11f2ae7e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_release_trust_card_automation.py",
+      "sha": "208b0e3216b0d087c54eb1244320f2a166059275",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_reproducibility_package.py",
+      "sha": "c0a3f6c8f6b2258ed3ef1786cc31410afc358ef8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_reproduction_scripts.py",
+      "sha": "b2657c08d73657b583671a6dfa6914eaede63fe6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_research_queue.py",
+      "sha": "5059b6c1e3dc056f9e13652dfddcfc4f0f86befd",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_restricted_g0_g1_theorem.py",
+      "sha": "b3fc940e0bbbcb9b2681c8280511243316200c10",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_rup_indexed_propagation.py",
+      "sha": "ecabef636144d85853165d158982b9d279e1ca1c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_satlib_fingerprint.py",
+      "sha": "b125e11e1e83d82e6edc1b5937a86131323e8ad6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_selective_lookahead_prototype.py",
+      "sha": "9ef582aa83ca99fee904058145b504714af41bef",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_affine_family_checker.py",
+      "sha": "98fb261f781c9e389e7518ac14b7e310981f6682",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_affine_family_controls.py",
+      "sha": "13b8157b1bfc3edbce72a6fac919265f4d9e7a00",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_affine_family_generators.py",
+      "sha": "a7f63f6b772973b51541dc4c4817dfaf89ecb27c",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_affine_family_schema.py",
+      "sha": "dccd05acd3e424d67f3b681c42944da9069466e7",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_affine_family_theorem.py",
+      "sha": "6fe6a1c067a058d29c4a9f3856f2d35d5965127d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_conditioned_solve.py",
+      "sha": "3c35387abc730d258b8a5107c38dbc5690108acd",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_scaling_families.py",
+      "sha": "350a175cc8dfa45c701e3f7f850aba4a9b4a0b8d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_separator_structural_priority.py",
+      "sha": "0732ae17f69ba99a37555223f0017a9ec4c465df",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_soundness_theoremization_claims.py",
+      "sha": "fa8075db57052d12f1f7a4869d5bc152b58d3098",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_soundness_theoremization_obligations.py",
+      "sha": "e43ef66b9692a382586143d4cdbcaa309a500987",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_soundness_theoremization_registry.py",
+      "sha": "8cf4ba4b853106d88a36c0887d03761916c0fbad",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_soundness_theoremization_report.py",
+      "sha": "a5ee549f46023573ed1f2f104e10b78bfb09731e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_soundness_theoremization_schema.py",
+      "sha": "c6214546516bd94e118a3f1097632c86ee5c2cfb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_sparse_parity_checks.py",
+      "sha": "7eea45daea80eab3b0371d38da6eeafdb094d471",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_spoke_collapse.py",
+      "sha": "9c14beb2882561c7a733e324dbab51581ea3f0af",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_spoke_discovery_reference.py",
+      "sha": "c2a2b3e060c3562d686a0393234255537ed849a4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_spoke_discovery.py",
+      "sha": "a7f7eb9650632bba833bf166dea014a3db16ecdf",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_strictness_family.py",
+      "sha": "1587c321b2edebf7859d1bd9f65eea4e01ccefdc",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_strictness_proof_records.py",
+      "sha": "801bd9aeeff7e369743651e267feb8a7a1a7daf6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_strictness_proof_reports.py",
+      "sha": "6d1b0b1a16416a1d63d419b66a9798306f97019e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_strictness_proof_width.py",
+      "sha": "8c17b9cfb17a8b971ea6e7c4000b660d9ff63b12",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_structural_operator_invention.py",
+      "sha": "396a3d93e657b5b9e87474b46ab4ca7f9bd4a563",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_structured_coloring_study.py",
+      "sha": "768552af74534de448dd68832d7a0f0b61fc0244",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_submit_release_v226.py",
+      "sha": "67033840e3bf95be369659400db9c72df987b2a8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_symbolic_implication.py",
+      "sha": "f742ce6603e8ac7ffbfbec9fca01342ed2486e40",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_symmetry_cardinality_integration.py",
+      "sha": "464968964c5dfba5ab5148deab150bbd2e78a027",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_symmetry_certificate.py",
+      "sha": "4ffa41f6822ab52ba3e4d5164d384d0b5b81dfb4",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_symmetry_orbit_diagnostic.py",
+      "sha": "dbed245bb32c5232063771752b39b073b2e73354",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_symmetry_unsat_preservation.py",
+      "sha": "1851f815017c7c911d4d60707f85d0456351154d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_symmetry_witness_reconstruction.py",
+      "sha": "9b830f6d46a43e392c189b90900e2a376af12439",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_targeted_graph_theorems.py",
+      "sha": "e7413617345b6ea59bfcbd362c6c067cbc810635",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_claim_boundaries.py",
+      "sha": "a73cbad2436408b0250a455973169c1522344e5f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_direct_attack.py",
+      "sha": "15f707cbb5a31513d2d1189e1e48604060dfcf5b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_lemmas.py",
+      "sha": "d328d3595e590d83bdd0d831275d42636b2840da",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_polynomial_bounds.py",
+      "sha": "7b3c6960077359d660d1a7af733fe698f3745f3b",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_scaling.py",
+      "sha": "fe8bdde5be90667c67986393450b71c6ba9c023d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_structural_validator.py",
+      "sha": "84afcc2eb5ceb6497b8fca5f50e843b7b7193fc6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_theorem_hardening_schema.py",
+      "sha": "983fe6bc0ed0a9ad67a199b292c39229df6a8bb1",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tc063_unit_counterexample.py",
+      "sha": "8873ce37c3198ee54509ae33a91443e8d66cff3f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_theorem_candidates.py",
+      "sha": "49833d8c50cffe7cbb247a3bc7d738a3ce741231",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_theoremization_reports.py",
+      "sha": "6c7ca40915ebbf098ca216aad9511c580899a0de",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_treewidth_audit.py",
+      "sha": "3d02723e3731fd7023e3a78592a25ab8055ca34e",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_treewidth_demo.py",
+      "sha": "3506bf39a1b0906b8668acdbdc7d2b18e56413ce",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tseitin_xor_drat_scaling.py",
+      "sha": "6e9c34553f0fa0dda5b9c176b04382b0a4286556",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_tseitin_xor_drat.py",
+      "sha": "1b6e34dd772bb194295537d7b037152a37ba1ec8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_unsat_path_dependency.py",
+      "sha": "a8db82d61895d73b4241957e5b3b9922bc65c5d6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_unsat.py",
+      "sha": "6927aab9334e085a015d1c344fb8eb61acb832b1",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_v213_claim_boundary_appendix.py",
+      "sha": "2f07407fb0f84103351608a2f6b3a6de32c1bf5d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_v213_external_review_packet.py",
+      "sha": "ff77cccbe75772eeae9a58950cd428a2cc6eb31a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_v213_paper_hardening.py",
+      "sha": "6077f36fd115eab85f346c0a156ce7bf2299255f",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_v213_reviewer_guide.py",
+      "sha": "732d44bc8d4e35822cfd619ea51ab3b1b91bbcfa",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_v213_reviewer_objection_table.py",
+      "sha": "5a1edea85d56369ca6b73f7b956a676dff603ffb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_verification_kernel.py",
+      "sha": "0b0d390a5d3b3f272ac40211f24b8defcfdd89dd",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_verification_semantics.py",
+      "sha": "f6567294c1eacc96e34a4dcc6c7d383edb5eeedd",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_verified_compression_pipeline.py",
+      "sha": "cb1dc86e851181678a3dd298ac3813f39451b7ac",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_vertex_coupling_exhaustive.py",
+      "sha": "9a83d14a16a915eb56621ddd09929ef4dd41e099",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_vertex_coupling_g14_benchmark.py",
+      "sha": "914591cb7666946dc2b82e73dcc979d2fe0d0e17",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_vertex_coupling_separator.py",
+      "sha": "b0812328c8bb5d1e606a17c4cc31b39447b36a08",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_violation_image_anf.py",
+      "sha": "0a3e8be9428fa1e13e28def6640cf8040e29dfeb",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_xor_drat.py",
+      "sha": "9c9ab859e20717517d61f393cd118b24f27e66f8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_xor_empty_encoding.py",
+      "sha": "1a2276ad07995d50656b778447fe9fa42beb88b8",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_xor_k_variable.py",
+      "sha": "f903265a12cf5f092689bcc367bd741b27c4878d",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_xor_minfill_order.py",
+      "sha": "599eb9bb3182c1291b7146899d64fcd20c640cf0",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_xor_public_categories.py",
+      "sha": "da5f2fd05a0b046134a58df42a21c619bfa5ae8a",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "tests/test_xor.py",
+      "sha": "c365e05ab6db0be5cc2bb3fbce3b559cb588dcf6",
+      "group": "tests",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/__init__.py",
+      "sha": "7d2111018534204933d9dd294cf9c0662a8ced59",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/adaptive_lookahead_prototype.py",
+      "sha": "319cc19bc872d37cdf09a6d99129acb44c905e4e",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/anf_separator_conditioning.py",
+      "sha": "9bafa9c44088c16288a17ba0b506b53162c65902",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/anf_structured_counter.py",
+      "sha": "eeedc054df1eb6314f1e4b44bfbe1dfeeec08276",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/ascii_certificate_adversarial.py",
+      "sha": "b52a25c9f5428727134849848a45add66329d1d4",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/aux_violation_tensors.py",
+      "sha": "49b260c3a2db57347342a2048f1e87980769fe4d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/bce.py",
+      "sha": "1885d7ceae4f46fde6637eafecf43a65aa709805",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/benchmark_artifact.py",
+      "sha": "a84cb4a0091fcb5128ae4307641a81a7a0ace854",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/benchmark.py",
+      "sha": "cfaadd7ec4a01da1b68f220c0a9f4524bc96a02b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/certificate.py",
+      "sha": "e2364a1dc71cb9b2ec854667b5975153c0c47cf6",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/ci.py",
+      "sha": "a0fc5cfb006846690faaf385538e3a3a70d1c29a",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/circuit_projection_lift.py",
+      "sha": "c5abc14c967c3af6d74ad7289c8cf0c4e4b0160c",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/claim_boundary.py",
+      "sha": "44f3b6ca80f239b06420a53aa155d2ff956b5c7e",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/cnf.py",
+      "sha": "fdca9b6d5a6835c684bed6c528c381332c744289",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/cnfgen_matrix.py",
+      "sha": "e797a944ecd5e1000450ebedd37d6c8012c37fea",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/collapse_planner.py",
+      "sha": "3c1f3b58826970b0879e2bf876fcba0997e717b4",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/collapse_theory.py",
+      "sha": "d7c16a24b4e7d8eb35012d296f52ad9f9ea6403c",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/color_repair_lab.py",
+      "sha": "2d4b3563767fccee4cbbfdc12ce15f4fe066a978",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/color_selector_lab.py",
+      "sha": "b52777ad570db95c2282c91e05e6b698eb3f649d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/compare.py",
+      "sha": "4d43d768553903d553942f0c5c9df5171e18c36d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/components.py",
+      "sha": "0a2710f1c17774ca179a5895e0ca1eb6a346277d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/composed_orchestration.py",
+      "sha": "5dfe773feb4ee6dd9bcb7b4b45dc89a49b1017c6",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/conditional_graph_conjectures.py",
+      "sha": "ffa70926a5606063e6466c26e9a4e68b290c4ed0",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/conjecture_triage.py",
+      "sha": "eb4d7862f590f36a9c8751f2568edc4bcef8fbef",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/constraint_geometry.py",
+      "sha": "257dc7d22d465df377eabfeefb5cc28f041aad42",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/cost_sensitive_gate.py",
+      "sha": "14be83a81dfccb48b3f291ab1b949543306eab88",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_boundary.py",
+      "sha": "f4e79fbe2e4faae004eaaee14bf3026f8ebd9b57",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_conditional_independence.py",
+      "sha": "3ccc752d40046a38c17bdefde5e1bca93f5634a9",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_conflict_oracle.py",
+      "sha": "a087b8b19f271276321f5f2e20716651fb505181",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_cutset_count.py",
+      "sha": "90459daada640a679e7a3e7a310e4c233b943071",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_defect_oracle.py",
+      "sha": "92e42b28618c2e7aef106ad1b3ae178893681311",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_independence_audit.py",
+      "sha": "63c33f0e30564783510fbccc242a613d0cd59ad1",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_orbit_oracle.py",
+      "sha": "72ef4f0fa4dc796e70b96cc91177d931b3b039c4",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_rust_affine.py",
+      "sha": "bfddbefe00ac312dcfa64131f1d52e8a82316aeb",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_rust_bridge.py",
+      "sha": "eacc8602ca4c3a38fe6cfb89145df6165adaccde",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_rust_preprocess.py",
+      "sha": "1408890743dafa802e22efe636e3d1e13c3dc1d4",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_rust_walsh.py",
+      "sha": "89ebb5b9422faa93d2e677ce2cc83a05f838a6c9",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_rust_xor.py",
+      "sha": "898d90f1b7da6aa752ebf48a1f36b41fdb1d24fa",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_separator_discovery.py",
+      "sha": "f96ad35ae31f0891402e5dfce67676a7ad89427d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_shannon_oracle.py",
+      "sha": "339b56b988c8a2ef55e3ae8962395bfcbdd7893a",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_source.py",
+      "sha": "0a8568615fdcc9ed8102b709e9fb935026d5d486",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_structural_independence.py",
+      "sha": "8408bd447703e33b81a0a22794286b979288f241",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/crc_variable_elimination_indexed.py",
+      "sha": "e7507f7bd839a273fc225837e4f9dbc7682a828c",
+      "group": "witnora_core",
+      "status": "parallel_reference"
+    },
+    {
+      "path": "witnora_core/crc_variable_elimination.py",
+      "sha": "87b92534ee56e86b4c051fe37dc59d0587864602",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/cycle_discovery.py",
+      "sha": "2aa99b384fd7d459c01a7e7f0e6b51f4c0f6d060",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/dimacs.py",
+      "sha": "6d1a0c53f98bc86687dd7c8ff265b45b60be8104",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/double_kempe_lab.py",
+      "sha": "0e9abed32c639e2c94ecb1570d7a38cda9103f6a",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/drat_check.py",
+      "sha": "a452ffc01f51f1c76278d9d236ee61268e45da49",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/drat_trim.py",
+      "sha": "db946d2f0d562047a86ae83d60a61f0421ec23db",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/drat.py",
+      "sha": "fbb19ce117ff33bfaab9c330115d38bb6cf9da6b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/dsatur_adversarial_lab.py",
+      "sha": "c8ccbb97cea1b96e988204bb30d09df3b4770640",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/dsatur_bipartite_audit.py",
+      "sha": "0ccd7672531a54e52c1abba14f547c38d2f32600",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/eth_clause_violation_parity.py",
+      "sha": "0296d2d7a8191c865a777dbec7529dc7e0022dc1",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/exact_tensor_counting.py",
+      "sha": "b1873945e244c5e98a424d5a5451097e78abd375",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/experimental_operator_search.py",
+      "sha": "1054ded001f0c0f2045e227883c3e4a0bb0b219c",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/expression_conjecture_search.py",
+      "sha": "32b0fbfc3a698af6c62631bbe51c5fd66565e2ae",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/external_review_package_v224.py",
+      "sha": "5a11e6b3475535ff1e04dae4d941a87eb7759720",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/factor_elimination_orders.py",
+      "sha": "42d8dbfc1a994e4ffc10150b325bb978f3ccdce8",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/families.py",
+      "sha": "97ad0dbeefd4ee154ad8cdbf046829dc94681d39",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/finite_edge_certificate.py",
+      "sha": "9251434bed53ed3a315c8ad917164a358ce90eba",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/finite_strictness_certificate.py",
+      "sha": "da091d69bc7ba2bbb32feab8ffc60b303f9b392d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/forced_relation_probe.py",
+      "sha": "aa9e2ed985b037531e0363c6d7ae50a82cbaee16",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/g5_boundary_path_signal.py",
+      "sha": "a5de6dfc26844b3f302aeb68ef7db905c37c74f2",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/g5_elimination_activity.py",
+      "sha": "39d4d55898c1e41d17dd5da9158efe5e8c272a49",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/geometry_aware_parity.py",
+      "sha": "9dcba9e148677dc9a624e5fb03b28db8b9025a14",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/gf2_sparse_row_basis.py",
+      "sha": "636069561072219c8b9933093aa03d63c6f3993b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/global_coupling_separator.py",
+      "sha": "23a22bdb0b56420551f2f77365945261cb6fcb30",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/graph_conjecture_lab.py",
+      "sha": "22600a030b44e43c827a6964e17441aa4754ca6c",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/graph_separator_lift.py",
+      "sha": "7a1baf8e3e43c5ff1ebcbba2a130dae137af4347",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/hard_separator_families.py",
+      "sha": "16c3b1f0048a761806679324f4eef1926708d576",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/hidden_separator_challenge.py",
+      "sha": "71e8ca2d3df227fe6b490d89c6af5fbeb0c92b39",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/hierarchy_formalization.py",
+      "sha": "577e54541ee0d5a9c1c9f23dc63cffdee92f4013",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/incremental_separator.py",
+      "sha": "acd23667130ec6b936e911f6e4f156d28e0518bf",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/independent_check.py",
+      "sha": "ea50d01e40bfc1abbcd3482564eb79590545c7af",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/kempe_repair_lab.py",
+      "sha": "080b3de240b204657ea7b4239f4bc5bb6ace14c3",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_ascii_certificate_export.py",
+      "sha": "9a1267a076b6ee43cf02aa04ff25e22ab02776af",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_cnf_gate.py",
+      "sha": "faa71b6cc6fb03c4cc6c930308bdc384b5c95810",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_color_certificate_export.py",
+      "sha": "5c79ee33e4eae003e710af2eb4371d9fbce32ad8",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_compressed_g14_gate.py",
+      "sha": "032db18102780405134ad8256229e59a7810ba27",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_cycle_gate.py",
+      "sha": "fd896eeec4b6c26adfa45bd278a6c944e9407ccb",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_g14_gate.py",
+      "sha": "71f13a66df5b6c28b9acaa9fcc1caadd553113e7",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_g5_gate.py",
+      "sha": "05f1ea7e8735398e49ba44fa69c6456647d468a3",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_numeric_certificate_export.py",
+      "sha": "300f7a10f7e942b9f44647fe527c69e6623cf266",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_parity_compression_gate.py",
+      "sha": "626ae049f23109a494050ad212c33e86acb09f28",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lean_spoke_gate.py",
+      "sha": "feea77bff929ecea1088a9d7b3e9a84345c19617",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/lookahead_pivot_prototype.py",
+      "sha": "e6e739a3fea5f93d254153d41c810d4472d66231",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/multicut_parity_separator.py",
+      "sha": "bf0fe32053459a60427ea9db0b5456643f1ad1d9",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/nonedge_matching_bound.py",
+      "sha": "bd575d34a5215e4d20ca6a495dd9643d09943067",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/obstruction_dual.py",
+      "sha": "4e9e8790a7a286e7c26aad6adbb568a142bc24d6",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/ood_sat_families.py",
+      "sha": "23c31039dcfd17790771878747a6a62e85b41fc6",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/operator_counterexamples.py",
+      "sha": "199a6c3158e28455a8064150c62da387709eb95e",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/operator_genesis.py",
+      "sha": "2aa75a6a3e57cc2fac2e321e28ffc1eee0627e66",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/operator_promotion.py",
+      "sha": "9600050f4d424d56d839b12c71974986c7c8e98b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/paper_hardening.py",
+      "sha": "fe32349737225b81da260f8e9b745b415d048243",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/parity_compression.py",
+      "sha": "c63c1bd2ce65b60e99a28a012b953ed6df93048f",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/parity_separator_fingerprint.py",
+      "sha": "1b947590023359b812ac388e6d5a0ec2e84133ba",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/partial_replay.py",
+      "sha": "91b481a48cb716b5ed762f2105e2aa2bfbde1032",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/planner_execution.py",
+      "sha": "ec3e8338d60d08310b0044ddcd93def585879f8f",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/primal.py",
+      "sha": "3d3a945ec717fb589d6c4afffd80fc3364ab0fad",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/proof_motif_generalization.py",
+      "sha": "2bfd603d830cbf68937ca16c61b8aeaf00074025",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/proof_trace.py",
+      "sha": "95908993d648a760d69889f87ea6131c25e57fb3",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/proof.py",
+      "sha": "a01673eaf0947019fc2c9751dde748c11ef458de",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/public_benchmarks.py",
+      "sha": "d246b7db27c638b7a62bcadcc51ac02733eb4d9b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/public_preprint_prep_v225.py",
+      "sha": "c499eeac4b17372487f3205a2ef16b48ae40ba29",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/python_dimacs_xor_lean_export.py",
+      "sha": "afab305075831b731d5865f2c24b1138ccaf1dd2",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/python_g14_lean_artifact.py",
+      "sha": "9f6b497e264579b12cae330092d48a5f1aeb164d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/reconstruction.py",
+      "sha": "192d25c58b45698ac1e7c5c7f228c8b1a87ce4f9",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/report.py",
+      "sha": "c610a596dc16d6644533aaf94e79a7b0e2311145",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/reproducibility_package.py",
+      "sha": "a5471eca4c3c340da9658a9b3f4ffd3926f8350e",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/runner.py",
+      "sha": "f4cab21767cde550d9d0c2a430058826eab15c8b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/rup_indexed_propagation.py",
+      "sha": "4f1e417e9847a38e31d8c1c9e40f1d3af8bfbc7c",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/rup_witness_import.py",
+      "sha": "6c620bcc1d8ff1052b2b6cd659b7d91d64429a2c",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/satlib_fingerprint.py",
+      "sha": "ad299a1b7df27bd65d88f4ec5366d2850df79688",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/selective_lookahead_prototype.py",
+      "sha": "638fed3e0d19ea97af3bebf4c3f97c2cea0821d6",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/separator_affine_family_theorem.py",
+      "sha": "af21bdd40173ffe724527caedc3f3cb3e413f3bb",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/separator_conditioned_solve.py",
+      "sha": "15cde7e8dee6cf627fc75a1628dea54a20b08bd1",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/separator_scaling_families.py",
+      "sha": "c089d9fdadf32599dd96a72e6d106d6ce9df4eb7",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/separator_structural_priority.py",
+      "sha": "2d4a1923833b640565646d39954f2220f50cfad5",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/simplify.py",
+      "sha": "cc6f9ae802843d773c768b2cc6e0385efc50f3e5",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/soundness_theoremization.py",
+      "sha": "ad5f7b8865f4da8054ddd335f208e8872c795211",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/sparse_parity_checks.py",
+      "sha": "2693b18941762d286bbad104c522ca5abe1d02c7",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/spoke_collapse.py",
+      "sha": "e387aeb3592692fa8d665f9cb298d083d7a918b2",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/spoke_discovery.py",
+      "sha": "2aeb4e21f40268eaf605a5012a86ea739e10941a",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/strictness_proof.py",
+      "sha": "437718029b3d5c2a0e242d1bef20cced5ac53b6b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/structural_operator_invention.py",
+      "sha": "f04239975699ab3a899ece7ebed7771be7956b33",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/structured_coloring_study.py",
+      "sha": "d178d77c9f1736bc108aaea48558d237ee6b90a9",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/submit_release_finalize_v226.py",
+      "sha": "2eb718aa16b56a9426e1016b322b8e29b0f26151",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/subsumption.py",
+      "sha": "2ad614323a692c5a308eda8e0a2c2a9b08178a25",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/symbolic_implication.py",
+      "sha": "adf3b010ceff73964bea43b1b67f95640e0ee985",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/targeted_graph_theorems.py",
+      "sha": "de3c105606598f0ebceab8d21ed1ef1604b4247e",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/tc063_theorem_hardening.py",
+      "sha": "fec62c88fb92585105de5e9c770837968e8e90d3",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/theorem_candidates.py",
+      "sha": "e607fdc26167635a83922c9d324806ec31aa6a19",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/treewidth_audit.py",
+      "sha": "815b90f555d202f289d415417270fb89d7f7d288",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/treewidth.py",
+      "sha": "0875d8f4f0d5ac9bf1cacd2059be0acf3c3efb38",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/two_sat_proof.py",
+      "sha": "8d933bf15a284e8e3e974f6eb3b4ad477a1f256a",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/two_sat.py",
+      "sha": "9eb0c8033ebd9da8d69ff3742c00a0202179007b",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/ve.py",
+      "sha": "ea1e0519cb5d457df07f0f68377a5b12b12abe43",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/verification_report.py",
+      "sha": "44093aab54785cd8980da602cca4c07b9812c6af",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/verified_compression_pipeline.py",
+      "sha": "350af247b14abe6e50ada6690ef6b7bcd4d63277",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/verifier.py",
+      "sha": "23344b573bc95cdc9b2a2de1dacaa6d07ff8f6ab",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/verify_certificate.py",
+      "sha": "e83f48e9b594df94ade2ee2cd37303ca0ead1f78",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/verify.py",
+      "sha": "f99bf9639bcad8398acf4bd0d731ff723c822c33",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/vertex_coupling_separator.py",
+      "sha": "388987081e436190518e3c60f9e78d9f4bf357fe",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/violation_image_anf.py",
+      "sha": "3738014028a24bcf3872fe4860ba8a73f3358a56",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/xor_diagnostic.py",
+      "sha": "af82b01d8038fdf9097123f4c858976f371dfcaf",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/xor_drat_diagnostic.py",
+      "sha": "0b022378ac2451ef64b58caf424ed6d9ed72495f",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/xor_drat.py",
+      "sha": "dc088da7e44bec98fb3a085695add47edfd1da1d",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    },
+    {
+      "path": "witnora_core/xor.py",
+      "sha": "6ec7564759de1e9e59dab6078a98edd75c239b14",
+      "group": "witnora_core",
+      "status": "not_migrated"
+    }
+  ]
+}
