@@ -133,10 +133,11 @@ def main() -> None:
     steps = resolution_trace(raw)
     if not verify_steps(raw, steps):
         raise AssertionError("Python resolution trace is internally inconsistent")
-    print("import Witnora.GeneralResolutionStream")
+    print("import Witnora.GeneralResolutionAscii")
     print("open Witnora.GeneralResolution")
     print("open Witnora.GeneralResolutionIndexed")
     print("open Witnora.GeneralResolutionStream")
+    print("open Witnora.GeneralResolutionAscii")
     print("set_option maxRecDepth 65536")
     print("set_option maxHeartbeats 4000000")
     print("-- The Lean evaluator checks all resolution steps from signed CNF clauses.")
@@ -157,6 +158,25 @@ def main() -> None:
     print("example : checkStream (Witnora.SignedSerialization.decodeCNF")
     print(f"    ({raw_lean} : List (List Int)))")
     print(f"    ({compact_lean} : List Instruction) = true := by decide")
+    source_text = ("p cnf 6 " + str(len(raw)) + "\\n" +
+                   "".join(" ".join(map(str, row)) + " 0\\n" for row in raw))
+    source_bytes_lean = "[" + ", ".join(str(ord(ch)) for ch in source_text) + "]"
+    tokens = [lit for row in raw for lit in [*row, 0]]
+    tokens_lean = "[" + ", ".join(str(lit) for lit in tokens) + "]"
+    print("example : checkAsciiStream")
+    print(f"    ({source_bytes_lean} : List Nat)")
+    print(f"    ({tokens_lean} : List Int)")
+    print(f"    ({raw_lean} : List (List Int))")
+    print(f"    ({compact_lean} : List Instruction) = true := by decide")
+    tampered = source_text.replace("p cnf 6 " + str(len(raw)),
+                                   "p cnf 6 " + str(len(raw) - 1), 1)
+    wrong_bytes = "[" + ", ".join(str(ord(ch)) for ch in tampered) + "]"
+    print("example : checkAsciiStream")
+    print(f"    ({wrong_bytes} : List Nat)")
+    print(f"    ({tokens_lean} : List Int)")
+    print(f"    ({raw_lean} : List (List Int))")
+    print(f"    ({compact_lean} : List Instruction) = false := by decide")
+    print("#print axioms Witnora.GeneralResolutionAscii.checkAsciiStream_sound")
     print(f"-- PHP(3,2): {len(raw)} source clauses; {len(steps)} derived resolutions.")
     print(f"-- Indexed trace payload: {len(compact_lean)} characters; full by-value trace: {len(trace_lean)} characters.")
     print("#print axioms Witnora.GeneralResolutionStream.signedStream_unsat")
