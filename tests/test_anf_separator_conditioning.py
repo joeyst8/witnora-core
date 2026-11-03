@@ -7,7 +7,7 @@ from scripts.generate_glucose_dense_3sat_lean import random_three_cnf
 from tests.test_exact_tensor_counting import collision_sketch
 from witnora_core.anf_separator_conditioning import (
     count_common_zeros_conditioned, find_bounded_separator,
-    residual_component_sizes,
+    residual_component_sizes, scope_primal_is_complete,
 )
 from witnora_core.anf_structured_counter import count_common_zeros_structured
 from witnora_core.aux_violation_tensors import exact_source_models_small
@@ -111,6 +111,47 @@ class SeparatorConditioningTests(unittest.TestCase):
                 (clause_violation_polynomial([3]),), 2)
         with self.assertRaises(ValueError):
             find_bounded_separator(equations, n, max_candidate_checks=0)
+
+    def test_conservative_admission_keeps_profitable_one_bridge(self) -> None:
+        source, n = bridge_case(3, 1)
+        equations = source_violation_polynomials(source, n)
+        result = count_common_zeros_conditioned(
+            equations, n, admission_policy="conservative")
+        self.assertEqual(result.separator, (1,))
+        self.assertEqual(result.admission_reason, "accepted")
+        self.assertEqual(result.satisfying_assignments,
+                         independent_bridge_oracle(3, 1))
+
+    def test_conservative_admission_skips_four_branch_cut(self) -> None:
+        source, n = bridge_case(4, 2)
+        equations = source_violation_polynomials(source, n)
+        selected, _ = find_bounded_separator(equations, n)
+        self.assertEqual(selected, (1, 2))
+        result = count_common_zeros_conditioned(
+            equations, n, admission_policy="conservative")
+        self.assertFalse(result.separator_found)
+        self.assertEqual(result.admission_reason, "low_payback")
+        self.assertGreater(result.separator_candidates_checked, 0)
+        self.assertEqual(result.satisfying_assignments,
+                         independent_bridge_oracle(4, 2))
+
+    def test_complete_scope_primal_shortcut_is_exact(self) -> None:
+        self.assertTrue(scope_primal_is_complete((0b1111,)))
+        self.assertTrue(scope_primal_is_complete(
+            (0b0011, 0b0101, 0b1001, 0b0110, 0b1010, 0b1100)))
+        self.assertFalse(scope_primal_is_complete(
+            (0b0011, 0b0110, 0b1100)))
+        complete = (clause_violation_polynomial([1, 2, 3, 4]),)
+        result = count_common_zeros_conditioned(
+            complete, 4, admission_policy="conservative")
+        self.assertEqual(result.admission_reason, "complete_primal_skip")
+        self.assertEqual(result.separator_candidates_checked, 0)
+        self.assertEqual(result.satisfying_assignments,
+                         count_common_zeros_structured(complete, 4)
+                         .satisfying_assignments)
+        with self.assertRaises(ValueError):
+            count_common_zeros_conditioned(
+                complete, 4, admission_policy="unknown")
 
     def test_component_graph_after_bridge_removal(self) -> None:
         scopes = (0b0011, 0b0110, 0b1100)
