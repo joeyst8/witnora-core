@@ -25,6 +25,8 @@ on:
       - "formal/Witnora/TC063VertexCoupling.lean"
       - "formal/Witnora/TC063VertexCouplingFiniteOracle.lean"
       - "formal/Witnora/TC063VertexCouplingCheckerSound.lean"
+      - "formal/Witnora/TC063SourceVertexCuts.lean"
+      - "scripts/generate_python_source_vertex_cuts_differential_lean.py"
       - "witnora_core/lean_g5_gate.py"
       - "tests/test_lean_g5_gate.py"
       - "tests/test_lean_g5_wire_real.py"
@@ -64,7 +66,7 @@ jobs:
           test: false
       - name: Kernel-check seen-at-enqueue invariants
         working-directory: formal
-        run: lake build Witnora.G14DFSSeenEnqueue Witnora.G14DFSOuterScan Witnora.G14DFSPreseen Witnora.G14DFSOwnerLabels Witnora.G14DFSModelBridge Witnora.TC063CompletenessReduction Witnora.TC063CanonicalAffineBridge Witnora.TC063PatternPermutation Witnora.TC063CanonicalBound Witnora.TC063SparseDirectChecker Witnora.TC063SparseCover Witnora.TC063SparseG5OperationBound Witnora.TC063SparseDagResource Witnora.TC063PythonCompilerModel Witnora.TC063PythonOperationCodec Witnora.TC063EliminationPairSignal Witnora.TC063VertexCoupling Witnora.TC063VertexCouplingFiniteOracle Witnora.TC063VertexCouplingCheckerSound
+        run: lake build Witnora.G14DFSSeenEnqueue Witnora.G14DFSOuterScan Witnora.G14DFSPreseen Witnora.G14DFSOwnerLabels Witnora.G14DFSModelBridge Witnora.TC063CompletenessReduction Witnora.TC063CanonicalAffineBridge Witnora.TC063PatternPermutation Witnora.TC063CanonicalBound Witnora.TC063SparseDirectChecker Witnora.TC063SparseCover Witnora.TC063SparseG5OperationBound Witnora.TC063SparseDagResource Witnora.TC063PythonCompilerModel Witnora.TC063PythonOperationCodec Witnora.TC063EliminationPairSignal Witnora.TC063VertexCoupling Witnora.TC063VertexCouplingFiniteOracle Witnora.TC063VertexCouplingCheckerSound Witnora.TC063SourceVertexCuts
       - name: Production G5 numeric-wire gate unit and real Lean smoke tests
         run: python -m unittest tests.test_lean_g5_gate tests.test_lean_g5_wire_real -v
       - name: Exercise structural separator prototype and independent graph oracle
@@ -97,8 +99,13 @@ jobs:
       - name: Lean-check each Python articulation and two-cut result
         working-directory: formal
         run: lake env lean Witnora/GeneratedPythonVertexCouplingDifferential.lean
+      - name: Generate Python source-CNF two-vertex-cut certificates for Lean
+        run: python -m scripts.generate_python_source_vertex_cuts_differential_lean > formal/Witnora/GeneratedPythonSourceVertexCutsDifferential.lean
+      - name: Lean-check Python claims against reconstructed signed-source primal graph
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedPythonSourceVertexCutsDifferential.lean
       - name: Reject proof holes
         run: |
-          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14DFSSeenEnqueue.lean formal/Witnora/G14DFSOuterScan.lean formal/Witnora/G14DFSPreseen.lean formal/Witnora/G14DFSOwnerLabels.lean formal/Witnora/G14DFSModelBridge.lean formal/Witnora/TC063CompletenessReduction.lean formal/Witnora/TC063CanonicalAffineBridge.lean formal/Witnora/TC063PatternPermutation.lean formal/Witnora/TC063CanonicalBound.lean formal/Witnora/TC063SparseDirectChecker.lean formal/Witnora/TC063SparseCover.lean formal/Witnora/TC063SparseG5OperationBound.lean formal/Witnora/TC063SparseDagResource.lean formal/Witnora/TC063PythonCompilerModel.lean formal/Witnora/TC063PythonOperationCodec.lean formal/Witnora/TC063EliminationPairSignal.lean formal/Witnora/TC063VertexCoupling.lean formal/Witnora/TC063VertexCouplingFiniteOracle.lean formal/Witnora/TC063VertexCouplingCheckerSound.lean; then
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14DFSSeenEnqueue.lean formal/Witnora/G14DFSOuterScan.lean formal/Witnora/G14DFSPreseen.lean formal/Witnora/G14DFSOwnerLabels.lean formal/Witnora/G14DFSModelBridge.lean formal/Witnora/TC063CompletenessReduction.lean formal/Witnora/TC063CanonicalAffineBridge.lean formal/Witnora/TC063PatternPermutation.lean formal/Witnora/TC063CanonicalBound.lean formal/Witnora/TC063SparseDirectChecker.lean formal/Witnora/TC063SparseCover.lean formal/Witnora/TC063SparseG5OperationBound.lean formal/Witnora/TC063SparseDagResource.lean formal/Witnora/TC063PythonCompilerModel.lean formal/Witnora/TC063PythonOperationCodec.lean formal/Witnora/TC063EliminationPairSignal.lean formal/Witnora/TC063VertexCoupling.lean formal/Witnora/TC063VertexCouplingFiniteOracle.lean formal/Witnora/TC063VertexCouplingCheckerSound.lean formal/Witnora/TC063SourceVertexCuts.lean; then
             exit 1
           fi
