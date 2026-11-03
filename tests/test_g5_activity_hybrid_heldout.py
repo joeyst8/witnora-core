@@ -14,6 +14,7 @@ from itertools import combinations
 from witnora_core.g5_elimination_activity import (
     activity_from_g5_operations,
     ranked_pair_candidates,
+    pairwise_cross_merge_activity,
 )
 from witnora_core.operator_genesis import gaussian_eliminate_gf2
 from witnora_core.separator_affine_family_theorem import _components_after_removing
@@ -95,6 +96,10 @@ class G5HybridHeldoutStudy(unittest.TestCase):
                     graph[mapping[a]].add(mapping[b])
                     graph[mapping[b]].add(mapping[a])
                 g5_pair = ranked_pair_candidates(activity)[0]
+                pairwise = pairwise_cross_merge_activity(
+                    trace["row_operations"], mapping.values()
+                )
+                pairwise_pair = pairwise["ranked_pairs"][0]
                 degree_pair = tuple(sorted(
                     graph, key=lambda v: (-len(graph[v]), v)
                 )[:2])
@@ -102,6 +107,7 @@ class G5HybridHeldoutStudy(unittest.TestCase):
                 hybrid_pair = g5_pair if uniform_degree else degree_pair
                 rows.append({
                     "g5": quality(graph, g5_pair),
+                    "pairwise": quality(graph, pairwise_pair),
                     "degree": quality(graph, degree_pair),
                     "hybrid": quality(graph, hybrid_pair),
                     "used_g5": uniform_degree,
@@ -117,7 +123,7 @@ class G5HybridHeldoutStudy(unittest.TestCase):
                             statistics.mean(r[method]["largest"] for r in rows), 3
                         )
                     )
-                    for method in ("g5", "degree", "hybrid")
+                    for method in ("g5", "pairwise", "degree", "hybrid")
                     for key in ("split", "largest")
                 },
             }
