@@ -610,10 +610,13 @@ states while structured counted 27⁴=531,441 in 85 states / 9.848ms.
 This is an exact exploit of separability, **not** a result for
 connected arbitrary 3-SAT or P-versus-NP.
 
-`formal/Witnora/ANFComponentFactor.lean` added to CI to prove
-the universal independent-product counting identity. Kernel check
-for this new theorem is pending at the time of this ledger entry;
-the bit-mask compiler, union-find scope detection, and complete
+`formal/Witnora/ANFComponentFactor.lean` now kernel-checks
+the universal independent-product counting identity. Lean printed
+only the standard `[propext]` axiom for `splitCount_mul`;
+no project-specific axiom or `sorry` was used. The final
+full regression gate is GREEN:
+https://github.com/joeyst8/witnora-core/actions/runs/41682758248 .
+The bit-mask compiler, union-find scope detection, and complete
 Python refinement are NOT Lean-proved. The restricted-family
 TC-063 theorem remains proved for its own precisely defined
 family, with no extrapolation to general arbitrary CNFs.
