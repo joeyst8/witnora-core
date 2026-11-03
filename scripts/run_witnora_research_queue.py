@@ -28,6 +28,10 @@ ALLOWED_TASKS = {
         ("-m", "unittest", "tests.test_crc_defect_oracle", "-v"),
     "wcrc005_defect_ganak":
         ("-m", "scripts.benchmark_crc_defect"),
+    "wcrc006_conflict_unit":
+        ("-m", "unittest", "tests.test_crc_conflict_oracle", "-v"),
+    "wcrc006_conflict_ganak":
+        ("-m", "scripts.benchmark_crc_conflict"),
     "wcrc004_orbit_unit":
         ("-m", "unittest", "tests.test_crc_orbit_oracle", "-v"),
     "wcrc004_orbit_benchmark":
