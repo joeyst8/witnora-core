@@ -28,6 +28,9 @@ on:
       - "tests/test_general_rup_indexed.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "tests/test_eth_clause_violation_parity.py"
+      - "witnora_core/constraint_geometry.py"
+      - "tests/test_constraint_geometry.py"
+      - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
       - "scripts/generate_eth_clause_violation_parity_lean.py"
       - "tests/test_general_resolution_trace.py"
@@ -58,6 +61,9 @@ on:
       - "tests/test_general_rup_indexed.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "tests/test_eth_clause_violation_parity.py"
+      - "witnora_core/constraint_geometry.py"
+      - "tests/test_constraint_geometry.py"
+      - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
       - "scripts/generate_eth_clause_violation_parity_lean.py"
       - "tests/test_general_resolution_trace.py"
@@ -90,6 +96,12 @@ jobs:
 
       - name: Exhaustively verify source-bound ETH-style parity sketches
         run: python -m unittest tests.test_eth_clause_violation_parity -v
+
+      - name: Validate non-enumerative dense parity and constraint geometry
+        run: python -m unittest tests.test_constraint_geometry -v
+
+      - name: Benchmark non-enumerative sketch construction only
+        run: python -m scripts.benchmark_eth_constraint_geometry
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
