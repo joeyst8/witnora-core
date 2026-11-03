@@ -307,6 +307,73 @@ theorem reverseCoverage_boundedCanonRows
       rw [checkClauseCoverage_expanded_boundedCanonRows
         bound rows clause hNodup hBound, ih]
 
+/-- Canonical support has exactly the same arity, positivity,
+    and duplicate-free validation as any bounded Nodup input row. -/
+theorem rowSupported_boundedCanonRow
+    (r bound : Nat) (row : Row)
+    (hNodup : row.coefficients.Nodup)
+    (hBound : ∀ v ∈ row.coefficients, v < bound) :
+    rowSupported r (boundedCanonRow bound row) =
+      rowSupported r row := by
+  have hp := canonicalSupport_perm_of_bounded bound row.coefficients
+    hNodup hBound
+  have hLen := hp.length_eq
+  have hDup := hp.nodup_iff
+  have hPos := all_perm (fun v => decide (v > 0)) hp
+  simp [rowSupported, boundedCanonRow, hLen, hDup, hPos]
+
+/-- Transport row-level validation across a list of bounded
+    canonicalized affine equations. -/
+theorem rowsSupported_boundedCanonRows
+    (r bound : Nat) (rows : List Row) :
+    (∀ row ∈ rows, row.coefficients.Nodup) →
+    (∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound) →
+    (boundedCanonRows bound rows).all (rowSupported r) =
+      rows.all (rowSupported r) := by
+  induction rows with
+  | nil =>
+      intro _ _
+      rfl
+  | cons row rest ih =>
+      intro hNodup hBound
+      have hHead : row.coefficients.Nodup :=
+        hNodup row (by simp)
+      have hHeadBound : ∀ v ∈ row.coefficients, v < bound :=
+        hBound row (by simp)
+      have hTailNo : ∀ r ∈ rest, r.coefficients.Nodup := by
+        intro r hr
+        exact hNodup r (by simp [hr])
+      have hTailBound : ∀ r ∈ rest, ∀ v ∈ r.coefficients, v < bound := by
+        intro r hr
+        exact hBound r (by simp [hr])
+      have hTailEq :
+          rest.all (rowSupported r ∘ boundedCanonRow bound) =
+            rest.all (rowSupported r) := by
+        simpa only [boundedCanonRows, List.all_map]
+          using ih hTailNo hTailBound
+      simp [boundedCanonRows, rowSupported_boundedCanonRow
+        r bound row hHead hHeadBound, hTailEq]
+
+/-- Every component accepted by the semantic affine CNF extraction
+    checker remains accepted after strict bounded canonicalization. -/
+theorem checkSemanticExactAffine_boundedCanonRows
+    (r bound : Nat) (source : CNF) (rows : List Row)
+    (hCheck : checkSemanticExactAffine r source rows = true)
+    (hBound : ∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound) :
+    checkSemanticExactAffine r source (boundedCanonRows bound rows) = true := by
+  have hNodup := semanticAffine_rows_nodup r source rows hCheck
+  have hEq :
+      checkSemanticExactAffine r source (boundedCanonRows bound rows) =
+        checkSemanticExactAffine r source rows := by
+    unfold checkSemanticExactAffine
+    rw [rowsSupported_boundedCanonRows r bound rows hNodup hBound,
+        checkInitialRows_boundedCanonRows bound source rows hNodup hBound,
+        reverseCoverage_boundedCanonRows bound source rows hNodup hBound]
+  rw [hEq]
+  exact hCheck
+
+#print axioms Witnora.TC063CanonicalBound.checkSemanticExactAffine_boundedCanonRows
+
 #print axioms Witnora.TC063CanonicalBound.reverseCoverage_boundedCanonRows
 
 #print axioms Witnora.TC063CanonicalBound.checkInitialRows_boundedCanonRows
