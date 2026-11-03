@@ -20,6 +20,7 @@ class BoundaryCount:
     right_violation_terms: int
     coefficient_queries: int
     internal_free_variables: int
+    right_components: int
 
 
 def _mask(ids: Iterable[int]) -> int:
@@ -195,6 +196,81 @@ def _coefficient(
     return total
 
 
+
+def _right_components(
+    clauses: tuple[tuple[int, int], ...] | None,
+    *,
+    max_subsets: int,
+) -> tuple[tuple[int, tuple[tuple[int, int, Fraction], ...]], ...] | None:
+    """Factorize the CNF by disjoint clause-variable components.
+
+    This is exact ordinary component decomposition in the coefficient
+    oracle, not a new algorithmic theorem. Each component is expanded
+    separately, with a shared inclusion-exclusion budget.
+    """
+    if clauses is None:
+        return ((0, ()),)  # Empty clause: every Fourier coefficient is zero.
+    if not clauses:
+        return ()
+    parent: dict[int, int] = {}
+
+    def find(v: int) -> int:
+        while parent[v] != v:
+            parent[v] = parent[parent[v]]
+            v = parent[v]
+        return v
+
+    for zeros, ones in clauses:
+        scope = zeros | ones
+        first = scope & -scope
+        parent.setdefault(first, first)
+        rest = scope ^ first
+        while rest:
+            bit = rest & -rest
+            parent.setdefault(bit, bit)
+            r1, r2 = find(first), find(bit)
+            if r1 != r2:
+                parent[r2] = r1
+            rest ^= bit
+
+    groups: dict[int, list[tuple[int, int]]] = {}
+    scopes: dict[int, int] = {}
+    for clause in clauses:
+        scope = clause[0] | clause[1]
+        root = find(scope & -scope)
+        groups.setdefault(root, []).append(clause)
+        scopes[root] = scopes.get(root, 0) | scope
+
+    remaining = max_subsets
+    components = []
+    for root in sorted(groups):
+        subset_count = 1 << len(groups[root])
+        if subset_count > remaining:
+            return None
+        terms = _right_violation_terms(tuple(groups[root]), max_subsets=remaining)
+        if terms is None:
+            return None
+        remaining -= subset_count
+        components.append((scopes[root], terms))
+    return tuple(components)
+
+
+def _component_coefficient(
+    components: tuple[tuple[int, tuple[tuple[int, int, Fraction], ...]], ...],
+    mode: int,
+) -> Fraction:
+    union = 0
+    for scope, _ in components:
+        union |= scope
+    if mode & ~union:
+        return Fraction()
+    result = Fraction(1)
+    for scope, terms in components:
+        result *= _coefficient(terms, mode & scope)
+        if result == 0:
+            return result
+    return result
+
 def count_asymmetric_boundary(
     left_affine_rows: Iterable[tuple[int, int]],
     internal_variables: Iterable[int],
@@ -215,11 +291,12 @@ def count_asymmetric_boundary(
     if spectrum is None:
         return None
     clauses = _normalized_clauses(right_clauses, boundary)
-    terms = _right_violation_terms(clauses, max_subsets=max_inclusion_subsets)
-    if terms is None:
+    components = _right_components(clauses, max_subsets=max_inclusion_subsets)
+    if components is None:
         return None
-    accumulated = sum((coef * _coefficient(terms, mode) for mode, coef in spectrum.items()), Fraction())
+    accumulated = sum((coef * _component_coefficient(components, mode) for mode, coef in spectrum.items()), Fraction())
     result = (1 << len(boundary)) * accumulated
     if result.denominator != 1 or result < 0:
         raise AssertionError("exact counting invariant violated")
-    return BoundaryCount(result.numerator, len(spectrum), len(terms), len(spectrum), free)
+    return BoundaryCount(result.numerator, len(spectrum), sum(len(terms) for _, terms in components),
+                         len(spectrum), free, len(components))
