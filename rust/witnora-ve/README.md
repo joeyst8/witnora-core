@@ -13,7 +13,7 @@ reference until native verification is complete.
 cargo test --manifest-path rust/witnora-ve/Cargo.toml --release
 cargo build --manifest-path rust/witnora-ve/Cargo.toml --release
 python -m pip install "maturin>=1.9,<2"
-maturin build --manifest-path rust/witnora-ve/Cargo.toml --release \\\n  --features python --out rust/witnora-ve/wheels
+maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
 python -m pip install rust/witnora-ve/wheels/*.whl
 WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
   python -m unittest tests.test_crc_rust_backend -v
