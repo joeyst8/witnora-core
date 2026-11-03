@@ -28,8 +28,11 @@ class AuxiliaryViolationTensorTests(unittest.TestCase):
                                      exact_source_models_small(source, n))
                     self.assertTrue(constant_term_matches_source(
                         source, sketch))
+                    # These six frozen sketches admit no false positives:
+                    # sum(coefficients) is the number passing parity,
+                    # NOT the number of all source assignments.
                     self.assertEqual(sum(p.coefficients),
-                                     1 << n)  # frozen exact sketch, verified before
+                                     p.constant_coefficient)
 
     def test_literal_evaluator_independence(self) -> None:
         source = ((1, -2), (-1, 3), (2,), ())
