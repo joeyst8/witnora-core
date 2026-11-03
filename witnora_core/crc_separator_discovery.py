@@ -90,7 +90,10 @@ def discover_source_separator(
 
     n = len(boundary_variables)
     pos = {v: i for i, v in enumerate(boundary_variables)}
-    src, dst, infinite = 2 * n, 2 * n + 1, n + 1
+    # Endpoint/direct-edge arcs must exceed the *configured* cut budget,
+    # not merely n; otherwise an oversized budget could admit a fake
+    # terminal cut and violate separator extraction.
+    src, dst, infinite = 2 * n, 2 * n + 1, max(n, max_separator_size) + 1
     residual = [dict() for _ in range(2 * n + 2)]
 
     def add_arc(u, v, capacity):
