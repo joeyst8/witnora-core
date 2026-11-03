@@ -14,6 +14,7 @@ from typing import Iterable
 
 from witnora_core.crc_shannon_oracle import query_walsh_coefficients
 from witnora_core.crc_orbit_oracle import query_orbit_walsh
+from witnora_core.crc_defect_oracle import query_defect_walsh
 
 
 @dataclass(frozen=True)
@@ -287,6 +288,7 @@ def count_asymmetric_boundary(
     max_inclusion_subsets: int = 4096,
     max_coefficient_states: int | None = None,
     enable_orbit_oracle: bool = False,
+    enable_defect_oracle: bool = False,
 ) -> BoundaryCount | None:
     """Count an affine left region and boundary-only CNF right region.
 
@@ -306,12 +308,19 @@ def count_asymmetric_boundary(
         # identities; it never estimates an unsupported coefficient.
         orbit = (query_orbit_walsh(clauses, boundary, tuple(spectrum))
                  if enable_orbit_oracle else None)
-        if orbit is not None:
+        # A separate opt-in FPT-by-defects enumeration also admits
+        # tetrahedral/high-order missing-support patterns. The
+        # low-defect cardinality path retains priority when available.
+        defect = (query_defect_walsh(clauses, boundary, tuple(spectrum))
+                  if orbit is None and enable_defect_oracle else None)
+        exact = orbit if orbit is not None else defect
+        if exact is not None:
             accumulated = sum(
-                (coef * orbit.coefficients[mode]
+                (coef * exact.coefficients[mode]
                  for mode, coef in spectrum.items()), Fraction(),
             )
-            backend = "orbit_cardinality"
+            backend = ("orbit_cardinality" if orbit is not None
+                       else "defect_hypergraph")
             right_terms = right_components = states = hits = 0
         else:
             # Exact bounded Shannon fallback for general overlap.
