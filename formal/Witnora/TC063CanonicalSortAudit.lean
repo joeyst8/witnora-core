@@ -1,15 +1,12 @@
-import Witnora.TC063CanonicalAffineBridge
+import Witnora.TC063CanonicalBound
 
 /-!
-# TC-063: structural validity preserved by canonical coefficient sorting
+# TC-063: independent normalization gate against proved universal theorems
 
-The certified-affine domain already forbids repeated and zero variables.
-Sorting must preserve the row arity, positive variable IDs and Nodup
-predicate. This theorem removes the row-supportedness portion of the
-normalization gap without assuming extraction reacceptance.
-
-The still-open part is transporting *syntactic forbidden-pattern coverage*
-for checkSemanticExactAffine across arbitrary row-variable permutations.
+Audit note (2026-11-03): the complete proof already exists in
+TC063PatternPermutation and TC063CanonicalBound.  This small module
+checks those interfaces and adds an executable unsorted-row regression.
+No additional completeness premise is assumed here.
 -/
 
 namespace Witnora.TC063CanonicalSortAudit
@@ -17,44 +14,34 @@ namespace Witnora.TC063CanonicalSortAudit
 open Witnora.G5Trace
 open Witnora.ExactAffineMembership
 open Witnora.TC063CanonicalAffineBridge
+open Witnora.SemanticSAF
 
-/-- Sorting an affine row preserves every validated domain restriction,
-    including arity bound, distinctness and strictly positive IDs. -/
+/-- The source checker sees unchanged row validity after sorting. -/
 theorem row_supported_sort_eq (r : Nat) (row : Row) :
-    rowSupported r (sortAffineRow row) = rowSupported r row := by
-  have hp :=
-    Witnora.FiniteXor.sortVariables_perm row.coefficients
-  have hlen :
-      (Witnora.FiniteXor.sortVariables row.coefficients).length =
-      row.coefficients.length := hp.length_eq
-  have hn :
-      (Witnora.FiniteXor.sortVariables row.coefficients).Nodup ↔
-      row.coefficients.Nodup := hp.nodup_iff
-  have hall :
-      (Witnora.FiniteXor.sortVariables row.coefficients).all
-        (fun v => decide (v > 0)) =
-      row.coefficients.all (fun v => decide (v > 0)) :=
-    Witnora.ComponentPartition.all_perm
-      (fun v => decide (v > 0)) hp
-  simp [rowSupported, sortAffineRow, hlen, hn, hall]
+    rowSupported r (sortAffineRow row) = rowSupported r row :=
+  Witnora.TC063PatternPermutation.rowSupported_sortAffineRow r row
 
-/-- The row-validation conjunction is invariant for *every* row list. -/
+/-- The row-list validity checker is invariant for every input list. -/
 theorem rows_supported_sort_eq (r : Nat) (rows : List Row) :
     (sortAffineRows rows).all (rowSupported r) =
-      rows.all (rowSupported r) := by
-  induction rows with
-  | nil => rfl
-  | cons row rest ih =>
-      simp only [sortAffineRows, List.map_cons, List.all_cons]
-      simpa [sortAffineRows] using
-        congrArg (fun b : Bool => rowSupported r row && b) ih
+      rows.all (rowSupported r) :=
+  Witnora.TC063PatternPermutation.rowsSupported_sortAffineRows r rows
 
-example :
-    rowSupported 3
-      (sortAffineRow { coefficients := [3, 1, 2], rhs := true }) =
-    rowSupported 3 { coefficients := [3, 1, 2], rhs := true } := by decide
+/-- Every accepted exact affine extraction remains accepted when sorted. -/
+theorem accepted_extraction_stays_accepted (r : Nat)
+    (source : Witnora.Concrete.CNF) (rows : List Row)
+    (h : checkSemanticExactAffine r source rows = true) :
+    checkSemanticExactAffine r source (sortAffineRows rows) = true :=
+  Witnora.TC063PatternPermutation.checkSemanticExactAffine_sortAffineRows
+    r source rows h
 
-#print axioms Witnora.TC063CanonicalSortAudit.row_supported_sort_eq
-#print axioms Witnora.TC063CanonicalSortAudit.rows_supported_sort_eq
+/-- The restricted-family canonical-witness obligation is already closed. -/
+theorem all_certified_affine_have_canonical_witness (r : Nat)
+    (cnf : Witnora.Concrete.CNF) (h : CertifiedAffine r cnf) :
+    CanonicalAffineWitness r cnf :=
+  Witnora.TC063CanonicalBound.certifiedAffine_has_canonicalWitness r cnf h
+
+#print axioms Witnora.TC063CanonicalSortAudit.accepted_extraction_stays_accepted
+#print axioms Witnora.TC063CanonicalSortAudit.all_certified_affine_have_canonical_witness
 
 end Witnora.TC063CanonicalSortAudit
