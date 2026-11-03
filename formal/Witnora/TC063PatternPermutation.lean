@@ -222,9 +222,15 @@ theorem checkInitialRows_sortAffineRows
       have hTail : ∀ r ∈ rest, r.coefficients.Nodup := by
         intro r hr
         exact hNodup r (by simp [hr])
+      have hRest :
+          rest.all ((fun r => checkPattern source r.coefficients r.rhs) ∘
+              sortAffineRow) =
+          rest.all (fun r => checkPattern source r.coefficients r.rhs) := by
+        simpa only [checkInitialRows, sortAffineRows, List.all_map]
+          using ih hTail
       simp [sortAffineRows, sortAffineRow, checkInitialRows,
         checkPattern_sortVariables source row.coefficients row.rhs hHead,
-        ih hTail]
+        hRest]
 
 #print axioms Witnora.TC063PatternPermutation.checkInitialRows_sortAffineRows
 
