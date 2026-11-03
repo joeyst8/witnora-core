@@ -8,6 +8,7 @@
 //! native Rust code does not constitute a formal proof.
 
 pub mod source_preprocess;
+pub mod source_xor;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -397,11 +398,27 @@ fn simplify_source_adaptive_native(
     )))
 }
 
+/// Exact source-CNF extraction of complete k-XOR blocks, k<=3.
+/// Arbitrary-precision bit masks are returned as decimal strings.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn extract_small_xors_native(
+    clauses: Vec<Vec<i32>>, nvars: u32,
+) -> PyResult<(Vec<(String, u32)>, Vec<Vec<i32>>)> {
+    let answer = source_xor::extract_small_xors(&clauses, nvars)
+        .map_err(PyValueError::new_err)?;
+    Ok((
+        answer.rows.into_iter().map(|(mask, rhs)| (mask.to_string(), rhs)).collect(),
+        answer.residual_clauses,
+    ))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
     module.add_function(wrap_pyfunction!(simplify_source_native, module)?)?;
     module.add_function(wrap_pyfunction!(simplify_source_adaptive_native, module)?)?;
+    module.add_function(wrap_pyfunction!(extract_small_xors_native, module)?)?;
     Ok(())
 }
