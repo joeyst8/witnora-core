@@ -34,7 +34,9 @@ def auxExact (cnf : List (List Int)) (rows : List (List Bool))
 theorem source_model_iff_unique_exact_aux
     (cnf : List (List Int)) (rows : List (List Bool))
     (a : Nat → Bool) :
-    signedCNFHolds cnf a ↔ ∃! v : List Bool, auxExact cnf rows a v := by
+    signedCNFHolds cnf a ↔
+      ∃ v : List Bool, auxExact cnf rows a v ∧
+        ∀ other, auxExact cnf rows a other → other = v := by
   constructor
   · intro hsource
     refine ⟨violationVector cnf a, ?_, ?_⟩
