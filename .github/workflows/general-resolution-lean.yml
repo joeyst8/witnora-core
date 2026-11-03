@@ -49,6 +49,9 @@ on:
       - "formal/Witnora/ViolationProduct.lean"
       - "tests/test_violation_image_anf.py"
       - "scripts/benchmark_violation_image_anf.py"
+      - "witnora_core/anf_structured_counter.py"
+      - "tests/test_anf_structured_counter.py"
+      - "scripts/benchmark_anf_structured_counter.py"
       - "formal/Witnora/GF2RowParity.lean"
       - "tests/test_gf2_sparse_row_basis.py"
       - "scripts/benchmark_gf2_sparse_basis_counting.py"
@@ -107,6 +110,9 @@ on:
       - "formal/Witnora/ViolationProduct.lean"
       - "tests/test_violation_image_anf.py"
       - "scripts/benchmark_violation_image_anf.py"
+      - "witnora_core/anf_structured_counter.py"
+      - "tests/test_anf_structured_counter.py"
+      - "scripts/benchmark_anf_structured_counter.py"
       - "formal/Witnora/GF2RowParity.lean"
       - "tests/test_gf2_sparse_row_basis.py"
       - "scripts/benchmark_gf2_sparse_basis_counting.py"
@@ -210,6 +216,12 @@ jobs:
 
       - name: Benchmark nonlinear violation-image ANF versus original CNF constraints
         run: python -m scripts.benchmark_violation_image_anf
+
+      - name: Verify shared-cofactor ANF counter, independent scopes and collisions
+        run: python -m unittest tests.test_anf_structured_counter -v
+
+      - name: Compare bounded exact ANF counter strategies on frozen controls
+        run: python -m scripts.benchmark_anf_structured_counter
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
