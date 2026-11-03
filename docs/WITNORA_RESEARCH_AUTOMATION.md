@@ -245,3 +245,19 @@ conditioning, not a broad #SAT victory or an autonomous theorem
 discovery. A passing queue run validates that the three *reviewed*
 commands executed sequentially; it does not autonomously create the
 next experiment or send a chat message.
+
+
+### Verified W-CRC-012/013 completion-driven execution
+
+[GitHub Actions research queue #41719605405](https://github.com/joeyst8/witnora-core/actions/runs/41719605405)
+completed the new approved manifest in order, without any
+fixed-interval polling:
+
+1. `wcrc012_cutset_unit`: **PASS**, 0.107 seconds.
+2. `wcrc013_adversarial_unit`: **PASS**, 0.155 seconds.
+3. `wcrc013_adversarial_ganak`: **PASS**, 0.809 seconds.
+
+The queue printed `QUEUE_COMPLETE` and uploaded its JSON report.
+This demonstrates bounded, event-triggered experiment sequencing;
+it is **not** a self-generating research agent and cannot post new
+updates to a closed ChatGPT turn on its own.
