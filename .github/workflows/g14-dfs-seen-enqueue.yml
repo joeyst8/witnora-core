@@ -36,6 +36,8 @@ on:
       - "tests/test_g5_pairwise_dense_bridge.py"
       - "witnora_core/global_coupling_separator.py"
       - "tests/test_global_coupling_separator.py"
+      - "witnora_core/vertex_coupling_separator.py"
+      - "tests/test_vertex_coupling_separator.py"
       - "scripts/generate_python_g5_compiler_differential_lean.py"
       - ".github/workflows/g14-dfs-seen-enqueue.yml"
   workflow_dispatch:
@@ -73,6 +75,8 @@ jobs:
         run: python -m unittest tests.test_g5_pairwise_dense_bridge -v
       - name: Global two-edge coupling hidden-bridge and G14 recognition checks
         run: python -m unittest tests.test_global_coupling_separator -v
+      - name: Vertex-coupling completeness, randomized graph oracle and dense-overlap G14 test
+        run: python -m unittest tests.test_vertex_coupling_separator -v
       - name: Emit actual Python G5 compiler differential trace assertions
         run: python -m scripts.generate_python_g5_compiler_differential_lean > formal/Witnora/GeneratedPythonG5CompilerDifferential.lean
       - name: Lean-check every Python compiler differential result
