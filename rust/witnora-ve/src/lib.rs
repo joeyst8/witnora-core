@@ -11,6 +11,7 @@ pub mod source_preprocess;
 pub mod source_xor;
 pub mod right_walsh;
 pub mod left_affine;
+pub mod fused_source;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -475,6 +476,32 @@ fn affine_spectrum_native(
     )))
 }
 
+/// Fully native source-CNF exact counting with one PyO3 boundary.
+/// The model count is transported as decimal text to avoid truncation.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn count_source_native(
+    clauses: Vec<Vec<i32>>, nvars: u32, preprocess: &str,
+    max_preprocess_passes: usize, max_preprocess_clause_visits: usize,
+    max_spectrum_terms: usize, max_inclusion_subsets: usize,
+    max_coefficient_operations: u64,
+) -> PyResult<Option<(String, usize, usize, usize, usize, usize,
+                       usize, usize, bool, usize, u64)>> {
+    let got = fused_source::count_fused_source(
+        &clauses, nvars, preprocess, max_preprocess_passes,
+        max_preprocess_clause_visits, max_spectrum_terms,
+        max_inclusion_subsets, max_coefficient_operations,
+    ).map_err(PyValueError::new_err)?;
+    Ok(got.map(|out| (
+        out.models.to_string(), out.extracted_affine_rows,
+        out.residual_clauses, out.boundary_variables,
+        out.internal_variables, out.left_fourier_terms,
+        out.right_violation_terms, out.right_components,
+        out.source_preprocess_skipped, out.source_preprocess_passes,
+        out.right_subset_operations,
+    )))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -484,5 +511,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(extract_small_xors_native, module)?)?;
     module.add_function(wrap_pyfunction!(right_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(affine_spectrum_native, module)?)?;
+    module.add_function(wrap_pyfunction!(count_source_native, module)?)?;
     Ok(())
 }
