@@ -31,7 +31,7 @@ theorem falseProduct_eq_not_any (clause : List Int)
   | nil => rfl
   | cons lit rest ih =>
       simp only [falseProduct, List.any_cons]
-      rw [← ih]
+      rw [ih]
       cases h : signedLitTrue a (decode lit) <;> simp [h]
 
 def productViolations (cnf : List (List Int))
