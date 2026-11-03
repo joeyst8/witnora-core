@@ -16,6 +16,7 @@ from typing import Iterable
 from witnora_core.crc_boundary import _normalized_clauses
 from witnora_core.crc_separator_discovery import discover_source_separator
 from witnora_core.crc_variable_elimination import count_component_by_elimination
+from witnora_core.crc_variable_elimination_indexed import count_component_by_indexed_elimination
 
 
 @dataclass(frozen=True)
@@ -62,7 +63,8 @@ def count_source_by_separator(
         not isinstance(max_separator_branches, int) or
         not 1 <= max_separator_branches <= 256):
         raise ValueError("invalid component/state cap")
-    if component_backend not in ("enumeration", "variable_elimination"):
+    if component_backend not in (
+        "enumeration", "variable_elimination", "variable_elimination_indexed"):
         raise ValueError("unknown exact component backend")
     if (not isinstance(max_ve_factor_variables, int) or
         not 1 <= max_ve_factor_variables <= 16 or
@@ -142,11 +144,15 @@ def count_source_by_separator(
                 continue
             width = len(variables)
             biggest = max(biggest, width)
-            if component_backend == "variable_elimination":
+            if component_backend in (
+                "variable_elimination", "variable_elimination_indexed"):
                 remaining_ve_budget = max_ve_operations - ve_ops
                 if remaining_ve_budget < 1:
                     return None
-                ve = count_component_by_elimination(
+                backend = (count_component_by_indexed_elimination
+                           if component_backend == "variable_elimination_indexed"
+                           else count_component_by_elimination)
+                ve = backend(
                     local_clauses, tuple(variables),
                     max_factor_variables=max_ve_factor_variables,
                     max_operations=remaining_ve_budget)
