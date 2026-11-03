@@ -63,3 +63,46 @@ A meaningful algorithmic success needs:
 If Ganak is much faster, this is a useful **negative result**.
 A compact two-mode left spectrum can coexist with an expensive
 nonlinear coefficient-query problem. No P vs NP inference follows.
+
+
+## First high-count results (2026-11-03)
+
+Green GitHub Actions run: https://github.com/joeyst8/witnora-core/actions/runs/41698634046
+
+- All **31 Python test methods passed**.
+- All 18 Ganak integer model counts and SAT decisions completed.
+  Ganak default probabilistic caching caveat applies.
+- Glucose3 *enumeration* reached the 1,000-model cap on every
+  instance; it cannot be used as a counting baseline here.
+- With 3,000 internal states and 2.5s per attempt, Shannon CRC
+  completed **6/18** cases (all at k=24); ANF completed **3/18**
+  (the three dense-only k=24 controls).
+- On each of the six completed CRC instances, integer results
+  matched Ganak. No completed correctness discrepancies occurred.
+- The original inclusion-exclusion CRC could not handle these
+  overlapping nonlinear clause sets under its subset limit.
+
+| Boundary size / family (3 seeds each) | CRC complete | ANF complete | Median CRC (completed) | Median Ganak engine |
+| --- | ---: | ---: | ---: | ---: |
+| k=24 dense nonlinear, 24 source vars | 3/3 | 3/3 | 15.0405 ms | 74.0356 ms |
+| k=24 XOR + nonlinear, 46 source vars | 3/3 | 0/3 | 24.2935 ms | 420.2832 ms |
+| k=32 dense nonlinear, 32 source vars | 0/3 | 0/3 | — | 378.7424 ms |
+| k=32 XOR + nonlinear, 62 source vars | 0/3 | 0/3 | — | 640.3155 ms |
+| k=40 dense nonlinear, 40 source vars | 0/3 | 0/3 | — | 563.5883 ms |
+| k=40 XOR + nonlinear, 78 source vars | 0/3 | 0/3 | — | 930.8607 ms |
+
+Median of the **per-instance** Ganak/CRC runtime ratios is about
+4.92x on the three k=24 dense cases and 18.14x on the three k=24
+mixed cases. The medians are from a single GitHub runner and only
+two CRC repeat timings; not a stable population estimate. Ganak
+engine times include its CNF setup and count in the worker, excluding
+process startup, and may reflect parity-gadget preprocessing overhead.
+This is a positive *restricted small-instance* result versus Ganak,
+not evidence of universal SAT/#SAT superiority.
+
+At k=32/40 the CRC status was INCOMPLETE_BUDGET, not UNSAT.
+An expanded run with 30,000 states and a strict wall-clock limit
+tests whether this boundary is a chosen budget artifact. Even if it
+succeeds, serious claims require more seeds, larger instances,
+native XOR-aware baselines, and a mathematical invariant that
+predicts when exact coefficient queries can be generated cheaply.
