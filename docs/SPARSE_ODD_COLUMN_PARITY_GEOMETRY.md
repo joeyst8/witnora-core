@@ -130,3 +130,30 @@ certificate proving exactness.
 The next milestone is a *geometry-aware sparse row selection* that
 keeps global contraction width small **and** provides a checkable
 high-weight collision exclusion mechanism. No P=NP claim follows.
+
+
+## CI acceptance and construction-only timings
+
+The 28-step general SAT/Lean gate passed on 2026-11-03:
+[GitHub Actions run 41646810807](https://github.com/joeyst8/witnora-core/actions/runs/41646810807).
+
+The new sparse-constructor tests, complete 1–3 support audits,
+all six frozen SAT/UNSAT finite audits, adversarial four-bit collision,
+tampered-source rejection, 96-variable nonenumeration interception,
+and previously verified general-CNF RUP regressions passed.
+The new 1–3 coding theorem remains a mathematical argument and
+Python-checked structural property, not a new Lean universal theorem.
+
+Single-run GitHub Actions construction measurements (not SAT solving
+or counting; hardware-dependent diagnostics):
+
+| Variables / clauses | Sparse rows | Maximum clauses per row | Construction, ms |
+|---|---:|---:|---:|
+| 8 / 54 | 36 | 5 | 1.039 |
+| 12 / 84 | 54 | 5 | 1.931 |
+| 32 / 224 | 138 | 5 | 11.179 |
+| 96 / 576 | 349 | 5 | 73.618 |
+| 256 / 1,536 | 925 | 5 | 551.940 |
+
+The 96-variable and 256-variable transformed systems remain
+**unaudited for exactness** and **unsolved**.
