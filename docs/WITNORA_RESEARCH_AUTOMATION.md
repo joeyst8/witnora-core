@@ -11,13 +11,14 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-010 source-relative conditional-independence unit controls.
-2. W-CRC-011 exact minimum vertex-separator unit controls, including
-   exhaustive minimum-cut and conditional probability cross-checks.
-3. W-CRC-011 end-to-end source-checked cut discovery cost benchmark.
+1. W-CRC-012 exact source cutset model-counting unit controls.
+2. W-CRC-013 signed-block analytic count and chain/ring rejection tests.
+3. W-CRC-013 heterogeneous, random and adversarial model-count benchmark,
+   including Glucose3 witness-search timing and independent Ganak checks.
 
-These are the **current** three approved queue tasks. Earlier W-CRC-005/006
-configurations described in the chronological log below are historical.
+These are the **current** three approved queue tasks. Earlier W-CRC-005
+through W-CRC-011 configurations described chronologically below are
+historical.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -216,3 +217,31 @@ with a read-only token. It does not autonomously create research tasks
 or send a ChatGPT notification when a GitHub Action completes.
 The W-CRC-012 model-count benchmark is subject to its own separate
 full CI gate; its result is not implied by the queue's success.
+
+
+## W-CRC-012/013 exact source-counting queue — 2026-11-03
+
+A finite reviewed task plan now runs three bounded tasks in order:
+`wcrc012_cutset_unit`, `wcrc013_adversarial_unit`,
+`wcrc013_adversarial_ganak`. After all inputs are checked, the
+event-driven GitHub Actions workflow launches the next only after the
+previous succeeds. Its token is read-only and it never auto-merges.
+
+Separately from the queue, the full W-CRC independent gate passed 79
+tests and **8/8** W-CRC-012 exact counts against Ganak and analytic
+formulas (roughly 11–32× faster in the *special hub family*):
+https://github.com/joeyst8/witnora-core/actions/runs/41718161372 .
+
+W-CRC-013 broadened to 12 cases with explicit source-witness-search
+timing: 5/5 modular signed-block cases admitted and matched Ganak
+(roughly 7.6–14.8× faster with one SAT witness solve included), while
+7/7 chain/ring/random controls returned *incomplete* without
+incorrect counts. The independent Ganak counter solved 12/12.
+Full W-CRC CI passed **81 tests**:
+https://github.com/joeyst8/witnora-core/actions/runs/41719072620 .
+
+These are pilot family-level timings and established cutset
+conditioning, not a broad #SAT victory or an autonomous theorem
+discovery. A passing queue run validates that the three *reviewed*
+commands executed sequentially; it does not autonomously create the
+next experiment or send a chat message.
