@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from fractions import Fraction
 from typing import Iterable
 
+from witnora_core.crc_shannon_oracle import query_walsh_coefficients
+
 
 @dataclass(frozen=True)
 class BoundaryCount:
@@ -21,6 +23,9 @@ class BoundaryCount:
     coefficient_queries: int
     internal_free_variables: int
     right_components: int
+    coefficient_backend: str = "inclusion_exclusion"
+    coefficient_states: int = 0
+    coefficient_memo_hits: int = 0
 
 
 def _mask(ids: Iterable[int]) -> int:
@@ -279,6 +284,7 @@ def count_asymmetric_boundary(
     *,
     max_spectrum_terms: int = 4096,
     max_inclusion_subsets: int = 4096,
+    max_coefficient_states: int | None = None,
 ) -> BoundaryCount | None:
     """Count an affine left region and boundary-only CNF right region.
 
@@ -293,10 +299,38 @@ def count_asymmetric_boundary(
     clauses = _normalized_clauses(right_clauses, boundary)
     components = _right_components(clauses, max_subsets=max_inclusion_subsets)
     if components is None:
-        return None
-    accumulated = sum((coef * _component_coefficient(components, mode) for mode, coef in spectrum.items()), Fraction())
+        # Optional exact Shannon fallback for overlapping nonlinear
+        # clauses. It is a bounded weighted model counter, not a
+        # polynomial-time coefficient oracle.
+        if max_coefficient_states is None:
+            return None
+        query = query_walsh_coefficients(
+            clauses, boundary, tuple(spectrum), max_states=max_coefficient_states,
+        )
+        if query is None:
+            return None
+        accumulated = sum(
+            (coef * query.coefficients[mode] for mode, coef in spectrum.items()),
+            Fraction(),
+        )
+        backend = "shannon"
+        right_terms = 0
+        right_components = 0
+        states = query.states
+        hits = query.memo_hits
+    else:
+        accumulated = sum(
+            (coef * _component_coefficient(components, mode)
+             for mode, coef in spectrum.items()), Fraction(),
+        )
+        backend = "inclusion_exclusion"
+        right_terms = sum(len(terms) for _, terms in components)
+        right_components = len(components)
+        states = hits = 0
     result = (1 << len(boundary)) * accumulated
     if result.denominator != 1 or result < 0:
         raise AssertionError("exact counting invariant violated")
-    return BoundaryCount(result.numerator, len(spectrum), sum(len(terms) for _, terms in components),
-                         len(spectrum), free, len(components))
+    return BoundaryCount(
+        result.numerator, len(spectrum), right_terms, len(spectrum), free,
+        right_components, backend, states, hits,
+    )
