@@ -7,6 +7,8 @@ on:
   pull_request:
     paths:
       - "witnora_core/separator_affine_family_theorem.py"
+      - "witnora_core/separator_structural_priority.py"
+      - "tests/test_separator_structural_priority.py"
       - "witnora_core/operator_genesis.py"
       - "tests/test_g14_separator_only.py"
       - "scripts/check_g14_separator_only_lean.py"
@@ -32,6 +34,6 @@ jobs:
           test: false
       - name: Build full source G14 and indexed G5 checkers
         working-directory: formal
-        run: lake build Witnora.G14ConcreteBridge Witnora.G5IndexedBridge
+        run: lake build Witnora.G14ConcreteBridge Witnora.G5IndexedBridge Witnora.G14NormalizedPartition Witnora.TC063SparseCover Witnora.TC063PythonOperationCodec
       - name: Lean UNSAT proof and SAT rejection
         run: PYTHONPATH=. python scripts/check_g14_separator_only_lean.py

@@ -48,6 +48,8 @@ class G14LeanCoverGateTest(unittest.TestCase):
         self.assertTrue(result["normalization_check"]["verified"])
         self.partition_runner.assert_called_once()
         self.assertEqual(gate.call_count, 2)
+        self.assertTrue(all(call.kwargs.get("use_sparse_checker") is True
+                            for call in gate.call_args_list))
         self.assertEqual([b["assignment_id"] for b in result["branches"]], ["S1", "S2"])
 
 
@@ -63,7 +65,9 @@ class G14LeanCoverGateTest(unittest.TestCase):
             path = Path(argv[3])
             source_code = path.read_text(encoding="utf-8")
             if path.name == "G14CompleteSourceProof.lean":
-                self.assertIn("checked_ascii_dimacs_g14_canonical_normalized_unsat", source_code)
+                self.assertIn("checked_ascii_dimacs_g14_canonical_sparse_unsat", source_code)
+                self.assertIn("TC063SparseDirectChecker.checkSparseG5", source_code)
+                self.assertNotIn("certBound", source_code)
                 self.assertIn("checkNormalizedPartition", source_code)
                 self.assertNotIn(chr(92) + "n", source_code)
                 captured.append(source_code)

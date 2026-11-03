@@ -6,6 +6,8 @@ on:
   pull_request:
     paths:
       - "formal/Witnora/G14NormalizedPartition.lean"
+      - "formal/Witnora/TC063PythonOperationCodec.lean"
+      - "witnora_core/lean_g5_gate.py"
       - "witnora_core/lean_g14_gate.py"
       - "tests/test_lean_g14_gate.py"
       - "tests/test_g14_normalized_gate_real.py"
@@ -30,7 +32,7 @@ jobs:
         run: python -m scripts.generate_g14_adversarial_matrix_lean
       - name: Kernel-check normalized partition soundness
         working-directory: formal
-        run: lake build Witnora.G14NormalizedPartition
+        run: lake build Witnora.G14NormalizedPartition Witnora.TC063SparseCover Witnora.TC063PythonOperationCodec
       - name: Production G14 gate unit tests
         run: python -m unittest tests.test_lean_g14_gate -v
       - name: Production G14 gate real Lean tamper tests

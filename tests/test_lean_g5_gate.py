@@ -8,7 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from witnora_core.lean_g5_gate import (verify_g5_certificate_with_lean,
-                                       _compile_dag, _serialize_indexed_operations)
+                                       _compile_dag, _serialize_indexed_operations,
+                                       _serialize_wire_operations)
 from witnora_core.operator_genesis import (
     build_affine_residue_certificate,
     make_affine_residue_instance,
@@ -36,6 +37,8 @@ class G5LeanGateTest(unittest.TestCase):
             source = Path(argv[3]).read_text(encoding="utf-8")
             self.assertIn("Witnora.SparseBridge.checkG5Closed", source)
             self.assertIn("Witnora.G5IndexedBridge.compile", source)
+            self.assertIn("Witnora.TC063PythonOperationCodec.decodeAll", source)
+            self.assertIn("Witnora.TC063PythonOperationCodec.compileWire", source)
             self.assertIn("= true := by decide", source)
             self.assertNotIn("isUnsat", source)
             self.assertNotIn("sorry", source)
@@ -61,6 +64,22 @@ class G5LeanGateTest(unittest.TestCase):
         self.assertIn("Operation.addRowXor 0 1", indexed)
         self.assertEqual(indexed.count("Operation.swapRows"), 2)
         self.assertEqual(indexed.count("Operation.addRowXor"), 2)
+        self.assertEqual(
+            _serialize_wire_operations(ops),
+            "[(0, 0, 1), (1, 0, 1), (0, 0, 1), (1, 0, 1)]",
+        )
+
+    def test_wire_operations_reject_non_integer_indices_and_bad_kinds(self):
+        malformed = [
+            [{"operation": "SWAP_ROWS", "row_a": True, "row_b": 0}],
+            [{"operation": "ADD_ROW_XOR", "target_row": -1, "source_row": 0}],
+            [{"operation": "ADD_ROW_XOR", "target_row": "1", "source_row": 0}],
+            [{"operation": "FOREIGN_LEAN", "row_a": 0, "row_b": 0}],
+        ]
+        for operations in malformed:
+            with self.subTest(operations=operations), self.assertRaises(ValueError):
+                _serialize_wire_operations(operations)
+
 
     def test_normalization_rejection_blocks_g5_proof(self):
         self.normalization_gate.return_value = {

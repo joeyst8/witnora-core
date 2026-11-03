@@ -112,6 +112,33 @@ def _serialize_indexed_operations(ops: Any) -> str:
     return "[" + ", ".join(encoded) + "]"
 
 
+def _serialize_wire_operations(ops: Any) -> str:
+    """Render validated JSON operations as numeric (tag, index, index) triples.
+
+    Lean independently checks decoding these triples to typed G5 operations.
+    No certificate-controlled constructor names or Lean syntax are copied.
+    """
+    if not isinstance(ops, list):
+        raise ValueError("G5 operations must be a list")
+    encoded = []
+    for op in ops:
+        if not isinstance(op, dict):
+            raise ValueError("malformed G5 operation")
+        kind = op.get("operation")
+        if kind == "SWAP_ROWS":
+            tag = 0
+            left = _strict_nonnegative(op.get("row_a"))
+            right = _strict_nonnegative(op.get("row_b"))
+        elif kind == "ADD_ROW_XOR":
+            tag = 1
+            left = _strict_nonnegative(op.get("target_row"))
+            right = _strict_nonnegative(op.get("source_row"))
+        else:
+            raise ValueError("unsupported G5 operation")
+        encoded.append(f"({tag}, {left}, {right})")
+    return "[" + ", ".join(encoded) + "]"
+
+
 def verify_g5_certificate_with_lean(
     formula: CNFFormula,
     certificate: Any,
@@ -123,6 +150,7 @@ def verify_g5_certificate_with_lean(
     source_tokens: object | None = None,
     source_spellings: object | None = None,
     source_text: object | None = None,
+    use_sparse_checker: bool = False,
 ) -> dict[str, Any]:
     """Return LEAN_VERIFIED only after independent Lean execution succeeds.
 
@@ -133,13 +161,16 @@ def verify_g5_certificate_with_lean(
     identity = sha256(json.dumps(
         {"formula": formula.to_clause_lists(), "certificate": data,
          "raw_clauses": raw_clauses, "source_tokens": source_tokens,
-         "source_spellings": source_spellings, "source_text": source_text},
+         "source_spellings": source_spellings, "source_text": source_text,
+         "use_sparse_checker": use_sparse_checker},
         sort_keys=True, separators=(",", ":"), default=str,
     ).encode("utf-8")).hexdigest()
     failure = {"lean_formal_status": "NOT_LEAN_VERIFIED",
                "verified": False, "input_sha256": identity}
 
     try:
+        if type(use_sparse_checker) is not bool or (use_sparse_checker and raw_clauses is not None):
+            raise ValueError("sparse G5 checking requires Boolean mode and canonical component CNF")
         if source_text is not None and source_spellings is None:
             raise ValueError("source text requires original decimal spellings")
         if source_spellings is not None and source_tokens is None:
@@ -189,10 +220,12 @@ def verify_g5_certificate_with_lean(
         rows = _serialize_rows(initial_rows)
         dag = _compile_dag(initial_rows, data.get("row_operations"))
         indexed_ops = _serialize_indexed_operations(data.get("row_operations"))
+        wire_ops = _serialize_wire_operations(data.get("row_operations"))
         bound = _strict_nonnegative(formula.max_var) + 1
         lean_source = (
             "import Witnora.SparseBridge\n"
             "import Witnora.G5IndexedBridge\n"
+            "import Witnora.TC063PythonOperationCodec\n"
             "import Witnora.SignedSerialization\n"
             "set_option maxRecDepth 16384\n"
             "set_option maxHeartbeats 0\n"
@@ -200,12 +233,25 @@ def verify_g5_certificate_with_lean(
             f"{formula.to_clause_lists()} = {cnf} := by decide\n"
             "example : Witnora.G5IndexedBridge.compile "
             f"{len(initial_rows)} {indexed_ops} = some {dag} := by decide\n"
+            "example : Witnora.TC063PythonOperationCodec.decodeAll "
+            f"{wire_ops} = some {indexed_ops} := by decide\n"
+            "example : Witnora.TC063PythonOperationCodec.compileWire "
+            f"{len(initial_rows)} {wire_ops} = some {dag} := by decide\n"
         )
         if raw_clauses is None:
-            lean_source += (
-                "example : Witnora.SparseBridge.checkG5Closed "
-                f"{bound} {cnf} {rows} {dag} = true := by decide\n"
-            )
+            if use_sparse_checker:
+                lean_source = "import Witnora.TC063SparseDirectChecker\n" + lean_source
+                lean_source += (
+                    "example : Witnora.TC063SparseDirectChecker.checkSparseG5 "
+                    f"{cnf} {rows} {dag} = true := by decide\n"
+                    "example : Witnora.TC063PythonOperationCodec.checkWireSparseG5 "
+                    f"{cnf} {rows} {wire_ops} = true := by decide\n"
+                )
+            else:
+                lean_source += (
+                    "example : Witnora.SparseBridge.checkG5Closed "
+                    f"{bound} {cnf} {rows} {dag} = true := by decide\n"
+                )
         else:
             # This closed theorem proves UNSAT of the source signed clauses
             # themselves, using canonicalization plus G5 reconstruction.
