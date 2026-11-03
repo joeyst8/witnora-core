@@ -16,6 +16,8 @@ on:
       - "tests/test_glucose_drup_import.py"
       - "scripts/generate_glucose_drup_rup_lean.py"
       - "scripts/benchmark_cdcl_rup_scaling.py"
+      - "scripts/generate_glucose_dense_3sat_lean.py"
+      - "tests/test_glucose_dense_3sat.py"
       - "witnora_core/rup_witness_import.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
@@ -33,6 +35,8 @@ on:
       - "tests/test_glucose_drup_import.py"
       - "scripts/generate_glucose_drup_rup_lean.py"
       - "scripts/benchmark_cdcl_rup_scaling.py"
+      - "scripts/generate_glucose_dense_3sat_lean.py"
+      - "tests/test_glucose_dense_3sat.py"
       - "witnora_core/rup_witness_import.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
@@ -59,7 +63,7 @@ jobs:
         working-directory: formal
         run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP Witnora.GeneralRUPAscii
       - name: Test independent proof generation and tamper rejection
-        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import -v
+        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import tests.test_glucose_dense_3sat -v
       - name: Generate non-affine CNF resolution examples
         run: python -m scripts.generate_general_resolution_lean > formal/Witnora/GeneratedGeneralResolution.lean
       - name: Lean-check all generated non-affine examples
@@ -77,3 +81,9 @@ jobs:
         run: lake env lean Witnora/GeneratedGlucoseDRUP.lean
       - name: Measure frozen non-affine CDCL proof annotation scaling
         run: python -m scripts.benchmark_cdcl_rup_scaling
+
+      - name: Generate real dense random 3SAT and planted-SAT controls
+        run: python -m scripts.generate_glucose_dense_3sat_lean > formal/Witnora/GeneratedDense3SAT.lean
+      - name: Lean-check dense no-small-separator 3SAT and positive SAT models
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedDense3SAT.lean
