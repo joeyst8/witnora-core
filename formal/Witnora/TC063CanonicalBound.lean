@@ -15,6 +15,8 @@ open Witnora.Concrete
 open Witnora.SparseBridge
 open Witnora.FiniteXor
 open Witnora.G5Trace
+open Witnora.G5Extraction
+open Witnora.ComponentPartition
 open Witnora.ExactAffineMembership
 open Witnora.TC063CanonicalAffineBridge
 open Witnora.TC063PatternPermutation
