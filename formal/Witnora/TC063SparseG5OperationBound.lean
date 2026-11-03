@@ -199,6 +199,56 @@ theorem tc063_total_sparse_schedule_quadratic_op_count
 
 #print axioms Witnora.TC063SparseG5OperationBound.tc063_total_sparse_schedule_quadratic_op_count
 
+
+/-- If each initial equation has arity at most r, then the original
+    support schedule has length at most r times the row count. -/
+theorem supportRows_length_le_arity
+    (initial : List Row) (r : Nat)
+    (hWidth : ∀ row ∈ initial, row.coefficients.length ≤ r) :
+    (supportRows initial).length ≤ initial.length * r := by
+  induction initial with
+  | nil => simp [supportRows]
+  | cons row rest ih =>
+      have hhead : row.coefficients.length ≤ r :=
+        hWidth row (by simp)
+      have htail : ∀ row' ∈ rest, row'.coefficients.length ≤ r := by
+        intro row' hrow
+        exact hWidth row' (by simp [hrow])
+      have hrest := ih htail
+      calc
+        (supportRows (row :: rest)).length =
+            row.coefficients.length + (supportRows rest).length := by
+              simp [supportRows]
+        _ ≤ r + rest.length * r :=
+          Nat.add_le_add hhead hrest
+        _ = (row :: rest).length * r := by
+          simp [Nat.succ_mul, Nat.add_comm]
+
+/-- For any bounded-width r collection of m source equations, the
+    *total* indexed pivot-ledger generator emits at most r*m*m XOR
+    operations, without a numeric-ID bound or a successful-run premise. -/
+theorem tc063_total_fixed_arity_quadratic_op_count
+    (initial : List Row) (r : Nat)
+    (hWidth : ∀ row ∈ initial, row.coefficients.length ≤ r) :
+    ∃ outcome : PivotOutcome initial,
+      emitScheduleWithPivots initial (supportRows initial)
+        (List.range initial.length) (SourceState.start initial) =
+          some outcome ∧
+      outcome.operations.length ≤ r * initial.length * initial.length := by
+  obtain ⟨outcome, hrun, hcount⟩ :=
+    tc063_total_sparse_schedule_quadratic_op_count initial
+  have hsupport := supportRows_length_le_arity initial r hWidth
+  refine ⟨outcome, hrun, ?_⟩
+  calc
+    outcome.operations.length ≤
+        (supportRows initial).length * initial.length := hcount
+    _ ≤ (initial.length * r) * initial.length :=
+      Nat.mul_le_mul_right initial.length hsupport
+    _ = r * initial.length * initial.length := by ac_rfl
+
+#print axioms Witnora.TC063SparseG5OperationBound.supportRows_length_le_arity
+#print axioms Witnora.TC063SparseG5OperationBound.tc063_total_fixed_arity_quadratic_op_count
+
 #print axioms Witnora.TC063SparseG5OperationBound.emitOne_op_count
 #print axioms Witnora.TC063SparseG5OperationBound.emitPass_op_count
 #print axioms Witnora.TC063SparseG5OperationBound.emitSchedule_op_count
