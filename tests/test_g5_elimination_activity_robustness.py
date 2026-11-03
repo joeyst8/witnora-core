@@ -15,6 +15,7 @@ from witnora_core.g5_elimination_activity import (
     ranked_pair_candidates,
 )
 from witnora_core.operator_genesis import gaussian_eliminate_gf2
+from witnora_core.separator_affine_family_theorem import _components_after_removing
 from tests.test_g5_elimination_activity import two_bridge_equations
 
 
@@ -40,6 +41,11 @@ class G5ActivityRobustnessTest(unittest.TestCase):
             activity = activity_from_g5_operations(
                 trace["row_operations"], mapping.values()
             )
+            graph = {v: set() for v in mapping.values()}
+            for equation in translated:
+                a, b = equation["variables"]
+                graph[a].add(b)
+                graph[b].add(a)
             intended = {mapping[9], mapping[10]}
             g5_pairs = ranked_pair_candidates(activity)
             numeric_pairs = tuple(combinations(sorted(mapping.values()), 2))
@@ -51,11 +57,25 @@ class G5ActivityRobustnessTest(unittest.TestCase):
                 i + 1 for i, pair in enumerate(numeric_pairs)
                 if set(pair) == intended
             )
+            g5_sizes = sorted(
+                len(part) for part in
+                _components_after_removing(graph, set(g5_pairs[0]))
+            )
+            numeric_sizes = sorted(
+                len(part) for part in
+                _components_after_removing(graph, set(numeric_pairs[0]))
+            )
             records.append({
                 "trial": trial,
                 "g5_rank": g5_rank,
                 "baseline_rank": baseline_rank,
                 "hit_first": g5_rank == 1,
+                "g5_first_split": len(g5_sizes) >= 2,
+                "numeric_first_split": len(numeric_sizes) >= 2,
+                "g5_first_balanced": g5_sizes == [2, 2],
+                "numeric_first_balanced": numeric_sizes == [2, 2],
+                "g5_largest_component": max(g5_sizes),
+                "numeric_largest_component": max(numeric_sizes),
             })
         self.assertEqual(len(records), trials)
         self.assertTrue(
@@ -73,6 +93,20 @@ class G5ActivityRobustnessTest(unittest.TestCase):
             "g5_better": wins,
             "tie": ties,
             "g5_worse": losses,
+            "g5_first_split": sum(x["g5_first_split"] for x in records),
+            "numeric_first_split": sum(x["numeric_first_split"] for x in records),
+            "g5_first_balanced": sum(x["g5_first_balanced"] for x in records),
+            "numeric_first_balanced": sum(x["numeric_first_balanced"] for x in records),
+            "mean_g5_largest_component": round(
+                statistics.mean(x["g5_largest_component"] for x in records), 3
+            ),
+            "mean_numeric_largest_component": round(
+                statistics.mean(x["numeric_largest_component"] for x in records), 3
+            ),
+            "first_cut_quality_losses": [
+                row for row in records
+                if row["g5_largest_component"] > row["numeric_largest_component"]
+            ][:5],
             "first_counterexamples": [
                 row for row in records
                 if row["g5_rank"] > row["baseline_rank"]
