@@ -65,6 +65,18 @@ def resolution_trace(
     raise ValueError("no refutation: source is satisfiable or proof generation incomplete")
 
 
+def indexed_trace(raw: list[list[int]], steps: list[Step]) -> list[tuple[int, int, int]]:
+    """Serialize source/derived-row references, with no trusted index guesses."""
+    rows = [tuple(row) for row in raw]
+    result = []
+    for step in steps:
+        left = rows.index(step.left)
+        right = rows.index(step.right)
+        result.append((left, right, step.pivot))
+        rows.append(step.output)
+    return result
+
+
 def verify_steps(raw: list[list[int]], steps: list[Step]) -> bool:
     """Independent native format check, never treated as the proof authority."""
     database = {tuple(row) for row in raw}
@@ -121,8 +133,9 @@ def main() -> None:
     steps = resolution_trace(raw)
     if not verify_steps(raw, steps):
         raise AssertionError("Python resolution trace is internally inconsistent")
-    print("import Witnora.GeneralResolution")
+    print("import Witnora.GeneralResolutionIndexed")
     print("open Witnora.GeneralResolution")
+    print("open Witnora.GeneralResolutionIndexed")
     print("set_option maxRecDepth 65536")
     print("set_option maxHeartbeats 4000000")
     print("-- The Lean evaluator checks all resolution steps from signed CNF clauses.")
@@ -132,7 +145,17 @@ def main() -> None:
     print("example : checkResolution (Witnora.SignedSerialization.decodeCNF")
     print(f"    ({raw_lean} : List (List Int)))")
     print(f"    ({trace_lean} : List Step) = true := by decide")
+    idx = indexed_trace(raw, steps)
+    compact_lean = "[\n  " + ",\n  ".join(
+        "{leftID := " + str(a) + ", rightID := " + str(b) +
+        ", pivot := " + str(v) + "}" for a, b, v in idx
+    ) + "\n]"
+    print("example : checkIndexed (Witnora.SignedSerialization.decodeCNF")
+    print(f"    ({raw_lean} : List (List Int)))")
+    print(f"    ({compact_lean} : List Instruction) = true := by decide")
     print(f"-- PHP(3,2): {len(raw)} source clauses; {len(steps)} derived resolutions.")
+    print(f"-- Indexed trace payload: {len(compact_lean)} characters; full by-value trace: {len(trace_lean)} characters.")
+    print("#print axioms Witnora.GeneralResolutionIndexed.signedIndexed_unsat")
     print("#print axioms Witnora.GeneralResolution.signedResolution_unsat")
 
 
