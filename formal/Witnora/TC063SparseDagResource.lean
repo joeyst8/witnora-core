@@ -205,6 +205,54 @@ theorem replayDag_preserves_nodup
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_nodup
 #print axioms Witnora.TC063SparseDagResource.replayDag_preserves_nodup
 
+
+/-- Every derived sparse row has at most as many coefficients as the
+    total coefficient occurrences in the *original* row table.
+    Crucially, this does not depend on the length of the DAG trace or
+    on the numeric magnitude of variable IDs. -/
+theorem replayDag_row_width_le_original_support
+    (inputs : List Row) (steps : List XorRef) (result : List Row)
+    (h : replayDag inputs steps = some result)
+    (hNodup : ∀ row ∈ inputs, row.coefficients.Nodup) :
+    ∀ row ∈ result,
+      row.coefficients.length ≤
+        (Witnora.TC063CanonicalBound.supportRows inputs).length := by
+  have hNo := replayDag_preserves_nodup inputs steps result h hNodup
+  have hSupport := replayDag_preserves_support
+    (Witnora.TC063CanonicalBound.supportRows inputs)
+    inputs steps result h
+    (Witnora.TC063CanonicalBound.row_membership_supportRows inputs)
+  intro row hr
+  exact List.Nodup.length_le_of_subset
+    (hNo row hr) (hSupport row hr)
+
+/-- An accepted bound-independent source-G5 checker certificate has:
+    exactly input_rows + XOR_steps replay rows, and every replay row
+    is bounded by the original input coefficient occurrence count. -/
+theorem checkSparseG5_resource_bound
+    (cnf : Witnora.Concrete.CNF) (rows : List Row)
+    (steps : List XorRef)
+    (h : Witnora.TC063SparseDirectChecker.checkSparseG5
+      cnf rows steps = true) :
+    ∃ final : List Row,
+      replayDag rows steps = some final ∧
+      final.length = rows.length + steps.length ∧
+      (∀ row ∈ final,
+        row.coefficients.length ≤
+          (Witnora.TC063CanonicalBound.supportRows rows).length) := by
+  have hp := h
+  simp [Witnora.TC063SparseDirectChecker.checkSparseG5] at hp
+  have hNodup : ∀ row ∈ rows, row.coefficients.Nodup := hp.1.1
+  have hDag : checkDagContradiction rows steps = true := hp.2
+  obtain ⟨final, hrep, hlen, _⟩ :=
+    checkDagContradiction_resource_sound rows steps hDag
+  exact ⟨final, hrep, hlen,
+    replayDag_row_width_le_original_support
+      rows steps final hrep hNodup⟩
+
+#print axioms Witnora.TC063SparseDagResource.replayDag_row_width_le_original_support
+#print axioms Witnora.TC063SparseDagResource.checkSparseG5_resource_bound
+
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_no_fresh_variable
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_length_le_sum
 #print axioms Witnora.TC063SparseDagResource.replayDag_length_exact
