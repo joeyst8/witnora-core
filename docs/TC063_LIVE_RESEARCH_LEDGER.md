@@ -526,3 +526,55 @@ Next: analyze the nonlinear map from source assignments to
 realizable clause-violation patterns, seek exact algebra-aware
 operators and audited reductions that reduce computation, then
 benchmark against direct source counting. No P-vs-NP claim.
+
+
+## 2026-11-03 violation-image ANF semantics and nonlinear counting frontier (CI green)
+
+`witnora_core/violation_image_anf.py` now constructs the
+exact multilinear Boolean-ring ANF violation polynomial for
+every signed source clause: false(+v)=1+x_v and
+false(-v)=x_v, with x_v²=x_v. Parity-row equations are
+XORs of those clause-violation polynomials, with monomial
+cancellation mod two, and have degree≤3 for 3-CNF.
+Construction uses **no SAT assignment enumeration**.
+A separately budgeted Shannon/memoization solver counts
+common zeros of either source violations (#SAT) or sketch
+parity equations (sketch survivors).
+
+`formal/Witnora/ViolationProduct.lean` kernel-checks the
+universal literal-falsity product semantics and equivalence
+to the existing `violationVector`. The printed Lean axioms
+are only standard `[propext]` and
+`[propext, Quot.sound]`; complete refinement of Python
+ANF monomial normalization into Lean remains open.
+Five Python semantic/count/budget tests and full previous
+Lean/CDCL regressions passed:
+https://github.com/joeyst8/witnora-core/actions/runs/41669844135 .
+
+Actual exact bounded source-ANF vs parity-ANF count
+times (ms) on frozen cases: 4v/5c 0.443/0.879;
+5v/7c 0.726/1.031; 6v/9c 1.357/1.391;
+8v/54c UNSAT 5.863/7.265;
+8v/54c planted 5.237/10.024;
+10v/66c UNSAT 14.584/20.896;
+10v/66c planted 12.346/18.724.
+Source counts matched independent finite #SAT oracles and
+parity counts matched finite sketch-survivor oracles.
+The parity system was slower in every measured comparison,
+despite sometimes using fewer branch states.
+
+On large frozen planted 3-CNFs, symbolic construction-only
+ANF row monomial occurrences before/after cancellation were:
+32v/224c 2502→2118 (15.3%);
+96v/576c 6492→5896 (9.2%);
+256v/1536c 17286→15856 (8.3%).
+Max ANF degree was 3; no zero or duplicate nonzero row;
+construction took ~2.4,6.6,19.2ms. No large SAT counting
+was done. These are not asymptotic guarantees or industrial
+solver comparisons.
+
+[Detailed violation-image ANF report](VIOLATION_IMAGE_ANF_GEOMETRY.md).
+Next mathematical/computational target: exploit shared low-degree
+structure and subexpression reuse before elimination, with
+exact normalization certificates and actual total time/memory
+benchmarks. No general P-vs-NP claim.
