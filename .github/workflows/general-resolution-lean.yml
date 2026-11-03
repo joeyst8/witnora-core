@@ -40,6 +40,9 @@ on:
       - "witnora_core/aux_violation_tensors.py"
       - "tests/test_aux_violation_tensors.py"
       - "scripts/benchmark_aux_violation_tensors.py"
+      - "witnora_core/factor_elimination_orders.py"
+      - "tests/test_factor_elimination_orders.py"
+      - "scripts/benchmark_factor_elimination_orders.py"
       - "scripts/benchmark_sparse_parity.py"
       - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
@@ -84,6 +87,9 @@ on:
       - "witnora_core/aux_violation_tensors.py"
       - "tests/test_aux_violation_tensors.py"
       - "scripts/benchmark_aux_violation_tensors.py"
+      - "witnora_core/factor_elimination_orders.py"
+      - "tests/test_factor_elimination_orders.py"
+      - "scripts/benchmark_factor_elimination_orders.py"
       - "scripts/benchmark_sparse_parity.py"
       - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
@@ -150,6 +156,12 @@ jobs:
 
       - name: Measure auxiliary vs direct parity factor-graph geometry
         run: python -m scripts.benchmark_aux_violation_tensors
+
+      - name: Independently verify scope-aware elimination orders
+        run: python -m unittest tests.test_factor_elimination_orders -v
+
+      - name: Benchmark source/aux block and limited min-fill order strategies
+        run: python -m scripts.benchmark_factor_elimination_orders
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
