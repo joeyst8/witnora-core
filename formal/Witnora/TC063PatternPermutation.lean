@@ -87,7 +87,8 @@ theorem signForbiddenClause_zip_map
   induction vars with
   | nil => rfl
   | cons v rest ih =>
-      simp [signForbiddenClause, ih]
+      simpa [signForbiddenClause] using
+        congrArg (List.cons (v, !(a v))) ih
 
 /-- Assignment-based formulation of the exact syntactic coverage test
     for every bit pattern of incorrect parity on this variable support. -/
