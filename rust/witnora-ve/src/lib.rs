@@ -9,6 +9,7 @@
 
 pub mod source_preprocess;
 pub mod source_xor;
+pub mod right_walsh;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -413,6 +414,35 @@ fn extract_small_xors_native(
     ))
 }
 
+/// Exact batched right CNF Walsh coefficients using inclusion-exclusion.
+/// Every coefficient is returned as a signed numerator and positive
+/// denominator in decimal text; there is no floating point approximation.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn right_walsh_native(
+    clauses: Option<Vec<(String, String)>>,
+    boundary: Vec<u32>,
+    modes: Vec<String>,
+    max_subsets: usize,
+    max_operations: u64,
+) -> PyResult<Option<(Vec<(String, String)>, usize, usize, u64)>> {
+    let parse = |s: &str| {
+        BigUint::parse_bytes(s.as_bytes(), 10)
+            .ok_or_else(|| PyValueError::new_err("invalid decimal Walsh mask"))
+    };
+    let clauses = clauses.map(|rows| rows.into_iter()
+        .map(|(z, o)| Ok((parse(&z)?, parse(&o)?)))
+        .collect::<PyResult<Vec<_>>>()).transpose()?;
+    let modes = modes.iter().map(|m| parse(m)).collect::<PyResult<Vec<_>>>()?;
+    let answer = right_walsh::right_walsh_coefficients(
+        clauses.as_deref(), &boundary, &modes, max_subsets, max_operations,
+    ).map_err(PyValueError::new_err)?;
+    Ok(answer.map(|got| (
+        got.coefficients.into_iter().map(|(num, den)| (num.to_string(), den.to_string())).collect(),
+        got.compatible_terms, got.components, got.subset_operations,
+    )))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -420,5 +450,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(simplify_source_native, module)?)?;
     module.add_function(wrap_pyfunction!(simplify_source_adaptive_native, module)?)?;
     module.add_function(wrap_pyfunction!(extract_small_xors_native, module)?)?;
+    module.add_function(wrap_pyfunction!(right_walsh_native, module)?)?;
     Ok(())
 }
