@@ -62,6 +62,16 @@ def emit() -> str:
         lines.append(
             f"example : checkArticulations {vertices} {name} {_list(art)} = true := by decide"
         )
+        # Reject extra IDs and repeated claims in the same Lean oracle.
+        lines.append(
+            f"example : checkArticulations {vertices} {name} "
+            f"{_list(art + [n + 100])} = false := by decide"
+        )
+        if art:
+            lines.append(
+                f"example : checkArticulations {vertices} {name} "
+                f"{_list(art + [art[0]])} = false := by decide"
+            )
         baseline = oracle_component_count(graph)
         lines.append(
             f"example : residualComponentCount {vertices} {name} [] = {baseline} := by decide"
@@ -74,6 +84,19 @@ def emit() -> str:
             lines.append(
                 f"example : checkTwoCuts {vertices} {name} {_pairs(pairs)} = true := by decide"
             )
+            lines.append(
+                f"example : checkTwoCuts {vertices} {name} "
+                f"{_pairs(pairs + [(n + 100, n + 101)])} = false := by decide"
+            )
+            if pairs:
+                lines.append(
+                    f"example : checkTwoCuts {vertices} {name} "
+                    f"{_pairs(pairs + [pairs[0]])} = false := by decide"
+                )
+                lines.append(
+                    f"example : checkTwoCuts {vertices} {name} "
+                    f"{_pairs(pairs[1:])} = false := by decide"
+                )
             eligible += 1
         total += 1
     lines.extend([
