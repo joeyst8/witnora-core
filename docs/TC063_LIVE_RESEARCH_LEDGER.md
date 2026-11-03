@@ -235,3 +235,45 @@ exact polynomial/tensor contraction/counting procedure.
 
 Full source, method, proof boundary and measurements:
 [OpenAI ETH clause-violation parity bridge](OPENAI_ETH_CLAUSE_PARITY_BRIDGE.md).
+
+
+## 2026-11-03 nonenumerative dense parity and constraint geometry (CI green)
+
+`witnora_core/constraint_geometry.py` now constructs r=n+20 parity
+rows using only a random clause-selection bitmap per row, **without
+enumerating SAT assignments**. For a fixed formula and truly
+independent uniform matrix entries, a union bound proves
+Pr[any source-nonmodel passes] ≤ 2^(n-r) = 2^-20. This is a mathematical
+randomized bound under stated assumptions, **not** a certificate for a
+specific seeded Python PRNG output and not a subexponential SAT algorithm.
+
+The small-case independent audit saw **zero collisions in all six frozen
+dense 3-CNFs** (8/54, 10/66, 12/84, each UNSAT and planted-SAT).
+An explicit mocked 96-variable fixture ensured construction never
+calls the violation-vector enumeration function. An independent
+96/576 and 256/1536 construction benchmark ran without auditing
+their SAT models; source-based exactness remains unknown for those
+large instances. Indicative one-run CI construction-only timings:
+8/54 0.234 ms; 12/84 0.327 ms; 32/224 1.225 ms; 96/576
+6.515 ms; 256/1536 46.067 ms. Rows have mean width ~m/2 and
+are **dense**, so no actual SAT solving speedup is shown.
+
+A geometric necessary lower bound was introduced: if s different
+singleton-violation vectors are realizable and each selected row touches
+at most w source clauses, any exact sketch needs at least ceil(s/w)
+rows. A five-unit-clause adversary demonstrates the 5/2 → 3 row
+obstruction; the general counting bound currently has a paper argument,
+not a completed Lean theorem. Lean **does** universally prove
+disjoint violation masks have even parity and any family of such
+disjoint masks accepts its assignment, with only
+`[propext]` / `[propext, Quot.sound]` in axiom audits.
+
+All **26 workflow steps passed** including new tests, new Lean
+lemmas, and all previous general-CNF RUP regressions:
+https://github.com/joeyst8/witnora-core/actions/runs/41608773901 .
+Full report:
+[constraint geometry and nonenumerative random parity baseline](CONSTRAINT_GEOMETRY_RANDOM_PARITY_BASELINE.md).
+
+The *actual* next hurdle is sound nonenumerative **sparse** isolation
+with exact certificate, then low-degree symbolic representation,
+tensor/interpolation counting, and total-cost CDCL benchmarks.
