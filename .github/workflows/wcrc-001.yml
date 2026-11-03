@@ -13,6 +13,8 @@ on:
       - "tests/test_crc_shannon_oracle.py"
       - "tests/test_crc_shannon_integration.py"
       - "scripts/benchmark_crc_vs_anf.py"
+      - "scripts/benchmark_crc_scaling.py"
+      - "tests/test_crc_scaling_benchmark.py"
       - ".github/workflows/wcrc-001.yml"
   pull_request:
     paths:
@@ -23,6 +25,8 @@ on:
       - "tests/test_crc_source.py"
       - "tests/test_crc_shannon_oracle.py"
       - "tests/test_crc_shannon_integration.py"
+      - "tests/test_crc_scaling_benchmark.py"
+      - "scripts/benchmark_crc_scaling.py"
       - ".github/workflows/wcrc-001.yml"
   workflow_dispatch:
 
@@ -35,7 +39,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Install independent PySAT decision/enumeration baseline
+        run: python -m pip install --disable-pip-version-check python-sat
       - name: Exact source and coefficient controls
-        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration -v
+        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration tests.test_crc_scaling_benchmark -v
       - name: Source-bound CRC versus structured ANF pilot
         run: python -m scripts.benchmark_crc_vs_anf
+      - name: W-CRC-002 dense and mixed scaling pilot
+        run: python -m scripts.benchmark_crc_scaling
