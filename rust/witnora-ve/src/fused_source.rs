@@ -6,7 +6,7 @@
 //! The result is exact or None on a declared finite resource cap.
 //! Only the bounded inclusion-exclusion coefficient family is admitted.
 
-use num_bigint::{BigInt, BigUint, ToBigUint};
+use num_bigint::{BigInt, BigUint};
 use num_traits::{One, Zero};
 use std::collections::BTreeSet;
 
@@ -22,6 +22,7 @@ pub struct FusedSourceCount {
     pub residual_clauses: usize,
     pub boundary_variables: usize,
     pub internal_variables: usize,
+    pub internal_free_variables: usize,
     pub left_fourier_terms: usize,
     pub right_violation_terms: usize,
     pub right_components: usize,
@@ -158,6 +159,7 @@ pub fn count_fused_source(
         residual_clauses: extracted.residual_clauses.len(),
         boundary_variables: boundary.len(),
         internal_variables: internal.len(),
+        internal_free_variables: left.internal_free,
         left_fourier_terms: left.spectrum.len(),
         right_violation_terms: right.compatible_terms,
         right_components: right.components,
