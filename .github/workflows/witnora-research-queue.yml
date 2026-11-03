@@ -21,6 +21,7 @@ on:
       - "tests/test_crc_adversarial_benchmark.py"
       - "tests/test_crc_variable_elimination.py"
       - "tests/test_crc_variable_elimination_indexed.py"
+      - "tests/test_crc_heldout.py"
       - "scripts/benchmark_crc_defect.py"
       - "scripts/benchmark_crc_conflict.py"
       - "scripts/benchmark_crc_independence.py"
@@ -31,6 +32,7 @@ on:
       - "scripts/benchmark_crc_adversarial.py"
       - "scripts/benchmark_crc_variable_elimination.py"
       - "scripts/benchmark_crc_variable_elimination_indexed.py"
+      - "scripts/benchmark_crc_heldout.py"
       - "witnora_core/crc_*.py"
       - ".github/workflows/witnora-research-queue.yml"
   workflow_dispatch:
