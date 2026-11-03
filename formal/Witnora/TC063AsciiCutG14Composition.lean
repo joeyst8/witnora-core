@@ -45,7 +45,7 @@ theorem checked_ascii_two_cut_g14_unsat
     (rows : List (Nat × Bool) → List Witnora.G5Trace.Row)
     (steps : List (Nat × Bool) → List Witnora.G5Dag.XorRef)
     (hcert : ∀ branch ∈ Witnora.SeparatorAssignments.enumerate [pair.1, pair.2],
-      Witnora.G5Extraction.checkG5Closed (bound branch) (selected branch)
+      Witnora.SparseBridge.checkG5Closed (bound branch) (selected branch)
         (rows branch) (steps branch) = true) :
     Witnora.DIMACSDocument.parseDocument source =
       some (Witnora.DIMACSTokens.serialize raw) ∧
