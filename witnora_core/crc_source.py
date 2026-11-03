@@ -91,6 +91,7 @@ def count_signed_cnf_crc(
     max_inclusion_subsets: int = 4096,
     max_coefficient_states: int | None = None,
     enable_orbit_oracle: bool = False,
+    enable_defect_oracle: bool = False,
 ) -> SourceCRCResult | None:
     """Exact count or None on a declared resource budget.
 
@@ -108,6 +109,7 @@ def count_signed_cnf_crc(
         max_inclusion_subsets=max_inclusion_subsets,
         max_coefficient_states=max_coefficient_states,
         enable_orbit_oracle=enable_orbit_oracle,
+        enable_defect_oracle=enable_defect_oracle,
     )
     if result is None:
         return None
