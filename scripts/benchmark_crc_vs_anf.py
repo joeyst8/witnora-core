@@ -70,8 +70,11 @@ def timed(count_fn, repeats: int = 3):
         if value is not None and current[0] != value[0]:
             raise AssertionError("non-deterministic model count")
         value = current
-    return {"status": "EXACT", "median_ms": round(statistics.median(times), 4),
-            "models": value[0], "states_or_terms": value[1]}
+    result = {"status": "EXACT", "median_ms": round(statistics.median(times), 4),
+              "models": value[0], "states_or_terms": value[1]}
+    if len(value) > 2:
+        result["backend"] = value[2]
+    return result
 
 
 def compare(source: tuple[tuple[int, ...], ...], nvars: int,
@@ -89,21 +92,39 @@ def compare(source: tuple[tuple[int, ...], ...], nvars: int,
         r = count_common_zeros_structured(polys, nvars, max_states=2000)
         return (r.satisfying_assignments, r.unique_states)
 
+    def crc_shannon():
+        r = count_signed_cnf_crc(source, nvars,
+                                max_spectrum_terms=1024,
+                                max_inclusion_subsets=1024,
+                                max_coefficient_states=2000)
+        if r is None:
+            return None
+        detail = r.coefficient_stats
+        states = (detail.coefficient_states if detail.coefficient_backend == "shannon"
+                  else detail.left_fourier_terms)
+        return (r.models, states, detail.coefficient_backend)
+
     c = timed(crc)
+    s = timed(crc_shannon)
     b = timed(baseline)
-    if c["status"] == "EXACT" and b["status"] == "EXACT":
-        if c["models"] != b["models"]:
-            raise AssertionError("independent exact counters disagree")
+    completed = [method for method in (c, s, b) if method["status"] == "EXACT"]
+    if len({method["models"] for method in completed}) > 1:
+        raise AssertionError("independent exact counters disagree")
     if expected is not None:
-        for method in (c, b):
-            if method["status"] == "EXACT" and method["models"] != expected:
+        for method in completed:
+            if method["models"] != expected:
                 raise AssertionError("known constructed count mismatch")
     return {"source_variables": nvars, "source_clauses": len(source),
-            "crc": c, "structured_anf": b,
+            "crc": c, "crc_shannon_fallback": s, "structured_anf": b,
             "speedup_if_both_complete": (
                 round(b["median_ms"] / c["median_ms"], 3)
                 if c["status"] == b["status"] == "EXACT"
                 and c["median_ms"] else None
+            ),
+            "speedup_anf_over_shannon_if_complete": (
+                round(b["median_ms"] / s["median_ms"], 3)
+                if s["status"] == b["status"] == "EXACT"
+                and s["median_ms"] else None
             )}
 
 
