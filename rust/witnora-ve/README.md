@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-001/R-002/R-003/R-004
+# Witnora Rust migration — R-001/R-002/R-003/R-004/R-005
 
 The `witnora-ve` executable **and optional PyO3 in-process extension**
 are a native, bounded, exact #SAT **component counter**, ported from Python's W-CRC-015 indexed
@@ -103,6 +103,37 @@ adaptive 28.15 ms (admission overhead included). In n=64 forcing,
 raw 257.01 ms vs adaptive 3.82 ms on the same runner.
 These are two-repeat controlled measurements, **not** a general
 SAT solver improvement. See `docs/RUST_004_ADAPTIVE_SOURCE_ADMISSION.md`.
+
+## Exact small-XOR extraction (R-005)
+
+The crate now implements `extract_small_xors_native` to identify
+**complete** 1-, 2-, and 3-variable XOR clause blocks and leave
+incomplete patterns in the residual CNF. It produces arbitrary-precision
+equation support masks (up to variable ID 256) and preserves the exact
+source model set. The strict Python bridge is
+`witnora_core/crc_rust_xor.py` and the source counter opts in via
+`count_signed_cnf_crc(..., source_extractor="rust")`; the original
+`"python"` remains the default. This works with opt-in
+`source_preprocessor="rust_adaptive"` or `"rust_consensus"`.
+
+After building/installing the PyO3 wheel, verify with:
+
+```sh
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m unittest tests.test_crc_rust_xor -v
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m scripts.benchmark_rust_xor
+```
+
+[Verified R-005 CI](https://github.com/joeyst8/witnora-core/actions/runs/41738553647)
+passed 13 Rust tests, four new Python tests with 280 exact-output and
+model-set differential cases, and **12/12 independent Ganak matches**.
+On n=64 pairwise parity, full adaptive-preprocessing plus source-count
+latency fell from 38.08 ms with Python extraction to 21.06 ms with
+Rust extraction on the same hosted runner (~1.81x). On n=64 forcing,
+it fell 5.43 to 4.59 ms (~1.18x). Two-repeat case studies are not
+broad solver benchmarks. Complete controls, data and caveats:
+`docs/RUST_005_EXACT_XOR_EXTRACTION.md`.
 
 ## Migration policy
 
