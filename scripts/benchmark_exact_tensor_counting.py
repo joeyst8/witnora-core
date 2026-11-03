@@ -48,11 +48,7 @@ def main() -> None:
           "peak_traced_kib", flush=True)
     cases = [
         ("triple3", [[1, 2, 3], [1, -2, 3], [-1, 2, 3]], 3, None),
-        ("four-collision", *collision_sketch(), None),
     ]
-    # The four-collision row above is expanded differently below to
-    # retain a uniform (label, source, nvars, sketch) structure.
-    cases = [cases[0]]
     source, sketch = collision_sketch()
     cases.append(("four-collision", source, 4, sketch))
     for n, m in ((4, 5), (5, 7), (6, 9), (8, 12)):
