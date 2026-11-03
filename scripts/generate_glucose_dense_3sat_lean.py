@@ -83,7 +83,9 @@ def find_case(nvars: int, nclauses: int, *, planted: bool,
 def lean_sat_model(source: list[list[int]]) -> None:
     raw = "[" + ", ".join(lean_signed(row) for row in source) + "]"
     print("example : Witnora.SignedSerialization.signedCNFHolds")
-    print(f"    ({raw} : List (List Int)) (fun _ => true) := by decide")
+    print(f"    ({raw} : List (List Int)) (fun _ => true) := by")
+    print("  unfold Witnora.SignedSerialization.signedCNFHolds")
+    print("  decide")
     print("example : checkRup (Witnora.SignedSerialization.decodeCNF")
     print(f"    ({raw} : List (List Int)))")
     print("    [{clause := [], units := []}] = false := by decide")
