@@ -41,6 +41,20 @@ Audited independent green CI: https://github.com/joeyst8/witnora-core/actions/ru
 5. `scripts/generate_tc063_ascii_smoke_identity_lean.py`: Lean-checks that the committed DIMACS bytes equal those used by the concrete proof.
 6. `TC063CanonicalSortAudit.lean`: tiny interface audit for already-proved sorting and canonical-witness implications. `scripts/generate_python_canonical_sort_differential_lean.py`: 48 Python-generated randomized affine cases checked against Lean's source extraction and normalization before/after sorting (**passed** targeted CI https://github.com/joeyst8/witnora-core/actions/runs/41585442371; all generated extraction/sorting examples were accepted by Lean).
 
+## 2026-11-03 operational test: nontrivial overlapping affine UNSAT
+
+Committed `fixtures/tc063_three_row_affine_unsat.cnf`, a ten-clause DIMACS document encoding:
+
+- `x1 ⊕ x2 ⊕ x3 = 0`
+- `x2 ⊕ x3 ⊕ x4 = 0`
+- `x1 ⊕ x4 = 1`
+
+All 16 Boolean assignments were independently enumerated: each two-equation subsystem has exactly four satisfying assignments, whereas all three together have none. The contradiction requires combining three overlapping rows, not detecting opposite unit clauses.
+
+`tests/test_lean_g5_wire_real.py` now builds a certificate through the **actual production Python extractor and GF(2) indexed-operation emitter**, verifies the original DIMACS byte document, signed tokens, decimal spellings, canonical source clauses, and G5 contradiction against the **actual Lean executable checks**, with no mocked subprocess. The targeted GitHub Actions `Production G5 numeric-wire gate unit and real Lean smoke tests` step passed on the new fixture (PR #121, workflow runs https://github.com/joeyst8/witnora-core/actions/runs/41588336876 and https://github.com/joeyst8/witnora-core/actions/runs/41588553259).
+
+A real *negative* case holds the same certificate, clauses, token stream, and spellings but tampers with the source header from `p cnf 4 10` to `p cnf 4 9`. The test asserts `NOT_LEAN_VERIFIED` and `CNF_NORMALIZATION_REJECTED` and passed in the same real Lean test step. This detects source-document provenance corruption. The test is finite end-to-end validation, not universal Python refinement or a runtime bound.
+
 ## What remains open (separate from the restricted logical theorem)
 
 - **Full CPython refinement**: no universal proof that every execution of Python parsing, normalization, extraction, separator selection, G5 emission, and serialized DIMACS/certificate operations exactly refines the verified Lean meanings. Finite differential testing and narrow operation bridges do not establish this.
