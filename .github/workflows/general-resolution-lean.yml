@@ -53,6 +53,9 @@ on:
       - "formal/Witnora/ANFComponentFactor.lean"
       - "tests/test_anf_structured_counter.py"
       - "scripts/benchmark_anf_structured_counter.py"
+      - "witnora_core/anf_separator_conditioning.py"
+      - "tests/test_anf_separator_conditioning.py"
+      - "scripts/benchmark_anf_separator_conditioning.py"
       - "formal/Witnora/GF2RowParity.lean"
       - "tests/test_gf2_sparse_row_basis.py"
       - "scripts/benchmark_gf2_sparse_basis_counting.py"
@@ -115,6 +118,9 @@ on:
       - "formal/Witnora/ANFComponentFactor.lean"
       - "tests/test_anf_structured_counter.py"
       - "scripts/benchmark_anf_structured_counter.py"
+      - "witnora_core/anf_separator_conditioning.py"
+      - "tests/test_anf_separator_conditioning.py"
+      - "scripts/benchmark_anf_separator_conditioning.py"
       - "formal/Witnora/GF2RowParity.lean"
       - "tests/test_gf2_sparse_row_basis.py"
       - "scripts/benchmark_gf2_sparse_basis_counting.py"
@@ -228,6 +234,12 @@ jobs:
 
       - name: Compare bounded exact ANF counter strategies on frozen controls
         run: python -m scripts.benchmark_anf_structured_counter
+
+      - name: Verify exact bounded separator conditioning and no-separator controls
+        run: python -m unittest tests.test_anf_separator_conditioning -v
+
+      - name: Benchmark connected bridge structures versus dense 3SAT controls
+        run: python -m scripts.benchmark_anf_separator_conditioning
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
