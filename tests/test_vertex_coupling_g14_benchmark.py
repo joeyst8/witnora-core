@@ -72,31 +72,49 @@ class VertexCouplingG14BenchmarkTest(unittest.TestCase):
 
     def test_real_g14_high_label_ternary_xor_cnf(self):
         results = {}
-        for count in (6, 8):
+        for count in (6, 8, 10, 12):
             formula = ternary_spoke_affine_formula(count)
             graph = primal_graph(formula)
             self.assertEqual(two_cut_oracle(graph), {(100, 101)})
             self.assertTrue(all(len(clause) == 3 for clause in formula.clauses))
-            entry = {}
-            for mode in ("vertex_coupling", "lexicographic"):
-                begin = time.perf_counter()
-                accepted = recognize_separator_affine_family(
-                    formula, c=2, r=3, priority=mode
-                )
-                elapsed = time.perf_counter() - begin
-                self.assertEqual(accepted["status"], SEPARATOR_AFFINE_FAMILY_RECOGNIZED)
-                self.assertEqual(accepted["separator_variables"], [100, 101])
-                self.assertTrue(accepted["trace"][-1]["accepted"])
-                entry[mode] = {
-                    "candidates_examined": accepted["candidates_examined"],
-                    "elapsed_seconds": round(elapsed, 6),
-                }
             n = len(graph)
-            self.assertEqual(entry["vertex_coupling"]["candidates_examined"], n + 1)
-            self.assertEqual(
-                entry["lexicographic"]["candidates_examined"], n + n * (n - 1) // 2
+            samples = {"vertex_coupling": [], "lexicographic": []}
+            examined = {}
+            # Seven paired repetitions with alternating mode order reduce
+            # first-call/warm-cache bias. Never assert elapsed-time thresholds:
+            # GitHub Actions timing can vary with the runner.
+            for repeat in range(7):
+                modes = ("vertex_coupling", "lexicographic")
+                if repeat % 2:
+                    modes = tuple(reversed(modes))
+                for mode in modes:
+                    begin = time.perf_counter()
+                    accepted = recognize_separator_affine_family(
+                        formula, c=2, r=3, priority=mode
+                    )
+                    elapsed = time.perf_counter() - begin
+                    self.assertEqual(accepted["status"], SEPARATOR_AFFINE_FAMILY_RECOGNIZED)
+                    self.assertEqual(accepted["separator_variables"], [100, 101])
+                    self.assertTrue(accepted["trace"][-1]["accepted"])
+                    samples[mode].append(elapsed)
+                    examined[mode] = accepted["candidates_examined"]
+            self.assertEqual(examined["vertex_coupling"], n + 1)
+            self.assertEqual(examined["lexicographic"], n + n * (n - 1) // 2)
+            results[n] = {
+                mode: {
+                    "repetitions": len(samples[mode]),
+                    "candidates_examined": examined[mode],
+                    "median_seconds": round(statistics.median(samples[mode]), 6),
+                    "min_seconds": round(min(samples[mode]), 6),
+                    "max_seconds": round(max(samples[mode]), 6),
+                }
+                for mode in ("vertex_coupling", "lexicographic")
+            }
+            results[n]["median_lex_over_vertex_ratio"] = round(
+                statistics.median(samples["lexicographic"]) /
+                statistics.median(samples["vertex_coupling"]),
+                3,
             )
-            results[n] = entry
         print("VERTEX_COUPLING_REAL_G14_BENCHMARK", json.dumps(results, sort_keys=True))
 
 
