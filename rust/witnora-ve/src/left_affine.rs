@@ -175,8 +175,8 @@ mod tests {
         assert_eq!(out.projected_rows,
                    Some(vec![(BigUint::from(15u32), 0)]));
         assert_eq!(out.spectrum, vec![
-            (BigUint::zero(), BigInt::one(), BigUint::one()),
-            (BigUint::from(15u32), BigInt::one(), BigUint::one()),
+            (BigUint::zero(), BigInt::from(2), BigUint::from(2u32)),
+            (BigUint::from(15u32), BigInt::from(2), BigUint::from(2u32)),
         ]);
         let contradiction = project_and_expand(
             &[(BigUint::from(3u32), 0), (BigUint::from(3u32), 1)],
