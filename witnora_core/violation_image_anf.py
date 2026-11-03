@@ -14,9 +14,8 @@ and is NOT a polynomial-time SAT solver or a complete TC-063 proof.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import lru_cache
-
 from witnora_core.constraint_geometry import canonical_source
+from witnora_core.gf2_sparse_row_basis import (SparseBasisCertificate, verify_sparse_parity_basis)
 from witnora_core.sparse_parity_checks import SparseOddSketch, validate_sparse_odd_sketch
 
 Monomial = frozenset[int]
@@ -78,16 +77,15 @@ def source_violation_polynomials(
 def row_violation_polynomials(
     source: list[list[int]] | tuple[tuple[int, ...], ...],
     sketch: SparseOddSketch,
-    *, rows_override: tuple[tuple[int, ...], ...] | None = None,
+    *, basis: SparseBasisCertificate | None = None,
 ) -> tuple[Polynomial, ...]:
     cnf = validate_sparse_odd_sketch(source, sketch)
-    if rows_override is not None:
-        # An override is only safe when verified externally. Public
-        # exact sketch semantics use the original rows.
-        raise ValueError("unchecked row overrides are not supported")
+    if basis is not None:
+        verify_sparse_parity_basis(sketch, basis)
+    rows = sketch.rows if basis is None else basis.rows
     clauses = source_violation_polynomials(cnf, sketch.nvars)
     result = []
-    for row in sketch.rows:
+    for row in rows:
         equation = ZERO
         for j in row:
             equation = xor_polynomials(equation, clauses[j])
