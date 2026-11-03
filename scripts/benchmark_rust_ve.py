@@ -7,6 +7,7 @@ speed claim follows from this component-only pilot.
 from __future__ import annotations
 
 import json
+import os
 
 from scripts.benchmark_crc_scaling import measured
 from scripts.benchmark_crc_highcount import independent_ganak
@@ -36,22 +37,34 @@ def run(n, family):
                       repeats=3, seconds=6)
     native = measured(lambda: direct(count_component_by_rust_elimination),
                       repeats=3, seconds=6)
+    cli_binary = os.environ["WITNORA_RUST_VE_BIN"]
+    def cli(clauses, boundary, *, max_factor_variables, max_operations):
+        return count_component_by_rust_elimination(
+            clauses, boundary, max_factor_variables=max_factor_variables,
+            max_operations=max_operations, binary_path=cli_binary)
+    rust_cli = measured(lambda: direct(cli), repeats=3, seconds=6)
     ganak = independent_ganak(source, n, seconds=6)
-    if python["status"] != native["status"] or python["status"] != "EXACT":
+    if (python["status"] != native["status"] or
+            python["status"] != rust_cli["status"] or
+            python["status"] != "EXACT"):
         raise AssertionError(f"Rust/Python admission mismatch {family} n={n}")
-    if python["models"] != expected or native["models"] != expected:
+    if (python["models"] != expected or native["models"] != expected or
+            rust_cli["models"] != expected):
         raise AssertionError(f"model count mismatch {family} n={n}")
-    if python["states"] != native["states"]:
+    if python["states"] != native["states"] or python["states"] != rust_cli["states"]:
         raise AssertionError(f"factor operation work mismatch {family} n={n}")
     if ganak["status"] != "EXACT" or ganak["models"] != expected:
         raise AssertionError(f"Ganak mismatch {family} n={n}")
     return {
         "family": family, "n": n, "clauses": len(source),
         "analytic_models": expected,
-        "python": python, "rust": native, "ganak": ganak,
-        "rust_over_python_ms": round(
+        "python": python, "rust_binding": native, "rust_cli": rust_cli,
+        "ganak": ganak,
+        "rust_binding_over_python_ms": round(
             native["median_ms"] / python["median_ms"], 3),
-        "rust_subprocess_included": True,
+        "rust_cli_over_python_ms": round(
+            rust_cli["median_ms"] / python["median_ms"], 3),
+        "inprocess_binding_measured_separately": True,
     }
 
 
