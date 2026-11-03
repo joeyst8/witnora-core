@@ -1,8 +1,11 @@
 # W-CRC-015: Incremental indexed variable elimination
 
 Status: **verified restricted-family implementation speedup**;
-the dedicated completion-driven research queue passed all approved
-W-CRC-014/015 tasks. Full green CI gate is recorded separately.
+**92 Python tests green**. The dedicated completion-driven research queue
+passed all approved W-CRC-014/015 tasks.
+
+Full W-CRC CI (92 tests, all 15 benchmark cases):
+https://github.com/joeyst8/witnora-core/actions/runs/41722453364
 
 Sequential W-CRC-015 research queue:
 https://github.com/joeyst8/witnora-core/actions/runs/41722441602
