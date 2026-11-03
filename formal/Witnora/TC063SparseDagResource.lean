@@ -532,7 +532,8 @@ private theorem sourceStep_refines_indexedCompiler
                     | some sourceRow =>
                         simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
                           hNe, ht, hs, htr, hsr] at hStep
-                        subst next
+                        simp [htr, hsr] at hStep
+                        cases hStep
                         exact Witnora.G5IndexedLengthRefinement.xor_step_refines_compiler
                           initial state target source targetRef sourceRef
                           hEq hLength ht hs
@@ -600,9 +601,13 @@ theorem sourceRun_compiler_exact
     initial operations
     (Witnora.G5IndexedOperationEmitter.SourceState.start initial)
     result hLength hRun
-  simp [Witnora.G5IndexedBridge.compile,
-    Witnora.G5IndexedOperationEmitter.SourceState.start] at hFold ⊢
-  simpa [hFold]
+  have hFold' :
+      operations.foldlM Witnora.G5IndexedBridge.step
+        (List.range initial.length, []) =
+          some (result.refs, result.dag.steps) := by
+    simpa [Witnora.G5IndexedOperationEmitter.SourceState.start,
+      Witnora.G5VerifiedDagEmitter.Builder.start] using hFold
+  simp [Witnora.G5IndexedBridge.compile, hFold']
 
 #print axioms Witnora.TC063SparseDagResource.sourceRun_compiler_exact
 
