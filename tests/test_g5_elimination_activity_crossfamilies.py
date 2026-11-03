@@ -87,24 +87,36 @@ class G5ActivityCrossFamilyTest(unittest.TestCase):
                     x, y = mapping[a], mapping[b]
                     graph[x].add(y)
                     graph[y].add(x)
+                degree_pair = tuple(sorted(graph, key=lambda v: (-len(graph[v]), v))[:2])
                 g5_sizes = sizes_after(graph, g5_pair)
                 numeric_sizes = sizes_after(graph, numeric_pair)
+                degree_sizes = sizes_after(graph, degree_pair)
                 outcomes.append({
                     "trial": trial,
                     "g5_split": len(g5_sizes) > 1,
                     "numeric_split": len(numeric_sizes) > 1,
+                    "degree_split": len(degree_sizes) > 1,
                     "g5_largest": max(g5_sizes),
                     "numeric_largest": max(numeric_sizes),
+                    "degree_largest": max(degree_sizes),
                 })
             records[name] = {
                 "trials": len(outcomes),
                 "g5_split": sum(x["g5_split"] for x in outcomes),
                 "numeric_split": sum(x["numeric_split"] for x in outcomes),
+                "degree_split": sum(x["degree_split"] for x in outcomes),
                 "g5_mean_largest": round(
                     statistics.mean(x["g5_largest"] for x in outcomes), 3
                 ),
                 "numeric_mean_largest": round(
                     statistics.mean(x["numeric_largest"] for x in outcomes), 3
+                ),
+                "degree_mean_largest": round(
+                    statistics.mean(x["degree_largest"] for x in outcomes), 3
+                ),
+                "g5_worse_than_degree": sum(
+                    x["g5_largest"] > x["degree_largest"]
+                    for x in outcomes
                 ),
                 "g5_worse_largest": sum(
                     x["g5_largest"] > x["numeric_largest"]
@@ -115,6 +127,7 @@ class G5ActivityCrossFamilyTest(unittest.TestCase):
             if name == "clique6":
                 self.assertEqual(records[name]["g5_split"], 0)
                 self.assertEqual(records[name]["numeric_split"], 0)
+                self.assertEqual(records[name]["degree_split"], 0)
         print("G5_ACTIVITY_CROSSFAMILY_STUDY", json.dumps(records, sort_keys=True))
 
 
