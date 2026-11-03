@@ -18,6 +18,7 @@ open Witnora.Extraction
 open Witnora.G5Extraction
 open Witnora.TC063CanonicalAffineBridge
 open Witnora.ComponentPartition
+open Witnora.ExactAffineMembership
 
 /-- Every enumerated n-bit pattern really has length n. -/
 theorem allBits_member_length
