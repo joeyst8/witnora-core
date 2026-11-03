@@ -123,3 +123,41 @@ do not provide a universal Lean theorem or certify CPython implementation.
 XOR-easy or clause-count-small cases and preprocessing plus queries do
 not beat existing exact counters on mixed nonlinear controls, do not
 promote W-CRC-001 as a breakthrough.
+
+## 2026-11-03 milestone: exact source-CNF XOR-gadget recognition
+
+The new source adapter, witnora_core/crc_source.py, accepts signed CNF
+and lifts a clause set into a GF(2) affine equation **only if all**
+canonical clauses encoding a k-variable XOR (k=1,2,3) are present.
+For support variables (v_1,...,v_k) and rhs b, these clauses forbid
+exactly the 2^(k-1) assignments of opposite parity. Their conjunction
+is equivalent to the extracted affine equation for every assignment.
+
+All unrecognized clauses remain on the right. Tautologies/duplicate
+clauses are removed; invalid zero or out-of-range literals are rejected,
+including those inside tautologies. Variables in residual clauses form
+the boundary. All other source variables are internal and are counted
+through exact affine projection and its free-variable multiplier.
+
+Seven additional unittest methods pass, including:
+
+- k=1,2,3 canonical XOR gadgets, both parity values;
+- a deliberately incomplete gadget, correctly not extracted;
+- empty-clause, duplication, tautology, malformed-input and budget controls;
+- **400 independently exhaustive original-source-CNF random cases**,
+  including planted canonical gadgets plus random extra clauses;
+- a **118-variable source CNF** encoding global parity over 60 boundary
+  variables via 59 recognized small XOR equations, plus 20 nonlinear
+  three-literal OR clauses. Its exact count is (7^20 + 1)/2 with only
+  two left Fourier coefficients and 20 right CNF components.
+
+**Total in-memory Python dry run:** 16 unittest methods passed,
+including 800 randomly generated formulas with independent exhaustive
+count comparisons, plus 80 all-mode Fourier coefficient controls.
+A dedicated GitHub Actions workflow now checks both test modules.
+
+This remains a restricted, structurally easy source-CNF pilot.
+The gadget recognition and boundary interaction are mathematically exact,
+but universal CPython-to-Lean refinement, harder overlapping nonlinear
+regions, measured advantage over existing Witnora counters, and general
+SAT improvements remain unproved/unmeasured.
