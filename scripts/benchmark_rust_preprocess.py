@@ -1,4 +1,4 @@
-"""R-003: full source preprocessor + exact CRC count against Ganak.
+"""R-003/R-004: full source preprocessor + adaptive gate versus Ganak.
 
 Compares identical CNFs with and without opt-in native consensus.
 Both timings include source parsing; native timing also includes
@@ -17,23 +17,27 @@ from witnora_core.crc_rust_preprocess import simplify_source_in_rust
 
 def run(n, family, variant):
     source = equivalent_encoding(n, family, variant)
-    def crc(preprocess):
+    def crc(mode):
         got = count_signed_cnf_crc(
             source, n, max_inclusion_subsets=2,
             max_coefficient_states=20000, enable_orbit_oracle=True,
-            source_preprocessor=("rust_consensus" if preprocess else "none"))
+            source_preprocessor=mode)
         if got is None:
             return None
         return (got.models, got.extracted_affine_rows,
                 got.coefficient_stats.coefficient_backend)
-    raw = measured(lambda: crc(False), repeats=2, seconds=5)
-    native = measured(lambda: crc(True), repeats=2, seconds=5)
+    raw = measured(lambda: crc("none"), repeats=2, seconds=5)
+    native = measured(lambda: crc("rust_consensus"), repeats=2, seconds=5)
+    adaptive = measured(lambda: crc("rust_adaptive"), repeats=2, seconds=5)
     ganak = independent_ganak(source, n, seconds=5)
     simplified = simplify_source_in_rust(source, n)
-    if simplified is None:
+    adapted = simplify_source_in_rust(source, n, adaptive=True)
+    if simplified is None or adapted is None:
         raise AssertionError("native simplification budget refused controlled input")
     if native["status"] != "EXACT" or native["models"] != 2:
         raise AssertionError(f"native count missed analytic 2: n={n} {family} {variant}")
+    if adaptive["status"] != "EXACT" or adaptive["models"] != 2:
+        raise AssertionError(f"adaptive count missed analytic 2: n={n} {family} {variant}")
     if raw["status"] == "EXACT" and raw["models"] != 2:
         raise AssertionError("reference source count wrong")
     if ganak["status"] != "EXACT" or ganak["models"] != 2:
@@ -44,14 +48,17 @@ def run(n, family, variant):
         "rust_simplified_clauses": len(simplified.clauses),
         "rust_consensus_pairs": simplified.consensus_pairs,
         "rust_preprocess_passes": simplified.passes,
+        "rust_adaptive_skipped": adapted.skipped,
         "crc_without_preprocess": raw,
         "crc_with_rust_preprocess": native,
+        "crc_with_rust_adaptive": adaptive,
         "ganak": ganak,
         "native_total_over_raw_if_both_exact": (
             round(native["median_ms"] / raw["median_ms"], 3)
             if native["status"] == raw["status"] == "EXACT" else None
         ),
         "preprocessing_included_in_native_wall_ms": True,
+        "admission_included_in_adaptive_wall_ms": True,
     }
 
 
@@ -67,13 +74,16 @@ def main():
             rows.append(row)
             print(json.dumps(row, sort_keys=True), flush=True)
     print(json.dumps({
-        "summary": "R-003 Rust consensus source normalization before CRC",
+        "summary": "R-003/R-004 native consensus and adaptive admission before CRC",
         "cases": len(rows),
         "independent_ganak_matches": len(rows),
         "native_exact": sum(r["crc_with_rust_preprocess"]["status"] == "EXACT"
                             for r in rows),
         "raw_incomplete": sum(r["crc_without_preprocess"]["status"] != "EXACT"
                               for r in rows),
+        "adaptive_exact": sum(r["crc_with_rust_adaptive"]["status"] == "EXACT"
+                              for r in rows),
+        "adaptive_skipped": sum(r["rust_adaptive_skipped"] for r in rows),
         "no_general_sat_speedup_claim": True,
     }, sort_keys=True), flush=True)
 
