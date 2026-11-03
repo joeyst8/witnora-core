@@ -1,0 +1,32 @@
+name: W-CRC-001 exact boundary source controls
+
+on:
+  push:
+    branches:
+      - research/w-crc-001-asymmetric-v1
+    paths:
+      - "witnora_core/crc_boundary.py"
+      - "witnora_core/crc_source.py"
+      - "tests/test_crc_boundary.py"
+      - "tests/test_crc_source.py"
+      - ".github/workflows/wcrc-001.yml"
+  pull_request:
+    paths:
+      - "witnora_core/crc_boundary.py"
+      - "witnora_core/crc_source.py"
+      - "tests/test_crc_boundary.py"
+      - "tests/test_crc_source.py"
+      - ".github/workflows/wcrc-001.yml"
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Exact source and coefficient controls
+        run: python -m unittest tests.test_crc_boundary tests.test_crc_source -v
