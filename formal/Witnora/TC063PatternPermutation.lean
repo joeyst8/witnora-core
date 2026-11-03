@@ -240,7 +240,7 @@ theorem clauseSubsumes_perm_source
     clauseSubsumes candidate expected =
       clauseSubsumes ordered expected := by
   unfold clauseSubsumes
-  exact List.all_perm (fun lit => decide (lit ∈ expected)) hPerm
+  exact all_perm (fun lit => decide (lit ∈ expected)) hPerm
 
 /-- Every canonical forbidden clause for one coefficient order has a
     literally permutation-equivalent clause after support reordering.
@@ -265,7 +265,8 @@ theorem signedClause_permutation_match
   obtain ⟨a, hMap⟩ :=
     nodup_vars_realize_bits vars hNodup bad hLen
   have hWrongOld : parityVars vars a ≠ rhs := by
-    simpa [parityBits_map, hMap] using hWrong
+    rw [← parityBits_map vars a, hMap]
+    exact hWrong
   have hWrongNew : parityBits (ordered.map a) ≠ rhs := by
     rw [parityBits_map, ← parityVars_perm hPerm a]
     exact hWrongOld
