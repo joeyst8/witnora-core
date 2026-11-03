@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "description": "Finite reviewed W-CRC-014/015 exact VE reference, indexed differential and Ganak benchmarks; immediately advance on successful predecessor completion.",
+  "description": "Finite reviewed W-CRC-015/016 exact indexed elimination and held-out graph tests, completion-driven with fail-stop budgets.",
   "tasks": [
-    "wcrc014_ve_unit",
     "wcrc015_indexed_unit",
-    "wcrc015_indexed_ganak"
+    "wcrc016_heldout_unit",
+    "wcrc016_heldout_ganak"
   ]
 }
