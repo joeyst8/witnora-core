@@ -121,6 +121,60 @@ fn consensus_pass(clauses: &[Vec<i32>]) -> (Vec<Vec<i32>>, usize) {
     (result, pairs)
 }
 
+/// Lightweight *heuristic* admission check for expensive consensus closure.
+/// It conservatively admits all non-binary clauses and any unit/empty clause,
+/// and checks whether a binary support contains clauses with a one-sign flip.
+/// A false result permits skipping preprocessing but NEVER implies that the
+/// source is irreducible by every Boolean method (e.g. deduplication).
+/// The count remains exact on either branch. Full source validation occurs
+/// even when the admission decision is false.
+pub fn source_admission_heuristic(
+    source: &[Vec<i32>], nvars: u32,
+) -> Result<bool, String> {
+    if nvars > 512 {
+        return Err("invalid source variable universe".into());
+    }
+    let mut sign_masks: BTreeMap<(u32, u32), u8> = BTreeMap::new();
+    let mut special_clause = false;
+    for clause in source {
+        for &lit in clause {
+            if lit == 0 || lit == i32::MIN || lit.unsigned_abs() > nvars {
+                return Err("literal outside declared source universe".into());
+            }
+        }
+        if clause.len() != 2 {
+            special_clause = true;
+            continue;
+        }
+        let (a, b) = (clause[0], clause[1]);
+        if a.unsigned_abs() == b.unsigned_abs() {
+            special_clause = true;
+            continue;
+        }
+        let (first, second) = if a.unsigned_abs() < b.unsigned_abs() {
+            (a, b)
+        } else {
+            (b, a)
+        };
+        let pattern = ((first < 0) as u8) * 2 + (second < 0) as u8;
+        *sign_masks.entry((first.unsigned_abs(), second.unsigned_abs()))
+            .or_default() |= 1u8 << pattern;
+    }
+    if special_clause {
+        return Ok(true);
+    }
+    for &mask in sign_masks.values() {
+        // Bit 0 = ++, bit 1 = +-, bit 2 = -+, bit 3 = --.
+        // Any edge on this 4-vertex square is a direct consensus pair.
+        if (mask & 1 != 0 && mask & 6 != 0)
+            || (mask & 8 != 0 && mask & 6 != 0)
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 /// Return an exact logically equivalent CNF, or None on resource cap.
 ///
 /// `max_clause_visits` bounds repeated full-clause examination.
@@ -234,6 +288,29 @@ mod tests {
         ).unwrap().unwrap();
         assert_eq!(models(&tautological.clauses, 3), models(&[vec![2]], 3));
         assert_eq!(simplify_source(&[], 3, 10, 100).unwrap().unwrap().clauses.len(), 0);
+    }
+
+    #[test]
+    fn adaptive_admission_selects_forcing_not_parity() {
+        let n = 64usize;
+        let mut parity = Vec::new();
+        let mut forcing = Vec::new();
+        for u in 1..n {
+            for v in (u + 1)..=n {
+                parity.push(vec![u as i32, -(v as i32)]);
+                parity.push(vec![-(u as i32), v as i32]);
+                forcing.push(vec![u as i32, v as i32]);
+                forcing.push(vec![u as i32, -(v as i32)]);
+            }
+        }
+        assert!(!source_admission_heuristic(&parity, n as u32).unwrap());
+        assert!(source_admission_heuristic(&forcing, n as u32).unwrap());
+        forcing.push(vec![1]);
+        assert!(source_admission_heuristic(&forcing, n as u32).unwrap());
+        assert!(source_admission_heuristic(&[vec![1, 2, 3]], 3).unwrap());
+        assert!(!source_admission_heuristic(&[vec![1, -2], vec![-1, 2]], 2).unwrap());
+        assert!(source_admission_heuristic(&[vec![3]], 2).is_err());
+        assert!(source_admission_heuristic(&[vec![0, 1]], 2).is_err());
     }
 
     #[test]
