@@ -170,7 +170,7 @@ private theorem nodup_count_nat
         simp [List.count_cons, hTail, hNot]
       · have hTail := ih hRest v
         have hNe : x ≠ v := Ne.symm heq
-        simp [List.count_cons, hNe, hTail]
+        simp [List.count_cons, heq, hNe, hTail]
 
 /-- Two finite duplicate-free variable lists with exactly the same
     variable membership are permutations in Lean's literal List.Perm. -/
