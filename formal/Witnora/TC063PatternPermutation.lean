@@ -318,6 +318,58 @@ theorem checkClauseCoverage_signedClauses_perm
     simpa only [← clauseSubsumes_perm_source clause target expected hp]
       using hsub
 
+/-- The original-clause coverage checker distributes over a
+    concatenation of generated affine clause sets. -/
+theorem checkClauseCoverage_append
+    (front back : CNF) (expected : List Literal) :
+    checkClauseCoverage (front ++ back) expected =
+      (checkClauseCoverage front expected ||
+        checkClauseCoverage back expected) := by
+  simp [checkClauseCoverage, List.any_append]
+
+/-- Reverse semantic extraction coverage is unaffected when every row
+    coefficient list is sorted, provided supports are duplicate-free. -/
+theorem checkClauseCoverage_expanded_sortAffineRows
+    (rows : List Witnora.G5Trace.Row) (expected : List Literal)
+    (hNodup : ∀ row ∈ rows, row.coefficients.Nodup) :
+    checkClauseCoverage (expanded (sortAffineRows rows)) expected =
+      checkClauseCoverage (expanded rows) expected := by
+  induction rows with
+  | nil => rfl
+  | cons row rest ih =>
+      have hHead : row.coefficients.Nodup :=
+        hNodup row (by simp)
+      have hTail : ∀ r ∈ rest, r.coefficients.Nodup := by
+        intro r hr
+        exact hNodup r (by simp [hr])
+      change checkClauseCoverage
+          (generateSignedClauses (sortVariables row.coefficients) row.rhs ++
+            expanded (sortAffineRows rest)) expected =
+        checkClauseCoverage
+          (generateSignedClauses row.coefficients row.rhs ++
+            expanded rest) expected
+      rw [checkClauseCoverage_append, checkClauseCoverage_append]
+      have hRow :=
+        checkClauseCoverage_signedClauses_perm
+          row.coefficients (sortVariables row.coefficients) row.rhs
+          expected (sortVariables_perm row.coefficients).symm hHead
+      rw [← hRow, ih hTail]
+
+/-- Every original clause's reverse-coverage result is unchanged
+    after deterministic coefficient sorting across the entire system. -/
+theorem reverseCoverage_sortAffineRows
+    (source : CNF) (rows : List Witnora.G5Trace.Row)
+    (hNodup : ∀ row ∈ rows, row.coefficients.Nodup) :
+    source.all (checkClauseCoverage (expanded (sortAffineRows rows))) =
+      source.all (checkClauseCoverage (expanded rows)) := by
+  induction source with
+  | nil => rfl
+  | cons clause rest ih =>
+      simp only [List.all_cons]
+      rw [checkClauseCoverage_expanded_sortAffineRows rows clause hNodup, ih]
+
+#print axioms Witnora.TC063PatternPermutation.reverseCoverage_sortAffineRows
+
 #print axioms Witnora.TC063PatternPermutation.signedClause_permutation_match
 #print axioms Witnora.TC063PatternPermutation.checkClauseCoverage_signedClauses_perm
 
