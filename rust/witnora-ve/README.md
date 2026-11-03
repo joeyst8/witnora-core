@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-001/R-002/R-003/R-004/R-005
+# Witnora Rust migration — R-001/R-002/R-003/R-004/R-005/R-006
 
 The `witnora-ve` executable **and optional PyO3 in-process extension**
 are a native, bounded, exact #SAT **component counter**, ported from Python's W-CRC-015 indexed
@@ -134,6 +134,44 @@ Rust extraction on the same hosted runner (~1.81x). On n=64 forcing,
 it fell 5.43 to 4.59 ms (~1.18x). Two-repeat case studies are not
 broad solver benchmarks. Complete controls, data and caveats:
 `docs/RUST_005_EXACT_XOR_EXTRACTION.md`.
+
+## Exact batched right Walsh coefficients (R-006)
+
+The new `right_walsh_native` PyO3 entry point computes the entire
+requested set of right-CNF Walsh coefficients in **exact dyadic
+arithmetic**, using standard component-wise inclusion-exclusion.
+The native operation takes canonical zero/one violation masks and
+outputs decimal numerator/denominator pairs; no floating-point
+rounding is involved. Strict Python `Fraction` conversion is in
+`witnora_core/crc_rust_walsh.py`.
+
+Both `count_asymmetric_boundary` and `count_signed_cnf_crc` can opt
+in via `coefficient_backend="rust_inclusion_exclusion"`.
+The `"python"` default stays unchanged. The Rust path preserves
+the Python inclusion-exclusion subset limit and adds a
+`max_rust_coefficient_operations` limit for batched Walsh modes.
+When a native cap refuses, the opted-in path returns incomplete
+**without silently switching to the Python Shannon/orbit oracles**.
+
+After installing the PyO3 wheel, the verification and benchmark are:
+
+```sh
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m unittest tests.test_crc_rust_walsh -v
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m scripts.benchmark_rust_walsh
+```
+
+[Green R-006 CI](https://github.com/joeyst8/witnora-core/actions/runs/41740113548)
+passed **17 Rust tests**, four new Python differential tests including
+whole small CNF Walsh spectra and full affine/source counts, and
+**16/16 independently counted Ganak cases**. On n=60 with three
+three-variable parity blocks crossing 20 disjoint OR components,
+full affine-plus-coefficient time was **0.7021 ms Python versus
+0.2218 ms Rust**, ~3.17x for this specific family. The benchmark
+deliberately excludes earlier source preparation and source XOR
+extraction; three very short repeats are not a general solver ranking.
+See `docs/RUST_006_RIGHT_WALSH_COEFFICIENTS.md`.
 
 ## Migration policy
 
