@@ -253,6 +253,32 @@ theorem checkSparseG5_resource_bound
 #print axioms Witnora.TC063SparseDagResource.replayDag_row_width_le_original_support
 #print axioms Witnora.TC063SparseDagResource.checkSparseG5_resource_bound
 
+
+/-- The *entire materialized replay table* has a polynomial aggregate
+    coefficient count: at most (initial rows + XOR steps) times total
+    initial sparse coefficient occurrences. -/
+theorem checkSparseG5_total_replay_coefficients_bound
+    (cnf : Witnora.Concrete.CNF) (rows : List Row)
+    (steps : List XorRef)
+    (h : Witnora.TC063SparseDirectChecker.checkSparseG5
+      cnf rows steps = true) :
+    ∃ final : List Row,
+      replayDag rows steps = some final ∧
+      (Witnora.TC063CanonicalBound.supportRows final).length ≤
+        (rows.length + steps.length) *
+          (Witnora.TC063CanonicalBound.supportRows rows).length := by
+  obtain ⟨final, hrep, hlen, hwidth⟩ :=
+    checkSparseG5_resource_bound cnf rows steps h
+  refine ⟨final, hrep, ?_⟩
+  have hsum :=
+    Witnora.TC063SparseG5OperationBound.supportRows_length_le_arity
+      final
+      (Witnora.TC063CanonicalBound.supportRows rows).length
+      hwidth
+  simpa [hlen] using hsum
+
+#print axioms Witnora.TC063SparseDagResource.checkSparseG5_total_replay_coefficients_bound
+
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_no_fresh_variable
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_length_le_sum
 #print axioms Witnora.TC063SparseDagResource.replayDag_length_exact
