@@ -84,6 +84,20 @@ jobs:
       - name: Kernel-check universal resolution soundness
         working-directory: formal
         run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP Witnora.GeneralRUPAscii Witnora.GeneralRUPIndexed Witnora.GeneralRUPIndexedAscii
+      - name: Kernel-check universal clause-violation parity soundness
+        working-directory: formal
+        run: lake build Witnora.ClauseViolationParity
+
+      - name: Exhaustively verify source-bound ETH-style parity sketches
+        run: python -m unittest tests.test_eth_clause_violation_parity -v
+
+      - name: Generate bounded source-CNF versus parity-equivalence checks
+        run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
+
+      - name: Lean-check exact parity sketches on dense UNSAT and SAT controls
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedETHParity.lean
+
       - name: Test independent proof generation and tamper rejection
         run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import tests.test_glucose_dense_3sat tests.test_rup_indexed_propagation tests.test_general_rup_indexed -v
       - name: Generate non-affine CNF resolution examples
@@ -119,16 +133,3 @@ jobs:
         working-directory: formal
         run: lake env lean Witnora/GeneratedIndexedRUP.lean
 
-      - name: Kernel-check universal clause-violation parity soundness
-        working-directory: formal
-        run: lake build Witnora.ClauseViolationParity
-
-      - name: Exhaustively verify source-bound ETH-style parity sketches
-        run: python -m unittest tests.test_eth_clause_violation_parity -v
-
-      - name: Generate bounded source-CNF versus parity-equivalence checks
-        run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
-
-      - name: Lean-check exact parity sketches on dense UNSAT and SAT controls
-        working-directory: formal
-        run: lake env lean Witnora/GeneratedETHParity.lean
