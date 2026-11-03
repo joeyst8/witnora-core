@@ -538,8 +538,6 @@ private theorem sourceStep_refines_indexedCompiler
                             initial state target source targetRef sourceRef
                             hEq hLength ht hs
                         · simp at hStep
-                          initial state target source targetRef sourceRef
-                          hEq hLength ht hs
 
 /-- Inductively, *all* successful source-interpreter operations agree
     exactly with compiler state: both the mutable refs and XOR DAG steps. -/
