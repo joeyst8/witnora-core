@@ -207,6 +207,27 @@ theorem checkPattern_sortVariables
     (sortVariables vars) rhs
     (sortVariables_perm vars).symm hNodup).symm
 
+/-- Sorting a whole list of duplicate-free affine row supports leaves
+    the executable G5 initial-source extraction checker unchanged. -/
+theorem checkInitialRows_sortAffineRows
+    (source : CNF) (rows : List Witnora.G5Trace.Row)
+    (hNodup : ∀ row ∈ rows, row.coefficients.Nodup) :
+    checkInitialRows source (sortAffineRows rows) =
+      checkInitialRows source rows := by
+  induction rows with
+  | nil => rfl
+  | cons row rest ih =>
+      have hHead : row.coefficients.Nodup :=
+        hNodup row (by simp)
+      have hTail : ∀ r ∈ rest, r.coefficients.Nodup := by
+        intro r hr
+        exact hNodup r (by simp [hr])
+      simp [sortAffineRows, sortAffineRow, checkInitialRows,
+        checkPattern_sortVariables source row.coefficients row.rhs hHead,
+        ih hTail]
+
+#print axioms Witnora.TC063PatternPermutation.checkInitialRows_sortAffineRows
+
 #print axioms Witnora.TC063PatternPermutation.checkPattern_perm_of_nodup
 #print axioms Witnora.TC063PatternPermutation.checkPattern_sortVariables
 
