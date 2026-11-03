@@ -67,6 +67,9 @@ class TestCutsetModelCount(unittest.TestCase):
             [[1]], (1, 2), (1,), (2,), 0))
         self.assertIsNone(count_source_by_separator(
             [[1, 2]], (1, 2), (1,), (2,), 3))
+        self.assertIsNone(count_source_by_separator(
+            [[1, 3], [3, 2]], (1, 2, 3), (1,), (2,), 7,
+            max_separator_branches=1))
         with self.assertRaises(ValueError):
             count_source_by_separator(
                 source, (1, 2, 3, 4, 5), (1,), (2,), 31,
