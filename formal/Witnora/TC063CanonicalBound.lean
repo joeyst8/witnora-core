@@ -17,6 +17,9 @@ open Witnora.FiniteXor
 open Witnora.G5Trace
 open Witnora.G5Extraction
 open Witnora.ComponentPartition
+open Witnora.G5InitialSupportCoverage
+open Witnora.SemanticSAF
+open Witnora.TC063CompletenessReduction
 open Witnora.ExactAffineMembership
 open Witnora.TC063CanonicalAffineBridge
 open Witnora.TC063PatternPermutation
@@ -371,6 +374,83 @@ theorem checkSemanticExactAffine_boundedCanonRows
         reverseCoverage_boundedCanonRows bound source rows hNodup hBound]
   rw [hEq]
   exact hCheck
+
+/-- Explicit largest-variable fold; this avoids choosing a
+    nonconstructive bound or relying on the numerical density of IDs. -/
+def maxVariable : List Nat → Nat
+  | [] => 0
+  | v :: rest => max v (maxVariable rest)
+
+theorem le_maxVariable_of_mem (xs : List Nat) :
+    ∀ v ∈ xs, v ≤ maxVariable xs := by
+  induction xs with
+  | nil =>
+      intro v hv
+      simp at hv
+  | cons x rest ih =>
+      intro v hv
+      rcases List.mem_cons.mp hv with heq | hRest
+      · subst v
+        exact Nat.le_max_left x (maxVariable rest)
+      · exact (ih v hRest).trans (Nat.le_max_right x (maxVariable rest))
+
+/-- The support schedule lists row variables directly, including repeats.
+    This is finite and avoids enumerating every integer below max ID. -/
+def supportRows (rows : List Row) : List Nat :=
+  rows.flatMap (fun row => row.coefficients)
+
+theorem row_membership_supportRows (rows : List Row) :
+    ∀ row ∈ rows, ∀ v ∈ row.coefficients, v ∈ supportRows rows := by
+  intro row hr v hv
+  change v ∈ rows.flatMap (fun row => row.coefficients)
+  exact List.mem_flatMap.mpr ⟨row, hr, hv⟩
+
+def boundForRows (rows : List Row) : Nat :=
+  maxVariable (supportRows rows) + 1
+
+theorem rows_bounded_boundForRows (rows : List Row) :
+    ∀ row ∈ rows, ∀ v ∈ row.coefficients, v < boundForRows rows := by
+  intro row hr v hv
+  have hMem := row_membership_supportRows rows row hr v hv
+  have hLe := le_maxVariable_of_mem (supportRows rows) v hMem
+  unfold boundForRows
+  omega
+
+/-- The resulting bounded canonical rows mechanically pass the *exact*
+    canonical G5 row representation checker. -/
+theorem checkCanonicalRows_boundedCanonRows
+    (bound : Nat) (rows : List Row) :
+    checkCanonicalRows bound (boundedCanonRows bound rows) = true := by
+  unfold checkCanonicalRows
+  apply List.all_eq_true.mpr
+  intro row' hr'
+  obtain ⟨row, _, hEq⟩ := List.mem_map.mp hr'
+  subst row'
+  simp [checkCanonicalRow, boundedCanonRow, canonicalSupport_idempotent]
+
+/-- The original finite variable names form a complete schedule
+    for every bounded canonical row. -/
+theorem supportRows_covers_boundedCanonRows
+    (bound : Nat) (rows : List Row) :
+    Covered (supportRows rows) (boundedCanonRows bound rows) := by
+  intro row' hr' v hv
+  obtain ⟨row, hr, hEq⟩ := List.mem_map.mp hr'
+  subst row'
+  have hOld : v ∈ row.coefficients :=
+    ((mem_canonicalSupport_iff bound v row.coefficients).mp hv).2
+  exact row_membership_supportRows rows row hr v hOld
+
+/-- The explicit schedule uses only variable names below its finite
+    bound.  No integer interval is materialized. -/
+theorem supportRows_in_range (rows : List Row) :
+    ∀ v ∈ supportRows rows, v < boundForRows rows := by
+  intro v hv
+  have hLe := le_maxVariable_of_mem (supportRows rows) v hv
+  unfold boundForRows
+  omega
+
+#print axioms Witnora.TC063CanonicalBound.checkCanonicalRows_boundedCanonRows
+#print axioms Witnora.TC063CanonicalBound.supportRows_covers_boundedCanonRows
 
 #print axioms Witnora.TC063CanonicalBound.checkSemanticExactAffine_boundedCanonRows
 
