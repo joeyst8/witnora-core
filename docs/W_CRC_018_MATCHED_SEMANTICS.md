@@ -1,10 +1,12 @@
 # W-CRC-018: Graph-, clause-, and model-count-matched semantic controls
 
-Status: **10/10 exact Witnora model counts** matching independent
-Ganak 2.8.0 in the verified completion-driven queue;
-**4/4 exhaustive small-n semantic profiles** matched analytic
-backbone/dependency predictions; one exact higher-order counterexample.
-The full W-CRC regression CI is a separate verification gate.
+Status: **101 green Python tests**, **10/10 exact Witnora model counts**
+matching independent Ganak 2.8.0, **4/4 exhaustive small-n semantic
+profiles**, and one exact higher-order counterexample, verified in
+the full W-CRC regression CI and the completion-driven queue.
+
+Full green W-CRC CI:
+https://github.com/joeyst8/witnora-core/actions/runs/41725616948
 
 Verified completion-driven queue:
 https://github.com/joeyst8/witnora-core/actions/runs/41725603426
