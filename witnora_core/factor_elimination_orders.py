@@ -72,9 +72,9 @@ def elimination_order(
 
         ns = neighbors_cache[chosen]
         width = max(width, len(ns))
-        # Each missing pair is counted once as its first endpoint is handled.
+        # Count undirected missing neighbor pairs before adding any edges.
+        added += sum(len(ns - graph[u] - {u}) for u in ns) // 2
         for u in sorted(ns):
-            added += len(ns - graph[u] - {u})
             graph[u].update(ns - {u})
             graph[u].discard(chosen)
         active.remove(chosen)
