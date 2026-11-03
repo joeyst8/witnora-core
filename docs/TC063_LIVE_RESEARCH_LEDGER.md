@@ -402,3 +402,38 @@ Next research hurdle: use **structure-aware elimination**, parity
 linear algebra, and actual coefficient extraction; compare direct
 CNF, flattened checks, auxiliary bridge, and independent solvers
 on total runtime and memory. No broad SAT speedup or P-vs-NP result.
+
+
+## 2026-11-03 scope-aware elimination orders, complete large run (CI green)
+
+`witnora_core/factor_elimination_orders.py` added deterministic
+minimum-degree, source-first, auxiliary-first, and eight-candidate
+limited-min-fill elimination orders with explicit fill-edge and
+induced-width outputs. Independent order-replay tests pass.
+The frozen exact 3-CNF sources and geometry-aware sketches were
+unchanged; no assignment enumeration or SAT/tensor contraction
+occurred in the ordering benchmark.
+
+On (32/224, 96/576, 256/1536), observed induced widths were:
+source-CNF 26/73/191, flat parity 30/90/241;
+auxiliary min-degree 94/310/921;
+source-first 226/590/1575;
+aux-first 94/311/831;
+beam-fill 89/291/774.
+Thus for the 256 case, beam-fill improved 921→774 (~16%)
+against min-degree, but stayed far worse than source width191.
+The 256 beam-fill order search alone took ~61.6 seconds;
+source-first took ~96.7 seconds. These are **graph-ordering
+times**, not SAT or exact coefficient-computation times.
+
+The entire 256-variable, four-strategy CI + previous Lean/CDCL
+regressions passed:
+https://github.com/joeyst8/witnora-core/actions/runs/41652408617 .
+Default CI now scopes the heavier benchmark to 32 and 96; the
+256/1536 run is available by explicit `--large`.
+[Detailed scope-aware elimination report](SCOPE_AWARE_ELIMINATION_EXPERIMENT.md).
+
+Next: implement a genuine small exact weighted factor contraction
+or parity-aware reduction, benchmark total counting time/memory
+against source CNF, and only then assess any computational gain.
+No general SAT speedup or resolution of P vs NP.
