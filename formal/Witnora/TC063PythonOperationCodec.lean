@@ -105,7 +105,7 @@ theorem checkWireSparseG5_unsat
     (rows : List Witnora.G5Trace.Row)
     (wire : List WireOperation)
     (h : checkWireSparseG5 cnf rows wire = true) :
-    ¬ ∃ a : Nat → Bool, Witnora.Concrete.CNFHolds cnf a := by
+    ¬ ∃ a : Nat → Bool, Witnora.G5Extraction.CNFHolds cnf a := by
   cases hc : compileWire rows.length wire with
   | none =>
       simp [checkWireSparseG5, hc] at h
