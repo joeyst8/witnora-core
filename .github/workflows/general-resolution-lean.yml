@@ -6,12 +6,14 @@ on:
       - formal/g14-python-seen-enqueue-v121
     paths:
       - "formal/Witnora/GeneralResolution.lean"
+      - "formal/Witnora/GeneralResolutionIndexed.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "tests/test_general_resolution_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
   pull_request:
     paths:
       - "formal/Witnora/GeneralResolution.lean"
+      - "formal/Witnora/GeneralResolutionIndexed.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "tests/test_general_resolution_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -33,7 +35,7 @@ jobs:
           test: false
       - name: Kernel-check universal resolution soundness
         working-directory: formal
-        run: lake build Witnora.GeneralResolution
+        run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed
       - name: Test independent proof generation and tamper rejection
         run: python -m unittest tests.test_general_resolution_trace -v
       - name: Generate non-affine CNF resolution examples
