@@ -24,6 +24,10 @@ DEFAULT_REPORT = ROOT / "artifacts" / "witnora_research_queue_report.json"
 ALLOWED_TASKS = {
     "wcrc005_symmetry_falsification":
         ("-m", "scripts.benchmark_crc_symmetry_stress"),
+    "wcrc005_defect_unit":
+        ("-m", "unittest", "tests.test_crc_defect_oracle", "-v"),
+    "wcrc005_defect_ganak":
+        ("-m", "scripts.benchmark_crc_defect"),
     "wcrc004_orbit_unit":
         ("-m", "unittest", "tests.test_crc_orbit_oracle", "-v"),
     "wcrc004_orbit_benchmark":
