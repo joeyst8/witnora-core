@@ -13,6 +13,7 @@ from fractions import Fraction
 from typing import Iterable
 
 from witnora_core.crc_shannon_oracle import query_walsh_coefficients
+from witnora_core.crc_orbit_oracle import query_orbit_walsh
 
 
 @dataclass(frozen=True)
@@ -285,6 +286,7 @@ def count_asymmetric_boundary(
     max_spectrum_terms: int = 4096,
     max_inclusion_subsets: int = 4096,
     max_coefficient_states: int | None = None,
+    enable_orbit_oracle: bool = False,
 ) -> BoundaryCount | None:
     """Count an affine left region and boundary-only CNF right region.
 
@@ -299,25 +301,36 @@ def count_asymmetric_boundary(
     clauses = _normalized_clauses(right_clauses, boundary)
     components = _right_components(clauses, max_subsets=max_inclusion_subsets)
     if components is None:
-        # Optional exact Shannon fallback for overlapping nonlinear
-        # clauses. It is a bounded weighted model counter, not a
-        # polynomial-time coefficient oracle.
-        if max_coefficient_states is None:
-            return None
-        query = query_walsh_coefficients(
-            clauses, boundary, tuple(spectrum), max_states=max_coefficient_states,
-        )
-        if query is None:
-            return None
-        accumulated = sum(
-            (coef * query.coefficients[mode] for mode, coef in spectrum.items()),
-            Fraction(),
-        )
-        backend = "shannon"
-        right_terms = 0
-        right_components = 0
-        states = query.states
-        hits = query.memo_hits
+        # Optional exact, recognizable dense nonlinear family. It
+        # computes only requested Walsh modes using cardinality
+        # identities; it never estimates an unsupported coefficient.
+        orbit = (query_orbit_walsh(clauses, boundary, tuple(spectrum))
+                 if enable_orbit_oracle else None)
+        if orbit is not None:
+            accumulated = sum(
+                (coef * orbit.coefficients[mode]
+                 for mode, coef in spectrum.items()), Fraction(),
+            )
+            backend = "orbit_cardinality"
+            right_terms = right_components = states = hits = 0
+        else:
+            # Exact bounded Shannon fallback for general overlap.
+            if max_coefficient_states is None:
+                return None
+            query = query_walsh_coefficients(
+                clauses, boundary, tuple(spectrum),
+                max_states=max_coefficient_states,
+            )
+            if query is None:
+                return None
+            accumulated = sum(
+                (coef * query.coefficients[mode]
+                 for mode, coef in spectrum.items()), Fraction(),
+            )
+            backend = "shannon"
+            right_terms = right_components = 0
+            states = query.states
+            hits = query.memo_hits
     else:
         accumulated = sum(
             (coef * _component_coefficient(components, mode)
