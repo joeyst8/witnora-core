@@ -102,3 +102,31 @@ A small row count does not imply a fast solver. Our next milestones:
 
 The performance gate is **total time = construct + count + verify**.
 No polynomial-time, subexponential-time, or P=NP conclusion is claimed.
+
+
+## Verification and indicative benchmark checkpoint
+
+All 26 steps of the general-CNF/Lean workflow passed on 2026-11-03:
+[GitHub Actions run 41608773901](https://github.com/joeyst8/witnora-core/actions/runs/41608773901).
+The two new universal Lean disjointness lemmas report only the standard
+axioms `[propext]` and `[propext, Quot.sound]`, and
+all new Python construction, collision, tampering, and adversarial
+coverage tests passed.
+
+Single-run GitHub Actions construction timings (not solving or
+certification times, not statistically benchmarked):
+
+| Variables | Clauses | Rows | Mean row width | Construction, ms | Exactness audit |
+|---:|---:|---:|---:|---:|---|
+| 8 | 54 | 28 | 26.93 | 0.234 | 0 false positives |
+| 12 | 84 | 32 | 42.09 | 0.327 | 0 false positives |
+| 32 | 224 | 52 | 110.71 | 1.225 | Not audited |
+| 96 | 576 | 116 | 288.16 | 6.515 | Not audited |
+| 256 | 1536 | 276 | 766.10 | 46.067 | Not audited |
+
+The six frozen 8/10/12-variable Glucose source controls were separately
+audited for exactness and had zero false positives. The larger
+unaudited instances **must not** be called proven equivalent to their
+source formulas. No SAT solver was run on those generated parity
+systems, and there is no polynomial-time or subexponential runtime
+claim.
