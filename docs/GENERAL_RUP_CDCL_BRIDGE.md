@@ -154,3 +154,41 @@ CI: https://github.com/joeyst8/witnora-core/actions/runs/41601167317 .
 **Limitations:** These remain modest random test instances, selected using
 solver results and bounded proof length. They do not prove complete proof
 import for every CDCL run, RAT support, or industrial-scale performance.
+
+
+## 2026-11-03 opt-in indexed propagation: validated A/B experiment
+
+`witnora_core/rup_indexed_propagation.py` adds a second, **untrusted** RUP
+witness producer. Each addition builds literal-to-clause occurrence lists
+and maintains a work queue and unsatisfied-literal counts. An assignment
+updates only its affected clauses, avoiding the reference implementation's
+complete database sort/scan at every propagated unit.
+
+`annotate_drup(..., indexed_propagation=True)` is opt-in. A 300-case
+small random differential test compared conflict reachability to the
+reference implementation. The actual Glucose PHP(5,4) and PHP(6,5) traces
+produced the same *added clauses*, independently replayable witnesses, and
+no rejected RUP step. The generated indexed PHP(5,4) refutation additionally
+passed the **existing Lean RUP checker**, so the optimization has not
+changed the proof authority.
+
+| Instance | Reference Python annotation | Indexed Python annotation | Single-run improvement | Indexed units |
+|---|---:|---:|---:|---:|
+| PHP(3,2) | 0.140 ms | 0.100 ms | 1.40× | 10 |
+| PHP(4,3) | 1.134 ms | 0.523 ms | 2.17× | 64 |
+| PHP(5,4) | 13.052 ms | 3.356 ms | 3.89× | 363 |
+| PHP(6,5) | 259.882 ms | 43.006 ms | 6.04× | 2,434 |
+
+The A/B run and every source/proof/native/Lean test completed successfully:
+https://github.com/joeyst8/witnora-core/actions/runs/41601552613 .
+These numbers use one shared CI runner, with sequential order and no
+repeated confidence intervals. They demonstrate a speedup in **Python
+witness production**, not in Lean's still-list-scanning RUP verification
+or the solver itself. PHP(6,5) remains native-replayed, not Lean-gated.
+
+Next performance milestone: **proof row IDs and reason indices in Lean**,
+with a universal theorem that every indexed unit reason and indexed
+contradiction points to a present clause. That would remove the verifier's
+repeated existential row search while preserving soundness. Then stress
+larger non-affine and industrial instances, handle unsupported RAT proof
+steps explicitly, and benchmark total wall time against CDCL/DRAT checkers.
