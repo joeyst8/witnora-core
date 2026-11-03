@@ -130,7 +130,7 @@ theorem checkDagContradiction_resource_sound
   cases hrep : replayDag inputs steps with
   | none => simp [hrep] at h
   | some result =>
-      refine ⟨result, hrep,
+      refine ⟨result, by simp [hrep],
         replayDag_length_exact inputs steps result hrep, ?_⟩
       apply replayDag_preserves_support
         (inputs.flatMap (fun row => row.coefficients))
