@@ -67,11 +67,14 @@ theorem source_model_passes (cnf : List (List Int))
 def assignmentBits (bits varId : Nat) : Bool :=
   decide ((bits / (2 ^ (varId - 1))) % 2 = 1)
 
+def sourceSatisfiedBool (cnf : List (List Int)) (a : Nat → Bool) : Bool :=
+  cnf.all (fun clause => clause.any (fun lit => signedLitTrue a (decode lit)))
+
 /-- Exponential finite check of BOTH directions on the first n variables. -/
 def boundedExact (cnf : List (List Int)) (rows : List (List Bool))
     (n : Nat) : Bool :=
   (List.range (2 ^ n)).all (fun bits =>
-    decide (signedCNFHolds cnf (assignmentBits bits)) ==
+    sourceSatisfiedBool cnf (assignmentBits bits) ==
       accepts cnf rows (assignmentBits bits))
 
 example : rowParity [true, true] [true, true] = false := by decide
