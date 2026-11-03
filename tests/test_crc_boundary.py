@@ -60,8 +60,8 @@ class TestCRC001(unittest.TestCase):
     def test_limits_fail_closed(self):
         self.assertIsNone(count_asymmetric_boundary(((1, 0), (2, 0)), (), (1, 2), (),
                                                      max_spectrum_terms=2))
-        self.assertIsNone(count_asymmetric_boundary((), (), tuple(range(1, 14)),
-                                                     tuple((i,) for i in range(1, 14)),
+        self.assertIsNone(count_asymmetric_boundary((), (), tuple(range(1, 15)),
+                                                     tuple((1, i) for i in range(2, 15)),
                                                      max_inclusion_subsets=4096))
 
     def test_invalid_inputs(self):
@@ -71,6 +71,21 @@ class TestCRC001(unittest.TestCase):
             count_asymmetric_boundary(((4, 0),), (), (1, 2), ())
         with self.assertRaises(ValueError):
             count_asymmetric_boundary((), (), (1,), ((0,),))
+
+    def test_dense_global_parity_many_disjoint_nonlinear_clauses(self):
+        # One 60-variable affine coupling crosses 20 independent
+        # nonlinear OR clauses. Explicit boundary enumeration is 2**60.
+        b = tuple(range(1, 61))
+        clauses = tuple(tuple(range(i, i + 3)) for i in range(1, 61, 3))
+        result = count_asymmetric_boundary(
+            (((1 << 60) - 1, 0),), (), b, clauses,
+            max_spectrum_terms=8, max_inclusion_subsets=64,
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(result.models, (7**20 + 1) // 2)
+        self.assertEqual(result.left_fourier_terms, 2)
+        self.assertEqual(result.right_violation_terms, 40)
+        self.assertEqual(result.right_components, 20)
 
     def test_coefficient_oracle_against_direct_walsh(self):
         from witnora_core.crc_boundary import (
