@@ -26,6 +26,10 @@ on:
       - "scripts/benchmark_rup_indexed_propagation.py"
       - "scripts/generate_glucose_indexed_rup_lean.py"
       - "tests/test_general_rup_indexed.py"
+      - "witnora_core/eth_clause_violation_parity.py"
+      - "tests/test_eth_clause_violation_parity.py"
+      - "formal/Witnora/ClauseViolationParity.lean"
+      - "scripts/generate_eth_clause_violation_parity_lean.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -52,6 +56,10 @@ on:
       - "scripts/benchmark_rup_indexed_propagation.py"
       - "scripts/generate_glucose_indexed_rup_lean.py"
       - "tests/test_general_rup_indexed.py"
+      - "witnora_core/eth_clause_violation_parity.py"
+      - "tests/test_eth_clause_violation_parity.py"
+      - "formal/Witnora/ClauseViolationParity.lean"
+      - "scripts/generate_eth_clause_violation_parity_lean.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -110,3 +118,17 @@ jobs:
       - name: Lean-check exact RUP reason rows and forged-index rejection
         working-directory: formal
         run: lake env lean Witnora/GeneratedIndexedRUP.lean
+
+      - name: Kernel-check universal clause-violation parity soundness
+        working-directory: formal
+        run: lake build Witnora.ClauseViolationParity
+
+      - name: Exhaustively verify source-bound ETH-style parity sketches
+        run: python -m unittest tests.test_eth_clause_violation_parity -v
+
+      - name: Generate bounded source-CNF versus parity-equivalence checks
+        run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
+
+      - name: Lean-check exact parity sketches on dense UNSAT and SAT controls
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedETHParity.lean
