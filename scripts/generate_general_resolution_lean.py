@@ -26,7 +26,7 @@ def resolution_trace(
 ) -> list[Step]:
     if max_clauses <= 0:
         raise ValueError("positive proof-size limit required")
-    if any(not isinstance(lit, int) or lit == 0 for row in raw for lit in row):
+    if any(type(lit) is not int or lit == 0 for row in raw for lit in row):
         raise ValueError("resolution source must contain nonzero integer literals")
     database: list[tuple[int, ...]] = [tuple(row) for row in raw]
     known = {frozenset(row) for row in database}
