@@ -1,4 +1,5 @@
 import Witnora.G5IndexedBridge
+import Witnora.TC063SparseDirectChecker
 
 /-!
 # Typed numeric-wire decoding of Python G5 source operations
@@ -83,5 +84,51 @@ example : compileWire 2 [(1, 0, 0)] = none := by decide
 #print axioms Witnora.TC063PythonOperationCodec.decodeAll_encode
 #print axioms Witnora.TC063PythonOperationCodec.compileWire_encode
 #print axioms Witnora.TC063PythonOperationCodec.compileWire_sound
+
+
+/-- Certificate-only G5 gate from typed numeric operation triples:
+    ill-formed tags or invalid references fail closed before the
+    source-bound sparse contradiction checker is reached. -/
+def checkWireSparseG5
+    (cnf : Witnora.Concrete.CNF)
+    (rows : List Witnora.G5Trace.Row)
+    (wire : List WireOperation) : Bool :=
+  match compileWire rows.length wire with
+  | none => false
+  | some steps =>
+      Witnora.TC063SparseDirectChecker.checkSparseG5 cnf rows steps
+
+/-- If the executable numeric-wire gate accepts, the original CNF is
+    UNSAT for every assignment; no trust in Python's claimed status. -/
+theorem checkWireSparseG5_unsat
+    (cnf : Witnora.Concrete.CNF)
+    (rows : List Witnora.G5Trace.Row)
+    (wire : List WireOperation)
+    (h : checkWireSparseG5 cnf rows wire = true) :
+    ¬ ∃ a : Nat → Bool, Witnora.Concrete.CNFHolds cnf a := by
+  cases hc : compileWire rows.length wire with
+  | none =>
+      simp [checkWireSparseG5, hc] at h
+  | some steps =>
+      have hCheck :
+          Witnora.TC063SparseDirectChecker.checkSparseG5
+            cnf rows steps = true := by
+        simpa [checkWireSparseG5, hc] using h
+      exact Witnora.TC063SparseDirectChecker.checkSparseG5_unsat
+        cnf rows steps hCheck
+
+example :
+    checkWireSparseG5
+      [[(1048576, true)], [(1048576, false)]]
+      [⟨[1048576], true⟩, ⟨[1048576], false⟩]
+      [(1, 0, 1)] = true := by decide
+
+example :
+    checkWireSparseG5
+      [[(1, true)], [(1, false)]]
+      [⟨[1], true⟩, ⟨[1], false⟩]
+      [(99, 0, 1)] = false := by decide
+
+#print axioms Witnora.TC063PythonOperationCodec.checkWireSparseG5_unsat
 
 end Witnora.TC063PythonOperationCodec
