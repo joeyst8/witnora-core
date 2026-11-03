@@ -578,3 +578,45 @@ Next mathematical/computational target: exploit shared low-degree
 structure and subexpression reuse before elimination, with
 exact normalization certificates and actual total time/memory
 benchmarks. No general P-vs-NP claim.
+
+
+## 2026-11-03 exact structured ANF counter: cofactor reuse and separability
+
+Continuation of the violation-image ANF prototype in draft PR #121:
+new `anf_structured_counter.py` compiles Boolean monomials as bit masks,
+caches Shannon cofactors across states, propagates forced unit equations,
+factors out unused variables and multiplies independent component counts.
+The factorization is **exact for disjoint variable scopes**. Six
+tests compare to independent small finite oracles (source SAT and
+sketch survivors separately), retain the deliberate four-clause parity
+collision (source count 1 vs sketch count 2), check forced propagation,
+unconstrained 96-variable counts, and fail-closed search bounds.
+Full prior Lean/CDCL regressions passed:
+https://github.com/joeyst8/witnora-core/actions/runs/41681763613 .
+
+Median-three-run timing with `tracemalloc`, old/new (ms):
+8v/54c UNSAT source 10.053/5.474, sketch 11.792/7.898;
+8v/54c planted source 8.659/4.831, sketch 16.465/8.887;
+10v/66c UNSAT source 15.675/8.735, sketch 34.348/13.846;
+10v/66c planted source 20.442/9.113, sketch 28.381/20.616.
+Some tiny controls regress slightly. Crucially, **parity sketch
+counting remains slower than original source counting** on these
+frozen dense systems.
+
+Stress structure: 3 disjoint 6v/9c planted blocks give 27³=19,683
+source models: old 3,960 states / 525.779ms, structured 64 states /
+7.226ms (~73×). For 4 independent blocks, old exceeded 5,000
+states while structured counted 27⁴=531,441 in 85 states / 9.848ms.
+This is an exact exploit of separability, **not** a result for
+connected arbitrary 3-SAT or P-versus-NP.
+
+`formal/Witnora/ANFComponentFactor.lean` added to CI to prove
+the universal independent-product counting identity. Kernel check
+for this new theorem is pending at the time of this ledger entry;
+the bit-mask compiler, union-find scope detection, and complete
+Python refinement are NOT Lean-proved. The restricted-family
+TC-063 theorem remains proved for its own precisely defined
+family, with no extrapolation to general arbitrary CNFs.
+
+Detailed benchmark and limitations:
+[Violation-image ANF geometry](VIOLATION_IMAGE_ANF_GEOMETRY.md).
