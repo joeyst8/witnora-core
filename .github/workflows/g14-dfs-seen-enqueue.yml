@@ -40,6 +40,7 @@ on:
       - "witnora_core/vertex_coupling_separator.py"
       - "tests/test_vertex_coupling_separator.py"
       - "tests/test_vertex_coupling_g14_benchmark.py"
+      - "tests/test_vertex_coupling_exhaustive.py"
       - "scripts/generate_python_g5_compiler_differential_lean.py"
       - ".github/workflows/g14-dfs-seen-enqueue.yml"
   workflow_dispatch:
@@ -79,6 +80,8 @@ jobs:
         run: python -m unittest tests.test_global_coupling_separator -v
       - name: Vertex-coupling completeness, randomized graph oracle and dense-overlap G14 test
         run: python -m unittest tests.test_vertex_coupling_separator -v
+      - name: Complete labeled graph census and randomized Python articulation differential oracle
+        run: python -m unittest tests.test_vertex_coupling_exhaustive -v
       - name: Compare vertex-coupling ranking and actual G14 ternary-XOR recognition
         run: python -m unittest tests.test_vertex_coupling_g14_benchmark -v
       - name: Emit actual Python G5 compiler differential trace assertions
