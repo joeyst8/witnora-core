@@ -93,6 +93,9 @@ def count_signed_cnf_crc(
     enable_orbit_oracle: bool = False,
     enable_defect_oracle: bool = False,
     enable_conflict_oracle: bool = False,
+    source_preprocessor: str = "none",
+    max_preprocess_passes: int = 64,
+    max_preprocess_clause_visits: int = 1000000,
 ) -> SourceCRCResult | None:
     """Exact count or None on a declared resource budget.
 
@@ -100,6 +103,16 @@ def count_signed_cnf_crc(
     define the boundary. Everything else is an internal affine/free
     variable. No source-clause information is discarded.
     """
+    if source_preprocessor not in ("none", "rust_consensus"):
+        raise ValueError("unknown exact source preprocessor")
+    if source_preprocessor == "rust_consensus":
+        from witnora_core.crc_rust_preprocess import simplify_source_in_rust
+        simplified = simplify_source_in_rust(
+            raw_clauses, nvars, max_passes=max_preprocess_passes,
+            max_clause_visits=max_preprocess_clause_visits)
+        if simplified is None:
+            return None
+        raw_clauses = simplified.clauses
     rows, residual = extract_exact_small_xors(raw_clauses, nvars)
     boundary = tuple(sorted({abs(lit) for clause in residual for lit in clause}))
     bset = set(boundary)
