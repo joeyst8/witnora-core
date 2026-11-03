@@ -164,3 +164,76 @@ use shared subexpression structure, compiled polynomial
 evaluation or elimination, variable-order selection and
 independent total-cost comparisons. A universal
 Python-monomial-to-Lean refinement remains unfinished.
+
+
+## Cached-cofactor and component-split counting (2026-11-03 continuation)
+
+New implementation: `witnora_core/anf_structured_counter.py`,
+validated by `tests/test_anf_structured_counter.py` and measured in
+`scripts/benchmark_anf_structured_counter.py`.
+
+The alternative exact counter compiles ANF monomials into integer
+variable-bit masks. Cofactor polynomials under `x_v=0/1` are cached
+across search states. The counter also propagates unit ANF equations,
+eliminates unconstrained variables as a power-of-two factor, and
+detects disconnected equation-variable hypergraph components.
+
+For disjoint equation components `E1` and `E2` with variable
+scopes `V1` and `V2` (and free variables `U \\ (V1 ∪ V2)`),
+the model count satisfies the exact identity
+
+    #Z_U(E1 AND E2)
+      = 2^(|U \\ (V1 ∪ V2)|) * #Z_V1(E1) * #Z_V2(E2).
+
+The identity is valid only when components have disjoint variable
+supports; it does not suppose that a dense CNF has small separators.
+The separate Lean module `formal/Witnora/ANFComponentFactor.lean`
+formalizes the universal count-product rule for independent Boolean
+predicates. Full refinement of the Python component detector and
+bit-mask compilation into Lean is not yet established.
+
+### Measured exact counts, median of three timed runs
+
+The old and new counters saw **identical** equation systems and
+independent reference counts were exercised by Python tests.
+Wall times include Python `tracemalloc` instrumentation; each
+nontrivial search was limited to 5,000 unique states.
+
+| Frozen system | Old source count ms | Structured source count ms | Old sketch survivor ms | Structured sketch survivor ms |
+|---|---:|---:|---:|---:|
+| 4v/5c planted | 0.646 | 0.744 | 0.772 | 0.767 |
+| 5v/7c planted | 1.249 | 1.192 | 1.760 | 1.663 |
+| 6v/9c planted | 2.168 | 1.838 | 2.459 | 2.638 |
+| 8v/54c UNSAT | 10.053 | 5.474 | 11.792 | 7.898 |
+| 8v/54c planted | 8.659 | 4.831 | 16.465 | 8.887 |
+| 10v/66c UNSAT | 15.675 | 8.735 | 34.348 | 13.846 |
+| 10v/66c planted | 20.442 | 9.113 | 28.381 | 20.616 |
+
+The structured solver improves most of these frozen cases,
+but is marginally slower on the 4v/5c source and 6v/9c sketch.
+Even after optimization, dense-case parity sketches were generally
+more expensive to count than their source clause systems.
+
+### Separability stress test, no source/sketch conflation
+
+Each 6-variable block has exactly 27 satisfying assignments.
+The blocks share **no variables**, and the count is the product.
+
+| Construction | Old source-ANF counter | Structured source-ANF counter |
+|---|---|---|
+| 3 disjoint blocks (18 variables) | 19,683 models; 3,960 states; 525.779 ms; 6,130 KiB | 19,683 models; 64 states; 7.226 ms; 84 KiB |
+| 4 disjoint blocks (24 variables) | Exceeded 5,000-state bound | 531,441 models; 85 states; 9.848 ms; 105 KiB |
+
+The 18-variable disjoint case is approximately 73× faster,
+but the benefit comes from **explicit component independence**.
+This is a valuable operator for decomposable formulas, not evidence
+for polynomial-time counting on arbitrary connected 3-SAT.
+
+The six new unit tests passed, as did the counter comparison and all
+earlier Lean/CDCL regression steps in
+[CI run #41681763613](https://github.com/joeyst8/witnora-core/actions/runs/41681763613).
+The separate Lean factorization proof is CI-gated in a subsequent commit.
+Next priorities: confirm that Lean proof, measure separators with
+small overlaps (conditioning / component reformation),
+separately benchmark SAT/#SAT against independent solvers,
+and retain a strict TC-063 restricted-family/general-CNF distinction.
