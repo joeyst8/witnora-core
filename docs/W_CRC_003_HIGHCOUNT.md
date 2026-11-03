@@ -106,3 +106,59 @@ tests whether this boundary is a chosen budget artifact. Even if it
 succeeds, serious claims require more seeds, larger instances,
 native XOR-aware baselines, and a mathematical invariant that
 predicts when exact coefficient queries can be generated cheaply.
+
+
+## Expanded state-budget probe: 30,000 states (2026-11-03)
+
+Green CI run: https://github.com/joeyst8/witnora-core/actions/runs/41698947755
+
+A second invocation used `--max-states 30000 --seconds 2.5 --repeats 1`
+on the *same deterministic 18 instances*. This is a **one-timing-sample
+resource-bound probe**, not a statistically independent experiment.
+
+- Shannon CRC exactly completed **14/18** (up from 6/18 at 3,000 states).
+  The four missing cases reached the state budget, not a wrong
+  SAT/UNSAT conclusion.
+- Structured ANF completed **12/18** (up from 3/18), with one
+  TIMEOUT among its six incomplete cases.
+- Ganak completed **18/18** again, and all **14 completed CRC counts
+  agreed**. The independent PySAT SAT decisions also agreed.
+- k=32: all three dense and all three mixed instances completed
+  under 6,337–13,333 CRC states, despite all six failing the
+  earlier 3,000-state limit.
+- k=40: one of three random seeds completed in both the dense
+  and mixed versions (29,616 CRC states); the other four exceeded
+  30,000 states under the strict budget.
+
+| Boundary k / family | CRC complete | Median CRC among completed | Median Ganak (all three) | Median per-instance Ganak/CRC among completed |
+| --- | ---: | ---: | ---: | ---: |
+| 24 / dense | 3/3 | 18.3302 ms | 68.2080 ms | 3.84x |
+| 24 / mixed | 3/3 | 18.5461 ms | 383.2579 ms | 19.52x |
+| 32 / dense | 3/3 | 113.5569 ms | 349.6224 ms | 3.08x |
+| 32 / mixed | 3/3 | 105.4589 ms | 579.5104 ms | 5.49x |
+| 40 / dense | 1/3 | 337.6868 ms | 514.0193 ms | 1.33x (one completed) |
+| 40 / mixed | 1/3 | 299.1284 ms | 845.0338 ms | 2.82x (one completed) |
+
+**Interpretation:** there is a real but parameter-sensitive
+restricted-benchmark win over this Ganak configuration. The initial
+k=32 failure was chiefly an artificially tight state cap. The
+subsequent k=40 failures under 30,000 states remain and may be
+removed by larger budgets *at additional computational cost*.
+
+In the paired dense and mixed formulas, the nonlinear Shannon oracle
+used exactly the same number of memoized states because both
+requested Fourier coefficients share a single cofactor recursion.
+This is the exact asymmetric-combination property we intended to
+measure. The mixed source additionally pays for detecting and
+projecting canonical XOR gadgets.
+
+The result is not a new computational-complexity theorem.
+Indeed the constant coefficient
+`hat(g)(0) = #SAT(g) / 2^k`:
+a polynomial-time exact coefficient oracle for *arbitrary* right CNF
+would also give a polynomial-time exact #SAT counter. The search
+cannot disappear universally by renaming a model count as a
+coefficient. The next milestone should seek **precise structural
+conditions** under which *requested* coefficients can be found
+without this exponential recursion, and compare against a native
+parity-aware dedicated counting baseline on the same formulas.
