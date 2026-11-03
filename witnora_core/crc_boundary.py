@@ -292,12 +292,15 @@ def count_asymmetric_boundary(
     enable_defect_oracle: bool = False,
     enable_conflict_oracle: bool = False,
     coefficient_backend: str = "python",
+    left_backend: str = "python",
     max_rust_coefficient_operations: int = 2000000,
 ) -> BoundaryCount | None:
     """Count an affine left region and boundary-only CNF right region.
 
     Returns None on budget exhaustion, never an incorrect model count.
     """
+    if left_backend not in ("python", "rust"):
+        raise ValueError("unknown exact left affine/Fourier backend")
     if coefficient_backend not in ("python", "rust_inclusion_exclusion"):
         raise ValueError("unknown exact coefficient backend")
     if (not isinstance(max_rust_coefficient_operations, int)
@@ -305,8 +308,19 @@ def count_asymmetric_boundary(
         raise ValueError("invalid native coefficient operation budget")
     internals = tuple(internal_variables)
     boundary = tuple(boundary_variables)
-    rows, free = _project_affine(tuple(left_affine_rows), internals, boundary)
-    spectrum = _sparse_fourier(rows, free, max_terms=max_spectrum_terms)
+    if left_backend == "rust":
+        from witnora_core.crc_rust_affine import query_left_affine_in_rust
+        native_left = query_left_affine_in_rust(
+            tuple(left_affine_rows), internals, boundary,
+            max_terms=max_spectrum_terms,
+        )
+        if native_left is None:
+            return None
+        rows, free = native_left.projected_rows, native_left.internal_free_variables
+        spectrum = native_left.spectrum
+    else:
+        rows, free = _project_affine(tuple(left_affine_rows), internals, boundary)
+        spectrum = _sparse_fourier(rows, free, max_terms=max_spectrum_terms)
     if spectrum is None:
         return None
     clauses = _normalized_clauses(right_clauses, boundary)
