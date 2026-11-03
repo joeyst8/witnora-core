@@ -387,3 +387,23 @@ The bounded read-only queue still cannot invent its own next
 experiment or notify a closed ChatGPT chat. A future approved
 W-CRC-020 could test source-level consensus normalization with its
 preprocessing time included, maintaining independent Ganak crosschecks.
+
+
+## Native Rust migration workflow — 2026-11-03
+
+The separate opt-in `.github/workflows/rust-ve.yml` builds and
+tests a standalone Rust exact VE component kernel plus its in-process
+PyO3 extension. The [verified Rust run #41730735431](https://github.com/joeyst8/witnora-core/actions/runs/41730735431)
+passed native tests, source-level Python differential controls, and
+eight independent analytic/Ganak cases (up to 256 variables).
+The legacy [105-test W-CRC gate #41730735450](https://github.com/joeyst8/witnora-core/actions/runs/41730735450)
+also passed. Rust is an opt-in backend; neither the existing Python
+default nor Lean TC-063 formal proof files were changed.
+
+The Rust in-process binding improved this restricted component-counting
+pilot by ~1.1–4.5x over the Python indexed engine, with no general
+SAT/#SAT speedup or formal count-certificate claim. See
+`docs/RUST_001_NATIVE_VE_MIGRATION.md` for the complete benchmark.
+
+**This Rust workflow is not a self-generating AI research loop**. Like
+the original queue, it responds to vetted research-branch pushes.
