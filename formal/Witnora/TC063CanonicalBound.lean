@@ -29,10 +29,7 @@ theorem mem_canonicalSupport_iff
   | zero =>
       simp [canonicalSupport]
   | succ n ih =>
-      change
-        (v ∈ canonicalSupport n coeff ∨
-          v ∈ (if decide (n ∈ coeff) then [n] else [])) ↔
-          v < n + 1 ∧ v ∈ coeff
+      simp only [canonicalSupport, List.mem_append]
       by_cases hn : n ∈ coeff
       · have hFlag : decide (n ∈ coeff) = true := by simp [hn]
         simp only [hFlag, ite_true, List.mem_singleton]
