@@ -11,10 +11,10 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-016 held-out signed tree/ladder regression controls.
-2. W-CRC-017 graph-matched dense CNF unit tests with exhaustive small cases.
-3. W-CRC-017 16-case complete-primal-graph study against Ganak with
-   analytical XOR/OR model-count controls.
+1. W-CRC-017 dense-semantic signed CNF regression controls.
+2. W-CRC-018 matched graph/clause/model-count exact semantic tests.
+3. W-CRC-018 10-case matched study versus Ganak, including a
+   three-way XOR negative control for pairwise dependence.
 
 These are the **current** three approved queue tasks. Earlier task
 configurations described chronologically below are historical.
@@ -332,3 +332,30 @@ integer counts, timing and limitations. Neither a new interaction
 metric nor new polynomial-time theorem has been established.
 The queue is still finite/read-only; it will not invent W-CRC-018
 or notify ChatGPT when no conversation is active.
+
+
+## Verified W-CRC-018 matched-semantic queue and full gate — 2026-11-03
+
+The new reviewed queue tasks are `wcrc017_dense_unit`,
+`wcrc018_matched_unit`, and `wcrc018_matched_ganak`. The
+[dedicated queue run #41725603426](https://github.com/joeyst8/witnora-core/actions/runs/41725603426)
+passed all three subprocesses in sequence (0.275s, 0.109s,
+1.100s), with the JSON artifact saved. The independent
+[full CI #41725616948](https://github.com/joeyst8/witnora-core/actions/runs/41725616948)
+passed **101 Python tests** and **10/10 Ganak source-count matches**.
+
+Both matched 2-CNF families had exactly K_n, n(n-1) source clauses
+and two models at n=8/12/16/32/64. Exhaustive small-n model
+profiles distinguished all-live globally coupled parity from
+(n-1)-backbone/one-free-variable forcing, despite the same
+size and model count. A three-way XOR formula gave an exact
+counterexample to relying on pairwise dependence alone.
+At n=64 the Witnora generic backend was ~44.6x slower than
+Ganak on the forcing family, an important negative control.
+See `docs/W_CRC_018_MATCHED_SEMANTICS.md` for mathematics and
+limits. This does not establish a novel invariant or a general
+#SAT solver advantage.
+
+The queue remains finite, source-triggered by new reviewed
+commits, and read-only. It cannot create W-CRC-019 on its own,
+auto-merge a proof, or send closed-chat notifications.
