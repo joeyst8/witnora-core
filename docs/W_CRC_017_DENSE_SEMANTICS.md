@@ -1,9 +1,10 @@
 # W-CRC-017: Equal complete variable graphs, different source semantics
 
-Status: **16/16 exact source counts**, with independent Ganak agreement on
-all cases and 12/12 analytic-count confirmations, from the verified
-completion-driven research queue. The full W-CRC regression CI is a
-separate gate.
+Status: **97 green Python unit tests**, **16/16 exact source counts**
+matching independent Ganak, and **12/12 analytical-count confirmations**,
+verified in both the full W-CRC CI and the completion-driven queue.
+
+Full green W-CRC CI: https://github.com/joeyst8/witnora-core/actions/runs/41724594677
 
 Dedicated queue run and raw experiment logs:
 https://github.com/joeyst8/witnora-core/actions/runs/41724585736
