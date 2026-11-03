@@ -79,3 +79,51 @@ def ranked_pair_candidates(activity: Mapping[str, Any], limit: int | None = None
             raise ValueError("limit must be a nonnegative integer")
         ranked = ranked[:limit]
     return tuple(combinations(ranked, 2))
+
+
+def pairwise_cross_merge_activity(
+    operations: Iterable[Mapping[str, Any]],
+    variables: Iterable[int],
+) -> dict[str, Any]:
+    """Rank unordered variable pairs by opposite-side XOR interactions.
+
+    A pair gains one point when one variable occurs only in the target
+    before the XOR and the other only in the source. These two surviving
+    variables are brought into the derived row by the operation. This
+    is *not* a sound separator inference; every proposed pair still
+    needs independent graph and G14 checks.
+
+    Traversal costs O(sum |target_only| * |source_only|) across operations,
+    plus sorting all O(n^2) candidate pairs.
+    """
+    universe = tuple(sorted(set(variables)))
+    if any(type(v) is not int or v <= 0 for v in universe):
+        raise ValueError("variables must be positive integer IDs")
+    permitted = set(universe)
+    scores: Counter[tuple[int, int]] = Counter()
+    events = 0
+    for operation in operations:
+        kind = operation.get("operation")
+        if kind == "SWAP_ROWS":
+            continue
+        if kind != "ADD_ROW_XOR":
+            raise ValueError("unsupported G5 operation kind")
+        before = _support(operation.get("before"))
+        source = _support(operation.get("source"))
+        if not (before | source) <= permitted:
+            raise ValueError("operation has variable outside declared universe")
+        for left in before - source:
+            for right in source - before:
+                pair = (min(left, right), max(left, right))
+                scores[pair] += 1
+                events += 1
+    pairs = tuple(combinations(universe, 2))
+    ranked = tuple(sorted(
+        pairs, key=lambda pair: (-scores[pair], pair)
+    ))
+    return {
+        "status": "DIAGNOSTIC_ONLY",
+        "ranked_pairs": ranked,
+        "scores": {pair: scores[pair] for pair in pairs},
+        "cross_merge_events": events,
+    }
