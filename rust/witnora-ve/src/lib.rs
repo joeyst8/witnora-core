@@ -7,6 +7,8 @@
 //! This crate is a performance candidate. Lean checks separate certificates;
 //! native Rust code does not constitute a formal proof.
 
+pub mod source_preprocess;
+
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
 use std::cmp::Reverse;
@@ -353,8 +355,23 @@ fn count_component_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn simplify_source_native(
+    clauses: Vec<Vec<i32>>, nvars: u32,
+    max_passes: usize, max_clause_visits: usize,
+) -> PyResult<Option<(Vec<Vec<i32>>, usize, usize)>> {
+    let answer = source_preprocess::simplify_source(
+        &clauses, nvars, max_passes, max_clause_visits,
+    ).map_err(PyValueError::new_err)?;
+    Ok(answer.map(|result| (
+        result.clauses, result.passes, result.consensus_pairs,
+    )))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
+    module.add_function(wrap_pyfunction!(simplify_source_native, module)?)?;
     Ok(())
 }
