@@ -486,7 +486,7 @@ fn count_source_native(
     max_spectrum_terms: usize, max_inclusion_subsets: usize,
     max_coefficient_operations: u64,
 ) -> PyResult<Option<(String, usize, usize, usize, usize, usize,
-                       usize, usize, bool, usize, u64)>> {
+                       usize, usize, usize, bool, usize, u64)>> {
     let got = fused_source::count_fused_source(
         &clauses, nvars, preprocess, max_preprocess_passes,
         max_preprocess_clause_visits, max_spectrum_terms,
@@ -495,7 +495,7 @@ fn count_source_native(
     Ok(got.map(|out| (
         out.models.to_string(), out.extracted_affine_rows,
         out.residual_clauses, out.boundary_variables,
-        out.internal_variables, out.left_fourier_terms,
+        out.internal_variables, out.internal_free_variables, out.left_fourier_terms,
         out.right_violation_terms, out.right_components,
         out.source_preprocess_skipped, out.source_preprocess_passes,
         out.right_subset_operations,
