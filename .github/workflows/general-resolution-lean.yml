@@ -9,6 +9,7 @@ on:
       - "formal/Witnora/GeneralResolutionIndexed.lean"
       - "formal/Witnora/GeneralResolutionStream.lean"
       - "formal/Witnora/GeneralResolutionAscii.lean"
+      - "formal/Witnora/GeneralRUP.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "tests/test_general_resolution_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -18,6 +19,7 @@ on:
       - "formal/Witnora/GeneralResolutionIndexed.lean"
       - "formal/Witnora/GeneralResolutionStream.lean"
       - "formal/Witnora/GeneralResolutionAscii.lean"
+      - "formal/Witnora/GeneralRUP.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "tests/test_general_resolution_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -39,7 +41,7 @@ jobs:
           test: false
       - name: Kernel-check universal resolution soundness
         working-directory: formal
-        run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii
+        run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP
       - name: Test independent proof generation and tamper rejection
         run: python -m unittest tests.test_general_resolution_trace -v
       - name: Generate non-affine CNF resolution examples
