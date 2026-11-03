@@ -72,6 +72,41 @@ theorem mem_canonicalSupport_idempotent
   · intro h
     exact ⟨((mem_canonicalSupport_iff bound v coeff).mp h).1, h⟩
 
+/-- The bounded canonical support enumerates every in-range variable
+    at most once, even when its input contains duplicates. -/
+theorem canonicalSupport_nodup
+    (bound : Nat) (coeff : List Nat) :
+    (canonicalSupport bound coeff).Nodup := by
+  induction bound with
+  | zero => simp [canonicalSupport]
+  | succ n ih =>
+      by_cases hn : n ∈ coeff
+      · have hExpand :
+            canonicalSupport (n + 1) coeff =
+              canonicalSupport n coeff ++ [n] := by
+          simp [canonicalSupport, hn]
+        rw [hExpand]
+        have hNot : n ∉ canonicalSupport n coeff := by
+          intro h
+          have hLt := (mem_canonicalSupport_iff n n coeff).mp h |>.1
+          omega
+        apply (List.pairwise_append).2
+        refine ⟨ih, by simp, ?_⟩
+        intro a ha b hb
+        have hbEq : b = n := by simpa using hb
+        subst b
+        intro heq
+        subst a
+        exact hNot ha
+      · have hExpand :
+            canonicalSupport (n + 1) coeff =
+              canonicalSupport n coeff := by
+          simp [canonicalSupport, hn]
+        rw [hExpand]
+        exact ih
+
+#print axioms Witnora.TC063CanonicalBound.canonicalSupport_nodup
+
 #print axioms Witnora.TC063CanonicalBound.mem_canonicalSupport_iff
 #print axioms Witnora.TC063CanonicalBound.mem_canonicalSupport_idempotent
 
