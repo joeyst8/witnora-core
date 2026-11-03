@@ -17,7 +17,7 @@ pub struct PreprocessResult {
     pub original_clauses: usize,
 }
 
-fn normalize(mut clauses: Vec<Vec<i32>>, nvars: u32) -> Result<Vec<Vec<i32>>, String> {
+pub(crate) fn normalize(mut clauses: Vec<Vec<i32>>, nvars: u32) -> Result<Vec<Vec<i32>>, String> {
     let mut output = Vec::new();
     for mut clause in clauses.drain(..) {
         let mut bits: BTreeMap<u32, i8> = BTreeMap::new();
