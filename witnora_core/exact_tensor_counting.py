@@ -16,6 +16,9 @@ from itertools import combinations
 
 from witnora_core.constraint_geometry import canonical_source
 from witnora_core.factor_elimination_orders import elimination_order
+from witnora_core.gf2_sparse_row_basis import (
+    SparseBasisCertificate, verify_sparse_parity_basis,
+)
 from witnora_core.sparse_parity_checks import (
     SparseOddSketch, validate_sparse_odd_sketch,
 )
@@ -92,9 +95,13 @@ def source_factors(source: list[list[int]] | tuple[tuple[int, ...], ...],
 
 def auxiliary_factors(
     source: list[list[int]] | tuple[tuple[int, ...], ...],
-    sketch: SparseOddSketch,
+    sketch: SparseOddSketch, *,
+    basis: SparseBasisCertificate | None = None,
 ) -> list[Factor]:
     cnf = validate_sparse_odd_sketch(source, sketch)
+    if basis is not None:
+        verify_sparse_parity_basis(sketch, basis)
+    rows = sketch.rows if basis is None else basis.rows
     n = sketch.nvars
     factors: list[Factor] = []
     for j, clause in enumerate(cnf):
@@ -109,7 +116,7 @@ def auxiliary_factors(
         factors.append(Factor(scope, table))
         # The monomial weight t^v_j is a separate unary factor.
         factors.append(Factor((aux_id,), {0: ONE, 1: (0, 1)}))
-    for row in sketch.rows:
+    for row in rows:
         scope = tuple(sorted(n + j + 1 for j in row))
         table = {bits: ONE for bits in range(1 << len(scope))
                  if bits.bit_count() % 2 == 0}
@@ -202,10 +209,12 @@ def count_source_exact(
 
 def count_auxiliary_weight_polynomial(
     source: list[list[int]] | tuple[tuple[int, ...], ...],
-    sketch: SparseOddSketch, **budget,
+    sketch: SparseOddSketch, *,
+    basis: SparseBasisCertificate | None = None,
+    **budget,
 ) -> ContractionResult:
     return contract_factors(
-        auxiliary_factors(source, sketch),
+        auxiliary_factors(source, sketch, basis=basis),
         sketch.nvars + sketch.clause_count,
         **budget,
     )
