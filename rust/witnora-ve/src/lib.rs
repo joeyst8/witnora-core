@@ -10,6 +10,7 @@
 pub mod source_preprocess;
 pub mod source_xor;
 pub mod right_walsh;
+pub mod left_affine;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -443,6 +444,37 @@ fn right_walsh_native(
     )))
 }
 
+/// Native exact affine GF(2) projection and sparse Fourier expansion.
+/// The optional outer result is budget refusal. The optional projected
+/// rows distinguish a contradictory system from a satisfiable one.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn affine_spectrum_native(
+    rows: Vec<(String, u32)>,
+    internals: Vec<u32>,
+    boundary: Vec<u32>,
+    max_terms: usize,
+) -> PyResult<Option<(Option<Vec<(String, u32)>>, usize,
+                       Vec<(String, String, String)>)>> {
+    let mut parsed = Vec::with_capacity(rows.len());
+    for (mask, rhs) in rows {
+        let support = BigUint::parse_bytes(mask.as_bytes(), 10)
+            .ok_or_else(|| PyValueError::new_err("invalid GF2 affine decimal mask"))?;
+        parsed.push((support, rhs));
+    }
+    let result = left_affine::project_and_expand(
+        &parsed, &internals, &boundary, max_terms,
+    ).map_err(PyValueError::new_err)?;
+    Ok(result.map(|answer| (
+        answer.projected_rows.map(|rs| rs.into_iter()
+            .map(|(mask, rhs)| (mask.to_string(), rhs)).collect()),
+        answer.internal_free,
+        answer.spectrum.into_iter()
+            .map(|(mode, num, den)| (mode.to_string(), num.to_string(), den.to_string()))
+            .collect(),
+    )))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -451,5 +483,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(simplify_source_adaptive_native, module)?)?;
     module.add_function(wrap_pyfunction!(extract_small_xors_native, module)?)?;
     module.add_function(wrap_pyfunction!(right_walsh_native, module)?)?;
+    module.add_function(wrap_pyfunction!(affine_spectrum_native, module)?)?;
     Ok(())
 }
