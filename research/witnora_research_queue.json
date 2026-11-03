@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "description": "Finite reviewed W-CRC-017/018 dense semantics and matched controls, completion-driven with fail-stop budgets.",
+  "description": "Finite reviewed W-CRC-018/019 source-equivalence and encoding sensitivity, with fail-stop budgets.",
   "tasks": [
-    "wcrc017_dense_unit",
     "wcrc018_matched_unit",
-    "wcrc018_matched_ganak"
+    "wcrc019_encoding_unit",
+    "wcrc019_encoding_ganak"
   ]
 }
