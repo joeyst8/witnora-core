@@ -1,4 +1,5 @@
 import Witnora.TC063SparseG5OperationBound
+import Witnora.G5IndexedExecutionInvariant
 
 /-!
 # Indexed G5 DAG resource and sparse support closure
@@ -471,5 +472,138 @@ theorem emitted_sparse_schedule_compiled_replay_bound
         (Nat.add_le_add_left hCount rows.length))⟩
 
 #print axioms Witnora.TC063SparseDagResource.emitted_sparse_schedule_compiled_replay_bound
+
+
+/-! ## Universal source interpreter to indexed compiler refinement -/
+
+/-- For every successful source-state transition, the original indexed
+    compiler performs the matching reference-map and DAG-step update.
+    The input-slot count is the persistent source-state invariant. -/
+private theorem sourceStep_refines_indexedCompiler
+    (initial : List Row)
+    (state next : Witnora.G5IndexedOperationEmitter.SourceState initial)
+    (op : Witnora.G5IndexedBridge.Operation)
+    (hLength : state.refs.length = initial.length)
+    (hStep : Witnora.G5IndexedOperationEmitter.SourceState.step
+      initial state op = some next) :
+    Witnora.G5IndexedBridge.step (state.refs, state.dag.steps) op =
+      some (next.refs, next.dag.steps) := by
+  cases op with
+  | swapRows i j =>
+      cases hi : state.refs[i]? with
+      | none =>
+          simp [Witnora.G5IndexedOperationEmitter.SourceState.step, hi] at hStep
+      | some left =>
+          cases hj : state.refs[j]? with
+          | none =>
+              simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+                hi, hj] at hStep
+          | some right =>
+              simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+                hi, hj] at hStep
+              subst next
+              exact Witnora.G5IndexedLengthRefinement.swap_step_refines_compiler
+                initial state i j left right hi hj
+  | addRowXor target source =>
+      by_cases hEq : target = source
+      · subst source
+        simp [Witnora.G5IndexedOperationEmitter.SourceState.step] at hStep
+      · have hNe : (target == source) = false :=
+          decide_eq_false hEq
+        cases ht : state.refs[target]? with
+        | none =>
+            simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+              hNe, ht] at hStep
+        | some targetRef =>
+            cases hs : state.refs[source]? with
+            | none =>
+                simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+                  hNe, ht, hs] at hStep
+            | some sourceRef =>
+                cases htr : state.dag.rows[targetRef]? with
+                | none =>
+                    simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+                      hNe, ht, hs, htr] at hStep
+                | some targetRow =>
+                    cases hsr : state.dag.rows[sourceRef]? with
+                    | none =>
+                        simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+                          hNe, ht, hs, htr, hsr] at hStep
+                    | some sourceRow =>
+                        simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
+                          hNe, ht, hs, htr, hsr] at hStep
+                        subst next
+                        exact Witnora.G5IndexedLengthRefinement.xor_step_refines_compiler
+                          initial state target source targetRef sourceRef
+                          hEq hLength ht hs
+
+/-- Inductively, *all* successful source-interpreter operations agree
+    exactly with compiler state: both the mutable refs and XOR DAG steps. -/
+private theorem sourceFold_refines_indexedCompiler
+    (initial : List Row)
+    (operations : List Witnora.G5IndexedBridge.Operation)
+    (state result :
+      Witnora.G5IndexedOperationEmitter.SourceState initial)
+    (hLength : state.refs.length = initial.length)
+    (hRun : operations.foldlM
+      (fun s op =>
+        Witnora.G5IndexedOperationEmitter.SourceState.step initial s op)
+      state = some result) :
+    operations.foldlM Witnora.G5IndexedBridge.step
+      (state.refs, state.dag.steps) =
+        some (result.refs, result.dag.steps) := by
+  induction operations generalizing state with
+  | nil =>
+      simp at hRun
+      cases hRun
+      simp
+  | cons op rest ih =>
+      cases hs :
+          Witnora.G5IndexedOperationEmitter.SourceState.step
+            initial state op with
+      | none =>
+          simp [List.foldlM_cons, hs] at hRun
+      | some next =>
+          have hRest : rest.foldlM
+              (fun s op =>
+                Witnora.G5IndexedOperationEmitter.SourceState.step
+                  initial s op)
+              next = some result := by
+            simpa [List.foldlM_cons, hs] using hRun
+          have hBridge := sourceStep_refines_indexedCompiler
+            initial state next op hLength hs
+          have hNextLength : next.refs.length = initial.length := by
+            have hPreserve :=
+              Witnora.G5IndexedExecutionInvariant.step_preserves_ref_length
+                (state.refs, state.dag.steps)
+                (next.refs, next.dag.steps) op hBridge
+            exact hPreserve.trans hLength
+          simpa [List.foldlM_cons, hBridge] using
+            ih next hNextLength hRest
+
+/-- A successful execution by the *actual* proof-carrying source
+    interpreter always compiles to exactly its recorded DAG step list.
+    No separate successful-compile hypothesis is needed. -/
+theorem sourceRun_compiler_exact
+    (initial : List Row)
+    (operations : List Witnora.G5IndexedBridge.Operation)
+    (result : Witnora.G5IndexedOperationEmitter.SourceState initial)
+    (hRun : Witnora.G5IndexedOperationEmitter.run
+      initial operations = some result) :
+    Witnora.G5IndexedBridge.compile initial.length operations =
+      some result.dag.steps := by
+  have hLength :
+      (Witnora.G5IndexedOperationEmitter.SourceState.start initial).refs.length =
+        initial.length := by
+    simp [Witnora.G5IndexedOperationEmitter.SourceState.start]
+  have hFold := sourceFold_refines_indexedCompiler
+    initial operations
+    (Witnora.G5IndexedOperationEmitter.SourceState.start initial)
+    result hLength hRun
+  simp [Witnora.G5IndexedBridge.compile,
+    Witnora.G5IndexedOperationEmitter.SourceState.start] at hFold ⊢
+  simpa [hFold]
+
+#print axioms Witnora.TC063SparseDagResource.sourceRun_compiler_exact
 
 end Witnora.TC063SparseDagResource
