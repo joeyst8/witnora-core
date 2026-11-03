@@ -86,6 +86,20 @@ class TestRustVariableElimination(unittest.TestCase):
                 self.assertEqual(native.models, reference.models)
                 self.assertEqual(native.ve_operations, reference.ve_operations)
 
+    def test_inprocess_extension_matches_explicit_cli(self):
+        from witnora_ve import count_component_native
+        self.assertTrue(callable(count_component_native))
+        binary = os.environ["WITNORA_RUST_VE_BIN"]
+        for n in (8, 64, 128):
+            boundary = tuple(range(1, n + 1))
+            clauses = _normalized_clauses(chain_source(n), boundary)
+            native = count_component_by_rust_elimination(
+                clauses, boundary, max_factor_variables=3)
+            cli = count_component_by_rust_elimination(
+                clauses, boundary, max_factor_variables=3,
+                binary_path=binary)
+            self.assertEqual(native, cli)
+
     def test_fail_closed_and_invalid_masks(self):
         boundary = tuple(range(1, 17))
         clauses = _normalized_clauses(ring_source(16), boundary)
