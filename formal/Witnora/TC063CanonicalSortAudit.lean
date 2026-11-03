@@ -46,7 +46,8 @@ theorem rows_supported_sort_eq (r : Nat) (rows : List Row) :
   | nil => rfl
   | cons row rest ih =>
       simp only [sortAffineRows, List.map_cons, List.all_cons]
-      rw [row_supported_sort_eq, ih]
+      simpa [sortAffineRows] using
+        congrArg (fun b : Bool => rowSupported r row && b) ih
 
 example :
     rowSupported 3
