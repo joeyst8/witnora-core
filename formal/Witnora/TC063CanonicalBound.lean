@@ -20,6 +20,7 @@ open Witnora.ComponentPartition
 open Witnora.G5InitialSupportCoverage
 open Witnora.SemanticSAF
 open Witnora.TC063CompletenessReduction
+open Witnora.TC063Direct
 open Witnora.ExactAffineMembership
 open Witnora.TC063CanonicalAffineBridge
 open Witnora.TC063PatternPermutation
@@ -448,6 +449,67 @@ theorem supportRows_in_range (rows : List Row) :
   have hLe := le_maxVariable_of_mem (supportRows rows) v hv
   unfold boundForRows
   omega
+
+/-!
+## TC-063 family-level logical completeness
+
+The complete finite-bound construction now supplies all the premises
+of the already-checked G5 indexed emitter and G14 family reduction,
+with no assumed canonical witness and no preexisting contradiction trace.
+This establishes logical certificate completeness for precisely the
+explicit CertifiedAffine/Family(c,r) predicate.  It does not establish
+polynomial time or correspondence to all CPython runs.
+-/
+
+/-- Every machine-checker-certified exact affine CNF has an explicitly
+    bounded, canonical, extraction-accepted G5 initial row representation
+    and a finite complete variable schedule. -/
+theorem certifiedAffine_has_canonicalWitness
+    (r : Nat) (cnf : CNF) (h : CertifiedAffine r cnf) :
+    CanonicalAffineWitness r cnf := by
+  obtain ⟨rows, hCheck⟩ := h
+  let bound := boundForRows rows
+  have hBound :
+      ∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound := by
+    simpa only [bound] using rows_bounded_boundForRows rows
+  refine ⟨bound, boundedCanonRows bound rows, supportRows rows,
+    ?_, ?_, ?_, ?_⟩
+  · exact checkSemanticExactAffine_boundedCanonRows
+      r bound cnf rows hCheck hBound
+  · exact checkCanonicalRows_boundedCanonRows bound rows
+  · exact supportRows_covers_boundedCanonRows bound rows
+  · intro v hv
+    exact supportRows_in_range rows v hv
+
+/-- The formerly conditional local G5 completeness premise is
+    established for all CertifiedAffine components of bounded arity r. -/
+theorem certifiedAffine_g5_complete (r : Nat) :
+    AffineG5Complete r := by
+  exact affine_g5_complete_of_canonical_witness r
+    (fun cnf h => certifiedAffine_has_canonicalWitness r cnf h)
+
+/-- Every UNSAT instance in the explicitly defined restricted SAF
+    family has a verified G14 branch cover whose selected components
+    carry source-bound closed G5 contradiction certificates. -/
+theorem tc063_restricted_family_cover_complete (c r : Nat) :
+    UnsatCoverComplete c (Family c r) := by
+  exact affine_g5_complete_implies_tc063_cover_complete c r
+    (certifiedAffine_g5_complete r)
+
+/-- The infinite restricted-family TC-063 *logical* result:
+    source UNSAT if and only if an accepted finite G14/G5 cover exists.
+    This is not a P-versus-NP separation or a polynomial runtime claim. -/
+theorem tc063_restricted_family_unsat_iff_checked_cover
+    (c r : Nat) (raw : List (List Int))
+    (hFamily : Family c r raw) :
+    (¬ ∃ a, Witnora.SignedSerialization.signedCNFHolds raw a) ↔
+      ∃ cert : CoverData, cert.accepts c raw = true := by
+  exact tc063_family_iff_of_affine_g5_complete c r
+    (certifiedAffine_g5_complete r) raw hFamily
+
+#print axioms Witnora.TC063CanonicalBound.certifiedAffine_has_canonicalWitness
+#print axioms Witnora.TC063CanonicalBound.tc063_restricted_family_cover_complete
+#print axioms Witnora.TC063CanonicalBound.tc063_restricted_family_unsat_iff_checked_cover
 
 #print axioms Witnora.TC063CanonicalBound.checkCanonicalRows_boundedCanonRows
 #print axioms Witnora.TC063CanonicalBound.supportRows_covers_boundedCanonRows
