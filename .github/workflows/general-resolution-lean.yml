@@ -45,6 +45,10 @@ on:
       - "scripts/benchmark_factor_elimination_orders.py"
       - "witnora_core/exact_tensor_counting.py"
       - "witnora_core/gf2_sparse_row_basis.py"
+      - "witnora_core/violation_image_anf.py"
+      - "formal/Witnora/ViolationProduct.lean"
+      - "tests/test_violation_image_anf.py"
+      - "scripts/benchmark_violation_image_anf.py"
       - "formal/Witnora/GF2RowParity.lean"
       - "tests/test_gf2_sparse_row_basis.py"
       - "scripts/benchmark_gf2_sparse_basis_counting.py"
@@ -99,6 +103,10 @@ on:
       - "scripts/benchmark_factor_elimination_orders.py"
       - "witnora_core/exact_tensor_counting.py"
       - "witnora_core/gf2_sparse_row_basis.py"
+      - "witnora_core/violation_image_anf.py"
+      - "formal/Witnora/ViolationProduct.lean"
+      - "tests/test_violation_image_anf.py"
+      - "scripts/benchmark_violation_image_anf.py"
       - "formal/Witnora/GF2RowParity.lean"
       - "tests/test_gf2_sparse_row_basis.py"
       - "scripts/benchmark_gf2_sparse_basis_counting.py"
@@ -192,6 +200,16 @@ jobs:
 
       - name: Benchmark certified sparse-basis exact polynomial counting
         run: python -m scripts.benchmark_gf2_sparse_basis_counting
+
+      - name: Kernel-check clause-violation false-literal product semantics
+        working-directory: formal
+        run: lake build Witnora.ViolationProduct
+
+      - name: Verify symbolic ANF semantics and exact bounded common-zero counting
+        run: python -m unittest tests.test_violation_image_anf -v
+
+      - name: Benchmark nonlinear violation-image ANF versus original CNF constraints
+        run: python -m scripts.benchmark_violation_image_anf
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
