@@ -8,6 +8,7 @@ tensor evaluations or Lean proofs occur in this benchmark.
 from __future__ import annotations
 
 from time import perf_counter
+from argparse import ArgumentParser
 
 from scripts.generate_glucose_dense_3sat_lean import random_three_cnf
 from witnora_core.aux_violation_tensors import (
@@ -19,9 +20,16 @@ from witnora_core.sparse_parity_checks import min_degree_elimination_width
 
 
 def main() -> None:
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--large", action="store_true",
+                        help="also run 256/1536; can be prohibitively expensive")
+    args = parser.parse_args()
     print("n clauses representation strategy vertices factors "
-          "width fill_edges order_ms")
-    for n, m in ((32, 224), (96, 576), (256, 1536)):
+          "width fill_edges order_ms", flush=True)
+    cases = [(32, 224), (96, 576)]
+    if args.large:
+        cases.append((256, 1536))
+    for n, m in cases:
         source = random_three_cnf(n, m, 630000 + n, planted=True)
         sketch = geometry_aware_sparse_sketch(source, n)
         source_factors = [{abs(lit) for lit in clause} for clause in source]
@@ -41,6 +49,7 @@ def main() -> None:
             print(f"{n} {m} aux {strategy} {n+m} {len(aux_factors)} "
                   f"{result.induced_width} {result.added_fill_edges} "
                   f"{millis:.3f}", flush=True)
+    print("256/1536 full-order search is opt-in (--large) due to cost.")
     print("Heuristic graph diagnostics only: no verified runtime speedup "
           "or exact contraction benchmark was executed.")
 
