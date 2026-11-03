@@ -423,7 +423,7 @@ theorem checkSparseG5_compiled_replay_bound
     checkSparseG5_total_replay_coefficients_bound cnf rows steps hCheck
   have hsteps := compile_steps_length_le_source_operations
     rows.length operations steps hCompile
-  exact ⟨final, hrep, le_trans hbound
+  exact ⟨final, hrep, Nat.le_trans hbound
     (Nat.mul_le_mul_right
       (Witnora.TC063CanonicalBound.supportRows rows).length
       (Nat.add_le_add_left hsteps rows.length))⟩
