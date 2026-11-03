@@ -17,6 +17,7 @@ namespace Witnora.ViolationProduct
 open Witnora.SignedSerialization
 open Witnora.ClauseViolationParity
 open Witnora.G5Extraction
+open Witnora.FiniteXor
 
 def falseProduct : List Int → (Nat → Bool) → Bool
   | [], _ => true
