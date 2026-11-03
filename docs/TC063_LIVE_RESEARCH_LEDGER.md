@@ -77,8 +77,12 @@ Green job: https://github.com/joeyst8/witnora-core/actions/runs/41593864870 (the
 - **General-domain expansion**: prove, or falsify with a counterexample, a larger structural family in which cheap exact affine extraction and small separator covers arise. No extension to arbitrary SAT has been proved.
 - **Original TC-063 instance identity**: no canonical original source document or benchmark certificate was identified in the repo audit; do not conflate the synthetic fixture with an external named instance.
 
-## Next milestone
+## Track B is active: verified-path separator discovery
 
-**Track A is logically closed for the restricted theorem**. Run and maintain the full green CI gate on current head, audit the trust boundary and exact executable checker acceptance for real serialized certificates, and test hard instances before announcing operational completeness. **Then** move to Track B structural discovery, as the user requested. Retain this audit and links in draft PR #121; avoid repeating proofs already present in `TC063PatternPermutation` and `TC063CanonicalBound`.
+**Track A's restricted-family logical theorem is complete**, while Python refinement and runtime complexity remain separate open tasks. Track B's first prototype now uses actual indexed G5 row operations to reconstruct edge-lineage paths and rank their two boundary endpoints as **diagnostic** G14 separator candidates.
+
+See [`docs/TC063_TRACK_B_BOUNDARY_PATH.md`](TC063_TRACK_B_BOUNDARY_PATH.md) for the full invariant proposal, the 144-trial cycle study, numerical comparisons against older heuristics, explicit wheel/cube false positives, and the signed-source Lean validation. The source-bound G5-to-G14 candidate checks passed at https://github.com/joeyst8/witnora-core/actions/runs/41595717841.
+
+Next: a universal Lean proof of the mod-2 provenance-boundary identity, followed by adversarial graph controls and total pipeline runtime comparisons. The path heuristic is **not** a verified cut classifier; exact G14 validation remains mandatory.
 
 No P-versus-NP result, general SAT polynomial-time algorithm, or breakthrough complexity separation has been claimed.
