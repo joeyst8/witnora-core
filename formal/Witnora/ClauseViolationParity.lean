@@ -15,6 +15,7 @@ for arbitrary masks and is assessed by exhaustive finite diagnostics only.
 namespace Witnora.ClauseViolationParity
 
 open Witnora.Concrete
+open Witnora.FiniteXor
 open Witnora.G5Extraction
 open Witnora.SignedSerialization
 
@@ -63,8 +64,8 @@ theorem source_model_passes (cnf : List (List Int))
   have hzero := source_model_has_no_violations cnf a h
   simp [rowParity_of_zero (violationVector cnf a) row hzero]
 
-def assignmentBits (bits variable : Nat) : Bool :=
-  decide ((bits / (2 ^ (variable - 1))) % 2 = 1)
+def assignmentBits (bits varId : Nat) : Bool :=
+  decide ((bits / (2 ^ (varId - 1))) % 2 = 1)
 
 /-- Exponential finite check of BOTH directions on the first n variables. -/
 def boundedExact (cnf : List (List Int)) (rows : List (List Bool))
