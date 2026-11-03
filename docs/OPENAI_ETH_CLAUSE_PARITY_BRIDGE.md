@@ -113,3 +113,15 @@ assignment and the resulting nonlinear parity system still needs solving.
 
 The next bottleneck is **finding and counting the sketch's solutions
 efficiently**, not merely compressing the number of equations.
+
+
+## CI verification recorded
+
+The full general-resolution gate passed on 2026-11-03:
+[GitHub Actions run 41606445630](https://github.com/joeyst8/witnora-core/actions/runs/41606445630).
+It built the universal Lean clause-violation parity theorem (axioms:
+`[propext, Quot.sound]`), exhaustively executed Python source-identity
+and tamper tests on all six cases, kernel-reduced both equivalence
+directions on the two dense 8-variable sources, and passed the previously
+existing general-CNF resolution/RUP regression suite. This is *proof
+soundness and finite exactness*, not faster SAT search.
