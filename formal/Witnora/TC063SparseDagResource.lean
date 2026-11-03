@@ -431,4 +431,45 @@ theorem checkSparseG5_compiled_replay_bound
 #print axioms Witnora.TC063SparseDagResource.compile_steps_length_le_source_operations
 #print axioms Witnora.TC063SparseDagResource.checkSparseG5_compiled_replay_bound
 
+
+/-- The actual total pivot-ledger emitter's operation count composes with
+    the exact indexed compiler and checker bounds.  Both compiler
+    success and checker acceptance remain explicit hypotheses. -/
+theorem emitted_sparse_schedule_compiled_replay_bound
+    (cnf : Witnora.Concrete.CNF)
+    (rows : List Row)
+    (outcome : Witnora.G5RetiredPivotLedger.PivotOutcome rows)
+    (steps : List XorRef)
+    (hEmit : Witnora.G5RetiredPivotLedger.emitScheduleWithPivots
+      rows (Witnora.TC063CanonicalBound.supportRows rows)
+      (List.range rows.length)
+      (Witnora.G5IndexedOperationEmitter.SourceState.start rows) =
+        some outcome)
+    (hCompile : Witnora.G5IndexedBridge.compile
+      rows.length outcome.operations = some steps)
+    (hCheck : Witnora.TC063SparseDirectChecker.checkSparseG5
+      cnf rows steps = true) :
+    ∃ final : List Row,
+      replayDag rows steps = some final ∧
+      (Witnora.TC063CanonicalBound.supportRows final).length ≤
+        (rows.length +
+          (Witnora.TC063CanonicalBound.supportRows rows).length *
+            rows.length) *
+          (Witnora.TC063CanonicalBound.supportRows rows).length := by
+  obtain ⟨produced, hRun, hCount⟩ :=
+    Witnora.TC063SparseG5OperationBound.tc063_total_sparse_schedule_quadratic_op_count
+      rows
+  rw [hEmit] at hRun
+  cases hRun
+  obtain ⟨final, hRep, hBound⟩ :=
+    checkSparseG5_compiled_replay_bound
+      cnf rows outcome.operations steps hCompile hCheck
+  exact ⟨final, hRep,
+    Nat.le_trans hBound
+      (Nat.mul_le_mul_right
+        (Witnora.TC063CanonicalBound.supportRows rows).length
+        (Nat.add_le_add_left hCount rows.length))⟩
+
+#print axioms Witnora.TC063SparseDagResource.emitted_sparse_schedule_compiled_replay_bound
+
 end Witnora.TC063SparseDagResource
