@@ -101,3 +101,30 @@ https://pysathq.github.io/docs/api/solvers.html .
 
 This is a firm mathematical trust advance, **not** yet a solver-performance
 breakthrough.
+
+
+## 2026-11-03 frozen CDCL proof-size ladder (single CI sample)
+
+The new bounded CI diagnostic runs the same pinned Glucose3→DRUP→native RUP
+witness elaboration/replay over a growing family. **Only PHP(3,2), PHP(4,3)
+and PHP(5,4) underwent the separate Lean acceptance gate**; PHP(6,5) was
+native checked in this initial measurement, not yet Lean checked.
+
+| Instance | Variables / source clauses | DRUP lines / RUP additions | Propagated units | Solver + proof | Witness annotation | Native replay | Status |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| PHP(3,2) | 6 / 9 | 2 / 2 | 11 | 0.352 ms | 0.139 ms | 0.041 ms | Lean checked separately |
+| PHP(4,3) | 12 / 22 | 7 / 7 | 68 | 0.163 ms | 1.115 ms | 0.201 ms | Lean checked separately |
+| PHP(5,4) | 20 / 45 | 57 / 28 | 379 | 0.275 ms | 13.263 ms | 1.469 ms | Lean checked separately |
+| PHP(6,5) | 30 / 81 | 235 / 140 | 2,530 | 0.922 ms | 251.766 ms | 16.527 ms | Native-only, Lean pending |
+
+Single un-warmed GitHub runner measurement; timings include local Python
+representation overhead and are **not** comparative throughput evidence.
+The importer deliberately retains 29 and 95 DRUP deletion hints at 5/4 and
+6/5 respectively. Native annotation increases much faster than input size,
+indicating a concrete quadratic-or-worse bottleneck in current repeated full
+clause scans and list-based proof database. No complexity bound is claimed.
+
+Successful CI job: https://github.com/joeyst8/witnora-core/actions/runs/41600247380 .
+Next gate: dense random 3-CNF controls and a watch/indexed propagation
+implementation that retains the same Lean-checked theorem, with independent
+source-bound SAT/UNSAT controls and trace-length measurements.
