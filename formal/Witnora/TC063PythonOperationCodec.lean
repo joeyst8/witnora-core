@@ -69,7 +69,7 @@ theorem compileWire_sound
   | none =>
       simp [compileWire, hd] at h
   | some operations =>
-      refine ⟨operations, hd, ?_⟩
+      refine ⟨operations, by simp [hd], ?_⟩
       simpa [compileWire, hd] using h
 
 example : decodeAll [(0, 0, 1), (1, 0, 1)] =
