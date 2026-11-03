@@ -6,6 +6,7 @@ from witnora_core.cnf import CNFFormula
 from witnora_core.g5_elimination_activity import (
     activity_from_g5_operations,
     ranked_pair_candidates,
+    pairwise_cross_merge_activity,
 )
 from witnora_core.operator_genesis import gaussian_eliminate_gf2
 from witnora_core.separator_affine_family_theorem import (
@@ -128,6 +129,25 @@ class G5EliminationActivityTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             activity_from_g5_operations(
                 [{"operation": "UNSUPPORTED"}], [1, 2]
+            )
+
+    def test_pairwise_cross_merge_has_complete_and_fail_closed_order(self):
+        operations = gaussian_eliminate_gf2(two_bridge_equations())["row_operations"]
+        result = pairwise_cross_merge_activity(
+            operations, [1, 2, 3, 4, 9, 10]
+        )
+        self.assertEqual(result["status"], "DIAGNOSTIC_ONLY")
+        self.assertEqual(len(result["ranked_pairs"]), 15)
+        self.assertEqual(len(set(result["ranked_pairs"])), 15)
+        self.assertGreater(result["cross_merge_events"], 0)
+        empty = pairwise_cross_merge_activity([], [1, 2, 3])
+        self.assertEqual(empty["ranked_pairs"], ((1, 2), (1, 3), (2, 3)))
+        with self.assertRaises(ValueError):
+            pairwise_cross_merge_activity(
+                [{"operation": "ADD_ROW_XOR",
+                  "before": {"coefficients": [1]},
+                  "source": {"coefficients": [3]}}],
+                [1, 2]
             )
 
     def test_empty_trace_cannot_claim_a_proof(self):
