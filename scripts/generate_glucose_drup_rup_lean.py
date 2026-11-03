@@ -10,7 +10,8 @@ from witnora_core.ood_sat_families import pigeonhole
 from witnora_core.rup_witness_import import annotate_drup, verify_native_witness
 
 
-def glucose_drup_witness(pigeons: int, holes: int) -> tuple[list[list[int]], dict]:
+def glucose_drup_witness(pigeons: int, holes: int, *,
+                         indexed: bool = False) -> tuple[list[list[int]], dict]:
     from pysat.solvers import Glucose3
 
     source = pigeonhole(pigeons, holes).to_clause_lists()
@@ -19,7 +20,8 @@ def glucose_drup_witness(pigeons: int, holes: int) -> tuple[list[list[int]], dic
         raw_proof = solver.get_proof()
     if result is not False or not raw_proof:
         raise AssertionError("independent Glucose did not emit a UNSAT proof")
-    elaborated = annotate_drup(source, raw_proof)
+    elaborated = annotate_drup(source, raw_proof,
+                              indexed_propagation=indexed)
     if not verify_native_witness(source, elaborated["additions"]):
         raise AssertionError("emitted unit witness does not replay")
     return source, elaborated
@@ -84,6 +86,10 @@ def main() -> None:
         lean_example(source, report)
         if pigeons == 3:
             lean_ascii_example(source, report)
+    source, indexed_report = glucose_drup_witness(5, 4, indexed=True)
+    print("-- Indexed-occurrence Python importer: the same PHP(5,4) actual " +
+          "Glucose proof, rechecked in Lean with independently generated units.")
+    lean_example(source, indexed_report)
     print("#print axioms Witnora.GeneralRUP.signedRup_unsat")
     print("#print axioms Witnora.GeneralRUPAscii.checkAsciiRup_sound")
 
