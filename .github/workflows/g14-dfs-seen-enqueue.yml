@@ -36,6 +36,7 @@ on:
       - "scripts/generate_tc063_ascii_smoke_identity_lean.py"
       - "scripts/generate_python_ascii_source_vertex_cuts_lean.py"
       - "scripts/generate_python_source_vertex_cuts_differential_lean.py"
+      - "scripts/generate_python_g5_path_two_cut_lean.py"
       - "witnora_core/lean_g5_gate.py"
       - "tests/test_lean_g5_gate.py"
       - "tests/test_lean_g5_wire_real.py"
@@ -117,6 +118,11 @@ jobs:
       - name: Lean-check Python claims against reconstructed signed-source primal graph
         working-directory: formal
         run: lake env lean Witnora/GeneratedPythonSourceVertexCutsDifferential.lean
+      - name: Generate G5 path-boundary hints from actual Python elimination traces
+        run: python -m scripts.generate_python_g5_path_two_cut_lean > formal/Witnora/GeneratedG5PathSourceTwoCuts.lean
+      - name: Lean-check G5-derived cuts against signed source-CNF G14 DFS
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG5PathSourceTwoCuts.lean
       - name: Generate original Python DIMACS document bytes for Lean structural certificates
         run: python -m scripts.generate_python_ascii_source_vertex_cuts_lean > formal/Witnora/GeneratedPythonAsciiSourceVertexCuts.lean
       - name: Lean-check source ASCII bytes, signed stream and exact separator claims
