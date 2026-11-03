@@ -476,3 +476,53 @@ combines GF(2) row operations with local semantic certificates,
 preserves the exact constant term, and compare its total time/memory
 against direct source CNF and independent model counters.
 TC-063 universal refinement and general SAT speedup remain open.
+
+
+## 2026-11-03 certified sparse GF(2) independent-row basis (CI green)
+
+The new `witnora_core/gf2_sparse_row_basis.py` chooses a linearly
+independent **subset of original parity rows** and constructs
+independently checkable XOR-reconstruction witnesses for every
+removed row. This exactly preserves the row-space and every
+violation vector's parity acceptance, without assignment
+enumeration or widening retained rows. The modified exact
+auxiliary polynomial counter revalidates the certificate before
+using its retained rows.
+
+`formal/Witnora/GF2RowParity.lean` proves universal
+`rowParity_xorMask` and `rowReplacement_equiv` for concrete
+Boolean masks with equal length. CI's printed axioms are standard
+`[propext, Classical.choice, Quot.sound]`. Python certificate
+decoding/reconstruction **is not yet fully refined into Lean**;
+structural Python verification and the universal Lean row-step
+theorem are distinct trust layers.
+
+On small full-polynomial contraction controls, original vs
+reduced row counts and measured times (ms):
+4-unit collision 6→3 rows, 1.391→1.141;
+4v/5c 6→5 rows, 4.727→4.086;
+5v/7c 5→5 rows, 27.755→28.063;
+6v/9c 8→8 rows, 71.520→70.147.
+The adversarial collision retains the exact polynomial
+`1+t^4`. Both 8v/12c variants exceeded the fixed
+intermediate-scope budget and gave no count.
+
+On nonenumerated larger planted random 3-CNF, structural
+(rows→rank, linear nullity) was:
+32/224: 150→150, nullity74;
+96/576: 385→385, nullity191;
+256/1536: 1022→1021, nullity515.
+Basis build+verify took ~1.3, 7.2, 51.4 ms respectively;
+**no large tensor/SAT counting was performed**.
+Nearly all rows were already independent, so removing
+redundancies does not fix global contraction.
+
+All new proofs/tests and existing general-CNF Lean/CDCL
+regressions passed:
+https://github.com/joeyst8/witnora-core/actions/runs/41660196196 .
+[Detailed sparse GF2 basis report](GF2_SPARSE_BASIS_EXPERIMENT.md).
+
+Next: analyze the nonlinear map from source assignments to
+realizable clause-violation patterns, seek exact algebra-aware
+operators and audited reductions that reduce computation, then
+benchmark against direct source counting. No P-vs-NP claim.
