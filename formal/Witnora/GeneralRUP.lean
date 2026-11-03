@@ -209,7 +209,7 @@ theorem signedRup_unsat
 
 example :
     checkRup [[(1, true)], [(1, false)]]
-      [{clause := [], units := []}] = true := by decide
+      [{clause := [], units := [(1, true)]}] = true := by decide
 
 example :
     checkRup [[(1, true)]]
