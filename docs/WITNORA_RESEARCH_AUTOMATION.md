@@ -11,13 +11,13 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-015 indexed exact VE regression controls.
-2. W-CRC-016 held-out signed tree/ladder source tests versus brute counts.
-3. W-CRC-016 23-case held-out graph study with Glucose3 witness cost,
-   explicit resource refusals and independent Ganak counting.
+1. W-CRC-016 held-out signed tree/ladder regression controls.
+2. W-CRC-017 graph-matched dense CNF unit tests with exhaustive small cases.
+3. W-CRC-017 16-case complete-primal-graph study against Ganak with
+   analytical XOR/OR model-count controls.
 
-These are the **current** three approved queue tasks. W-CRC-005 through
-W-CRC-014 configurations described chronologically below are historical.
+These are the **current** three approved queue tasks. Earlier task
+configurations described chronologically below are historical.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -307,3 +307,28 @@ The distinction between *automatically executing a fixed reviewed
 queue* and *autonomously inventing the next research hypothesis*
 remains critical: only the former is configured, and the queue
 does not send messages into a closed ChatGPT thread.
+
+
+## Verified W-CRC-017 dense-semantic queue and full gate — 2026-11-03
+
+The manifest now selects `wcrc016_heldout_unit`,
+`wcrc017_dense_unit`, and `wcrc017_dense_ganak` in precisely that
+order. The [dedicated queue run #41724585736](https://github.com/joeyst8/witnora-core/actions/runs/41724585736)
+confirmed all three finished successfully: 0.170s, 0.096s, and
+2.077s respectively. A JSON results artifact was uploaded.
+
+The independent [full W-CRC gate #41724594677](https://github.com/joeyst8/witnora-core/actions/runs/41724594677)
+completed with **97 Python tests passing** and 16/16 exactly matched
+Witnora/Ganak dense 2-CNF counts on graph-equivalent parity,
+inconsistent parity, positive OR, and signed OR examples (n=8,16,32,64).
+12/12 analytic model counts were verified. All cases had the complete
+variable primal graph, but different source semantics. The n=64
+signed-OR case was roughly **18.5x slower** than Ganak's reported
+engine time; the positive-OR case was ~36.7x faster. These are
+limited single-runner pilot timings and show no general #SAT edge.
+
+See `docs/W_CRC_017_DENSE_SEMANTICS.md` for the complete design,
+integer counts, timing and limitations. Neither a new interaction
+metric nor new polynomial-time theorem has been established.
+The queue is still finite/read-only; it will not invent W-CRC-018
+or notify ChatGPT when no conversation is active.
