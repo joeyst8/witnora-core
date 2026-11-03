@@ -125,7 +125,7 @@ theorem checkResolution_sound
               checkResolution (database ++ [s.output]) rest = true := by
             simpa [checkResolution, hs] using hcheck
           intro hmodel
-          exact ih (database ++ [s.output]) htail a
+          exact ih (database ++ [s.output]) htail
             (checkStep_preserves_models database s a hs hmodel)
 
 /-- The same theorem starts with arbitrary signed-integer CNF clauses.
