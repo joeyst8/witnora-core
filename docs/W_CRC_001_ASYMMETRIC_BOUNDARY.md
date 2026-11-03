@@ -161,3 +161,52 @@ The gadget recognition and boundary interaction are mathematically exact,
 but universal CPython-to-Lean refinement, harder overlapping nonlinear
 regions, measured advantage over existing Witnora counters, and general
 SAT improvements remain unproved/unmeasured.
+
+## 2026-11-03 first source-to-count benchmark (measured, not a theorem)
+
+Reproducible runner: python -m scripts.benchmark_crc_vs_anf
+CI: https://github.com/joeyst8/witnora-core/actions/runs/41694701619
+(result **success**, all 16 Python tests + both benchmark families).
+
+Both methods receive the **same original signed CNF**. W-CRC-001
+includes its source gadget extraction and coefficient-query time.
+The unchanged structured ANF baseline includes source violation-ANF
+construction and exact structured counting. Times are median of three
+single-process Python calls; no cross-run statistical interval or
+separate external solver comparison has been performed.
+
+| Boundary bits | Source vars | Clauses | Exact #models | CRC ms | ANF ms | Ratio ANF/CRC |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 6 | 10 | 20 | 25 | 0.2380 | 1.5673 | 6.585 |
+| 9 | 16 | 33 | 171 | 0.3298 | 4.1040 | 12.444 |
+| 12 | 22 | 46 | 1201 | 0.3946 | 9.8888 | 25.060 |
+| 15 | 28 | 59 | 8403 | 0.5245 | 12.4170 | 23.674 |
+| 18 | 34 | 72 | 58825 | 0.5848 | 17.8827 | 30.579 |
+
+W-CRC-001 recovered a **two-term projected parity response** for
+each deliberately factorable global XOR chain, while the right-hand
+nonlinear clauses form independent size-three regions. This is a
+meaningful improvement over the project's existing generic ANF
+counter on **these constructed inputs**, but the structure is already
+tractable by known Gaussian-elimination and decomposition techniques.
+It is not evidence of novelty over parity-aware SAT/#SAT solvers.
+
+**Adversarial controls (dense random 3-CNF):**
+
+- 10 variables, 42 clauses, seed 20261103: CRC returned
+  INCOMPLETE_BUDGET, while ANF exactly reported UNSAT (0 models)
+  in 2.1317 ms (40 states).
+- 12 variables, 51 clauses, seed 20261104: CRC returned
+  INCOMPLETE_BUDGET, while ANF exactly returned 4 models in
+  3.0371 ms (56 states).
+
+The W-CRC-001 source adapter is deliberately **not** an arbitrary-CNF
+replacement. The next hurdle is overlapping nonlinear components:
+the current right-side inclusion-exclusion oracle may still require
+2^m work when m clauses share variables. A truly substantive
+algorithmic contribution must improve that case without moving the
+exponential cost into extraction, oracle lookup or proof generation.
+
+**Claim boundary:** no Lean correctness proof for this Python module,
+no universal CPython refinement, no industrial SAT benchmark advantage,
+no general runtime upper bound, and no P-vs-NP conclusion.
