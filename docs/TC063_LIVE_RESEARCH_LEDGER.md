@@ -360,3 +360,45 @@ Next: **auxiliary clause-violation variable tensor bridge**,
 with exact model/count correspondence formalized and direct
 time/memory benchmarks against source CNF and CDCL. No general
 polynomial SAT or P-vs-NP result is claimed.
+
+
+## 2026-11-03 auxiliary violation-variable tensor semantics and geometry (CI green)
+
+`formal/Witnora/AuxViolationBridge.lean` now kernel-checks
+`source_model_iff_unique_exact_aux`: each satisfying source
+assignment has exactly one zero-violation vector extension satisfying
+arbitrary parity rows, and conversely a zero-violation extension
+requires source satisfaction. `relaxed_aux_iff_parity_acceptance`
+makes the unsafe parity-only relaxation explicit. The proof relies
+only on the standard Lean axioms propext and Quot.sound, as CI reports.
+The algebraic coefficient identity is
+`[t^0] Σ_{x:Hv(x)=0} t^(weight(v(x))) = #SAT(F)`;
+it holds even when sparse parity rows have positive-weight collisions.
+There is **no efficient coefficient extractor** yet.
+
+`witnora_core/aux_violation_tensors.py` builds separate local factors
+(scope ≤4 on distinct 3-CNF) and violation-bit parity factors
+(scope ≤5), and a separate, **exponential small-only oracle**
+independently verified the constant coefficient against source
+#SAT on all six frozen 8/54, 10/66, 12/84 controls. This Python
+oracle cannot scale; the new factor scopes are only a representation.
+
+Explicit min-degree elimination-width heuristic yielded
+source / flat parity / auxiliary bridge:
+32/224 → 26 / 30 / 94 (aux graph 256 vertices);
+96/576 → 73 / 90 / 310 (672 vertices);
+256/1536 → 191 / 241 / 921 (1,792 vertices).
+The large 256-variable auxiliary width diagnostic took about
+31 seconds, *not* SAT or tensor counting. Individual small factors
+do **not** imply globally narrow contraction, and this auxiliary
+representation made generic min-degree elimination **much worse**.
+
+All new five tests, Lean proofs, geometry benchmarks, and existing
+general CNF Lean/CDCL regressions passed:
+https://github.com/joeyst8/witnora-core/actions/runs/41650939175 .
+[Detailed auxiliary tensor bridge analysis](AUXILIARY_VIOLATION_TENSOR_BRIDGE.md).
+
+Next research hurdle: use **structure-aware elimination**, parity
+linear algebra, and actual coefficient extraction; compare direct
+CNF, flattened checks, auxiliary bridge, and independent solvers
+on total runtime and memory. No broad SAT speedup or P-vs-NP result.
