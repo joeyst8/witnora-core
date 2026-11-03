@@ -154,8 +154,10 @@ theorem checkRupStep_sound
       have hassumptions : assumptionsHold (step.clause.map flip) a := by
         intro lit hlit
         obtain ⟨original, horiginal, rfl⟩ := List.mem_map.mp hlit
-        have hfalse : signedLitTrue a original = false :=
+        have hnot : ¬ signedLitTrue a original = true :=
           List.any_eq_false.mp hb original horiginal
+        have hfalse : signedLitTrue a original = false := by
+          cases hv : signedLitTrue a original <;> simp_all
         exact flip_true_of_false a original hfalse
       exact False.elim
         (checkPropagation_sound database (step.clause.map flip)
