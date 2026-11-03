@@ -63,13 +63,18 @@ to a unique value a_U. Its contribution to normalized Fourier mode T is:
       * (-1)^parity(T & a_U).
 
 Thus, the coefficient oracle does not enumerate boundary assignments.
-It enumerates **clause subsets**, with hard `max_inclusion_subsets`
-and `max_spectrum_terms` caps. A budget failure returns `None`, never
-SAT, UNSAT or a guessed model count.
+It first splits right-hand clauses into disjoint variable-scope components.
+Each component is expanded separately, so total coefficient work is bounded
+by a sum of clause-subset costs, not necessarily the exponential in the
+**total** number of clauses. This is an established component-factorization
+identity, not a new SAT algorithm. A shared `max_inclusion_subsets` budget
+and `max_spectrum_terms` cap fail closed with `None`, never SAT, UNSAT
+or a guessed model count.
 
 This is not a worst-case complexity improvement: the right oracle has a
-hidden O(2^m) cost for m right clauses, and sparse expansion can require
-O(2^r) terms for r independent left boundary conditions. Converting
+hidden O(sum_i 2^(m_i)) cost for m_i clauses in each scope-connected
+component (O(2^m) if all m clauses interact), and sparse expansion can
+require O(2^r) terms for r independent left boundary conditions. Converting
 general CNF to exact affine responses remains out of scope.
 
 ## Reproduced finite checks (read-only dry run)
@@ -86,7 +91,12 @@ general CNF to exact affine responses remains out of scope.
   independently written exhaustive total-assignment oracle.
 - **80 seeded CNFs**, each coefficient independently checked for all
   32 modes against explicit Walsh sums.
-- Total: **8 Python unittest methods passed** in the dry run.
+- A 60-variable parity constraint crossing **20 disjoint 3-literal
+  nonlinear clauses**: exact answer `(7^20 + 1)/2` using only **2**
+  left Fourier coefficients and **40** total clause-subset terms,
+  without enumerating 2^60 assignments. This is a purposely
+  factorable class, not evidence of improved general SAT complexity.
+- Total: **9 Python unittest methods passed** in the dry run.
 
 These are correctness controls, not benchmark speed claims. They also
 do not provide a universal Lean theorem or certify CPython implementation.
