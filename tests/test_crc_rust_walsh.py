@@ -12,6 +12,7 @@ from witnora_core.crc_boundary import (
     count_asymmetric_boundary,
 )
 from witnora_core.crc_rust_walsh import query_right_walsh_in_rust
+from witnora_core.crc_source import _xor_cnf, count_signed_cnf_crc
 
 
 @unittest.skipUnless(os.environ.get("WITNORA_RUST_VE_BIN"),
@@ -124,6 +125,39 @@ class TestNativeRightWalsh(unittest.TestCase):
         )
         self.assertEqual(batch.coefficients,
                          {0: Fraction(1, 2), bit: Fraction(-1, 2)})
+
+    def test_combined_native_preprocess_xor_and_coefficient_pipeline(self):
+        # Every stage except final orchestration is the opt-in native
+        # implementation; compare with an independently coded Python
+        # end-to-end source path and the closed-form exact model count.
+        for groups in (4, 8, 20):
+            n = 3 * groups
+            for xor_blocks in (0, 1, 3):
+                source = []
+                for group in range(groups):
+                    triple = tuple(range(3 * group + 1, 3 * group + 4))
+                    source.append(triple)
+                    if group < xor_blocks:
+                        source.extend(_xor_cnf(triple, 0))
+                expected = 3**xor_blocks * 7**(groups - xor_blocks)
+                common = dict(max_spectrum_terms=64,
+                              max_inclusion_subsets=512,
+                              max_coefficient_states=100000)
+                baseline = count_signed_cnf_crc(
+                    source, n, source_preprocessor="none",
+                    source_extractor="python", coefficient_backend="python",
+                    **common)
+                native = count_signed_cnf_crc(
+                    source, n, source_preprocessor="rust_adaptive",
+                    source_extractor="rust",
+                    coefficient_backend="rust_inclusion_exclusion",
+                    **common)
+                self.assertIsNotNone(baseline)
+                self.assertIsNotNone(native)
+                self.assertEqual(native.models, expected)
+                self.assertEqual(baseline.models, native.models)
+                self.assertEqual(native.coefficient_stats.coefficient_backend,
+                                 "inclusion_exclusion_rust")
 
     def test_explicit_fail_closed_budgets_and_malformed_input(self):
         clauses = ((1, 0),)
