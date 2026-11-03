@@ -291,11 +291,18 @@ def count_asymmetric_boundary(
     enable_orbit_oracle: bool = False,
     enable_defect_oracle: bool = False,
     enable_conflict_oracle: bool = False,
+    coefficient_backend: str = "python",
+    max_rust_coefficient_operations: int = 2000000,
 ) -> BoundaryCount | None:
     """Count an affine left region and boundary-only CNF right region.
 
     Returns None on budget exhaustion, never an incorrect model count.
     """
+    if coefficient_backend not in ("python", "rust_inclusion_exclusion"):
+        raise ValueError("unknown exact coefficient backend")
+    if (not isinstance(max_rust_coefficient_operations, int)
+            or max_rust_coefficient_operations < 1):
+        raise ValueError("invalid native coefficient operation budget")
     internals = tuple(internal_variables)
     boundary = tuple(boundary_variables)
     rows, free = _project_affine(tuple(left_affine_rows), internals, boundary)
@@ -303,7 +310,21 @@ def count_asymmetric_boundary(
     if spectrum is None:
         return None
     clauses = _normalized_clauses(right_clauses, boundary)
-    components = _right_components(clauses, max_subsets=max_inclusion_subsets)
+    native = None
+    if coefficient_backend == "rust_inclusion_exclusion":
+        from witnora_core.crc_rust_walsh import query_right_walsh_in_rust
+        native = query_right_walsh_in_rust(
+            clauses, boundary, tuple(spectrum),
+            max_subsets=max_inclusion_subsets,
+            max_operations=max_rust_coefficient_operations,
+        )
+        if native is None:
+            # Explicit Rust inclusion-exclusion caps fail closed; do not
+            # silently switch to Python's other coefficient algorithms.
+            return None
+        components = ()
+    else:
+        components = _right_components(clauses, max_subsets=max_inclusion_subsets)
     if components is None:
         # Optional exact, recognizable dense nonlinear family. It
         # computes only requested Walsh modes using cardinality
@@ -348,13 +369,22 @@ def count_asymmetric_boundary(
             states = query.states
             hits = query.memo_hits
     else:
-        accumulated = sum(
-            (coef * _component_coefficient(components, mode)
-             for mode, coef in spectrum.items()), Fraction(),
-        )
-        backend = "inclusion_exclusion"
-        right_terms = sum(len(terms) for _, terms in components)
-        right_components = len(components)
+        if native is not None:
+            accumulated = sum(
+                (coef * native.coefficients[mode]
+                 for mode, coef in spectrum.items()), Fraction(),
+            )
+            backend = "inclusion_exclusion_rust"
+            right_terms = native.compatible_terms
+            right_components = native.components
+        else:
+            accumulated = sum(
+                (coef * _component_coefficient(components, mode)
+                 for mode, coef in spectrum.items()), Fraction(),
+            )
+            backend = "inclusion_exclusion"
+            right_terms = sum(len(terms) for _, terms in components)
+            right_components = len(components)
         states = hits = 0
     result = (1 << len(boundary)) * accumulated
     if result.denominator != 1 or result < 0:
