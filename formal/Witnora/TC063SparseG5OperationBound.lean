@@ -110,7 +110,7 @@ theorem emitSchedule_op_count
               some (ops, result) := by
             simpa [emitSchedule, hp] using h
           have hb := ih candidates state result ops hrest
-          exact hb.trans
+          exact le_trans hb
             (Nat.mul_le_mul_right candidates.length
               (by simp : rest.length ≤ (v :: rest).length))
       | some choice =>
