@@ -158,8 +158,8 @@ def main() -> None:
     print("example : checkStream (Witnora.SignedSerialization.decodeCNF")
     print(f"    ({raw_lean} : List (List Int)))")
     print(f"    ({compact_lean} : List Instruction) = true := by decide")
-    source_text = ("p cnf 6 " + str(len(raw)) + "\\n" +
-                   "".join(" ".join(map(str, row)) + " 0\\n" for row in raw))
+    source_text = ("p cnf 6 " + str(len(raw)) + "\n" +
+                   "".join(" ".join(map(str, row)) + " 0\n" for row in raw))
     source_bytes_lean = "[" + ", ".join(str(ord(ch)) for ch in source_text) + "]"
     tokens = [lit for row in raw for lit in [*row, 0]]
     tokens_lean = "[" + ", ".join(str(lit) for lit in tokens) + "]"
