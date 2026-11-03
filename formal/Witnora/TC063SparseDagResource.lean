@@ -319,4 +319,116 @@ theorem checkSparseG5_total_replay_coefficients_bound
 #print axioms Witnora.TC063SparseDagResource.replayDag_preserves_support
 #print axioms Witnora.TC063SparseDagResource.checkDagContradiction_resource_sound
 
+
+/-! ## Source-operation to compiled-DAG size bridge -/
+
+/-- A successful mutable source operation adds at most one indexed XOR
+    reference. Swaps only modify the reference map. -/
+private theorem indexedStep_adds_at_most_one
+    (state next : Witnora.G5IndexedBridge.State)
+    (op : Witnora.G5IndexedBridge.Operation)
+    (h : Witnora.G5IndexedBridge.step state op = some next) :
+    next.2.length ≤ state.2.length + 1 := by
+  rcases state with ⟨refs, steps⟩
+  cases op with
+  | swapRows i j =>
+      cases hi : refs[i]? with
+      | none => simp [Witnora.G5IndexedBridge.step, hi] at h
+      | some left =>
+          cases hj : refs[j]? with
+          | none => simp [Witnora.G5IndexedBridge.step, hi, hj] at h
+          | some right =>
+              simp [Witnora.G5IndexedBridge.step, hi, hj] at h
+              cases h
+              simp
+  | addRowXor target source =>
+      by_cases hsame : target == source
+      · simp [Witnora.G5IndexedBridge.step, hsame] at h
+      · cases hi : refs[target]? with
+        | none => simp [Witnora.G5IndexedBridge.step, hsame, hi] at h
+        | some left =>
+            cases hj : refs[source]? with
+            | none =>
+                simp [Witnora.G5IndexedBridge.step, hsame, hi, hj] at h
+            | some right =>
+                simp [Witnora.G5IndexedBridge.step, hsame, hi, hj] at h
+                cases h
+                simp
+
+/-- In a successful fold, the compiler appends no more XOR pairs than
+    the number of mutable source operations it processes. -/
+private theorem indexedFold_steps_length_le
+    (operations : List Witnora.G5IndexedBridge.Operation)
+    (state result : Witnora.G5IndexedBridge.State)
+    (h : operations.foldlM Witnora.G5IndexedBridge.step state =
+      some result) :
+    result.2.length ≤ state.2.length + operations.length := by
+  induction operations generalizing state with
+  | nil =>
+      simp at h
+      cases h
+      simp
+  | cons op rest ih =>
+      cases hs : Witnora.G5IndexedBridge.step state op with
+      | none => simp [List.foldlM, hs] at h
+      | some next =>
+          have hrest :
+              rest.foldlM Witnora.G5IndexedBridge.step next =
+                some result := by
+            simpa [List.foldlM, hs] using h
+          have hstep := indexedStep_adds_at_most_one state next op hs
+          have htail := ih next hrest
+          simp only [List.length_cons]
+          omega
+
+/-- The actual indexed source-operation compiler emits at most one
+    append-only DAG XOR reference for each source instruction.
+    This is a universal size guarantee for every successful compile. -/
+theorem compile_steps_length_le_source_operations
+    (initialRows : Nat)
+    (operations : List Witnora.G5IndexedBridge.Operation)
+    (steps : List XorRef)
+    (h : Witnora.G5IndexedBridge.compile initialRows operations =
+      some steps) :
+    steps.length ≤ operations.length := by
+  unfold Witnora.G5IndexedBridge.compile at h
+  cases hf : operations.foldlM Witnora.G5IndexedBridge.step
+      (List.range initialRows, []) with
+  | none => simp [hf] at h
+  | some result =>
+      simp [hf] at h
+      subst steps
+      have hb := indexedFold_steps_length_le operations
+        (List.range initialRows, []) result hf
+      simpa using hb
+
+/-- If compiled source instructions form an accepted sparse certificate,
+    the total replay table has at most (initial rows + source instruction
+    count) times original coefficient occurrences. -/
+theorem checkSparseG5_compiled_replay_bound
+    (cnf : Witnora.Concrete.CNF)
+    (rows : List Row)
+    (operations : List Witnora.G5IndexedBridge.Operation)
+    (steps : List XorRef)
+    (hCompile : Witnora.G5IndexedBridge.compile rows.length operations =
+      some steps)
+    (hCheck : Witnora.TC063SparseDirectChecker.checkSparseG5
+      cnf rows steps = true) :
+    ∃ final : List Row,
+      replayDag rows steps = some final ∧
+      (Witnora.TC063CanonicalBound.supportRows final).length ≤
+        (rows.length + operations.length) *
+          (Witnora.TC063CanonicalBound.supportRows rows).length := by
+  obtain ⟨final, hrep, hbound⟩ :=
+    checkSparseG5_total_replay_coefficients_bound cnf rows steps hCheck
+  have hsteps := compile_steps_length_le_source_operations
+    rows.length operations steps hCompile
+  exact ⟨final, hrep, le_trans hbound
+    (Nat.mul_le_mul_right
+      (Witnora.TC063CanonicalBound.supportRows rows).length
+      (Nat.add_le_add_left hsteps rows.length))⟩
+
+#print axioms Witnora.TC063SparseDagResource.compile_steps_length_le_source_operations
+#print axioms Witnora.TC063SparseDagResource.checkSparseG5_compiled_replay_bound
+
 end Witnora.TC063SparseDagResource
