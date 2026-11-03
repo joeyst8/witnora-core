@@ -30,7 +30,7 @@ jobs:
         run: python -m scripts.generate_g14_adversarial_matrix_lean
       - name: Kernel-check normalized partition soundness
         working-directory: formal
-        run: lake build Witnora.G14NormalizedPartition
+        run: lake build Witnora.G14NormalizedPartition Witnora.TC063SparseCover
       - name: Production G14 gate unit tests
         run: python -m unittest tests.test_lean_g14_gate -v
       - name: Production G14 gate real Lean tamper tests
