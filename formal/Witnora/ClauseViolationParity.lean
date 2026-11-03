@@ -64,6 +64,44 @@ theorem source_model_passes (cnf : List (List Int))
   have hzero := source_model_has_no_violations cnf a h
   simp [rowParity_of_zero (violationVector cnf a) row hzero]
 
+/-- None of the selected positions is a violated clause. This is a
+    sufficient condition for a false-positive collision, not necessary:
+    two selected violations also cancel mod 2. -/
+def disjointMask : List Bool → List Bool → Bool
+  | v :: vs, selected :: selections =>
+      !(v && selected) && disjointMask vs selections
+  | _, _ => true
+
+theorem disjointMask_implies_even (v row : List Bool)
+    (h : disjointMask v row = true) : rowParity v row = false := by
+  induction v generalizing row with
+  | nil =>
+      cases row <;> rfl
+  | cons head tail ih =>
+      cases row with
+      | nil => rfl
+      | cons selected rest =>
+          have hparts :
+              !(head && selected) = true ∧ disjointMask tail rest = true := by
+            simpa [disjointMask] using h
+          have hfalse : head && selected = false := by
+            cases hb : head && selected <;> simp_all
+          have hrest := ih rest hparts.2
+          simp [rowParity, hfalse, hrest]
+
+/-- Source models and also nonmodels with no tested violated clause pass.
+    This provides a formally checkable geometric collision mechanism. -/
+theorem all_disjoint_rows_accept (cnf : List (List Int))
+    (rows : List (List Bool)) (a : Nat → Bool)
+    (h : rows.all (fun row => disjointMask (violationVector cnf a) row) = true) :
+    accepts cnf rows a = true := by
+  unfold accepts
+  apply List.all_eq_true.mpr
+  intro row hmem
+  have hr := List.all_eq_true.mp h row hmem
+  have heven := disjointMask_implies_even (violationVector cnf a) row hr
+  simp [heven]
+
 def assignmentBits (bits varId : Nat) : Bool :=
   decide ((bits / (2 ^ (varId - 1))) % 2 = 1)
 
@@ -78,6 +116,7 @@ def boundedExact (cnf : List (List Int)) (rows : List (List Bool))
       accepts cnf rows (assignmentBits bits))
 
 example : rowParity [true, true] [true, true] = false := by decide
+example : disjointMask [true, false] [false, true] = true := by decide
 example : rowParity [true, false] [true, true] = true := by decide
 
 /-- Two violated clauses can cancel: arbitrary parity rows are not exact. -/
@@ -86,5 +125,7 @@ example : boundedExact [[1], [2]] [[true, true]] 2 = false := by decide
 #print axioms Witnora.ClauseViolationParity.rowParity_of_zero
 #print axioms Witnora.ClauseViolationParity.source_model_has_no_violations
 #print axioms Witnora.ClauseViolationParity.source_model_passes
+#print axioms Witnora.ClauseViolationParity.disjointMask_implies_even
+#print axioms Witnora.ClauseViolationParity.all_disjoint_rows_accept
 
 end Witnora.ClauseViolationParity
