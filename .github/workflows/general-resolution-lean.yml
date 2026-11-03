@@ -11,7 +11,9 @@ on:
       - "formal/Witnora/GeneralResolutionAscii.lean"
       - "formal/Witnora/GeneralRUP.lean"
       - "scripts/generate_general_resolution_lean.py"
+      - "scripts/generate_general_rup_lean.py"
       - "tests/test_general_resolution_trace.py"
+      - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
   pull_request:
     paths:
@@ -21,7 +23,9 @@ on:
       - "formal/Witnora/GeneralResolutionAscii.lean"
       - "formal/Witnora/GeneralRUP.lean"
       - "scripts/generate_general_resolution_lean.py"
+      - "scripts/generate_general_rup_lean.py"
       - "tests/test_general_resolution_trace.py"
+      - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
   workflow_dispatch:
 
@@ -43,9 +47,14 @@ jobs:
         working-directory: formal
         run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP
       - name: Test independent proof generation and tamper rejection
-        run: python -m unittest tests.test_general_resolution_trace -v
+        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace -v
       - name: Generate non-affine CNF resolution examples
         run: python -m scripts.generate_general_resolution_lean > formal/Witnora/GeneratedGeneralResolution.lean
       - name: Lean-check all generated non-affine examples
         working-directory: formal
         run: lake env lean Witnora/GeneratedGeneralResolution.lean
+      - name: Generate explicit non-affine RUP unit witnesses
+        run: python -m scripts.generate_general_rup_lean > formal/Witnora/GeneratedGeneralRUP.lean
+      - name: Lean-check proposed RUP additions and forged witness rejection
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedGeneralRUP.lean
