@@ -86,3 +86,41 @@ See [`docs/TC063_TRACK_B_BOUNDARY_PATH.md`](TC063_TRACK_B_BOUNDARY_PATH.md) for 
 Next: a universal Lean proof of the mod-2 provenance-boundary identity, followed by adversarial graph controls and total pipeline runtime comparisons. The path heuristic is **not** a verified cut classifier; exact G14 validation remains mandatory.
 
 No P-versus-NP result, general SAT polynomial-time algorithm, or breakthrough complexity separation has been claimed.
+
+
+## 2026-11-03 domain expansion: arbitrary-CNF UNSAT proof checking
+
+The user explicitly reprioritized the larger challenges: arbitrary CNFs,
+non-affine residuals, no small separators, performance and industrial-scale
+relevance. Rather than extend the restricted `Family c r` claim beyond its
+premises, a **separate universal proof-checker family** has now been implemented
+in the same draft PR:
+
+1. `GeneralResolution.lean`: universally sound binary resolution checker
+   from arbitrary signed clauses; every step must name two present clauses,
+   correctly oriented pivot and exact computed resolvent.
+2. `GeneralResolutionIndexed.lean`: compact zero-based DAG-index format,
+   reconstructed and independently checked in Lean.
+3. `GeneralResolutionStream.lean`: direct indexed streaming verification
+   without expanding the entire by-value certificate; universal UNSAT theorem.
+4. `GeneralResolutionAscii.lean`: actual supported ASCII DIMACS byte document
+   parsed and connected to the signed clauses and streaming refutation; source-
+   byte identity and UNSAT are conjoined by a universal theorem.
+
+All four main theorem `#print axioms` outputs are **[propext, Quot.sound]**,
+with no project axioms, `sorry` or SAT-verdict assumption. The final
+source-bound CI passed all five native adversarial tests and Lean verified
+the non-affine pigeonhole(3,2) refutation in by-value, indexed, streaming and
+source-ASCII forms. It also verified rejection of a tampered DIMACS clause
+count: https://github.com/joeyst8/witnora-core/actions/runs/41598267471 .
+
+[Full audited milestone and next experimental program](GENERAL_SAT_RESOLUTION_BRIDGE.md).
+
+**Non-claim:** the Python proof producer is an intentionally tiny saturation
+algorithm, not competitive CDCL; proof search can take exponential resources.
+The direct streaming proof database remains a list, so total checking is not
+yet proven linear or near-linear. No arbitrary-size CDCL DRAT/LRAT import,
+benchmark speedup, polynomial-time construction, or P-versus-NP conclusion is
+established. The next *bigger-fish* gate is sound CDCL proof import with source
+identity, then frozen hard non-affine and no-separator benchmarks against real
+industrial solvers.
