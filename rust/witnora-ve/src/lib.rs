@@ -368,10 +368,40 @@ fn simplify_source_native(
     )))
 }
 
+/// The adaptive option skips expensive normalization when the cheap
+/// binary-sign heuristic sees no direct consensus opportunity. It returns
+/// pass_count=0 for the exact no-op path. This changes only performance:
+/// the original source is retained unchanged if the heuristic rejects.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn simplify_source_adaptive_native(
+    clauses: Vec<Vec<i32>>, nvars: u32,
+    max_passes: usize, max_clause_visits: usize,
+) -> PyResult<Option<(Vec<Vec<i32>>, usize, usize)>> {
+    if max_passes == 0 || max_clause_visits == 0 || nvars > 512 {
+        return Err(PyValueError::new_err("invalid preprocessing bounds"));
+    }
+    let admitted = source_preprocess::source_admission_heuristic(&clauses, nvars)
+        .map_err(PyValueError::new_err)?;
+    if !admitted {
+        if clauses.len() > max_clause_visits {
+            return Ok(None);
+        }
+        return Ok(Some((clauses, 0, 0)));
+    }
+    let answer = source_preprocess::simplify_source(
+        &clauses, nvars, max_passes, max_clause_visits,
+    ).map_err(PyValueError::new_err)?;
+    Ok(answer.map(|result| (
+        result.clauses, result.passes, result.consensus_pairs,
+    )))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
     module.add_function(wrap_pyfunction!(simplify_source_native, module)?)?;
+    module.add_function(wrap_pyfunction!(simplify_source_adaptive_native, module)?)?;
     Ok(())
 }
