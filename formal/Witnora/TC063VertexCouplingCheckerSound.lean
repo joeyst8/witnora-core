@@ -27,7 +27,7 @@ theorem checkArticulations_acceptance_iff
       (∀ v ∈ claimed, v ∈ vertices) ∧
       (∀ v ∈ vertices,
         articulationFlag vertices neighbors v = decide (v ∈ claimed)) := by
-  simp [checkArticulations, List.all_eq_true]
+  simp [checkArticulations, List.all_eq_true, and_assoc]
 
 theorem checkTwoCuts_acceptance_iff
     (vertices : List Nat) (neighbors : Nat → List Nat)
@@ -38,7 +38,7 @@ theorem checkTwoCuts_acceptance_iff
       (∀ pair ∈ orderedPairs vertices,
         twoCutFlag vertices neighbors pair.1 pair.2 =
           decide (pair ∈ claimed)) := by
-  simp [checkTwoCuts, List.all_eq_true]
+  simp [checkTwoCuts, List.all_eq_true, and_assoc]
 
 /-- Every emitted pair of an accepted candidate certificate really
     separates the remaining vertices into at least two DFS components. -/
@@ -71,7 +71,9 @@ theorem accepted_checker_covers_every_cut
   have hTrue : decide (pair ∈ claimed) = true := by
     rw [← hEq]
     simp [twoCutFlag, hCut]
-  exact of_decide_true hTrue
+  by_cases hClaim : pair ∈ claimed
+  · exact hClaim
+  · simp [hClaim] at hTrue
 
 #print axioms Witnora.TC063VertexCouplingCheckerSound.checkTwoCuts_acceptance_iff
 #print axioms Witnora.TC063VertexCouplingCheckerSound.accepted_pair_is_genuine_cut
