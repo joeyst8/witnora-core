@@ -32,6 +32,7 @@ from .xor import canonical_xor_cnf_clauses
 from .separator_structural_priority import prioritized_singletons
 from .g5_elimination_activity import activity_from_g5_operations, ranked_pair_candidates
 from .global_coupling_separator import prioritized_global_pairs
+from .vertex_coupling_separator import prioritized_vertex_pairs
 
 
 VERSION = "2.22"
@@ -768,8 +769,8 @@ def recognize_separator_affine_family(
     priority: str = "structural",
     g5_operations: Iterable[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    if priority not in {"structural", "lexicographic", "g5_activity", "global_coupling"}:
-        raise ValueError("priority must be structural, lexicographic, g5_activity or global_coupling")
+    if priority not in {"structural", "lexicographic", "g5_activity", "global_coupling", "vertex_coupling"}:
+        raise ValueError("priority must be structural, lexicographic, g5_activity, global_coupling or vertex_coupling")
     variables = list(formula.variables)
     graph = primal_graph(formula)
     singletons = prioritized_singletons(graph) if priority != "lexicographic" else tuple(variables)
@@ -790,6 +791,11 @@ def recognize_separator_affine_family(
             # Exact graph-cut witnesses reorder candidates only; every G14
             # affine-component check remains authoritative, with full fallback.
             candidates = prioritized_global_pairs(graph)
+        elif size == 2 and priority == "vertex_coupling":
+            # The deletion/articulation identity covers all two-vertex cuts
+            # in connected articulation-free graphs. G14 still checks each
+            # conditioned affine component and retains exhaustive fallback.
+            candidates = prioritized_vertex_pairs(graph)
         else:
             candidates = combinations(variables, size)
         for candidate in candidates:
