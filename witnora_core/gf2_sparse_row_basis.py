@@ -79,8 +79,9 @@ def build_sparse_parity_basis(
             if found is None:
                 basis_index = len(chosen)
                 chosen.append(rid)
-                expression ^= 1 << basis_index
-                pivots[pivot] = (remaining, expression)
+                pivots[pivot] = (remaining, expression ^ (1 << basis_index))
+                # The selected source row is itself a retained basis row.
+                expression = 1 << basis_index
                 break
             reduced, retained_expression = found
             remaining ^= reduced
