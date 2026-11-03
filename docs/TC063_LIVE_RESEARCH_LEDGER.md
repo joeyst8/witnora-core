@@ -277,3 +277,43 @@ Full report:
 The *actual* next hurdle is sound nonenumerative **sparse** isolation
 with exact certificate, then low-degree symbolic representation,
 tensor/interpolation counting, and total-cost CDCL benchmarks.
+
+
+## 2026-11-03 sparse parity support guarantee and contraction-width obstruction (CI green)
+
+`witnora_core/sparse_parity_checks.py` now constructs nonenumerative
+width-at-most-five source-clause parity rows using three-ones-per-column
+signatures that are nonzero and pairwise distinct. A direct coding
+argument proves detection of every violation support of size 1, 2 or 3:
+singletons have nonzero columns, distinct pairs cannot cancel, and
+three odd-weight columns have an odd-weight XOR. Python structurally
+validates each produced matrix and independently checks every support
+of size 1–3 on the six frozen dense 3-CNF controls. The general coding
+claim is **not yet formalized in Lean**.
+
+Frozen 8/54, 10/66, and 12/84 UNSAT and planted-SAT sources yielded
+36, 43 and 54 sparse rows respectively, each touching at most five
+source clauses, and zero false positives in separate small-instance
+exhaustive audits. The 96/576 and 256/1536 source constructions yielded
+349 and 925 sparse rows without assignment enumeration; source
+equivalence **was not checked** for either large instance.
+
+A true adversarial counterexample was added: four distinct degree-three
+column signatures can XOR to zero, letting the all-false assignment
+pass a width-two sketch of the four unit clauses. Thus the 1–3 support
+guarantee does **not** imply exactness for arbitrary formulas.
+
+The central new structural negative observation is that local sparse
+rows do not necessarily yield globally narrow tensor factor graphs.
+An explicit min-degree elimination order on planted random 3-CNFs gave
+(source / sparse / dense width): 32/224 → 26/31/31,
+96/576 → 73/93/95, 256/1536 → 191/246/255. These are
+*heuristic induced widths*, not exact treewidth lower bounds or actual
+counting timings. They motivate geometry-aware row selection and a
+genuine tensor counting engine rather than equating few clauses per
+row with fast solving.
+
+Full 28-step CI passed including adversarial controls and previous
+general-CNF Lean regressions:
+https://github.com/joeyst8/witnora-core/actions/runs/41646810807 .
+[Detailed sparse parity and contraction geometry report](SPARSE_ODD_COLUMN_PARITY_GEOMETRY.md).
