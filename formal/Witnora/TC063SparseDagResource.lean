@@ -612,4 +612,72 @@ theorem sourceRun_compiler_exact
 
 #print axioms Witnora.TC063SparseDagResource.sourceRun_compiler_exact
 
+
+/-! ## Automatic compilation of the total pivot-ledger generator -/
+
+/-- Every successful actual pivot-ledger source emission is automatically
+    accepted by the indexed compiler and yields the source state's exact
+    proof-carrying DAG sequence. -/
+theorem emitted_pivot_ledger_compiles_exact
+    (rows : List Row)
+    (outcome : Witnora.G5RetiredPivotLedger.PivotOutcome rows)
+    (hEmit : Witnora.G5RetiredPivotLedger.emitScheduleWithPivots
+      rows (Witnora.TC063CanonicalBound.supportRows rows)
+      (List.range rows.length)
+      (Witnora.G5IndexedOperationEmitter.SourceState.start rows) =
+        some outcome) :
+    Witnora.G5IndexedBridge.compile rows.length outcome.operations =
+      some outcome.finalState.dag.steps := by
+  have hTracked :=
+    Witnora.G5RetiredPivotLedger.pivot_ledger_refines_tracked
+      rows (Witnora.TC063CanonicalBound.supportRows rows)
+      (List.range rows.length)
+      (Witnora.G5IndexedOperationEmitter.SourceState.start rows)
+      outcome hEmit
+  have hSchedule :=
+    Witnora.G5TrackedSurvivors.tracked_execution_matches_schedule
+      rows (Witnora.TC063CanonicalBound.supportRows rows)
+      (List.range rows.length)
+      (Witnora.G5IndexedOperationEmitter.SourceState.start rows)
+      outcome.finalState outcome.operations outcome.survivors hTracked
+  have hExecute :=
+    Witnora.G5IndexedScheduledEmitter.emitSchedule_replays
+      rows (Witnora.TC063CanonicalBound.supportRows rows)
+      (List.range rows.length)
+      (Witnora.G5IndexedOperationEmitter.SourceState.start rows)
+      outcome.finalState outcome.operations hSchedule
+  exact sourceRun_compiler_exact rows outcome.operations
+    outcome.finalState (by
+      simpa [Witnora.G5IndexedOperationEmitter.run,
+        Witnora.G5EmittedPivotPass.executeFrom] using hExecute)
+
+/-- The generated pivot-ledger source operations need no separate
+    compilation premise in the coefficient-storage resource bound.
+    Sparse certificate checker acceptance remains explicit. -/
+theorem emitted_sparse_schedule_replay_bound
+    (cnf : Witnora.Concrete.CNF)
+    (rows : List Row)
+    (outcome : Witnora.G5RetiredPivotLedger.PivotOutcome rows)
+    (hEmit : Witnora.G5RetiredPivotLedger.emitScheduleWithPivots
+      rows (Witnora.TC063CanonicalBound.supportRows rows)
+      (List.range rows.length)
+      (Witnora.G5IndexedOperationEmitter.SourceState.start rows) =
+        some outcome)
+    (hCheck : Witnora.TC063SparseDirectChecker.checkSparseG5
+      cnf rows outcome.finalState.dag.steps = true) :
+    ∃ final : List Row,
+      replayDag rows outcome.finalState.dag.steps = some final ∧
+      (Witnora.TC063CanonicalBound.supportRows final).length ≤
+        (rows.length +
+          (Witnora.TC063CanonicalBound.supportRows rows).length *
+            rows.length) *
+          (Witnora.TC063CanonicalBound.supportRows rows).length := by
+  exact emitted_sparse_schedule_compiled_replay_bound
+    cnf rows outcome outcome.finalState.dag.steps
+    hEmit (emitted_pivot_ledger_compiles_exact rows outcome hEmit)
+    hCheck
+
+#print axioms Witnora.TC063SparseDagResource.emitted_pivot_ledger_compiles_exact
+#print axioms Witnora.TC063SparseDagResource.emitted_sparse_schedule_replay_bound
+
 end Witnora.TC063SparseDagResource
