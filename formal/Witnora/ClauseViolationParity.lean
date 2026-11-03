@@ -84,10 +84,9 @@ theorem disjointMask_implies_even (v row : List Bool)
           have hparts :
               !(head && selected) = true ∧ disjointMask tail rest = true := by
             simpa [disjointMask] using h
-          have hfalse : head && selected = false := by
-            cases hb : head && selected <;> simp_all
           have hrest := ih rest hparts.2
-          simp [rowParity, hfalse, hrest]
+          cases head <;> cases selected <;>
+            simp_all [rowParity, disjointMask]
 
 /-- Source models and also nonmodels with no tested violated clause pass.
     This provides a formally checkable geometric collision mechanism. -/
