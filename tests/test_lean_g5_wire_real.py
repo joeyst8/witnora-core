@@ -67,5 +67,24 @@ class G5WireRealLeanTest(unittest.TestCase):
         self.assertTrue(result["source_lexemes_verified"], result)
         self.assertTrue(result["source_normalization_verified"], result)
 
+        # The same trusted row operations must not be accepted if the
+        # original source document's declared clause count was tampered with.
+        tampered_document = source.replace("p cnf 4 10", "p cnf 4 9")
+        self.assertNotEqual(tampered_document, source)
+        rejected = verify_g5_certificate_with_lean(
+            formula,
+            cert,
+            max_arity=3,
+            timeout_seconds=180,
+            raw_clauses=raw,
+            source_tokens=tokens,
+            source_spellings=spellings,
+            source_text=tampered_document,
+        )
+        self.assertFalse(rejected.get("verified"), rejected)
+        self.assertEqual(rejected.get("lean_formal_status"), "NOT_LEAN_VERIFIED")
+        self.assertEqual(rejected.get("reason"), "CNF_NORMALIZATION_REJECTED")
+
+
 if __name__ == "__main__":
     unittest.main()
