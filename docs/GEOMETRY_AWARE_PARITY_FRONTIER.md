@@ -112,3 +112,15 @@ Any such bridge needs a new Lean proof of model/count correspondence
 and independent benchmark comparison with modern CDCL and the original
 CNF. No P-vs-NP resolution, fast SAT algorithm, or OpenAI ETH theorem
 reproduction is claimed.
+
+
+## Verification checkpoint
+
+GitHub Actions **General-resolution universal UNSAT bridge** run
+[#41649224809](https://github.com/joeyst8/witnora-core/actions/runs/41649224809)
+completed successfully. The gate kernel-checked
+`Witnora.GeometryScope`, ran the five geometry-aware Python tests
+and geometry benchmark, then passed existing general-CNF regressions.
+This supports the new limited edge-containment theorem and tested
+construction, **not** full parity equivalence or efficient exact
+counting at large size.
