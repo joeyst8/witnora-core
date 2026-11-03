@@ -71,3 +71,52 @@ timings, full overhead, memory profiles, and adversarial controls.
 
 Benchmark numbers and the CI run will be appended only after they
 are observed and verified.
+
+
+## Verified experimental outcomes
+
+The **full** n=32, 96 and 256 run completed successfully with the
+[new order-search CI gate](https://github.com/joeyst8/witnora-core/actions/runs/41652408617).
+Independent replay tests verified every reported order's width on
+the frozen small graph; the full 256 benchmark printed all measurements.
+
+| n / clauses | Original CNF | Flat parity | Auxiliary min-degree | Auxiliary source-first | Auxiliary aux-first | Auxiliary beam-fill |
+|---|---:|---:|---:|---:|---:|---:|
+| 32 / 224 | 26 | 30 | 94 | 226 | 94 | **89** |
+| 96 / 576 | 73 | 90 | 310 | 590 | 311 | **291** |
+| 256 / 1536 | 191 | 241 | 921 | 1575 | 831 | **774** |
+
+All widths are heuristic induced widths, not optimal treewidth or
+tensor/SAT performance. The limited min-fill choice reduces the
+largest auxiliary *observed* width from 921 to 774 (~16%), still
+far worse than the original source's 191.
+
+| Auxiliary n/clauses | Min-degree ordering ms | Source-first ms | Aux-first ms | Beam-fill ms |
+|---|---:|---:|---:|---:|
+| 32 / 224 | 58 | 126 | 61 | 105 |
+| 96 / 576 | 1,367 | 2,856 | 1,344 | 2,344 |
+| 256 / 1536 | 34,594 | 96,721 | 29,753 | 61,585 |
+
+This table measures the cost of calculating graph orders alone,
+not coefficient extraction. Source-first produced a much wider graph
+than the unconstrained baseline, while aux-first and beam-fill
+helped somewhat at 256. At 32 and 96, aux-first was comparable to
+min-degree; beam-fill consistently reduced width modestly.
+
+The implementation also logged fill-edge counts (256 case):
+min-degree 613,422; source-first 1,433,487;
+aux-first 597,706; beam-fill 577,081.
+
+A subsequent usability update made n=256 full-order search
+**opt-in** with `python -m scripts.benchmark_factor_elimination_orders --large`;
+default CI runs 32/96. The recorded full 256 result above was
+produced by the preceding successful full-size workflow.
+
+### Decision
+
+This test confirms that elimination strategy affects induced width,
+but **no evidence of efficient general exact counting emerged**.
+The correct next milestone is an algebra-aware parity contraction
+or bounded-width exact factor-count pilot with total runtime and
+memory comparison. Iterating on graph ordering alone is unlikely
+to overturn the large gap to the source CNF.
