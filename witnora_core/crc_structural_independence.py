@@ -83,8 +83,11 @@ def audit_structural_source_independence(
 
     for zeros, ones in clauses:
         scope = zeros | ones
-        vertices = tuple(v for v in boundary_variables
-                         if scope & (1 << (v - 1)))
+        vertices = []
+        while scope:
+            bit = scope & -scope
+            vertices.append(bit.bit_length())
+            scope ^= bit
         if not vertices:
             continue
         for v in vertices[1:]:
