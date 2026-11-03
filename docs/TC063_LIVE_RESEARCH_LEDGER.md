@@ -55,6 +55,20 @@ All 16 Boolean assignments were independently enumerated: each two-equation subs
 
 A real *negative* case holds the same certificate, clauses, token stream, and spellings but tampers with the source header from `p cnf 4 10` to `p cnf 4 9`. The test asserts `NOT_LEAN_VERIFIED` and `CNF_NORMALIZATION_REJECTED` and passed in the same real Lean test step. This detects source-document provenance corruption. The test is finite end-to-end validation, not universal Python refinement or a runtime bound.
 
+## 2026-11-03 sparse high-ID cycle stress baseline
+
+Added `test_sparse_cycle_long_refutations_across_large_variable_ids` to `tests/test_lean_g5_wire_real.py`. Each instance is a minimally inconsistent XOR cycle: `x_i ⊕ x_(i+1) = 0` for each adjacent pair, plus `x_1 ⊕ x_n = 1`. Each has exactly `n` two-variable equations and `2n` canonical CNF clauses; removing any equation makes it satisfiable. The test uses actual Python equation extraction, Gaussian elimination, indexed-DAG operations and the *bound-independent* `checkWireSparseG5` Lean gate. A parity-flipped SAT twin at every size must not be classified as UNSAT.
+
+All three UNSAT certificates were **Lean-accepted** in the real CI invocation. Timings from the successful GitHub Actions log (one run, including independent Lean CNF normalization and numeric-wire verification; not a warmed performance benchmark):
+
+| Cycle equations / variables | Max variable ID | CNF clauses | Indexed XOR operations | Python certificate generation | Full Lean gate |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 8 | 8 | 16 | 8 | 1.1 ms | 1,269.2 ms |
+| 16 | 1,048,592 | 32 | 16 | 1.5 ms | 2,853.6 ms |
+| 32 | 16,777,248 | 64 | 32 | 2.8 ms | 9,584.0 ms |
+
+Green job: https://github.com/joeyst8/witnora-core/actions/runs/41593864870 (the `lean` job, including the real Lean tests). The test does **not** show linear gate scaling: as row count increases 4×, this cold CI sample's gate time increases ~7.6×. It does show the checker can handle sparse IDs over 16 million without allocating a dense ID array. To make a statistical speed claim, repeat timings, benchmark against external SAT solvers, and separate startup, CNF normalization, operation decoding, and sparse contradiction-checking costs.
+
 ## What remains open (separate from the restricted logical theorem)
 
 - **Full CPython refinement**: no universal proof that every execution of Python parsing, normalization, extraction, separator selection, G5 emission, and serialized DIMACS/certificate operations exactly refines the verified Lean meanings. Finite differential testing and narrow operation bridges do not establish this.
