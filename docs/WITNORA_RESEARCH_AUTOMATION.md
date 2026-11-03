@@ -11,11 +11,12 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-005 symmetry-defect falsification. Test four missing triple
-   supports arranged as a tetrahedron versus dispersed omissions;
-   independently count every model and compare to Ganak.
-2. W-CRC-004 exact Walsh/orbit unit checks.
-3. W-CRC-004 orbit versus Shannon/Ganak benchmark.
+1. W-CRC-005 symmetry-defect falsification: dispersed versus
+   tetrahedral four-triple omissions with independent Ganak counts.
+2. W-CRC-005 exact high-order defect Walsh unit tests, including
+   independently enumerated full Fourier spectra and budget rejection.
+3. W-CRC-005 eight-case exact defect source-to-count versus Ganak
+   benchmark, with fail-closed execution budgets.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -40,7 +41,9 @@ reviewed Python module; the manifest cannot inject shell commands.
   queue run. The queue does not repeatedly rerun itself.
 
 The prior hour-based ChatGPT reminder is disabled. This GitHub Actions
-workflow does not depend on it.
+workflow does not depend on it. The queue is finite and is refreshed
+only by reviewed commits to the research branch, never by its own
+automatic writes.
 
 ## Scientific test: why four missing triples matter
 
@@ -124,3 +127,18 @@ https://github.com/joeyst8/witnora-core/actions/runs/41706281993
 This CI result validates the queue **unit tests and benchmark**, not an
 independently inspected end-to-end run/artifact of the new dedicated
 queue workflow. That operational check is still pending.
+
+
+## Verified revised queue — 2026-11-03
+
+The research-branch manifest was advanced to the three W-CRC-005
+experiments above. Its whitelist and ordering tests passed. The
+dedicated workflow then completed successfully with sequential,
+bounded execution and JSON artifact upload:
+https://github.com/joeyst8/witnora-core/actions/runs/41711345293 .
+
+The new coefficient source-to-count method also passed the full
+independent W-CRC/Ganak suite:
+https://github.com/joeyst8/witnora-core/actions/runs/41710683455 .
+See docs/W_CRC_005_DEFECT_HYPERGRAPH.md for exact results.
+This is vetted task automation, not a self-generating agent.
