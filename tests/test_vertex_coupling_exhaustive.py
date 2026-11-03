@@ -86,11 +86,6 @@ class VertexCouplingExhaustiveTest(unittest.TestCase):
         comparisons = 0
         for n in (6, 8, 10):
             for _ in range(100):
-                graph = {
-                    v: set(w for w in range(n) if w != v and
-                           ((min(v, w), max(v, w)) in set()))
-                    for v in range(n)
-                }
                 # Build a symmetric random graph and scramble insertion order.
                 edges = [
                     (a, b) for a, b in combinations(range(n), 2)
