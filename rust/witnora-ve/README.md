@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-001
+# Witnora Rust migration — R-001/R-002/R-003
 
 The `witnora-ve` executable **and optional PyO3 in-process extension**
 are a native, bounded, exact #SAT **component counter**, ported from Python's W-CRC-015 indexed
@@ -48,6 +48,41 @@ its **in-process** entry point is preferred. Otherwise configure
 Python enumeration. Passing an explicit `binary_path` to the bridge
 forces the CLI path for differential tests. Compare complete timings:
 subprocess startup costs more than the native kernel on small inputs.
+
+## Native source simplification (R-003)
+
+The same crate also exports `simplify_source_native`, an **opt-in**
+source-preserving 2-CNF/CNF preprocessor. It removes tautologies and
+duplicates, performs unit propagation while retaining forced unit
+clauses, and applies the exact consensus identity
+`(A ∨ x) ∧ (A ∨ ¬x) ⇔ A` in deterministic, bounded passes.
+It preserves the **entire assignment set**, not just satisfiability;
+explicit source variable counts are kept even if clauses disappear.
+
+Python calls it via `witnora_core/crc_rust_preprocess.py` and
+`count_source_by_separator(..., source_preprocessor="rust_consensus")`.
+The `"none"` default is unchanged. The native extension must be
+installed; budget exhaustion returns incomplete instead of inventing a
+result. It is not a Lean-certified transformation.
+
+To verify in a development checkout after installing the PyO3 wheel:
+
+```sh
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m unittest tests.test_crc_rust_preprocess -v
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
+  python -m scripts.benchmark_rust_preprocess
+```
+
+[Verified R-003 CI](https://github.com/joeyst8/witnora-core/actions/runs/41736318985)
+passed nine native Rust tests, four Python source tests and 12/12 exact
+Ganak count comparisons. For n=64 pairwise-forcing CNF, 4,032 original
+clauses reduced to 63; full source-count time improved from 185.03 ms to
+3.40 ms on that benchmark runner **with preprocessing included**.
+An unchanged parity family slowed from 18.32 to 23.27 ms, so selective
+admission/benchmarking is necessary. These are narrow pilot results,
+not generic SAT/#SAT superiority. See
+`docs/RUST_003_SOURCE_PREPROCESS.md` for full methodology and limits.
 
 ## Migration policy
 
