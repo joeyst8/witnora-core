@@ -39,7 +39,7 @@ Audited independent green CI: https://github.com/joeyst8/witnora-core/actions/ru
 3. `TC063AsciiCutG14Composition.lean`: sound source-CNF UNSAT composition from passed two-cut, residual partitions, and checked G5 certificates.
 4. `TC063AsciiTwoCutSmoke.lean` and `fixtures/tc063_ascii_two_cut_unsat_smoke.cnf`: genuine 4-cycle two-cut synthetic fixture; x2 and ¬x2 contradiction produces concrete accepted G5 certificates. **This is a smoke test, not an original TC-063 benchmark**, structural speedup, or substantive hard instance.
 5. `scripts/generate_tc063_ascii_smoke_identity_lean.py`: Lean-checks that the committed DIMACS bytes equal those used by the concrete proof.
-6. `TC063CanonicalSortAudit.lean`: tiny interface audit for already-proved sorting and canonical-witness implications. `scripts/generate_python_canonical_sort_differential_lean.py`: 48 Python-generated randomized affine cases checked against Lean's source extraction and normalization before/after sorting (pending current CI at the time of this audit).
+6. `TC063CanonicalSortAudit.lean`: tiny interface audit for already-proved sorting and canonical-witness implications. `scripts/generate_python_canonical_sort_differential_lean.py`: 48 Python-generated randomized affine cases checked against Lean's source extraction and normalization before/after sorting (**passed** targeted CI https://github.com/joeyst8/witnora-core/actions/runs/41585442371; all generated extraction/sorting examples were accepted by Lean).
 
 ## What remains open (separate from the restricted logical theorem)
 
