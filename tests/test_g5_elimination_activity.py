@@ -11,6 +11,8 @@ from witnora_core.operator_genesis import gaussian_eliminate_gf2
 from witnora_core.separator_affine_family_theorem import (
     primal_graph,
     _components_after_removing,
+    recognize_separator_affine_family,
+    SEPARATOR_AFFINE_FAMILY_RECOGNIZED,
 )
 from witnora_core.separator_structural_priority import articulation_vertices
 from witnora_core.xor import canonical_xor_cnf_clauses
@@ -61,6 +63,44 @@ class G5EliminationActivityTest(unittest.TestCase):
             len(ranked_pair_candidates(activity)),
             len(cnf.variables) * (len(cnf.variables) - 1) // 2
         )
+
+    def test_opt_in_g14_search_reuses_live_activity_but_checks_components(self):
+        equations = two_bridge_equations()
+        raw = [
+            clause
+            for equation in equations
+            for clause in canonical_xor_cnf_clauses(
+                equation["variables"], equation["parity_bit"]
+            )
+        ]
+        formula = CNFFormula.from_raw_clauses(raw)
+        elimination = gaussian_eliminate_gf2(equations)
+        activity_result = recognize_separator_affine_family(
+            formula,
+            c=2,
+            r=2,
+            priority="g5_activity",
+            g5_operations=elimination["row_operations"],
+        )
+        graph_result = recognize_separator_affine_family(
+            formula, c=2, r=2, priority="structural"
+        )
+        self.assertEqual(activity_result["status"], SEPARATOR_AFFINE_FAMILY_RECOGNIZED)
+        self.assertEqual(activity_result["status"], graph_result["status"])
+        first_pair = next(
+            row["separator"] for row in activity_result["trace"]
+            if len(row["separator"]) == 2
+        )
+        self.assertEqual(set(first_pair), {9, 10})
+        self.assertEqual(set(activity_result["separator_variables"]), {9, 10})
+        self.assertLessEqual(
+            activity_result["candidates_examined"],
+            graph_result["candidates_examined"]
+        )
+        with self.assertRaises(ValueError):
+            recognize_separator_affine_family(
+                formula, c=2, r=2, priority="g5_activity"
+            )
 
     def test_operation_order_does_not_change_activity_count(self):
         result = gaussian_eliminate_gf2(two_bridge_equations())
