@@ -423,13 +423,12 @@ theorem semanticAffine_rows_nodup
     (r : Nat) (source : CNF) (rows : List Witnora.G5Trace.Row)
     (h : checkSemanticExactAffine r source rows = true) :
     ∀ row ∈ rows, row.coefficients.Nodup := by
-  have hSupport : rows.all (rowSupported r) = true := by
+  have hSupport : ∀ row ∈ rows, rowSupported r row = true := by
     unfold checkSemanticExactAffine at h
     simp at h
     exact h.1.1
   intro row hr
-  exact rowSupported_implies_nodup r row
-    (List.all_eq_true.mp hSupport row hr)
+  exact rowSupported_implies_nodup r row (hSupport row hr)
 
 /-- Main syntactic normalization theorem: *every* accepted semantic
     affine witness stays accepted by the original complete source checker
