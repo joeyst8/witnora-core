@@ -393,7 +393,7 @@ theorem le_maxVariable_of_mem (xs : List Nat) :
       rcases List.mem_cons.mp hv with heq | hRest
       · subst v
         exact Nat.le_max_left x (maxVariable rest)
-      · exact (ih v hRest).trans (Nat.le_max_right x (maxVariable rest))
+      · exact Nat.le_trans (ih v hRest) (Nat.le_max_right x (maxVariable rest))
 
 /-- The support schedule lists row variables directly, including repeats.
     This is finite and avoids enumerating every integer below max ID. -/
