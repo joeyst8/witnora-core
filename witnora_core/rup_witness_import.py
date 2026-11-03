@@ -17,6 +17,7 @@ from typing import Iterable
 
 from .cnf import Clause
 from .drat_check import parse_drat_text
+from .rup_indexed_propagation import indexed_unit_conflict_witness
 
 
 @dataclass(frozen=True)
@@ -90,6 +91,7 @@ def annotate_drup(
     *,
     max_additions: int = 20000,
     max_units: int = 100000,
+    indexed_propagation: bool = False,
 ) -> dict:
     """Annotate a solver-generated DRUP trace, rejecting uncheckable lines.
 
@@ -108,7 +110,8 @@ def annotate_drup(
             continue
         if len(additions) >= max_additions:
             raise RuntimeError("RUP proof-size bound exceeded")
-        units = unit_conflict_witness(database, clause, max_units=max_units)
+        producer = indexed_unit_conflict_witness if indexed_propagation else unit_conflict_witness
+        units = producer(database, clause, max_units=max_units)
         if units is None:
             raise ValueError("CDCL proof contains an uncheckable RUP addition")
         additions.append(RUPWitness(clause, units))
@@ -120,6 +123,7 @@ def annotate_drup(
     joined = "\n".join(proof_lines).encode("utf-8")
     return {
         "status": "LEAN_CHECK_PENDING",
+        "witness_algorithm": "indexed_occurrence" if indexed_propagation else "reference_full_scan",
         "proof_sha256": sha256(joined).hexdigest(),
         "source_clauses": len(source),
         "original_drup_lines": len(parsed),
