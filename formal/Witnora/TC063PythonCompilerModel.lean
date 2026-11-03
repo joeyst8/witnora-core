@@ -226,8 +226,16 @@ theorem pyCompile_eq_compiler
     (n : Nat) (ops : List Operation) :
     pyCompile n ops = compile n ops := by
   have hFold := pyFold_exact ops (PyState.start n) (start_invariant n)
-  have hProjected := congrArg (Option.map Prod.snd) hFold
-  simpa [pyCompile, compile, Option.map_map, PyState.start] using hProjected
+  cases hp : ops.foldlM pyStep (PyState.start n) with
+  | none =>
+      have hc : ops.foldlM step (List.range n, []) = none := by
+        simpa [PyState.start, hp] using hFold.symm
+      simp [pyCompile, compile, hp, hc, PyState.start]
+  | some result =>
+      have hc : ops.foldlM step (List.range n, []) =
+          some (result.refs, result.pairs) := by
+        simpa [PyState.start, hp] using hFold.symm
+      simp [pyCompile, compile, hp, hc, PyState.start]
 
 #print axioms Witnora.TC063PythonCompilerModel.pyStep_fails_iff_compiler_fails
 #print axioms Witnora.TC063PythonCompilerModel.pyFold_exact
