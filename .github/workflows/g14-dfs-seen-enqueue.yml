@@ -48,6 +48,8 @@ on:
       - "tests/test_g5_elimination_activity_crossfamilies.py"
       - "tests/test_g5_activity_hybrid_heldout.py"
       - "tests/test_g5_pairwise_dense_bridge.py"
+      - "witnora_core/g5_boundary_path_signal.py"
+      - "tests/test_g5_boundary_path_signal.py"
       - "witnora_core/global_coupling_separator.py"
       - "tests/test_global_coupling_separator.py"
       - "witnora_core/vertex_coupling_separator.py"
@@ -90,6 +92,8 @@ jobs:
         run: python -m unittest tests.test_g5_activity_hybrid_heldout -v
       - name: Regular 2-cut dense-bridge pairwise scale study
         run: python -m unittest tests.test_g5_pairwise_dense_bridge -v
+      - name: G5 indexed-provenance boundary-path discovery and no-cut controls
+        run: python -m unittest tests.test_g5_boundary_path_signal -v
       - name: Global two-edge coupling hidden-bridge and G14 recognition checks
         run: python -m unittest tests.test_global_coupling_separator -v
       - name: Vertex-coupling completeness, randomized graph oracle and dense-overlap G14 test
