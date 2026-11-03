@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "description": "Finite WCRC research experiments; each begins after the prior task completes. Tasks are audited IDs, never shell commands.",
+  "description": "Finite reviewed W-CRC-010/011 conditional independence and bounded separator experiments; each launches immediately on successful completion of predecessor. No arbitrary commands or autonomous task generation.",
   "tasks": [
-    "wcrc005_defect_unit",
-    "wcrc006_conflict_unit",
-    "wcrc006_conflict_ganak"
+    "wcrc010_conditional_unit",
+    "wcrc011_separator_unit",
+    "wcrc011_separator_benchmark"
   ]
 }
