@@ -30,6 +30,9 @@ on:
       - "tests/test_eth_clause_violation_parity.py"
       - "witnora_core/constraint_geometry.py"
       - "tests/test_constraint_geometry.py"
+      - "witnora_core/sparse_parity_checks.py"
+      - "tests/test_sparse_parity_checks.py"
+      - "scripts/benchmark_sparse_parity.py"
       - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
       - "scripts/generate_eth_clause_violation_parity_lean.py"
@@ -63,6 +66,9 @@ on:
       - "tests/test_eth_clause_violation_parity.py"
       - "witnora_core/constraint_geometry.py"
       - "tests/test_constraint_geometry.py"
+      - "witnora_core/sparse_parity_checks.py"
+      - "tests/test_sparse_parity_checks.py"
+      - "scripts/benchmark_sparse_parity.py"
       - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
       - "scripts/generate_eth_clause_violation_parity_lean.py"
@@ -102,6 +108,12 @@ jobs:
 
       - name: Benchmark non-enumerative sketch construction only
         run: python -m scripts.benchmark_eth_constraint_geometry
+
+      - name: Check nonenumerative sparse parity guarantees and 4-bit adversary
+        run: python -m unittest tests.test_sparse_parity_checks -v
+
+      - name: Measure sparse parity scope and min-degree contraction width
+        run: python -m scripts.benchmark_sparse_parity
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
