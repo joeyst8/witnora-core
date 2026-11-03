@@ -21,6 +21,7 @@ namespace Witnora.TC063SparseG5OperationBound
 
 open Witnora.G5Trace
 open Witnora.G5IndexedOperationEmitter
+open Witnora.G5IndexedRowValueRefinement
 open Witnora.G5EmittedPivotPass
 open Witnora.G5IndexedPivotSelection
 open Witnora.G5IndexedScheduledEmitter
