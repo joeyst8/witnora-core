@@ -3,8 +3,8 @@
 Status: **pilot proof of concept with restricted-family wins, not
 a general-purpose #SAT/SAT result**.
 
-Verified green GitHub Actions:
-https://github.com/joeyst8/witnora-core/actions/runs/41718112395
+Verified post-fix green GitHub Actions (**79 Python tests**):
+https://github.com/joeyst8/witnora-core/actions/runs/41718161372
 
 ## The actual end-to-end question
 
@@ -56,9 +56,8 @@ this limits the practical end-to-end interpretation.
   full-assignment #SAT evaluator checks the integer result.
 - Eight larger benchmark cases were checked against **Ganak** and
   separately against exact closed-form model counts.
-- GitHub Actions run #41718112395 passed **78 Python tests**
-  (prior to the extra W-CRC-011 oversized-budget regression added
-  in a subsequent commit).
+- GitHub Actions run #41718161372 passed **79 Python tests**,
+  including the added W-CRC-011 oversized-budget regression.
 
 A fresh W-CRC-012 test originally uncovered a preexisting W-CRC-011
 corner case: terminal/infinite capacity was n+1 but could be less
