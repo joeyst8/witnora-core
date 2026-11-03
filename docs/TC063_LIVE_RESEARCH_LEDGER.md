@@ -198,7 +198,7 @@ implementation with a proved reference correspondence is next. See
 [the universal CDCL/RUP research report](GENERAL_RUP_CDCL_BRIDGE.md).
 
 
-## 2026-11-03 OpenAI ETH-style clause-violation parity experiment (CI pending)
+## 2026-11-03 OpenAI ETH-style clause-violation parity experiment (CI green)
 
 Pivoting from physical/quark analogies, we inspected OpenAI's October 2026
 ETH research and isolated a mathematically relevant transfer: parity sketches
@@ -220,8 +220,11 @@ universal source-model ⇒ all parity-checks property. A generator emits
 actual signed-source-bound finite Lean examples that check both
 directions on the 8-variable source controls. The workflow was updated
 to run the universal Lean build, Python exhaustive/tamper tests, and
-generated Lean reductions. **Do not mark Lean acceptance until this
-workflow finishes green**.
+generated Lean reductions. **The full workflow passed**: universal theorem axiom audit showed only
+`[propext, Quot.sound]`, both 8-variable source-bound Lean equivalence
+examples kernel-checked, six Python exhaustive/tamper cases passed, and
+all existing resolution/RUP regressions passed:
+https://github.com/joeyst8/witnora-core/actions/runs/41606445630 .
 
 The reverse direction for arbitrary parity rows is false (two violated
 clauses can cancel); exactness currently rests on exponential finite
