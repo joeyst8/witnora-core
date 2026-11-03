@@ -103,13 +103,14 @@ def count_signed_cnf_crc(
     define the boundary. Everything else is an internal affine/free
     variable. No source-clause information is discarded.
     """
-    if source_preprocessor not in ("none", "rust_consensus"):
+    if source_preprocessor not in ("none", "rust_consensus", "rust_adaptive"):
         raise ValueError("unknown exact source preprocessor")
-    if source_preprocessor == "rust_consensus":
+    if source_preprocessor in ("rust_consensus", "rust_adaptive"):
         from witnora_core.crc_rust_preprocess import simplify_source_in_rust
         simplified = simplify_source_in_rust(
             raw_clauses, nvars, max_passes=max_preprocess_passes,
-            max_clause_visits=max_preprocess_clause_visits)
+            max_clause_visits=max_preprocess_clause_visits,
+            adaptive=(source_preprocessor == "rust_adaptive"))
         if simplified is None:
             return None
         raw_clauses = simplified.clauses
