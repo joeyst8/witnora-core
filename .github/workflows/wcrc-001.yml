@@ -53,3 +53,5 @@ jobs:
         run: python -m scripts.benchmark_crc_scaling
       - name: W-CRC-003 high-model-count pilot versus Ganak
         run: python -m scripts.benchmark_crc_highcount
+      - name: W-CRC-003 expanded state-budget falsification
+        run: python -m scripts.benchmark_crc_highcount --max-states 30000 --seconds 2.5 --repeats 1
