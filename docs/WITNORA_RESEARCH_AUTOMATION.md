@@ -170,3 +170,17 @@ This remains a **finite, read-only, non-self-modifying queue**.
 Its success does not automatically invent the next theorem or create
 a new research task. A new reviewed task requires a further draft
 commit; no automatic merge into TC-063/main occurs.
+
+
+## W-CRC-007 adversarial regression carried by the queue
+
+The W-CRC-006 unit task also runs the new W-CRC-007 negative
+independence case. Its two disjoint exceptional clause scopes are
+not independent under the complete source 3-CNF, so a naive
+multiplicative count is rejected. Full updated W-CRC gate:
+https://github.com/joeyst8/witnora-core/actions/runs/41712957364
+(51 tests passed). The updated queue workflow's file triggers now
+also include W-CRC-005/006 unit and benchmark files, and the
+dedicated queue succeeded again at
+https://github.com/joeyst8/witnora-core/actions/runs/41713038135 .
+See docs/W_CRC_007_CLUSTER_FALSIFICATION.md for the exact witness.
