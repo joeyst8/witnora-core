@@ -459,3 +459,29 @@ small overhead. Full analysis:
 This feature is built and tested automatically on vetted commits
 but it **does not** start a self-modifying research loop, post to
 the user's closed chat, modify Lean TC-063 or merge draft PR #122.
+
+
+## Verified R-005 exact native XOR extraction — 2026-11-03
+
+A third opt-in computation moved from Python to Rust: recognition
+and removal of **complete** width-1..3 source-CNF XOR blocks,
+with all nonmatching clauses retained. The source counter selects
+it via `source_extractor="rust"`; `"python"` remains the default.
+No unverified partial-parity assumptions are introduced, and
+native equation masks use 256-bit-capable arbitrary-precision
+integers.
+
+[Dedicated R-005 workflow #41738553647](https://github.com/joeyst8/witnora-core/actions/runs/41738553647)
+passed **13 Rust tests**, **4 new Python source-extractor tests**
+including **280 exact-output plus full-model-set comparisons**,
+and **12/12 independent Ganak count matches**. On the n=64
+pairwise-parity negative control, *whole adaptive-preprocessing
+and source counting* latency was 38.08 ms with Python extraction
+and 21.06 ms with Rust extraction (~1.8x, two repeats). On
+n=64 forcing it was 5.43 versus 4.59 ms (~1.18x). These
+are controlled comparisons, not a general #SAT superiority claim.
+Complete evidence: `docs/RUST_005_EXACT_XOR_EXTRACTION.md`.
+
+The existing reviewed read-only research queue is not self-writing
+and cannot notify the user in a closed ChatGPT chat. No Lean TC-063
+proof files or production default choices were changed.
