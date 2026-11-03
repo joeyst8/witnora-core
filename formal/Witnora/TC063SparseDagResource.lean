@@ -206,6 +206,38 @@ theorem replayDag_preserves_nodup
 #print axioms Witnora.TC063SparseDagResource.replayDag_preserves_nodup
 
 
+/-- Lean 4.19-compatible finite injection bound: a duplicate-free
+    list included in another cannot have more elements than its host. -/
+private theorem nodup_subset_length_v419 :
+    ∀ (xs ys : List Nat), xs.Nodup → xs ⊆ ys →
+      xs.length ≤ ys.length := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro ys _ _
+      simp
+  | cons head tail ih =>
+      intro ys hNo hSub
+      have hHead : head ∈ ys := hSub (by simp)
+      have hNoHead : head ∉ tail := (List.nodup_cons.mp hNo).1
+      have hTailNo : tail.Nodup := (List.nodup_cons.mp hNo).2
+      have hTailSub : tail ⊆ ys.erase head := by
+        intro v hv
+        have hNe : v ≠ head := by
+          intro heq
+          subst v
+          exact hNoHead hv
+        exact (List.mem_erase_of_ne hNe).2
+          (hSub (by simp [hv]))
+      have hBound := ih (ys.erase head) hTailNo hTailSub
+      have hErase := List.length_erase_of_mem hHead
+      have hPositive : 0 < ys.length := by
+        cases ys with
+        | nil => simp at hHead
+        | cons v rest => simp
+      simp only [List.length_cons]
+      omega
+
 /-- Every derived sparse row has at most as many coefficients as the
     total coefficient occurrences in the *original* row table.
     Crucially, this does not depend on the length of the DAG trace or
@@ -223,7 +255,9 @@ theorem replayDag_row_width_le_original_support
     inputs steps result h
     (Witnora.TC063CanonicalBound.row_membership_supportRows inputs)
   intro row hr
-  exact List.Nodup.length_le_of_subset
+  exact nodup_subset_length_v419
+    row.coefficients
+    (Witnora.TC063CanonicalBound.supportRows inputs)
     (hNo row hr) (hSupport row hr)
 
 /-- An accepted bound-independent source-G5 checker certificate has:
