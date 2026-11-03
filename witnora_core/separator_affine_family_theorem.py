@@ -30,6 +30,7 @@ from .operator_genesis import (
 )
 from .xor import canonical_xor_cnf_clauses
 from .separator_structural_priority import prioritized_singletons
+from .g5_elimination_activity import activity_from_g5_operations, ranked_pair_candidates
 
 
 VERSION = "2.22"
@@ -764,15 +765,28 @@ def check_separator_affine_certificate(
 def recognize_separator_affine_family(
     formula: CNFFormula, *, c: int = 1, r: int = 2,
     priority: str = "structural",
+    g5_operations: Iterable[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    if priority not in {"structural", "lexicographic"}:
-        raise ValueError("priority must be structural or lexicographic")
+    if priority not in {"structural", "lexicographic", "g5_activity"}:
+        raise ValueError("priority must be structural, lexicographic or g5_activity")
     variables = list(formula.variables)
     graph = primal_graph(formula)
-    singletons = prioritized_singletons(graph) if priority == "structural" else tuple(variables)
+    singletons = prioritized_singletons(graph) if priority != "lexicographic" else tuple(variables)
+    activity = None
+    if priority == "g5_activity":
+        if g5_operations is None:
+            raise ValueError("g5_activity requires an existing G5 operation trace")
+        # This is only a candidate ordering. Exact G14/G5 validation below
+        # never trusts the operation trace or its activity scores.
+        activity = activity_from_g5_operations(g5_operations, variables)
     trace: list[dict[str, Any]] = []
     for size in range(1, min(c, len(variables)) + 1):
-        candidates = ((v,) for v in singletons) if size == 1 else combinations(variables, size)
+        if size == 1:
+            candidates = ((v,) for v in singletons)
+        elif size == 2 and activity is not None:
+            candidates = ranked_pair_candidates(activity)
+        else:
+            candidates = combinations(variables, size)
         for candidate in candidates:
             components = _component_dicts(formula, list(candidate))
             ok = len(components) >= 2
