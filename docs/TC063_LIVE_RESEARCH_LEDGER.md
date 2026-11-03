@@ -196,3 +196,39 @@ This closes the next *soundness* milestone, **not** the industrial speed
 milestone: Lean still uses list indexing/append, so an Array-backed
 implementation with a proved reference correspondence is next. See
 [the universal CDCL/RUP research report](GENERAL_RUP_CDCL_BRIDGE.md).
+
+
+## 2026-11-03 OpenAI ETH-style clause-violation parity experiment (CI pending)
+
+Pivoting from physical/quark analogies, we inspected OpenAI's October 2026
+ETH research and isolated a mathematically relevant transfer: parity sketches
+of the **source CNF clause-violation vector**. This is distinct from ordinary
+G5 affine XOR reconstruction and does not require small source separators.
+
+The new finite experimental module
+`witnora_core/eth_clause_violation_parity.py` greedily selects 2–5
+clause sparse rows, with full 2^n enumeration; the independent verifier
+checks source SHA-256 and both directions on every enumerated assignment.
+The six existing deterministic complete-primal dense 3-CNFs yielded short
+exact sketches: UNSAT 8/54 → 6 rows, 10/66 → 7 rows, 12/84 → 9 rows;
+planted-SAT counterparts → 6, 9, 9 rows respectively. Distinct source
+model counts are 0/0/0 for UNSAT and 1/1/5 for planted SAT. These counts
+were reproduced locally in an independent exhaustive run.
+
+The Lean module `ClauseViolationParity.lean` states and proves the
+universal source-model ⇒ all parity-checks property. A generator emits
+actual signed-source-bound finite Lean examples that check both
+directions on the 8-variable source controls. The workflow was updated
+to run the universal Lean build, Python exhaustive/tamper tests, and
+generated Lean reductions. **Do not mark Lean acceptance until this
+workflow finishes green**.
+
+The reverse direction for arbitrary parity rows is false (two violated
+clauses can cancel); exactness currently rests on exponential finite
+enumeration. No new polynomial, subexponential, industrial SAT, or P=NP
+claim is made. The mathematically difficult missing step is a
+**non-enumerative** exact sparse-check construction and an efficient
+exact polynomial/tensor contraction/counting procedure.
+
+Full source, method, proof boundary and measurements:
+[OpenAI ETH clause-violation parity bridge](OPENAI_ETH_CLAUSE_PARITY_BRIDGE.md).
