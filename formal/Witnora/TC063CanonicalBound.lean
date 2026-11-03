@@ -201,6 +201,58 @@ theorem canonicalSupport_perm_of_bounded
     exact (mem_canonicalSupport_iff bound v coeff).mpr
       ⟨hBound v h, h⟩
 
+/-- Canonicalize every affine row directly with the bounded sparse
+    implementation, retaining its right-hand side and row order. -/
+def boundedCanonRow (bound : Nat) (row : Row) : Row :=
+  { row with coefficients := canonicalSupport bound row.coefficients }
+
+def boundedCanonRows (bound : Nat) (rows : List Row) : List Row :=
+  rows.map (boundedCanonRow bound)
+
+/-- The actual source-bound G5 extraction check is unchanged if
+    duplicate-free input rows are in range and we canonically scan them. -/
+theorem checkInitialRows_boundedCanonRows
+    (bound : Nat) (source : CNF) (rows : List Row) :
+    (∀ row ∈ rows, row.coefficients.Nodup) →
+    (∀ row ∈ rows, ∀ v ∈ row.coefficients, v < bound) →
+    checkInitialRows source (boundedCanonRows bound rows) =
+      checkInitialRows source rows := by
+  induction rows with
+  | nil =>
+      intro _ _
+      rfl
+  | cons row rest ih =>
+      intro hNodup hBound
+      have hHead : row.coefficients.Nodup :=
+        hNodup row (by simp)
+      have hHeadBound : ∀ v ∈ row.coefficients, v < bound :=
+        hBound row (by simp)
+      have hTailNo : ∀ r ∈ rest, r.coefficients.Nodup := by
+        intro r hr
+        exact hNodup r (by simp [hr])
+      have hTailBound : ∀ r ∈ rest, ∀ v ∈ r.coefficients, v < bound := by
+        intro r hr
+        exact hBound r (by simp [hr])
+      have hPerm := canonicalSupport_perm_of_bounded bound
+        row.coefficients hHead hHeadBound
+      have hHeadEq :
+          checkPattern source (canonicalSupport bound row.coefficients) row.rhs =
+            checkPattern source row.coefficients row.rhs :=
+        checkPattern_perm_of_nodup source
+          (canonicalSupport bound row.coefficients)
+          row.coefficients row.rhs hPerm
+          (canonicalSupport_nodup bound row.coefficients)
+      have hTailEq :
+          rest.all ((fun r => checkPattern source r.coefficients r.rhs) ∘
+              boundedCanonRow bound) =
+            rest.all (fun r => checkPattern source r.coefficients r.rhs) := by
+        simpa only [checkInitialRows, boundedCanonRows, List.all_map]
+          using ih hTailNo hTailBound
+      simp [boundedCanonRows, boundedCanonRow, checkInitialRows,
+        hHeadEq, hTailEq]
+
+#print axioms Witnora.TC063CanonicalBound.checkInitialRows_boundedCanonRows
+
 #print axioms Witnora.TC063CanonicalBound.canonicalSupport_idempotent
 #print axioms Witnora.TC063CanonicalBound.canonicalSupport_perm_of_bounded
 
