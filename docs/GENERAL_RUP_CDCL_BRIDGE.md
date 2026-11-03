@@ -192,3 +192,45 @@ contradiction points to a present clause. That would remove the verifier's
 repeated existential row search while preserving soundness. Then stress
 larger non-affine and industrial instances, handle unsupported RAT proof
 steps explicitly, and benchmark total wall time against CDCL/DRAT checkers.
+
+
+## 2026-11-03 universally sound indexed-reason RUP certificate
+
+**Completed and kernel checked**: `formal/Witnora/GeneralRUPIndexed.lean`
+introduces `UnitReason {forced, rowID}` and
+`IndexedRupStep {clause, units, conflictID}`. Unlike the previous RUP
+checker, every reason is a claim about an **exact zero-based source or
+previously derived clause index**. The checker verifies that the named row
+exists, contains the propagated literal, that all other literals are false
+under prior assumptions, and that the named final conflict row is falsified.
+A custom `selected_row_mem` lemma proves indexed lookup implies actual
+clause database membership. The universal `signedIndexedRup_unsat`
+theorem reduces every accepted indexed step to the earlier proved
+`signedRup_unsat` theorem. This is not a restatement of a solver verdict.
+
+`formal/Witnora/GeneralRUPIndexedAscii.lean` composes the exact DIMACS
+ASCII-byte parser, verified signed-token stream and indexed-reason checker.
+`checkAsciiIndexedRup_sound` returns both source-document identity and a
+universal UNSAT theorem for the parsed CNF. Both axiom audits are
+`[propext, Quot.sound]`, without any `sorry` or project axiom.
+
+An untrusted Python layer `attach_reason_indices` emits reason row IDs
+for actual Glucose3 DRUP additions. `verify_native_indexed_witness` is
+only a diagnostic; the independent Lean gate accepts/refutes the concrete
+claims. The CI generated and Lean-accepted the real indexed Glucose
+PHP(3,2), PHP(4,3), PHP(5,4), and an 8-variable/54-clause complete-primal
+graph random 3-CNF refutation. The smallest PHP proof was also checked
+against actual ASCII DIMACS bytes, while a changed header was rejected.
+Forged and future/unavailable unit/conflict row IDs were rejected in both
+native adversarial tests and the generated Lean negative example.
+
+Successful complete CI: https://github.com/joeyst8/witnora-core/actions/runs/41602608726 .
+
+**Performance caution:** the indexed Lean checker currently uses
+`List.getElem?`; indexing therefore costs up to the row ID, while
+`database ++ [step.clause]` also copies a list prefix. It eliminates the
+unrestricted existential search across all rows at each inference, but
+**does not yet establish O(1) random access, linear certificate checking,
+or better end-to-end performance**. Next: prove a true `Array`-backed
+append/read correspondence, check PHP(6,5) in Lean, then benchmark large
+RUP/LRAT industrial traces with bounded memory and independent controls.
