@@ -228,14 +228,16 @@ theorem pyCompile_eq_compiler
   have hFold := pyFold_exact ops (PyState.start n) (start_invariant n)
   cases hp : ops.foldlM pyStep (PyState.start n) with
   | none =>
+      simp only [PyState.start] at hp
       have hc : ops.foldlM step (List.range n, []) = none := by
         simpa [PyState.start, hp] using hFold.symm
-      simp [pyCompile, compile, hp, hc, PyState.start]
+      simp [pyCompile, compile, PyState.start, hp, hc]
   | some result =>
+      simp only [PyState.start] at hp
       have hc : ops.foldlM step (List.range n, []) =
           some (result.refs, result.pairs) := by
         simpa [PyState.start, hp] using hFold.symm
-      simp [pyCompile, compile, hp, hc, PyState.start]
+      simp [pyCompile, compile, PyState.start, hp, hc]
 
 #print axioms Witnora.TC063PythonCompilerModel.pyStep_fails_iff_compiler_fails
 #print axioms Witnora.TC063PythonCompilerModel.pyFold_exact
