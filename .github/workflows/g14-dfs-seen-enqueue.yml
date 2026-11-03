@@ -13,6 +13,7 @@ on:
       - "formal/Witnora/G14DFSModelBridge.lean"
       - "formal/Witnora/TC063CompletenessReduction.lean"
       - "formal/Witnora/TC063CanonicalAffineBridge.lean"
+      - "formal/Witnora/TC063PatternPermutation.lean"
       - ".github/workflows/g14-dfs-seen-enqueue.yml"
   workflow_dispatch:
 
@@ -32,9 +33,9 @@ jobs:
           test: false
       - name: Kernel-check seen-at-enqueue invariants
         working-directory: formal
-        run: lake build Witnora.G14DFSSeenEnqueue Witnora.G14DFSOuterScan Witnora.G14DFSPreseen Witnora.G14DFSOwnerLabels Witnora.G14DFSModelBridge Witnora.TC063CompletenessReduction Witnora.TC063CanonicalAffineBridge
+        run: lake build Witnora.G14DFSSeenEnqueue Witnora.G14DFSOuterScan Witnora.G14DFSPreseen Witnora.G14DFSOwnerLabels Witnora.G14DFSModelBridge Witnora.TC063CompletenessReduction Witnora.TC063CanonicalAffineBridge Witnora.TC063PatternPermutation
       - name: Reject proof holes
         run: |
-          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14DFSSeenEnqueue.lean formal/Witnora/G14DFSOuterScan.lean formal/Witnora/G14DFSPreseen.lean formal/Witnora/G14DFSOwnerLabels.lean formal/Witnora/G14DFSModelBridge.lean formal/Witnora/TC063CompletenessReduction.lean formal/Witnora/TC063CanonicalAffineBridge.lean; then
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14DFSSeenEnqueue.lean formal/Witnora/G14DFSOuterScan.lean formal/Witnora/G14DFSPreseen.lean formal/Witnora/G14DFSOwnerLabels.lean formal/Witnora/G14DFSModelBridge.lean formal/Witnora/TC063CompletenessReduction.lean formal/Witnora/TC063CanonicalAffineBridge.lean formal/Witnora/TC063PatternPermutation.lean; then
             exit 1
           fi
