@@ -32,6 +32,7 @@ on:
       - "formal/Witnora/TC063CanonicalSortAudit.lean"
       - "scripts/generate_python_canonical_sort_differential_lean.py"
       - "fixtures/tc063_ascii_two_cut_unsat_smoke.cnf"
+      - "fixtures/tc063_three_row_affine_unsat.cnf"
       - "scripts/generate_tc063_ascii_smoke_identity_lean.py"
       - "scripts/generate_python_ascii_source_vertex_cuts_lean.py"
       - "scripts/generate_python_source_vertex_cuts_differential_lean.py"
