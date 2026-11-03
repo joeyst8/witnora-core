@@ -32,6 +32,12 @@ ALLOWED_TASKS = {
         ("-m", "unittest", "tests.test_crc_conflict_oracle", "-v"),
     "wcrc006_conflict_ganak":
         ("-m", "scripts.benchmark_crc_conflict"),
+    "wcrc012_cutset_unit":
+        ("-m", "unittest", "tests.test_crc_cutset_count", "-v"),
+    "wcrc013_adversarial_unit":
+        ("-m", "unittest", "tests.test_crc_adversarial_benchmark", "-v"),
+    "wcrc013_adversarial_ganak":
+        ("-m", "scripts.benchmark_crc_adversarial"),
     "wcrc008_fourier_unit":
         ("-m", "unittest", "tests.test_crc_independence_audit", "-v"),
     "wcrc009_structural_unit":
