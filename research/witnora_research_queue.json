@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "description": "Finite reviewed W-CRC-016/017 held-out and algebraic graph controls, completion-driven with fail-stop budgets.",
+  "description": "Finite reviewed W-CRC-017/018 dense semantics and matched controls, completion-driven with fail-stop budgets.",
   "tasks": [
-    "wcrc016_heldout_unit",
     "wcrc017_dense_unit",
-    "wcrc017_dense_ganak"
+    "wcrc018_matched_unit",
+    "wcrc018_matched_ganak"
   ]
 }
