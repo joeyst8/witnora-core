@@ -163,7 +163,7 @@ WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
 ```
 
 [Green R-006 CI](https://github.com/joeyst8/witnora-core/actions/runs/41740113548)
-passed **17 Rust tests**, four new Python differential tests including
+passed **17 Rust tests**, five new Python differential tests including
 whole small CNF Walsh spectra and full affine/source counts, and
 **16/16 independently counted Ganak cases**. On n=60 with three
 three-variable parity blocks crossing 20 disjoint OR components,
@@ -171,6 +171,10 @@ full affine-plus-coefficient time was **0.7021 ms Python versus
 0.2218 ms Rust**, ~3.17x for this specific family. The benchmark
 deliberately excludes earlier source preparation and source XOR
 extraction; three very short repeats are not a general solver ranking.
+Follow-up [combined native pipeline CI](https://github.com/joeyst8/witnora-core/actions/runs/41740643432)
+also verified all three opt-in Rust source stages together against
+the original all-Python source path and analytic counts on nine
+n=12/24/60 source families.
 See `docs/RUST_006_RIGHT_WALSH_COEFFICIENTS.md`.
 
 ## Migration policy
