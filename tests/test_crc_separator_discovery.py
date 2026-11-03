@@ -62,6 +62,11 @@ class TestSeparatorDiscovery(unittest.TestCase):
             [[1, 2]], (1, 2, 3), (1,), (2,), 7,
             max_separator_size=2))
 
+    def test_direct_edge_rejected_even_if_cut_budget_exceeds_n(self):
+        self.assertIsNone(discover_source_separator(
+            [[1, 2]], (1, 2), (1,), (2,), 3,
+            max_separator_size=100))
+
     def test_disconnected_zero_cut(self):
         result = discover_source_separator(
             [[1, 3], [2, 4]], (1, 2, 3, 4),
