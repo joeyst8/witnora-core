@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import random
+from fractions import Fraction
 import unittest
 
 from tests.test_crc_boundary import brute_count
@@ -108,8 +109,7 @@ class TestRustLeftAffine(unittest.TestCase):
         bit = 1 << 255
         got = query_left_affine_in_rust(((bit, 1),), (), (256,), max_terms=2)
         self.assertEqual(got.projected_rows, ((bit, 1),))
-        self.assertEqual(got.spectrum, {0: 1/2, bit: -1/2})
-        # Fractions and float half values compare exactly at this denominator.
+        self.assertEqual(got.spectrum, {0: Fraction(1, 2), bit: Fraction(-1, 2)})
         self.assertIsNone(query_left_affine_in_rust(
             ((1, 0), (2, 0)), (), (1, 2), max_terms=2))
         self.assertEqual(query_left_affine_in_rust(
