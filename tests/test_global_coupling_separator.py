@@ -116,6 +116,23 @@ class GlobalCouplingSeparatorTest(unittest.TestCase):
             self.assertEqual(two_edge_cut_boundary_pairs(graph)["candidates"], [])
             self.assertEqual(prioritized_global_pairs(graph), tuple(combinations(sorted(graph), 2)))
 
+    def test_dense_shared_vertex_boundary_is_a_genuine_false_negative(self):
+        # Two K5 blocks overlap at exactly two vertices; 2-vertex removal
+        # separates the blocks, but no removal of two *edges* can do so.
+        left = (0, 1, 2, 3, 4)
+        right = (0, 1, 5, 6, 7)
+        edges = set(combinations(left, 2)) | set(combinations(right, 2))
+        labels = {0: 100, 1: 101, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6}
+        graph = graph_of(labels.values(), [
+            (labels[a], labels[b]) for a, b in sorted(edges)
+        ])
+        self.assertEqual(two_cut_oracle(graph), {(100, 101)})
+        report = two_edge_cut_boundary_pairs(graph)
+        self.assertEqual(report["candidates"], [])
+        self.assertEqual(prioritized_global_pairs(graph)[0], (1, 2))
+        # Completeness is preserved only because exhaustive G14 pair
+        # fallback is retained after these empty graph-cut suggestions.
+
     def test_reject_bad_graph_and_disconnected_inputs(self):
         with self.assertRaises(ValueError):
             two_edge_cut_boundary_pairs({1: {2}, 2: set()})
