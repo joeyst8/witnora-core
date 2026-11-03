@@ -89,7 +89,7 @@ theorem checkStep_preserves_models
       (s.pivot, true) ∈ s.left ∧
       (s.pivot, false) ∈ s.right ∧
       s.output = resolvent s.left s.right s.pivot := by
-    exact of_decide_true (by simpa [checkStep] using hstep)
+    simpa [checkStep] using hstep
   have hl : s.left.any (signedLitTrue a) = true :=
     List.all_eq_true.mp hmodel s.left hvalid.1
   have hr : s.right.any (signedLitTrue a) = true :=
@@ -97,7 +97,9 @@ theorem checkStep_preserves_models
   have hout : s.output.any (signedLitTrue a) = true := by
     rw [hvalid.2.2.2.2]
     exact resolvent_sound s.left s.right s.pivot a hl hr
-  simp [CNFHolds, List.all_append, hmodel, hout]
+  have hdb : database.all (fun clause => clause.any (signedLitTrue a)) = true := hmodel
+  change (database ++ [s.output]).all (fun clause => clause.any (signedLitTrue a)) = true
+  simp [List.all_append, hdb, hout]
 
 /-- Universal soundness: an accepted derivation of the empty clause
     refutes any finite CNF, even outside every TC-063 promise family. -/
@@ -110,7 +112,7 @@ theorem checkResolution_sound
   | nil =>
       intro hmodel
       have hempty : ([] : List Literal) ∈ database := by
-        exact of_decide_true (by simpa [checkResolution] using hcheck)
+        simpa [checkResolution] using hcheck
       have hfalse : ([] : List Literal).any (signedLitTrue a) = true :=
         List.all_eq_true.mp hmodel [] hempty
       simp at hfalse
@@ -123,7 +125,7 @@ theorem checkResolution_sound
               checkResolution (database ++ [s.output]) rest = true := by
             simpa [checkResolution, hs] using hcheck
           intro hmodel
-          exact ih htail a
+          exact ih (database ++ [s.output]) htail a
             (checkStep_preserves_models database s a hs hmodel)
 
 /-- The same theorem starts with arbitrary signed-integer CNF clauses.
