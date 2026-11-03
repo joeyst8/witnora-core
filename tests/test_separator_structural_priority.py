@@ -93,12 +93,15 @@ class StructuralSeparatorPriorityTest(unittest.TestCase):
         self.assertEqual(structural["trace"][0]["separator"], [new_separator])
 
     def test_rejection_is_not_overridden_by_structural_hint(self):
-        instance = make_separator_affine_instance("invalid_cross_clause")
+        # A three-variable clique has no singleton primal separator.
+        # A fixture invalid for one *specified* separator could still have
+        # another valid separator, so it is not a universal negative.
+        formula = CNFFormula.from_raw_clauses([[1, 2, 3]])
         structural = recognize_separator_affine_family(
-            instance.formula, c=1, r=2, priority="structural"
+            formula, c=1, r=2, priority="structural"
         )
         baseline = recognize_separator_affine_family(
-            instance.formula, c=1, r=2, priority="lexicographic"
+            formula, c=1, r=2, priority="lexicographic"
         )
         self.assertEqual(structural["status"], baseline["status"])
         self.assertNotEqual(structural["status"], SEPARATOR_AFFINE_FAMILY_RECOGNIZED)
