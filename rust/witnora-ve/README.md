@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-001/R-002/R-003
+# Witnora Rust migration — R-001/R-002/R-003/R-004
 
 The `witnora-ve` executable **and optional PyO3 in-process extension**
 are a native, bounded, exact #SAT **component counter**, ported from Python's W-CRC-015 indexed
@@ -60,7 +60,7 @@ It preserves the **entire assignment set**, not just satisfiability;
 explicit source variable counts are kept even if clauses disappear.
 
 Python calls it via `witnora_core/crc_rust_preprocess.py` and
-`count_source_by_separator(..., source_preprocessor="rust_consensus")`.
+`count_signed_cnf_crc(..., source_preprocessor="rust_consensus")`.
 The `"none"` default is unchanged. The native extension must be
 installed; budget exhaustion returns incomplete instead of inventing a
 result. It is not a Lean-certified transformation.
@@ -83,6 +83,26 @@ An unchanged parity family slowed from 18.32 to 23.27 ms, so selective
 admission/benchmarking is necessary. These are narrow pilot results,
 not generic SAT/#SAT superiority. See
 `docs/RUST_003_SOURCE_PREPROCESS.md` for full methodology and limits.
+
+## Adaptive admission gate (R-004)
+
+For source families that have no direct binary consensus pairs,
+`source_preprocessor="rust_adaptive"` invokes the native polarity-mask
+admission check, then **returns the original source unchanged** if no
+opportunity is seen. Any admitted source still passes through the
+fully exact, bounded R-003 transformation. This opt-in heuristic may
+miss useful preprocessing, but skipping a transformation cannot make
+the model count incorrect. The original `"none"` default remains.
+
+[Verified R-004 CI](https://github.com/joeyst8/witnora-core/actions/runs/41737533969)
+passed 10 Rust tests, five Python integration tests including 120 new
+full-model-set controls and 12/12 independent Ganak counts. The gate
+skipped all four parity cases and admitted all eight forcing cases.
+In n=64 parity, raw 27.27 ms vs always-preprocess 29.82 ms vs
+adaptive 28.15 ms (admission overhead included). In n=64 forcing,
+raw 257.01 ms vs adaptive 3.82 ms on the same runner.
+These are two-repeat controlled measurements, **not** a general
+SAT solver improvement. See `docs/RUST_004_ADAPTIVE_SOURCE_ADMISSION.md`.
 
 ## Migration policy
 
