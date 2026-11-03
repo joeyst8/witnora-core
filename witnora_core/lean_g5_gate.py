@@ -123,6 +123,7 @@ def verify_g5_certificate_with_lean(
     source_tokens: object | None = None,
     source_spellings: object | None = None,
     source_text: object | None = None,
+    use_sparse_checker: bool = False,
 ) -> dict[str, Any]:
     """Return LEAN_VERIFIED only after independent Lean execution succeeds.
 
@@ -133,13 +134,16 @@ def verify_g5_certificate_with_lean(
     identity = sha256(json.dumps(
         {"formula": formula.to_clause_lists(), "certificate": data,
          "raw_clauses": raw_clauses, "source_tokens": source_tokens,
-         "source_spellings": source_spellings, "source_text": source_text},
+         "source_spellings": source_spellings, "source_text": source_text,
+         "use_sparse_checker": use_sparse_checker},
         sort_keys=True, separators=(",", ":"), default=str,
     ).encode("utf-8")).hexdigest()
     failure = {"lean_formal_status": "NOT_LEAN_VERIFIED",
                "verified": False, "input_sha256": identity}
 
     try:
+        if type(use_sparse_checker) is not bool or (use_sparse_checker and raw_clauses is not None):
+            raise ValueError("sparse G5 checking requires Boolean mode and canonical component CNF")
         if source_text is not None and source_spellings is None:
             raise ValueError("source text requires original decimal spellings")
         if source_spellings is not None and source_tokens is None:
@@ -202,10 +206,17 @@ def verify_g5_certificate_with_lean(
             f"{len(initial_rows)} {indexed_ops} = some {dag} := by decide\n"
         )
         if raw_clauses is None:
-            lean_source += (
-                "example : Witnora.SparseBridge.checkG5Closed "
-                f"{bound} {cnf} {rows} {dag} = true := by decide\n"
-            )
+            if use_sparse_checker:
+                lean_source = "import Witnora.TC063SparseDirectChecker\n" + lean_source
+                lean_source += (
+                    "example : Witnora.TC063SparseDirectChecker.checkSparseG5 "
+                    f"{cnf} {rows} {dag} = true := by decide\n"
+                )
+            else:
+                lean_source += (
+                    "example : Witnora.SparseBridge.checkG5Closed "
+                    f"{bound} {cnf} {rows} {dag} = true := by decide\n"
+                )
         else:
             # This closed theorem proves UNSAT of the source signed clauses
             # themselves, using canonicalization plus G5 reconstruction.
