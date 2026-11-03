@@ -69,7 +69,7 @@ passed:
 
 1. **17 Rust tests** including exhaustive small-source coefficient
    comparisons against direct Walsh summation for random CNFs.
-2. **Four new Python integration tests**, including 210 seeded
+2. **Five new Python integration tests**, including 210 seeded
    small-CNF entire-Walsh-spectrum comparisons against the
    Python inclusion-exclusion component oracle **and direct
    truth-table Fourier calculation**, 120 seeded full affine
@@ -77,6 +77,15 @@ passed:
    Python and exhaustive `brute_count`, wide n=60 separated
    components and n=256 signed-mask tests. Budget and
    invalid-source negative controls passed.
+   A further end-to-end test combined all three native opt-in
+   stages in the same `count_signed_cnf_crc` source request:
+   `rust_adaptive` preprocessing, `rust` k-XOR extraction,
+   and `rust_inclusion_exclusion` coefficients. Across **9
+   source variants** with n=12/24/60 and q=0/1/3 parity blocks,
+   the combined native path matched the independently coded
+   all-Python source path and the analytic count exactly.
+   [Follow-up green CI #41740643432](https://github.com/joeyst8/witnora-core/actions/runs/41740643432)
+   verifies the whole pipeline, not merely isolated operations.
 3. **16/16 independent Ganak checks**, with separate exact
    analytical model counts, on source CNFs built from independent
    three-variable OR blocks plus 0 to 3 explicit four-clause
