@@ -10,6 +10,7 @@ on:
       - "formal/Witnora/GeneralResolutionStream.lean"
       - "formal/Witnora/GeneralResolutionAscii.lean"
       - "formal/Witnora/GeneralRUP.lean"
+      - "formal/Witnora/GeneralRUPAscii.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "scripts/generate_general_rup_lean.py"
       - "tests/test_glucose_drup_import.py"
@@ -25,6 +26,7 @@ on:
       - "formal/Witnora/GeneralResolutionStream.lean"
       - "formal/Witnora/GeneralResolutionAscii.lean"
       - "formal/Witnora/GeneralRUP.lean"
+      - "formal/Witnora/GeneralRUPAscii.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "scripts/generate_general_rup_lean.py"
       - "tests/test_glucose_drup_import.py"
@@ -53,7 +55,7 @@ jobs:
         run: python -m pip install "python-sat==1.8.dev24"
       - name: Kernel-check universal resolution soundness
         working-directory: formal
-        run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP
+        run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP Witnora.GeneralRUPAscii
       - name: Test independent proof generation and tamper rejection
         run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import -v
       - name: Generate non-affine CNF resolution examples
