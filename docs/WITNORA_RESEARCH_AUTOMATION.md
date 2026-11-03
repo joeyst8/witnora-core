@@ -407,3 +407,30 @@ SAT/#SAT speedup or formal count-certificate claim. See
 
 **This Rust workflow is not a self-generating AI research loop**. Like
 the original queue, it responds to vetted research-branch pushes.
+
+
+## Verified R-003 source preprocessor — 2026-11-03
+
+The native Rust migration now has a second exact operation:
+assignment-set-preserving source simplification (unit closure and bounded
+consensus). It is explicitly selected by
+`source_preprocessor="rust_consensus"`; Python remains the default.
+
+The [R-003 Rust workflow](https://github.com/joeyst8/witnora-core/actions/runs/41736318985)
+passed **9 Rust tests**, **4 additional Python integration tests** and
+**12/12 exact Ganak counts**. Randomized controls compared full
+satisfying-assignment sets, not just cardinalities. Three previously
+resource-refused equivalent-unit encodings n=16/32/64 now count exactly.
+For the n=64 pairwise-forcing case, full source-to-count latency was
+185.03 ms without preprocessing and 3.40 ms including Rust
+preprocessing. For the parity negative control it regressed from
+18.32 ms to 23.27 ms. These are family-specific two-repeat timings,
+not a blanket speedup claim. Details:
+`docs/RUST_003_SOURCE_PREPROCESS.md`.
+
+The dedicated Rust tests run on research-branch pushes. They **do not**
+add steps to the finite autonomous research queue, infer a mathematical
+theorem, post to a closed ChatGPT conversation, merge into main or
+modify TC-063 Lean proofs. The remaining Rust migration requires
+adversarial gating, expanded held-out controls and independent formal
+checking if transformation certificates become part of the trust base.
