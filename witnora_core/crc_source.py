@@ -89,6 +89,7 @@ def count_signed_cnf_crc(
     *,
     max_spectrum_terms: int = 4096,
     max_inclusion_subsets: int = 4096,
+    max_coefficient_states: int | None = None,
 ) -> SourceCRCResult | None:
     """Exact count or None on a declared resource budget.
 
@@ -104,6 +105,7 @@ def count_signed_cnf_crc(
         rows, internal, boundary, residual,
         max_spectrum_terms=max_spectrum_terms,
         max_inclusion_subsets=max_inclusion_subsets,
+        max_coefficient_states=max_coefficient_states,
     )
     if result is None:
         return None
