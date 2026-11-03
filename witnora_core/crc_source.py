@@ -94,6 +94,7 @@ def count_signed_cnf_crc(
     enable_defect_oracle: bool = False,
     enable_conflict_oracle: bool = False,
     source_preprocessor: str = "none",
+    source_extractor: str = "python",
     max_preprocess_passes: int = 64,
     max_preprocess_clause_visits: int = 1000000,
 ) -> SourceCRCResult | None:
@@ -114,7 +115,13 @@ def count_signed_cnf_crc(
         if simplified is None:
             return None
         raw_clauses = simplified.clauses
-    rows, residual = extract_exact_small_xors(raw_clauses, nvars)
+    if source_extractor == "python":
+        rows, residual = extract_exact_small_xors(raw_clauses, nvars)
+    elif source_extractor == "rust":
+        from witnora_core.crc_rust_xor import extract_small_xors_in_rust
+        rows, residual = extract_small_xors_in_rust(raw_clauses, nvars)
+    else:
+        raise ValueError("unknown exact source extractor")
     boundary = tuple(sorted({abs(lit) for clause in residual for lit in clause}))
     bset = set(boundary)
     internal = tuple(v for v in range(1, nvars + 1) if v not in bset)
