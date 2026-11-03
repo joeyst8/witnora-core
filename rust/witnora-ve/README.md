@@ -1,7 +1,7 @@
 # Witnora Rust migration — R-001
 
-The `witnora-ve` executable is a native, bounded, exact #SAT
-**component counter**, ported from Python's W-CRC-015 indexed
+The `witnora-ve` executable **and optional PyO3 in-process extension**
+are a native, bounded, exact #SAT **component counter**, ported from Python's W-CRC-015 indexed
 sum-product variable elimination. It is **not** a full SAT solver,
 proof of a new complexity class, or a replacement for Lean's formal
 certificate checker. The existing Python code remains a differential
@@ -12,6 +12,9 @@ reference until native verification is complete.
 ```sh
 cargo test --manifest-path rust/witnora-ve/Cargo.toml --release
 cargo build --manifest-path rust/witnora-ve/Cargo.toml --release
+python -m pip install "maturin>=1.9,<2"
+maturin build --manifest-path rust/witnora-ve/Cargo.toml --release \\\n  --features python --out rust/witnora-ve/wheels
+python -m pip install rust/witnora-ve/wheels/*.whl
 WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \
   python -m unittest tests.test_crc_rust_backend -v
 ```
@@ -39,10 +42,12 @@ counts on budget refusal. This is standard exact variable
 elimination with worst-case exponential intermediate width.
 
 Python can select `component_backend="variable_elimination_rust"`
-inside `count_source_by_separator` after setting
-`WITNORA_RUST_VE_BIN`. The default remains Python enumeration.
-The bridge includes subprocess startup and serialization cost;
-do not confuse kernel timing with end-to-end solver timing.
+inside `count_source_by_separator`. If the PyO3 extension is installed,
+its **in-process** entry point is preferred. Otherwise configure
+`WITNORA_RUST_VE_BIN` to use the executable. The default remains
+Python enumeration. Passing an explicit `binary_path` to the bridge
+forces the CLI path for differential tests. Compare complete timings:
+subprocess startup costs more than the native kernel on small inputs.
 
 ## Migration policy
 
