@@ -12,6 +12,9 @@ on:
       - "formal/Witnora/GeneralRUP.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "scripts/generate_general_rup_lean.py"
+      - "tests/test_glucose_drup_import.py"
+      - "scripts/generate_glucose_drup_rup_lean.py"
+      - "witnora_core/rup_witness_import.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -24,6 +27,9 @@ on:
       - "formal/Witnora/GeneralRUP.lean"
       - "scripts/generate_general_resolution_lean.py"
       - "scripts/generate_general_rup_lean.py"
+      - "tests/test_glucose_drup_import.py"
+      - "scripts/generate_glucose_drup_rup_lean.py"
+      - "witnora_core/rup_witness_import.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -43,11 +49,13 @@ jobs:
           lake-package-directory: formal
           build: false
           test: false
+      - name: Install pinned independent CDCL solver
+        run: python -m pip install "python-sat==1.8.dev24"
       - name: Kernel-check universal resolution soundness
         working-directory: formal
         run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP
       - name: Test independent proof generation and tamper rejection
-        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace -v
+        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import -v
       - name: Generate non-affine CNF resolution examples
         run: python -m scripts.generate_general_resolution_lean > formal/Witnora/GeneratedGeneralResolution.lean
       - name: Lean-check all generated non-affine examples
@@ -58,3 +66,8 @@ jobs:
       - name: Lean-check proposed RUP additions and forged witness rejection
         working-directory: formal
         run: lake env lean Witnora/GeneratedGeneralRUP.lean
+      - name: Generate independently sourced Glucose DRUP RUP witnesses
+        run: python -m scripts.generate_glucose_drup_rup_lean > formal/Witnora/GeneratedGlucoseDRUP.lean
+      - name: Lean-check actual CDCL refutations
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedGlucoseDRUP.lean
