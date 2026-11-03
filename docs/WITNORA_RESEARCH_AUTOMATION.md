@@ -11,11 +11,13 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-005 exact defect-hypergraph Walsh unit regression.
-2. W-CRC-006 independent mixed-sign Walsh unit tests with source
-   negative controls and explicit coefficient/budget bounds.
-3. W-CRC-006 16-case source-to-count versus independent Ganak
-   benchmark, including one and two conflicting-sign exceptions.
+1. W-CRC-010 source-relative conditional-independence unit controls.
+2. W-CRC-011 exact minimum vertex-separator unit controls, including
+   exhaustive minimum-cut and conditional probability cross-checks.
+3. W-CRC-011 end-to-end source-checked cut discovery cost benchmark.
+
+These are the **current** three approved queue tasks. Earlier W-CRC-005/006
+configurations described in the chronological log below are historical.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -184,3 +186,33 @@ also include W-CRC-005/006 unit and benchmark files, and the
 dedicated queue succeeded again at
 https://github.com/joeyst8/witnora-core/actions/runs/41713038135 .
 See docs/W_CRC_007_CLUSTER_FALSIFICATION.md for the exact witness.
+
+
+## Verified W-CRC-010/011 queue and W-CRC-012 investigation
+
+The reviewed finite queue was advanced to three exact signed-source
+separation tasks. Dedicated [queue run #41717147917](https://github.com/joeyst8/witnora-core/actions/runs/41717147917)
+completed in sequence with all three subprocesses passing:
+
+- `wcrc010_conditional_unit`: PASS, 0.089s.
+- `wcrc011_separator_unit`: PASS, 0.093s.
+- `wcrc011_separator_benchmark`: PASS, 0.110s.
+
+The complete W-CRC gate for W-CRC-011 passed **72 Python tests** and
+eight mincut timing controls:
+https://github.com/joeyst8/witnora-core/actions/runs/41716921282 .
+
+A later W-CRC-012 full-counting test exposed a genuine oversight in
+the W-CRC-011 minimum-cut implementation: terminal-arc 'infinite'
+capacity was only n+1, which is insufficient when an explicit
+max-separator budget is larger than n. The fix binds infinity above
+**both n and the configured cut budget**, and a regression test now
+requires a clean inconclusive return for a direct group edge even with
+a vastly oversized requested budget. This is an example of an
+adversarial negative control improving the checker.
+
+The queue remains finite, event-triggered by reviewed branch pushes,
+with a read-only token. It does not autonomously create research tasks
+or send a ChatGPT notification when a GitHub Action completes.
+The W-CRC-012 model-count benchmark is subject to its own separate
+full CI gate; its result is not implied by the queue's success.
