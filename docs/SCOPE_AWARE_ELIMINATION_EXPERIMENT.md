@@ -120,3 +120,6 @@ The correct next milestone is an algebra-aware parity contraction
 or bounded-width exact factor-count pilot with total runtime and
 memory comparison. Iterating on graph ordering alone is unlikely
 to overturn the large gap to the source CNF.
+
+The bounded default CI also passed on the opt-in-large benchmark revision:
+https://github.com/joeyst8/witnora-core/actions/runs/41653374604 .
