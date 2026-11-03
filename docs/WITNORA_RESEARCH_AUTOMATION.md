@@ -11,14 +11,13 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-012 exact source cutset model-counting unit controls.
-2. W-CRC-013 signed-block analytic count and chain/ring rejection tests.
-3. W-CRC-013 heterogeneous, random and adversarial model-count benchmark,
-   including Glucose3 witness-search timing and independent Ganak checks.
+1. W-CRC-014 exact frozen factor-VE correctness controls.
+2. W-CRC-015 incremental indexed-VE random/analytic differential tests.
+3. W-CRC-015 indexed-versus-frozen factor-VE benchmark with Glucose3
+   witness cost and independent Ganak counting.
 
-These are the **current** three approved queue tasks. Earlier W-CRC-005
-through W-CRC-011 configurations described chronologically below are
-historical.
+These are the **current** three approved queue tasks. W-CRC-005 through
+W-CRC-013 configurations described chronologically below are historical.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -261,3 +260,29 @@ The queue printed `QUEUE_COMPLETE` and uploaded its JSON report.
 This demonstrates bounded, event-triggered experiment sequencing;
 it is **not** a self-generating research agent and cannot post new
 updates to a closed ChatGPT turn on its own.
+
+
+## Verified W-CRC-014/015 completion-driven work — 2026-11-03
+
+The W-CRC-014 VE prototype rescues 10/10 long chain/ring model counts
+that the previous component enumeration rejected, but rescanning all
+remaining factors at each elimination step caused large-n timing loss.
+W-CRC-015 adds a versioned heap and variable-to-factor incidence index
+while preserving exactly the old factor algebra and operation budgets.
+
+The entire independent W-CRC gate passed **92 Python test methods**
+and 15/15 Ganak controls at:
+https://github.com/joeyst8/witnora-core/actions/runs/41722453364 .
+
+The dedicated finite research queue also completed successfully at:
+https://github.com/joeyst8/witnora-core/actions/runs/41722441602 .
+
+Actual subprocess task ordering and results:
+
+1. `wcrc014_ve_unit`: PASS (0.356 seconds).
+2. `wcrc015_indexed_unit`: PASS (0.263 seconds).
+3. `wcrc015_indexed_ganak`: PASS (5.055 seconds).
+
+The queue wrote a JSON report and uploaded its artifact. It **still
+does not invent new hypotheses, edit source automatically, merge into
+TC-063/main, or post to ChatGPT when the turn is closed**.
