@@ -519,3 +519,36 @@ discovery. The separate finite read-only research queue still
 cannot generate its own next experimental task or send a
 notification to a closed ChatGPT thread. Lean TC-063 and main
 remain untouched.
+
+
+## Verified R-007 exact left GF(2)/Fourier Rust port — 2026-11-03
+
+Another opt-in native operation now covers GF(2) affine internal
+variable projection and exact sparse boundary Fourier expansion,
+using signed arbitrary-precision rational dyadics.
+Both the source and boundary API select it through
+`left_backend="rust"`, with the unchanged `"python"` default.
+Resource caps, contradictions, undeclared variables, and free
+internal variables remain explicit and fail closed.
+
+[Dedicated R-007 CI #41741754634](https://github.com/joeyst8/witnora-core/actions/runs/41741754634)
+passed **20 Rust tests**, **4 Python integration tests**
+including **280 exact projection/spectrum comparisons**,
+**160 randomized full source-count differentials** and
+**12 four-stage integrated native-source cases**, plus
+**15/15 independent Ganak and analytic counts**. The
+[full 105-test W-CRC gate #41741762342](https://github.com/joeyst8/witnora-core/actions/runs/41741762342)
+also succeeded.
+
+In the controlled n=60 source with six projected XOR blocks,
+Python-left/native-right calculation took 1.0272 ms and
+native-left/native-right 0.6572 ms (~1.56x), including projection
+and coefficient assembly but excluding earlier source preparation.
+Some simpler instances experienced Rust overhead. Exact data
+and limitations: `docs/RUST_007_LEFT_AFFINE_FOURIER.md`.
+
+All changes remain on unmerged research draft PR #122;
+Lean TC-063 PR #121 and main are untouched. Reviewed GitHub
+Actions jobs can execute experiments on changed commits but
+cannot invent a new experimental queue task or post to a
+closed ChatGPT conversation automatically.
