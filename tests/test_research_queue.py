@@ -12,9 +12,9 @@ from scripts.run_witnora_research_queue import execute_plan, validate_plan
 
 
 TASKS = [
-    "wcrc005_symmetry_falsification",
     "wcrc005_defect_unit",
-    "wcrc005_defect_ganak",
+    "wcrc006_conflict_unit",
+    "wcrc006_conflict_ganak",
 ]
 
 
