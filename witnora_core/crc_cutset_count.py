@@ -15,6 +15,7 @@ from typing import Iterable
 
 from witnora_core.crc_boundary import _normalized_clauses
 from witnora_core.crc_separator_discovery import discover_source_separator
+from witnora_core.crc_variable_elimination import count_component_by_elimination
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,9 @@ class CutsetModelCount:
     assignment_states: int
     max_residual_components: int
     primal_edges: int
+    component_backend: str = "enumeration"
+    ve_operations: int = 0
+    ve_max_factor_variables: int = 0
 
 
 def count_source_by_separator(
@@ -40,6 +44,9 @@ def count_source_by_separator(
     max_component_variables: int = 14,
     max_assignment_states: int = 1000000,
     max_separator_branches: int = 64,
+    component_backend: str = "enumeration",
+    max_ve_factor_variables: int = 6,
+    max_ve_operations: int = 1000000,
 ) -> CutsetModelCount | None:
     """Exact source #SAT with strict cut, component and state caps.
 
@@ -55,6 +62,12 @@ def count_source_by_separator(
         not isinstance(max_separator_branches, int) or
         not 1 <= max_separator_branches <= 256):
         raise ValueError("invalid component/state cap")
+    if component_backend not in ("enumeration", "variable_elimination"):
+        raise ValueError("unknown exact component backend")
+    if (not isinstance(max_ve_factor_variables, int) or
+        not 1 <= max_ve_factor_variables <= 16 or
+        not isinstance(max_ve_operations, int) or max_ve_operations < 1):
+        raise ValueError("invalid VE width or operation budget")
     source = tuple(tuple(c) for c in source_clauses)
     cut = discover_source_separator(
         source, boundary_variables, left_group, right_group,
@@ -72,6 +85,7 @@ def count_source_by_separator(
     remaining = tuple(v for v in boundary_variables
                       if v not in set(separator))
     total, states, biggest, largest_comp_count = 0, 0, 0, 0
+    ve_ops, ve_width = 0, 0
     for branch in range(1 << len(separator)):
         condition = sum(1 << (v - 1) for i, v in enumerate(separator)
                         if branch & (1 << i))
@@ -128,6 +142,22 @@ def count_source_by_separator(
                 continue
             width = len(variables)
             biggest = max(biggest, width)
+            if component_backend == "variable_elimination":
+                remaining_ve_budget = max_ve_operations - ve_ops
+                if remaining_ve_budget < 1:
+                    return None
+                ve = count_component_by_elimination(
+                    local_clauses, tuple(variables),
+                    max_factor_variables=max_ve_factor_variables,
+                    max_operations=remaining_ve_budget)
+                if ve is None:
+                    return None
+                ve_ops += ve.operations
+                ve_width = max(ve_width, ve.max_factor_variables)
+                branch_models *= ve.models
+                if branch_models == 0:
+                    break
+                continue
             if width > max_component_variables:
                 return None
             attempts = 1 << width
@@ -149,4 +179,5 @@ def count_source_by_separator(
         total += branch_models
     return CutsetModelCount(
         total, separator, 1 << len(separator), biggest, states,
-        largest_comp_count, cut.primal_edges)
+        largest_comp_count, cut.primal_edges,
+        component_backend, ve_ops, ve_width)
