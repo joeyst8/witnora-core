@@ -62,3 +62,48 @@ semantics, exact small-XOR extraction, projection, requested Walsh
 coefficient query, contraction, budgets, and the correspondence from
 the Python-produced results to checker-approved evidence. No universal
 complexity-theory theorem is implied by W-CRC-002.
+
+
+## Initial GitHub Actions results — 2026-11-03
+
+Green run: https://github.com/joeyst8/witnora-core/actions/runs/41697640978
+(27 Python unittest methods passed; 18 scaling instances completed).
+
+All 18 original inclusion-exclusion CRC attempts returned
+INCOMPLETE_BUDGET. Opt-in exact Shannon CRC, existing ANF, and the
+external Glucose3 *all-model enumeration* each completed all 18;
+**every exact model count agreed**. PySAT decision agreed with each
+zero/nonzero classification.
+
+| Family (9 cases each) | Median Shannon CRC | Median ANF | Median PySAT model enumeration | CRC faster than ANF |
+| --- | ---: | ---: | ---: | ---: |
+| Dense random 3-CNF | 4.8181 ms | 6.1803 ms | 0.1326 ms | 8 / 9 |
+| Mixed XOR + overlapping nonlinear 3-CNF | 5.1942 ms | 16.2233 ms | 0.1494 ms | 9 / 9 |
+
+Median of **per-instance** ANF/CRC speed ratios:
+1.204x dense-only; 3.123x mixed. These are not the ratios of the
+median runtimes in the table. Individual medians are two repeated
+internal runs and one external model-enumeration run, on one CI machine.
+For the mixed family at the k=24 boundary setting, the source has
+46 variables and 191 clauses; the right nonlinear portion comprises
+101 clauses. Boundary interaction edge density in the tested cases
+ranges from roughly 0.67 to 0.82.
+
+**Important negative result:** the standalone external PySAT model
+enumerator is already about 34-37x faster than W-CRC-002 on these
+low-model-count controls by the median per-instance ratio. These
+instances are *easy for model enumeration*, so this comparison is
+not a specialized #SAT solver benchmark, but it decisively rules out
+claiming an external performance breakthrough on this pilot.
+The speedups over ANF can arise from source representation overhead
+and the tractable restricted affine-left structure, not an
+unanticipated collapse in general computational complexity.
+
+**Next gate:** select instances where naive model enumeration is
+uncompetitive (many solutions) and include a **dedicated exact #SAT**
+solver, plus larger random/structured controls with several repetitions.
+Measure preprocessing, memory and extrapolated scaling independently.
+We should also compare against native XOR-aware SAT methods. Run each
+method under fair constraints and record budget exhaustion and timeouts
+without dropping any failures. Do not infer novelty or a Lean proof
+from the green Python tests.
