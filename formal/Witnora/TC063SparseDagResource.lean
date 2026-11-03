@@ -138,6 +138,73 @@ theorem checkDagContradiction_resource_sound
       intro row hr v hv
       exact List.mem_flatMap.mpr ⟨row, hr, hv⟩
 
+
+/-- Symmetric-difference output remains a duplicate-free sparse support
+    whenever the two source supports are duplicate-free. -/
+theorem xorCoefficients_nodup
+    (left right : List Nat)
+    (hl : left.Nodup) (hr : right.Nodup) :
+    (xorCoefficients left right).Nodup := by
+  unfold xorCoefficients
+  apply (List.pairwise_append).2
+  refine ⟨hl.filter _, hr.filter _, ?_⟩
+  intro a ha b hb heq
+  have hnot : a ∉ right := by
+    have hp := (List.mem_filter.mp ha).2
+    simpa using hp
+  have hbmem : b ∈ right := (List.mem_filter.mp hb).1
+  subst b
+  exact hnot hbmem
+
+/-- A row XOR preserves duplicate-free representation. -/
+theorem xorRow_nodup
+    (left right : Row)
+    (hl : left.coefficients.Nodup)
+    (hr : right.coefficients.Nodup) :
+    (xorRow left right).coefficients.Nodup :=
+  xorCoefficients_nodup left.coefficients right.coefficients hl hr
+
+/-- Every row in the replayed append-only DAG remains duplicate-free
+    if each original sparse source row is duplicate-free. -/
+theorem replayDag_preserves_nodup
+    (inputs : List Row) (steps : List XorRef) (result : List Row)
+    (h : replayDag inputs steps = some result)
+    (hinput : ∀ row ∈ inputs, row.coefficients.Nodup) :
+    ∀ row ∈ result, row.coefficients.Nodup := by
+  induction steps generalizing inputs with
+  | nil =>
+      simp [replayDag] at h
+      cases h
+      exact hinput
+  | cons step rest ih =>
+      rcases step with ⟨i, j⟩
+      cases hi : inputs[i]? with
+      | none => simp [replayDag, hi] at h
+      | some left =>
+          cases hj : inputs[j]? with
+          | none => simp [replayDag, hi, hj] at h
+          | some right =>
+              have hrest :
+                  replayDag (inputs ++ [xorRow left right]) rest =
+                    some result := by
+                simpa [replayDag, hi, hj] using h
+              have hnext :
+                  ∀ row ∈ inputs ++ [xorRow left right],
+                    row.coefficients.Nodup := by
+                intro row hrow
+                rcases List.mem_append.mp hrow with hold | hnew
+                · exact hinput row hold
+                · have heq : row = xorRow left right := by
+                    simpa using hnew
+                  subst row
+                  exact xorRow_nodup left right
+                    (hinput left (getElem?_mem inputs i left hi))
+                    (hinput right (getElem?_mem inputs j right hj))
+              exact ih (inputs ++ [xorRow left right]) hrest hnext
+
+#print axioms Witnora.TC063SparseDagResource.xorCoefficients_nodup
+#print axioms Witnora.TC063SparseDagResource.replayDag_preserves_nodup
+
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_no_fresh_variable
 #print axioms Witnora.TC063SparseDagResource.xorCoefficients_length_le_sum
 #print axioms Witnora.TC063SparseDagResource.replayDag_length_exact
