@@ -22,6 +22,8 @@ on:
       - "tests/test_crc_variable_elimination.py"
       - "tests/test_crc_variable_elimination_indexed.py"
       - "tests/test_crc_heldout.py"
+      - "tests/test_crc_dense_semantics.py"
+      - "scripts/benchmark_crc_dense_semantics.py"
       - "scripts/benchmark_crc_defect.py"
       - "scripts/benchmark_crc_conflict.py"
       - "scripts/benchmark_crc_independence.py"
