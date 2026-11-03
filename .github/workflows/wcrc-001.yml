@@ -11,6 +11,7 @@ on:
       - "witnora_core/crc_orbit_oracle.py"
       - "witnora_core/crc_defect_oracle.py"
       - "witnora_core/crc_conflict_oracle.py"
+      - "witnora_core/crc_independence_audit.py"
       - "tests/test_crc_boundary.py"
       - "tests/test_crc_source.py"
       - "tests/test_crc_shannon_oracle.py"
@@ -23,6 +24,7 @@ on:
       - "tests/test_crc_orbit_oracle.py"
       - "tests/test_crc_defect_oracle.py"
       - "tests/test_crc_conflict_oracle.py"
+      - "tests/test_crc_independence_audit.py"
       - "scripts/benchmark_crc_orbit.py"
       - "scripts/benchmark_crc_symmetry_stress.py"
       - "scripts/benchmark_crc_defect.py"
@@ -63,7 +65,7 @@ jobs:
       - name: Install PySAT and Ganak independent counting baselines
         run: python -m pip install --disable-pip-version-check python-sat pyganak==2.8.0
       - name: Exact source and coefficient controls
-        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration tests.test_crc_scaling_benchmark tests.test_crc_highcount_benchmark tests.test_crc_orbit_oracle tests.test_crc_defect_oracle tests.test_crc_conflict_oracle tests.test_research_queue -v
+        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration tests.test_crc_scaling_benchmark tests.test_crc_highcount_benchmark tests.test_crc_orbit_oracle tests.test_crc_defect_oracle tests.test_crc_conflict_oracle tests.test_crc_independence_audit tests.test_research_queue -v
       - name: Source-bound CRC versus structured ANF pilot
         run: python -m scripts.benchmark_crc_vs_anf
       - name: W-CRC-002 dense and mixed scaling pilot
