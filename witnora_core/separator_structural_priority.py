@@ -12,9 +12,10 @@ from collections.abc import Mapping
 
 
 def articulation_vertices(graph: Mapping[int, set[int]]) -> tuple[int, ...]:
-    """Return all articulation vertices of an undirected graph in O(V+E).
+    """Find graph articulation vertices by a linear-time O(V+E) DFS.
 
-    Iterative DFS avoids Python recursion depth limits on long chains.
+    Final sorting of the returned articulation set costs O(k log k),
+    where k is the number of cuts. Iterative DFS avoids recursion limits.
     All graph neighbors must themselves be keys and edges be symmetric,
     as they are in Witnora's primal graph.
     """
@@ -24,9 +25,11 @@ def articulation_vertices(graph: Mapping[int, set[int]]) -> tuple[int, ...]:
     children: dict[int, int] = {}
     cut: set[int] = set()
     clock = 0
-    adjacency = {v: tuple(sorted(graph[v])) for v in graph}
+    # The low-link scan needs no neighbor ordering; sorting is only used
+    # for the final, deterministic candidate ranking.
+    adjacency = {v: tuple(graph[v]) for v in graph}
 
-    for root in sorted(graph):
+    for root in graph:
         if root in discovery:
             continue
         parent[root] = None
