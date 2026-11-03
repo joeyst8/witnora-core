@@ -33,7 +33,7 @@ theorem splitCount_mul {α β : Type}
     (xs : List α) (ys : List β) :
     splitCount p q ys xs = satCount p xs * satCount q ys := by
   induction xs with
-  | nil => rfl
+  | nil => simp [splitCount, satCount]
   | cons x xs ih =>
       simp only [splitCount, satCount]
       rw [ih]
