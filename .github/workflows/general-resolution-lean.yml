@@ -32,6 +32,10 @@ on:
       - "tests/test_constraint_geometry.py"
       - "witnora_core/sparse_parity_checks.py"
       - "tests/test_sparse_parity_checks.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "tests/test_geometry_aware_parity.py"
+      - "scripts/benchmark_geometry_aware_parity.py"
+      - "formal/Witnora/GeometryScope.lean"
       - "scripts/benchmark_sparse_parity.py"
       - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
@@ -68,6 +72,10 @@ on:
       - "tests/test_constraint_geometry.py"
       - "witnora_core/sparse_parity_checks.py"
       - "tests/test_sparse_parity_checks.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "tests/test_geometry_aware_parity.py"
+      - "scripts/benchmark_geometry_aware_parity.py"
+      - "formal/Witnora/GeometryScope.lean"
       - "scripts/benchmark_sparse_parity.py"
       - "scripts/benchmark_eth_constraint_geometry.py"
       - "formal/Witnora/ClauseViolationParity.lean"
@@ -114,6 +122,16 @@ jobs:
 
       - name: Measure sparse parity scope and min-degree contraction width
         run: python -m scripts.benchmark_sparse_parity
+
+      - name: Kernel-check direct parity scope containment theorem
+        working-directory: formal
+        run: lake build Witnora.GeometryScope
+
+      - name: Verify geometry-aware sparse parity and source edge preservation
+        run: python -m unittest tests.test_geometry_aware_parity -v
+
+      - name: Measure compression-versus-contraction geometry frontier
+        run: python -m scripts.benchmark_geometry_aware_parity
 
       - name: Generate bounded source-CNF versus parity-equivalence checks
         run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
