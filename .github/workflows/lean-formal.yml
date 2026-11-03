@@ -263,7 +263,7 @@ jobs:
 
       - name: Build G14 normalized-partition module for runtime Lean certificate checks
         working-directory: formal
-        run: lake build Witnora.G14NormalizedPartition Witnora.TC063SparseCover
+        run: lake build Witnora.G14NormalizedPartition Witnora.TC063SparseCover Witnora.TC063PythonOperationCodec
       - name: Kernel-check Python/Lean CNF normalization correspondence
         working-directory: formal
         run: lake env lean Witnora/CNFCanonicalGenerated.lean
