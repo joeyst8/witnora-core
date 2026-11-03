@@ -244,6 +244,8 @@ def verify_g5_certificate_with_lean(
                 lean_source += (
                     "example : Witnora.TC063SparseDirectChecker.checkSparseG5 "
                     f"{cnf} {rows} {dag} = true := by decide\n"
+                    "example : Witnora.TC063PythonOperationCodec.checkWireSparseG5 "
+                    f"{cnf} {rows} {wire_ops} = true := by decide\n"
                 )
             else:
                 lean_source += (
