@@ -485,3 +485,32 @@ Complete evidence: `docs/RUST_005_EXACT_XOR_EXTRACTION.md`.
 The existing reviewed read-only research queue is not self-writing
 and cannot notify the user in a closed ChatGPT chat. No Lean TC-063
 proof files or production default choices were changed.
+
+
+## Verified R-006 exact native coefficient engine — 2026-11-03
+
+The fourth opt-in Rust computation is exact batched right-CNF
+Walsh coefficients, using component-wise inclusion-exclusion
+and arbitrary-precision rational dyadics. `coefficient_backend=
+"rust_inclusion_exclusion"` can be selected in both the direct
+boundary and source count adapter; `"python"` remains default.
+The new explicit mode×subset operation budget fails closed
+without silent Python Shannon/orbit fallback.
+
+[Dedicated R-006 CI #41740113548](https://github.com/joeyst8/witnora-core/actions/runs/41740113548)
+passed **17 native Rust tests**, **4 new Python tests** with
+randomized entire Walsh spectra and full affine model-count
+differentials, and **16/16 independent Ganak matches**
+against analytic formulas. n=60 with 20 independent OR
+components and three XOR blocks produced exactly
+6,281,023,877,654,589 models in all three validators.
+In that controlled coefficient-engine benchmark, Python took
+0.7021 ms and Rust 0.2218 ms, including projection/spectrum
+and coefficient assembly but excluding raw source parsing.
+Full details: `docs/RUST_006_RIGHT_WALSH_COEFFICIENTS.md`.
+
+This verified source-triggered CI is **not** autonomous theorem
+discovery. The separate finite read-only research queue still
+cannot generate its own next experimental task or send a
+notification to a closed ChatGPT thread. Lean TC-063 and main
+remain untouched.
