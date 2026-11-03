@@ -29,6 +29,7 @@ class SeparatorCountResult:
     total_cofactor_hits: int
     total_forced_assignments: int
     separator_candidates_checked: int
+    admission_reason: str = "unrestricted"
 
 
 def polynomial_scopes(equations: tuple[Polynomial, ...]) -> tuple[int, ...]:
@@ -76,6 +77,25 @@ def residual_component_sizes(
         r = root(bit)
         sizes[r] = sizes.get(r, 0) + 1
     return tuple(sorted(sizes.values(), reverse=True))
+
+
+def scope_primal_is_complete(scopes: tuple[int, ...]) -> bool:
+    """Certify every active variable pair co-occurs in a source equation.
+
+    If true, deleting any subset cannot split the remaining active
+    vertices into multiple nonempty scope components. This is an exact
+    no-separator shortcut, not a prediction based on density alone.
+    """
+    active = 0
+    neighbors: dict[int, int] = {}
+    for scope in scopes:
+        active |= scope
+        remaining = scope
+        while remaining:
+            bit = remaining & -remaining
+            neighbors[bit] = neighbors.get(bit, 0) | (scope ^ bit)
+            remaining ^= bit
+    return all((neighbors[bit] | bit) == active for bit in neighbors)
 
 
 def find_bounded_separator(
@@ -139,20 +159,43 @@ def count_common_zeros_conditioned(
     max_states: int = 100_000,
     max_separator_size: int = 2,
     max_candidate_checks: int = 1_000,
+    admission_policy: str = "always",
 ) -> SeparatorCountResult:
-    """Exact #solutions, using small-separator conditioning if found."""
+    """Exact #solutions; opt-in conservative admission avoids some bad cuts.
+
+    The admission rule only selects an exact counting strategy. It never
+    changes the equation system or assumes a separator proves SAT/UNSAT.
+    """
     if max_states < 1:
         raise ValueError("max_states must be positive")
-    selected, checks = find_bounded_separator(
-        equations, nvars, max_separator_size=max_separator_size,
-        max_candidate_checks=max_candidate_checks)
+    if admission_policy not in ("always", "conservative"):
+        raise ValueError("unknown separator admission policy")
+    scopes = polynomial_scopes(equations)
+    if admission_policy == "conservative" and scope_primal_is_complete(scopes):
+        # A spanning scope clique remains connected after any deletion.
+        selected, checks = None, 0
+        reason = "complete_primal_skip"
+    else:
+        selected, checks = find_bounded_separator(
+            equations, nvars, max_separator_size=max_separator_size,
+            max_candidate_checks=max_candidate_checks)
+        reason = "no_separator" if selected is None else "accepted"
+        if selected is not None and admission_policy == "conservative":
+            removed = sum(1 << (v - 1) for v in selected)
+            component_count = len(residual_component_sizes(scopes, removed))
+            # Conservative workload proxy: each 2^k branch should expose
+            # more independent residual factors than there are branches.
+            # This is a heuristic, NOT a runtime guarantee.
+            if component_count <= (1 << len(selected)):
+                selected = None
+                reason = "low_payback"
     if selected is None:
         r = count_common_zeros_structured(equations, nvars,
                                            max_states=max_states)
         return SeparatorCountResult(
             r.satisfying_assignments, (), False, 1, r.unique_states,
             r.component_splits, r.cofactor_hits, r.forced_assignments,
-            checks)
+            checks, reason)
 
     total = 0
     states = 0
@@ -179,4 +222,4 @@ def count_common_zeros_conditioned(
         hits += r.cofactor_hits
         forced += r.forced_assignments
     return SeparatorCountResult(total, selected, True, 1 << len(selected),
-                                states, splits, hits, forced, checks)
+                                states, splits, hits, forced, checks, reason)
