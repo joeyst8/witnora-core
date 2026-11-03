@@ -174,4 +174,63 @@ example : pyCompile 1 [.addRowXor 0 0] = none := by decide
 #print axioms Witnora.TC063PythonCompilerModel.pyFold_refines_compiler
 #print axioms Witnora.TC063PythonCompilerModel.pyCompile_success_refines
 
+
+/-- The Python-style algorithm and the verified compiler reject exactly
+    the same invalid single operations, independent of next_id. -/
+theorem pyStep_fails_iff_compiler_fails
+    (state : PyState) (op : Operation) :
+    pyStep state op = none ↔
+      step (state.refs, state.pairs) op = none := by
+  cases op with
+  | swapRows a b =>
+      cases ha : state.refs[a]? <;>
+      cases hb : state.refs[b]? <;>
+      simp [pyStep, step, ha, hb]
+  | addRowXor target source =>
+      by_cases heq : target = source
+      · subst source
+        simp [pyStep, step]
+      · have hFalse : (target == source) = false :=
+          decide_eq_false heq
+        cases ha : state.refs[target]? <;>
+        cases hb : state.refs[source]? <;>
+        simp [pyStep, step, hFalse, ha, hb]
+
+/-- The complete Option result agrees across every Python-style run:
+    both accepted traces and rejected traces correspond to Lean's source
+    compiler, provided next_id is synchronized initially. -/
+theorem pyFold_exact
+    (operations : List Operation)
+    (state : PyState)
+    (hInv : PyInvariant state) :
+    (operations.foldlM pyStep state).map
+      (fun result => (result.refs, result.pairs)) =
+    operations.foldlM step (state.refs, state.pairs) := by
+  induction operations generalizing state with
+  | nil => rfl
+  | cons op rest ih =>
+      cases hs : pyStep state op with
+      | none =>
+          have hReject :=
+            (pyStep_fails_iff_compiler_fails state op).mp hs
+          simp [List.foldlM_cons, hs, hReject]
+      | some updated =>
+          obtain ⟨hUpdatedInv, hBridge⟩ :=
+            pyStep_refines_compiler state updated op hInv hs
+          simpa [List.foldlM_cons, hs, hBridge] using
+            ih updated hUpdatedInv
+
+/-- Full universal equivalence of the two *formal* compilers, including
+    rejected inputs; neither successful-execution nor UNSAT assumptions. -/
+theorem pyCompile_eq_compiler
+    (n : Nat) (ops : List Operation) :
+    pyCompile n ops = compile n ops := by
+  have hFold := pyFold_exact ops (PyState.start n) (start_invariant n)
+  have hProjected := congrArg (Option.map Prod.snd) hFold
+  simpa [pyCompile, compile, Option.map_map, PyState.start] using hProjected
+
+#print axioms Witnora.TC063PythonCompilerModel.pyStep_fails_iff_compiler_fails
+#print axioms Witnora.TC063PythonCompilerModel.pyFold_exact
+#print axioms Witnora.TC063PythonCompilerModel.pyCompile_eq_compiler
+
 end Witnora.TC063PythonCompilerModel
