@@ -134,3 +134,53 @@ particular, a `k=2` separator is not automatically useful.
 
 No general-purpose SAT solver, polynomial-time SAT or P vs NP
 breakthrough is claimed.
+
+
+## 2026-11-03 adaptive admission falsification (opt-in)
+
+The follow-on experiment added an opt-in conservative admission policy
+to count_common_zeros_conditioned, preserving the existing default.
+Two independent checks govern admission:
+
+1. If every active variable pair already appears together in an
+   equation scope, the scope primal graph is complete. Deleting
+   variables leaves the residual nonempty graph complete, so **no**
+   small separator can produce two nonempty residual components.
+   This is an exact structural no-cut shortcut, not a density guess.
+2. Otherwise the existing bounded search runs. A discovered k-cut is
+   admitted only when it exposes **more than 2^k residual components**.
+   This is a conservative cost *heuristic*, not a runtime theorem.
+
+The full existing general-CNF/Lean gate and eight ANF-separator tests
+passed on draft PR #121, CI:
+https://github.com/joeyst8/witnora-core/actions/runs/41709516550 .
+Every compared source/sketch model count remained exactly unchanged.
+
+**One-runner three-repeat median timings with tracemalloc (ms):**
+
+| Construction | Direct structured | Original conditioned | New conservative | Interpretation |
+| --- | ---: | ---: | ---: | --- |
+| 1 bridge, 3 blocks | 30.949 | 15.799 | 15.755 | Useful 2-way conditioning retained |
+| 1 bridge, 4 blocks | 83.472 | 22.542 | 23.628 | Useful 2-way conditioning retained |
+| 2 bridges, 3 blocks | 30.713 | 50.814 | **61.847** | Rejecting after search is worse |
+| 2 bridges, 4 blocks | 87.226 | 99.694 | **160.422** | Rejecting after search is much worse |
+| Dense 10v/66c UNSAT source | 8.901 | 19.992 | 9.595 | Complete-primal shortcut avoids 55 scans |
+| Dense 10v/66c UNSAT sketch | 13.993 | 31.642 | 15.605 | Complete-primal shortcut avoids 55 scans |
+
+All eight dense source/sketch cases triggered the exact complete-primal
+shortcut with **zero** cut candidates checked, compared with 36 or 55
+candidates in the unmodified separator-search path. The other six
+dense rows showed the same direction, with some residual cost from
+building the clique certificate. These are exploratory small Python
+timings, not statistical or general SAT results.
+
+**Important negative finding:** a branch-count versus component-count
+rule applied *after exhaustive pair search* can make performance worse,
+even when it correctly predicts that four-way branching may not pay.
+The 20- and 26-variable two-bridge cases still spent time on 210 and
+351 candidate checks and then repeated the original structured
+computation. The next admission rule must decide **before** pair search
+whether that search deserves its cost, or share work with the solver.
+
+This preserves the original checker and default algorithm, and does
+not modify the proved restricted-family TC-063 Lean theorem.
