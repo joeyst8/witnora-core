@@ -95,6 +95,8 @@ def count_signed_cnf_crc(
     enable_conflict_oracle: bool = False,
     source_preprocessor: str = "none",
     source_extractor: str = "python",
+    coefficient_backend: str = "python",
+    max_rust_coefficient_operations: int = 2000000,
     max_preprocess_passes: int = 64,
     max_preprocess_clause_visits: int = 1000000,
 ) -> SourceCRCResult | None:
@@ -133,6 +135,8 @@ def count_signed_cnf_crc(
         enable_orbit_oracle=enable_orbit_oracle,
         enable_defect_oracle=enable_defect_oracle,
         enable_conflict_oracle=enable_conflict_oracle,
+        coefficient_backend=coefficient_backend,
+        max_rust_coefficient_operations=max_rust_coefficient_operations,
     )
     if result is None:
         return None
