@@ -18,6 +18,9 @@ from witnora_core.anf_separator_conditioning import (
     count_common_zeros_conditioned,
 )
 from witnora_core.anf_structured_counter import count_common_zeros_structured
+from witnora_core.aux_violation_tensors import (
+    auxiliary_weight_profile_small, exact_source_models_small,
+)
 from witnora_core.geometry_aware_parity import geometry_aware_sparse_sketch
 from witnora_core.violation_image_anf import (
     ANFCountingBudgetExceeded, row_violation_polynomials,
@@ -26,7 +29,7 @@ from witnora_core.violation_image_anf import (
 
 
 def measure(label: str, equations, nvars: int, method,
-            expected: int | None = None, max_states: int = 5_000) -> None:
+            expected: int | None = None, max_states: int = 5_000) -> int | None:
     ms: list[float] = []
     peaks: list[float] = []
     model_count = None
@@ -43,7 +46,7 @@ def measure(label: str, equations, nvars: int, method,
             print(f"{label} BUDGET_EXCEEDED limit={max_states} "
                   f"ms={elapsed:.3f} peak_kib={peak/1024:.1f}",
                   flush=True)
-            return
+            return None
         elapsed = (perf_counter() - before) * 1000
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
@@ -65,10 +68,11 @@ def measure(label: str, equations, nvars: int, method,
     print(f"{label} models={model_count} states={state_count} "
           f"median_ms={median(ms):.3f} "
           f"peak_kib={median(peaks):.1f}{detail}", flush=True)
+    return model_count
 
 
 def main() -> None:
-    print("SMALL-SEPARATOR CONDITIONING ON CONNECTED SOURCE 3-CNF BLOCKS",
+    print("SEPARATOR CONDITIONING ON CONNECTED 3-CNF BLOCKS WITH 2-CNF BRIDGES",
           flush=True)
     for connectors in (1, 2):
         for nblocks in (3, 4):
@@ -89,15 +93,19 @@ def main() -> None:
             source, _ = find_case(n, m, planted=planted)
             sketch = geometry_aware_sparse_sketch(source, n)
             prefix = f"dense{n}v{m}c-{'sat' if planted else 'unsat'}"
-            for suffix, eqs in (
-                ("source", source_violation_polynomials(source, n)),
-                ("sketch", row_violation_polynomials(source, sketch)),
+            for suffix, eqs, expected in (
+                ("source", source_violation_polynomials(source, n),
+                 exact_source_models_small(source, n)),
+                ("sketch", row_violation_polynomials(source, sketch),
+                 sum(auxiliary_weight_profile_small(source, sketch).coefficients)),
             ):
                 label = prefix + "-" + suffix
-                measure(label+" structured", eqs, n,
-                        count_common_zeros_structured)
-                measure(label+" conditioned", eqs, n,
-                        count_common_zeros_conditioned)
+                original = measure(label+" structured", eqs, n,
+                                   count_common_zeros_structured, expected)
+                conditioned = measure(label+" conditioned", eqs, n,
+                                      count_common_zeros_conditioned, expected)
+                if original is not None and conditioned is not None and original != conditioned:
+                    raise AssertionError("separators changed exact count")
     print("This is bounded exact conditioning; no general polynomial SAT claim.",
           flush=True)
 
