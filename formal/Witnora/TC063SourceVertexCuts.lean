@@ -70,6 +70,44 @@ theorem checked_signed_pair_is_source_cut
     (clauseNeighbors (Witnora.SignedSerialization.decodeCNF raw))
     claimed hParts.2 pair hClaimed
 
+/-- A signed-source certificate accepts exactly the genuine two-vertex cuts:
+    every claimed pair is well formed, no pair is repeated, and no real
+    cut of the source-derived primal graph can be omitted.  The scope is
+    the finite DFS component-count specification, not SAT completeness. -/
+theorem checked_signed_source_exact_cuts
+    (raw : List (List Int)) (claimed : List (Nat × Nat))
+    (hAccepted : checkSignedTwoCuts raw claimed = true) :
+    claimed.Nodup ∧
+    (∀ pair ∈ claimed,
+      pair ∈ orderedPairs
+        (canonicalSourceVertices (Witnora.SignedSerialization.decodeCNF raw))) ∧
+    (∀ pair ∈ orderedPairs
+        (canonicalSourceVertices (Witnora.SignedSerialization.decodeCNF raw)),
+      residualComponentCount
+        (canonicalSourceVertices (Witnora.SignedSerialization.decodeCNF raw))
+        (clauseNeighbors (Witnora.SignedSerialization.decodeCNF raw))
+        [pair.1, pair.2] > 1 ↔ pair ∈ claimed) := by
+  have hParts :
+      validSignedCNF raw = true ∧
+      checkSourceTwoCuts (Witnora.SignedSerialization.decodeCNF raw)
+        claimed = true := by
+    simpa [checkSignedTwoCuts, Bool.and_eq_true] using hAccepted
+  have hCore :=
+    (checkTwoCuts_acceptance_iff
+      (canonicalSourceVertices (Witnora.SignedSerialization.decodeCNF raw))
+      (clauseNeighbors (Witnora.SignedSerialization.decodeCNF raw))
+      claimed).mp hParts.2
+  refine ⟨hCore.1, hCore.2.1, ?_⟩
+  intro pair hPair
+  constructor
+  · intro hCut
+    exact accepted_checker_covers_every_cut
+      (canonicalSourceVertices (Witnora.SignedSerialization.decodeCNF raw))
+      (clauseNeighbors (Witnora.SignedSerialization.decodeCNF raw))
+      claimed hParts.2 pair hPair hCut
+  · intro hClaimed
+    exact checked_signed_pair_is_source_cut raw claimed hAccepted pair hClaimed
+
 /-- Exact signed source edge witness uses the existing G14 theorem. -/
 theorem signed_source_primal_adjacency_iff
     (raw : List (List Int)) (u v : Nat) :
@@ -93,6 +131,7 @@ example : checkSignedTwoCuts
 
 #print axioms Witnora.TC063SourceVertexCuts.mem_canonicalSourceVertices_iff
 #print axioms Witnora.TC063SourceVertexCuts.checked_signed_pair_is_source_cut
+#print axioms Witnora.TC063SourceVertexCuts.checked_signed_source_exact_cuts
 #print axioms Witnora.TC063SourceVertexCuts.signed_source_primal_adjacency_iff
 
 end Witnora.TC063SourceVertexCuts
