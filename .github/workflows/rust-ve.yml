@@ -1,4 +1,4 @@
-name: R-001 Rust exact VE migration and differential gate
+name: Rust native Witnora migration differential gate (R-001 through R-005)
 
 on:
   push:
@@ -14,6 +14,9 @@ on:
       - "witnora_core/crc_rust_preprocess.py"
       - "tests/test_crc_rust_preprocess.py"
       - "scripts/benchmark_rust_preprocess.py"
+      - "witnora_core/crc_rust_xor.py"
+      - "tests/test_crc_rust_xor.py"
+      - "scripts/benchmark_rust_xor.py"
       - ".github/workflows/rust-ve.yml"
   pull_request:
     paths:
@@ -26,6 +29,9 @@ on:
       - "witnora_core/crc_rust_preprocess.py"
       - "tests/test_crc_rust_preprocess.py"
       - "scripts/benchmark_rust_preprocess.py"
+      - "witnora_core/crc_rust_xor.py"
+      - "tests/test_crc_rust_xor.py"
+      - "scripts/benchmark_rust_xor.py"
   workflow_dispatch:
 
 concurrency:
@@ -75,3 +81,11 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m scripts.benchmark_rust_preprocess
+      - name: Verify Rust source XOR extractor against Python reference
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_crc_rust_xor -v
+      - name: Benchmark native XOR source extraction against Ganak
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m scripts.benchmark_rust_xor
