@@ -440,3 +440,39 @@ No general SAT speedup or resolution of P vs NP.
 
 The bounded default CI also passed on the opt-in-large benchmark revision:
 https://github.com/joeyst8/witnora-core/actions/runs/41653374604 .
+
+
+## 2026-11-03 exact polynomial tensor contraction pilot (CI green)
+
+`witnora_core/exact_tensor_counting.py` implements **actual** exact
+binary factor elimination over integer polynomial coefficients.
+Direct source-CNF factors compute #SAT; clause-violation linkage,
+sparse parity factors and monomial weights compute full
+`Z_H(t)=Σ_{x:Hv(x)=0}t^weight(v(x))`. The algebraic identity
+`[t^0] Z_H(t)=#SAT(F)` remains valid even when the sketch has
+positive-weight false positives. An adversarial four-unit-clause
+example produced `Z_H(t)=1+t^4` and constant coefficient 1.
+Six new Python unit tests (including independent finite-oracle
+checks and fail-closed budget rejection) passed.
+
+Measured direct source / auxiliary full-polynomial contraction
+times (ms), including factor construction:
+3v/3c 0.857/3.064; 4v/4c collision 0.727/2.457;
+4v/5c 1.288/8.899; 5v/7c 2.259/54.447;
+6v/9c 3.121/138.650.
+For 8v/12c source completed in 5.026 ms, whereas auxiliary
+**BUDGET_EXCEEDED** at bucket scope12 beyond configured cap11.
+Full polynomial contraction was ~3.4–44.4x slower in finished
+comparisons, with greater Python traced allocations. These are
+small, single-run prototype measurements, **not** industrial
+SAT/counting performance or asymptotic claims.
+
+Complete CI passed, including prior Lean/CDCL gates:
+https://github.com/joeyst8/witnora-core/actions/runs/41658295643 .
+[Detailed exact tensor counting report](EXACT_TENSOR_COUNTING_PILOT.md).
+
+Next: invent an **algebra-aware elimination operator** that
+combines GF(2) row operations with local semantic certificates,
+preserves the exact constant term, and compare its total time/memory
+against direct source CNF and independent model counters.
+TC-063 universal refinement and general SAT speedup remain open.
