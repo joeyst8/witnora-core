@@ -13,6 +13,7 @@ access and append are not yet O(1). No proof-search complexity is claimed.
 namespace Witnora.GeneralResolutionStream
 
 open Witnora.Concrete
+open Witnora.FiniteXor
 open Witnora.G5Extraction
 open Witnora.GeneralResolution
 open Witnora.GeneralResolutionIndexed
