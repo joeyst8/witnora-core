@@ -55,6 +55,17 @@ class G5PairwiseDenseBridgeTest(unittest.TestCase):
             self.assertGreater(
                 len(_components_after_removing(skeleton, {0, 1})), 1
             )
+            actual_two_cuts = {
+                pair for pair in combinations(range(n), 2)
+                if len(_components_after_removing(skeleton, set(pair))) > 1
+            }
+            expected_two_cuts = {
+                (0, 1),
+                (0, block_size + 1),
+                (1, block_size),
+                (block_size, block_size + 1),
+            }
+            self.assertEqual(actual_two_cuts, expected_two_cuts)
             records = []
             for trial in range(48):
                 mapped = dict(zip(range(n), rng.sample(range(1, 2048), n)))
@@ -81,7 +92,11 @@ class G5PairwiseDenseBridgeTest(unittest.TestCase):
                     name: partition_metric(graph, candidate)
                     for name, candidate in candidate_pairs.items()
                 })
-            summary = {"trials": len(records)}
+            summary = {
+                "trials": len(records),
+                "exact_two_cuts": len(actual_two_cuts),
+                "possible_pairs": n * (n - 1) // 2,
+            }
             for method in ("numeric", "single", "pairwise"):
                 summary[method + "_split"] = sum(
                     rec[method]["split"] for rec in records
