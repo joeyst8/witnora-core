@@ -1,4 +1,4 @@
-"""Native Rust indexed VE adapter, preserving exact Python count contracts.
+"""In-process PyO3 / CLI Rust VE adapter, preserving exact count contracts.
 
 Only the VE arithmetic moves to Rust. The Python reference remains as
 an independent differential oracle during migration; the Lean checker
@@ -40,6 +40,7 @@ def count_component_by_rust_elimination(
     clauses = tuple(violation_clauses)
     allowed = sum(1 << (v - 1) for v in variables)
     source_lines = []
+    native_clauses = []
     for zeros, ones in clauses:
         if (not isinstance(zeros, int) or not isinstance(ones, int)
                 or zeros < 0 or ones < 0 or zeros & ones
@@ -48,9 +49,30 @@ def count_component_by_rust_elimination(
         literals = [str(v) for v in variables if zeros & (1 << (v - 1))]
         literals += [str(-v) for v in variables if ones & (1 << (v - 1))]
         source_lines.append(" ".join(literals + ["0"]))
+        native_clauses.append([int(lit) for lit in literals])
+    if binary_path is None:
+        try:
+            from witnora_ve import count_component_native
+        except ImportError:
+            pass
+        else:
+            answer = count_component_native(
+                native_clauses, list(variables),
+                max_factor_variables, max_operations)
+            if answer is None:
+                return None
+            count_s, operations, width, eliminated = answer
+            result = VariableEliminationCount(
+                int(count_s), operations, width, eliminated)
+            if (result.models < 0 or result.operations < 0
+                    or result.operations > max_operations
+                    or result.max_factor_variables > max_factor_variables
+                    or result.eliminated_variables != len(variables)):
+                raise RuntimeError("in-process Rust VE invariants violated")
+            return result
     location = binary_path or os.environ.get("WITNORA_RUST_VE_BIN")
     if not location:
-        raise RuntimeError("Rust VE binary not configured; build rust/witnora-ve")
+        raise RuntimeError("Rust VE not configured; install PyO3 extension or build executable")
     path = Path(location)
     if not path.is_file():
         raise RuntimeError(f"Rust VE binary unavailable: {path}")
