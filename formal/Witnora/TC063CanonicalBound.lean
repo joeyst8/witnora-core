@@ -105,6 +105,104 @@ theorem canonicalSupport_nodup
         rw [hExpand]
         exact ih
 
+/-- The canonical scan is extensional in the membership predicates
+    of indices below its exclusive bound. -/
+theorem canonicalSupport_congr_on_bound
+    (bound : Nat) (xs ys : List Nat) :
+    (∀ v, v < bound → (v ∈ xs ↔ v ∈ ys)) →
+      canonicalSupport bound xs = canonicalSupport bound ys := by
+  induction bound with
+  | zero =>
+      intro _
+      rfl
+  | succ n ih =>
+      intro h
+      have hRest : canonicalSupport n xs = canonicalSupport n ys :=
+        ih (by
+          intro v hv
+          exact h v (by omega))
+      have hFlag : decide (n ∈ xs) = decide (n ∈ ys) := by
+        by_cases hx : n ∈ xs
+        · have hy : n ∈ ys := (h n (by omega)).mp hx
+          simp [hx, hy]
+        · have hy : n ∉ ys := by
+            intro hy
+            exact hx ((h n (by omega)).mpr hy)
+          simp [hx, hy]
+      simp only [canonicalSupport]
+      rw [hRest, hFlag]
+
+/-- The executable bounded canonicalizer is exactly idempotent, not just
+    semantically or permutation-equivalent. -/
+theorem canonicalSupport_idempotent
+    (bound : Nat) (coeff : List Nat) :
+    canonicalSupport bound (canonicalSupport bound coeff) =
+      canonicalSupport bound coeff := by
+  apply canonicalSupport_congr_on_bound bound
+    (canonicalSupport bound coeff) coeff
+  intro v hv
+  constructor
+  · intro h
+    exact ((mem_canonicalSupport_iff bound v coeff).mp h).2
+  · intro h
+    exact (mem_canonicalSupport_iff bound v coeff).mpr ⟨hv, h⟩
+
+/-- A finite duplicate-free natural-number list contains each name
+    either once or not at all; we prove the exact count formula. -/
+private theorem nodup_count_nat
+    (xs : List Nat) :
+    xs.Nodup → ∀ v : Nat,
+      List.count v xs = if v ∈ xs then 1 else 0 := by
+  induction xs with
+  | nil =>
+      intro _ v
+      simp
+  | cons x rest ih =>
+      intro h v
+      have hNot : x ∉ rest := (List.nodup_cons.mp h).1
+      have hRest : rest.Nodup := (List.nodup_cons.mp h).2
+      by_cases heq : v = x
+      · subst v
+        have hTail : List.count x rest = 0 := by
+          simpa [hNot] using ih hRest x
+        simp [List.count_cons, hTail, hNot]
+      · have hTail := ih hRest v
+        simp [List.count_cons, heq, hTail]
+
+/-- Two finite duplicate-free variable lists with exactly the same
+    variable membership are permutations in Lean's literal List.Perm. -/
+theorem nodup_perm_of_mem_iff
+    (xs ys : List Nat)
+    (hX : xs.Nodup) (hY : ys.Nodup)
+    (hMem : ∀ v, v ∈ xs ↔ v ∈ ys) :
+    xs.Perm ys := by
+  apply List.perm_iff_count.mpr
+  intro v
+  rw [nodup_count_nat xs hX v, nodup_count_nat ys hY v]
+  simp only [hMem v]
+
+/-- Under a strict finite upper bound, canonicalSupport is a genuine
+    permutation of any Nodup coefficient list, enabling source-checker
+    transport without proving facts about the insertion-sort algorithm. -/
+theorem canonicalSupport_perm_of_bounded
+    (bound : Nat) (coeff : List Nat)
+    (hNodup : coeff.Nodup)
+    (hBound : ∀ v ∈ coeff, v < bound) :
+    (canonicalSupport bound coeff).Perm coeff := by
+  apply nodup_perm_of_mem_iff
+    (canonicalSupport bound coeff) coeff
+    (canonicalSupport_nodup bound coeff) hNodup
+  intro v
+  constructor
+  · intro h
+    exact ((mem_canonicalSupport_iff bound v coeff).mp h).2
+  · intro h
+    exact (mem_canonicalSupport_iff bound v coeff).mpr
+      ⟨hBound v h, h⟩
+
+#print axioms Witnora.TC063CanonicalBound.canonicalSupport_idempotent
+#print axioms Witnora.TC063CanonicalBound.canonicalSupport_perm_of_bounded
+
 #print axioms Witnora.TC063CanonicalBound.canonicalSupport_nodup
 
 #print axioms Witnora.TC063CanonicalBound.mem_canonicalSupport_iff
