@@ -74,7 +74,7 @@ pub fn project_and_expand(
                 mask ^= older;
                 parity ^= value;
             } else {
-                internal_pivots.insert(v, (mask, parity));
+                internal_pivots.insert(v, (mask.clone(), parity));
                 pivoted = true;
                 break;
             }
