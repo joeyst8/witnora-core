@@ -149,3 +149,30 @@ https://github.com/joeyst8/witnora-core/actions/runs/41600247380 .
 
 This extends **sound verification** to arbitrary CNF, not efficient
 proof construction, fast industrial SAT, or any polynomial-time bound.
+
+
+## 2026-11-03 dense random 3-CNF and indexed-RUP speed experiment
+
+Extending the universal CNF checker beyond affine/separator/pigeonhole
+families, independent Glucose refutations of **dense random 3-CNFs**
+(8/54, 10/66, 12/84 variables/clauses) passed Lean. Every variable pair
+co-occurs in a clause (complete primal graph; no small variable separator).
+Separate planted-SAT formulas with the same complete-primal property were
+verified using explicit all-true assignments in Lean. The 8-variable UNSAT
+proof was also bound to exact DIMACS ASCII bytes and a tampered header was
+rejected. Successful https://github.com/joeyst8/witnora-core/actions/runs/41601167317 .
+
+A new **opt-in indexed** Python witness generator uses literal occurrence
+lists and an incremental queue. A native 300-instance differential test,
+Glucose PHP(5,4) and PHP(6,5) native replays, and a Lean kernel acceptance
+of the indexed PHP(5,4) proof all passed. Frozen one-run PHP(6,5)
+annotation decreased from **259.882 ms** (reference) to **43.006 ms**
+(indexed), a **6.04×** speedup in Python annotation only. Successful
+https://github.com/joeyst8/witnora-core/actions/runs/41601552613 .
+
+The existing Lean checker still scans lists; the Python indexed generator
+has not made verification or solving polynomial-time, and PHP(6,5) is not
+Lean-accepted yet. Full details in
+[General CDCL/RUP bridge](GENERAL_RUP_CDCL_BRIDGE.md). Next: verified
+row-index reason certificates, industrial proof formats and held-out
+performance analysis, without inflating TC-063 restricted-family claims.
