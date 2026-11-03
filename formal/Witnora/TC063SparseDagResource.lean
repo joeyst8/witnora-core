@@ -532,9 +532,12 @@ private theorem sourceStep_refines_indexedCompiler
                     | some sourceRow =>
                         simp [Witnora.G5IndexedOperationEmitter.SourceState.step,
                           hNe, ht, hs, htr, hsr] at hStep
-                        simp [htr, hsr] at hStep
-                        cases hStep
-                        exact Witnora.G5IndexedLengthRefinement.xor_step_refines_compiler
+                        split at hStep
+                        · cases hStep
+                          exact Witnora.G5IndexedLengthRefinement.xor_step_refines_compiler
+                            initial state target source targetRef sourceRef
+                            hEq hLength ht hs
+                        · simp at hStep
                           initial state target source targetRef sourceRef
                           hEq hLength ht hs
 
