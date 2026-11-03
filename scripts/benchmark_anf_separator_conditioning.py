@@ -64,7 +64,8 @@ def measure(label: str, equations, nvars: int, method,
         detail = (f" separator={result.separator} "
                   f"found={result.separator_found} branches={result.branches}"
                   f" splits={result.total_component_splits}"
-                  f" checked={result.separator_candidates_checked}")
+                  f" checked={result.separator_candidates_checked}"
+                  f" admission={result.admission_reason}")
     print(f"{label} models={model_count} states={state_count} "
           f"median_ms={median(ms):.3f} "
           f"peak_kib={median(peaks):.1f}{detail}", flush=True)
@@ -85,6 +86,10 @@ def main() -> None:
                     count_common_zeros_structured, expected)
             measure(label+" conditioned", eqs, n,
                     count_common_zeros_conditioned, expected)
+            measure(label+" conservative", eqs, n,
+                    lambda e, v, max_states: count_common_zeros_conditioned(
+                        e, v, max_states=max_states,
+                        admission_policy="conservative"), expected)
 
     print("DENSE CONNECTED 3SAT CONTROLS (NO ASSUMED SMALL SEPARATOR)",
           flush=True)
@@ -104,8 +109,14 @@ def main() -> None:
                                    count_common_zeros_structured, expected)
                 conditioned = measure(label+" conditioned", eqs, n,
                                       count_common_zeros_conditioned, expected)
-                if original is not None and conditioned is not None and original != conditioned:
-                    raise AssertionError("separators changed exact count")
+                conservative = measure(label+" conservative", eqs, n,
+                                       lambda e, v, max_states:
+                                       count_common_zeros_conditioned(
+                                           e, v, max_states=max_states,
+                                           admission_policy="conservative"), expected)
+                if any(x is not None and original is not None and x != original
+                       for x in (conditioned, conservative)):
+                    raise AssertionError("admission policy changed exact count")
     print("This is bounded exact conditioning; no general polynomial SAT claim.",
           flush=True)
 
