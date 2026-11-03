@@ -623,3 +623,49 @@ family, with no extrapolation to general arbitrary CNFs.
 
 Detailed benchmark and limitations:
 [Violation-image ANF geometry](VIOLATION_IMAGE_ANF_GEOMETRY.md).
+
+
+## 2026-11-03 small-separator ANF conditioning: connected models, exact counts, no universal speedup
+
+New `witnora_core/anf_separator_conditioning.py` detects small
+scope-graph vertex separators (k<=2, bounded candidate checks)
+and Shannon-conditions on each separator assignment. Explicit
+Boolean-ring unit equations PIN the selected separator variables,
+so neither the fixed bits nor unconstrained residual bits are
+double-counted. Exact structured ANF counts are summed across
+branches under a *shared total state budget*; failure to find a
+separator falls back to the verified-by-tests structured solver.
+No separator found by a bounded heuristic is not a lower-bound proof.
+
+Five new Python tests and a new benchmark passed in
+[full green CI #41684233632](https://github.com/joeyst8/witnora-core/actions/runs/41684233632).
+Independent reference counts use local six-variable exhaustive
+oracles for connected 3-CNF blocks joined by 2-CNF bridge clauses.
+One-bridge 19v: 20,683 models, structured 160 states/22.116ms
+versus conditioned 103 states/11.228ms (1.97x).
+One-bridge 25v: 541,441 models, structured 342 states/62.427ms
+versus conditioned 136 states/16.322ms (3.82x).
+Two-bridge 20v: 21,710 models, structured 22.385ms
+versus conditioned 35.541ms (regression).
+Two-bridge 26v: 551,522 models, structured 63.301ms
+versus conditioned 70.051ms (regression).
+
+Four dense frozen 8v/54c and 10v/66c SAT/UNSAT cases
+had no separator of size<=2 under the bounded search,
+so conditioning added overhead: e.g. 10v/66c UNSAT source
+6.580→14.321ms, sketch 10.044→22.192ms.
+For all dense controls, source #SAT and sketch survivors were
+checked against **separate independent finite oracles**.
+The adversarial 4-clause sketch collision (1 true model vs
+2 parity survivors) remains correctly preserved.
+
+Interpretation: the structural method extends beyond already
+disconnected formulas, but separator width k introduces 2^k
+branches and search overhead. The first admissibility gate
+must decide when to invoke it. Universal Python-to-Lean
+refinement of separator detection and conditioning remains open;
+Lean already proves exact disjoint-count multiplication
+(`Witnora.ANFComponentFactor.splitCount_mul`), and the
+restricted TC-063 family theorem remains separate.
+
+[Detailed report](ANF_SEPARATOR_CONDITIONING.md).
