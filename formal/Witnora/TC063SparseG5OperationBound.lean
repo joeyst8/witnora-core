@@ -110,9 +110,11 @@ theorem emitSchedule_op_count
               some (ops, result) := by
             simpa [emitSchedule, hp] using h
           have hb := ih candidates state result ops hrest
-          exact le_trans hb
-            (Nat.mul_le_mul_right candidates.length
-              (by simp : rest.length ≤ (v :: rest).length))
+          calc
+            ops.length ≤ rest.length * candidates.length := hb
+            _ ≤ (v :: rest).length * candidates.length :=
+              Nat.mul_le_mul_right candidates.length
+                (by simp : rest.length ≤ (v :: rest).length)
       | some choice =>
           cases choice with
           | mk pivotSlot pivotRow =>
