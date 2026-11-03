@@ -128,3 +128,29 @@ Successful CI job: https://github.com/joeyst8/witnora-core/actions/runs/41600247
 Next gate: dense random 3-CNF controls and a watch/indexed propagation
 implementation that retains the same Lean-checked theorem, with independent
 source-bound SAT/UNSAT controls and trace-length measurements.
+
+
+## 2026-11-03 dense random 3-CNF without small variable separators
+
+The next test family is **not** a pigeonhole, affine-XOR, or
+separator-decomposition construction. A fixed-seed sampler chooses distinct
+three-literal clauses and rejects samples unless **every variable pair
+co-occurs** in at least one clause. Its primal variable-interaction graph
+is therefore complete, with no nontrivial small variable separator.
+
+| Candidate | Source clauses | Genuine Glucose DRUP | Lean UNSAT gate | Planted SAT control |
+|---|---:|---|---|---|
+| Random 3-CNF, 8 variables | 54 | Imported and replayed | Passed; ASCII-bound source and modified-header rejection | Lean proved all-true assignment |
+| Random 3-CNF, 10 variables | 66 | Imported and replayed | Passed | Lean proved all-true assignment |
+| Random 3-CNF, 12 variables | 84 | Imported and replayed | Passed | Lean proved all-true assignment |
+
+The SAT controls come from a separate generator that ensures each clause
+contains a positive literal. They also have complete primal graphs.
+Glucose independently reports SAT, and Lean verifies the explicit model.
+The native tests check deterministic clause generation, the complete-primal
+predicate, and missing-source rejection. Successful general-resolution
+CI: https://github.com/joeyst8/witnora-core/actions/runs/41601167317 .
+
+**Limitations:** These remain modest random test instances, selected using
+solver results and bounded proof length. They do not prove complete proof
+import for every CDCL run, RAT support, or industrial-scale performance.
