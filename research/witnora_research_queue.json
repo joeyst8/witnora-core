@@ -3,7 +3,7 @@
   "description": "Finite WCRC research experiments; each begins after the prior task completes. Tasks are audited IDs, never shell commands.",
   "tasks": [
     "wcrc005_symmetry_falsification",
-    "wcrc004_orbit_unit",
-    "wcrc004_orbit_benchmark"
+    "wcrc005_defect_unit",
+    "wcrc005_defect_ganak"
   ]
 }
