@@ -15,6 +15,7 @@ on:
       - "scripts/generate_general_rup_lean.py"
       - "tests/test_glucose_drup_import.py"
       - "scripts/generate_glucose_drup_rup_lean.py"
+      - "scripts/benchmark_cdcl_rup_scaling.py"
       - "witnora_core/rup_witness_import.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
@@ -31,6 +32,7 @@ on:
       - "scripts/generate_general_rup_lean.py"
       - "tests/test_glucose_drup_import.py"
       - "scripts/generate_glucose_drup_rup_lean.py"
+      - "scripts/benchmark_cdcl_rup_scaling.py"
       - "witnora_core/rup_witness_import.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
@@ -73,3 +75,5 @@ jobs:
       - name: Lean-check actual CDCL refutations
         working-directory: formal
         run: lake env lean Witnora/GeneratedGlucoseDRUP.lean
+      - name: Measure frozen non-affine CDCL proof annotation scaling
+        run: python -m scripts.benchmark_cdcl_rup_scaling
