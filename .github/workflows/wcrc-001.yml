@@ -9,6 +9,7 @@ on:
       - "witnora_core/crc_source.py"
       - "tests/test_crc_boundary.py"
       - "tests/test_crc_source.py"
+      - "scripts/benchmark_crc_vs_anf.py"
       - ".github/workflows/wcrc-001.yml"
   pull_request:
     paths:
@@ -30,3 +31,5 @@ jobs:
           python-version: "3.11"
       - name: Exact source and coefficient controls
         run: python -m unittest tests.test_crc_boundary tests.test_crc_source -v
+      - name: Source-bound CRC versus structured ANF pilot
+        run: python scripts/benchmark_crc_vs_anf.py
