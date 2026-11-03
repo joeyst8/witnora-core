@@ -1,0 +1,43 @@
+name: General-resolution universal UNSAT bridge
+
+on:
+  push:
+    branches:
+      - formal/g14-python-seen-enqueue-v121
+    paths:
+      - "formal/Witnora/GeneralResolution.lean"
+      - "scripts/generate_general_resolution_lean.py"
+      - "tests/test_general_resolution_trace.py"
+      - ".github/workflows/general-resolution-lean.yml"
+  pull_request:
+    paths:
+      - "formal/Witnora/GeneralResolution.lean"
+      - "scripts/generate_general_resolution_lean.py"
+      - "tests/test_general_resolution_trace.py"
+      - ".github/workflows/general-resolution-lean.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check universal resolution soundness
+        working-directory: formal
+        run: lake build Witnora.GeneralResolution
+      - name: Test independent proof generation and tamper rejection
+        run: python -m unittest tests.test_general_resolution_trace -v
+      - name: Generate non-affine CNF resolution examples
+        run: python -m scripts.generate_general_resolution_lean > formal/Witnora/GeneratedGeneralResolution.lean
+      - name: Lean-check all generated non-affine examples
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedGeneralResolution.lean
