@@ -106,3 +106,21 @@ Useful GitHub paths:
 
 - [Draft PR #122](https://github.com/joeyst8/witnora-core/pull/122)
 - [Research workflow](https://github.com/joeyst8/witnora-core/actions/workflows/witnora-research-queue.yml)
+
+## Verification checkpoint — 2026-11-03
+
+The existing W-CRC GitHub Actions suite passed on research commit
+`3d3ed744a572d5c0f99db292789d3eb70516f7fd`:
+https://github.com/joeyst8/witnora-core/actions/runs/41706281993
+
+- **42 Python unittest methods passed**, including queue ordering,
+  whitelist rejection, failure stop, timeout stop and task caps.
+- **6/6 W-CRC-005 negative-control instances** matched independent Ganak
+  and an exhaustive evaluator.
+- For n=8, dispersed versus tetrahedral deletions yielded **41/42**
+  models; for n=11, **71/72**. Every case was rejected by the
+  out-of-scope orbit recognizer and counted by the exact fallback.
+
+This CI result validates the queue **unit tests and benchmark**, not an
+independently inspected end-to-end run/artifact of the new dedicated
+queue workflow. That operational check is still pending.
