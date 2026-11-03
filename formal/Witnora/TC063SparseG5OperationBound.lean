@@ -1,5 +1,6 @@
 import Witnora.TC063SparseCover
 import Witnora.G5IndexedScheduledEmitter
+import Witnora.G5ExecutableTotality
 
 /-!
 # Quadratic sparse-input operation-count bound for indexed G5 emission
@@ -25,6 +26,8 @@ open Witnora.G5IndexedRowValueRefinement
 open Witnora.G5EmittedPivotPass
 open Witnora.G5IndexedPivotSelection
 open Witnora.G5IndexedScheduledEmitter
+open Witnora.G5RetiredPivotLedger
+open Witnora.G5TrackedSurvivors
 open Witnora.TC063CanonicalBound
 
 /-- Each successful source-target inspection emits either zero or one
@@ -166,6 +169,35 @@ theorem tc063_support_schedule_quadratic_op_count
   simpa using emitSchedule_op_count initial
     (supportRows initial) (List.range initial.length)
     (SourceState.start initial) result ops h
+
+
+/-- The actual *total* production pivot-ledger emitter always succeeds
+    and produces at most original row count times total input coefficient
+    occurrences. No external successful-execution assumption remains. -/
+theorem tc063_total_sparse_schedule_quadratic_op_count
+    (initial : List Row) :
+    ∃ outcome : PivotOutcome initial,
+      emitScheduleWithPivots initial (supportRows initial)
+        (List.range initial.length) (SourceState.start initial) =
+          some outcome ∧
+      outcome.operations.length ≤
+        (supportRows initial).length * initial.length := by
+  obtain ⟨outcome, hrun⟩ :=
+    Witnora.G5ExecutableTotality.initial_pivot_ledger_schedule_total
+      initial (supportRows initial)
+  have htracked :=
+    pivot_ledger_refines_tracked initial (supportRows initial)
+      (List.range initial.length) (SourceState.start initial)
+      outcome hrun
+  have hs :=
+    tracked_execution_matches_schedule initial (supportRows initial)
+      (List.range initial.length) (SourceState.start initial)
+      outcome.finalState outcome.operations outcome.survivors htracked
+  exact ⟨outcome, hrun,
+    tc063_support_schedule_quadratic_op_count initial
+      outcome.finalState outcome.operations hs⟩
+
+#print axioms Witnora.TC063SparseG5OperationBound.tc063_total_sparse_schedule_quadratic_op_count
 
 #print axioms Witnora.TC063SparseG5OperationBound.emitOne_op_count
 #print axioms Witnora.TC063SparseG5OperationBound.emitPass_op_count
