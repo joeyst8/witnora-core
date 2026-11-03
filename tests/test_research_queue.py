@@ -12,9 +12,9 @@ from scripts.run_witnora_research_queue import execute_plan, validate_plan
 
 
 TASKS = [
-    "wcrc010_conditional_unit",
-    "wcrc011_separator_unit",
-    "wcrc011_separator_benchmark",
+    "wcrc012_cutset_unit",
+    "wcrc013_adversarial_unit",
+    "wcrc013_adversarial_ganak",
 ]
 
 
