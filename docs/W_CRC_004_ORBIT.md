@@ -102,3 +102,55 @@ and prove a fixed-parameter time bound. Otherwise reject the idea.
 
 Finite Python and Ganak tests do not substitute for these universal
 kernel-checked statements.
+
+
+## First measured results — 2026-11-03
+
+GitHub Actions: https://github.com/joeyst8/witnora-core/actions/runs/41703441943
+All **36 Python unittest methods passed**. Every one of the 8
+dense-nonlinear benchmark cases was exact and independently matched
+Ganak's integer count; the opt-in backend was explicitly reported as
+`orbit_cardinality`. The ordinary 3,000-state Shannon backend
+also completed all eight cases.
+
+| Boundary k | Right nonlinear clauses (defects) | Orbit source-to-count | Shannon source-to-count | Ganak count, including CNF load |
+| --- | ---: | ---: | ---: | ---: |
+| 12 | 220 (0) | 3.8825 ms | 8.3319 ms | 28.6442 ms |
+| 20 | 1,138 (2) | 21.4526 ms | 77.0867 ms | 183.7662 ms |
+| 28 | 3,274 (2) | 52.9791 ms | 323.4890 ms | 849.9806 ms |
+| 36 | 7,137 (3) | 124.1389 ms | 1,010.6001 ms | 2,990.0322 ms |
+
+An additional 4 source-CNF instances contained a canonical XOR
+chain enforcing odd global boundary parity. Those instances had
+262, 1,212, 3,380, and 7,275 total clauses, and 22, 38, 54, and
+70 source variables. All four matched Ganak; orbit runtimes were
+3.9563, 18.3714, 56.9256 and 130.7492 ms respectively,
+while the Shannon fallback took 9.0856, 80.9879, 319.1857
+and 1,004.4497 ms.
+
+These are very small samples, **not calibrated microbenchmarks**:
+two orbit timings per case, one Shannon and one Ganak engine
+timing, all on one CI runner. Ganak's default cache has a documented
+low collision-error probability, so this integer comparison is
+independent evidence, not formal verification. The source-to-count
+timings include parsing/extracting canonical XORs where applicable
+and recognizing the dense orbit pattern. There is no claim that
+all densely overlapping formulas admit a compact signature.
+
+**Hostile audit:** This result exploits a complete/near-complete
+signed uniform hypergraph. Its satisfying assignments can be
+characterized by the number of flipped literals. That is familiar
+lifted cardinality reasoning, not a new source of polynomial-time
+general SAT algorithms. For example, see the AAAI 2022 paper on
+closed-form lifted counting with cardinality constraints:
+https://ojs.aaai.org/index.php/AAAI/article/view/20525 .
+The Walsh signed-sum expressions are related to established
+Krawtchouk/Hamming-weight identities.
+
+**Next falsification:** perturb the symmetry in *more* than r
+places and vary signs across overlapping clauses. The exact
+recognizer must reject these, leaving a complete fallback. Measure
+whether an extension based on a small set of perturbed variables
+improves runtime, with an explicit exponential parameter bound in
+the perturbation set. If it merely renames known lifted inference,
+report that connection explicitly.
