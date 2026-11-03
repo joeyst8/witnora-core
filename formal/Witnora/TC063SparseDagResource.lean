@@ -680,4 +680,29 @@ theorem emitted_sparse_schedule_replay_bound
 #print axioms Witnora.TC063SparseDagResource.emitted_pivot_ledger_compiles_exact
 #print axioms Witnora.TC063SparseDagResource.emitted_sparse_schedule_replay_bound
 
+
+/-- The production pivot-ledger emitter is total and *always* produces a
+    compiler-accepted exact indexed DAG, with at most m*S source XOR
+    operations. This theorem has no emission-success premise. -/
+theorem tc063_total_source_schedule_compiles
+    (rows : List Row) :
+    ∃ outcome : Witnora.G5RetiredPivotLedger.PivotOutcome rows,
+      Witnora.G5RetiredPivotLedger.emitScheduleWithPivots
+        rows (Witnora.TC063CanonicalBound.supportRows rows)
+        (List.range rows.length)
+        (Witnora.G5IndexedOperationEmitter.SourceState.start rows) =
+          some outcome ∧
+      Witnora.G5IndexedBridge.compile rows.length outcome.operations =
+        some outcome.finalState.dag.steps ∧
+      outcome.operations.length ≤
+        (Witnora.TC063CanonicalBound.supportRows rows).length *
+          rows.length := by
+  obtain ⟨outcome, hEmit, hCount⟩ :=
+    Witnora.TC063SparseG5OperationBound.tc063_total_sparse_schedule_quadratic_op_count
+      rows
+  exact ⟨outcome, hEmit,
+    emitted_pivot_ledger_compiles_exact rows outcome hEmit, hCount⟩
+
+#print axioms Witnora.TC063SparseDagResource.tc063_total_source_schedule_compiles
+
 end Witnora.TC063SparseDagResource
