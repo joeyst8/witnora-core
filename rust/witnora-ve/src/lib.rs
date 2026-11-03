@@ -327,3 +327,34 @@ mod tests {
         assert_eq!(answer.models, BigUint::from(4u8));
     }
 }
+
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+#[cfg(feature = "python")]
+use pyo3::exceptions::PyValueError;
+
+/// In-process Rust arithmetic entry point. BigUint travels as decimal
+/// text, avoiding a lossy 64-bit Python integer conversion.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn count_component_native(
+    clauses: Vec<Vec<i32>>,
+    component_variables: Vec<u32>,
+    max_factor_variables: usize,
+    max_operations: u64,
+) -> PyResult<Option<(String, u64, usize, usize)>> {
+    let answer = count_component(
+        &clauses, &component_variables, max_factor_variables, max_operations,
+    ).map_err(PyValueError::new_err)?;
+    Ok(answer.map(|result| (
+        result.models.to_string(), result.operations,
+        result.max_factor_variables, result.eliminated_variables,
+    )))
+}
+
+#[cfg(feature = "python")]
+#[pymodule]
+fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
+    Ok(())
+}
