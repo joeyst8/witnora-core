@@ -131,3 +131,77 @@ def annotate_drup(
         "deletions_ignored": deletions_ignored,
         "unit_witness_literals": sum(len(item.units) for item in additions),
     }
+
+
+@dataclass(frozen=True)
+class IndexedRUPWitness:
+    """Untrusted row-index hints for the Lean GeneralRUPIndexed checker."""
+    clause: tuple[int, ...]
+    units: tuple[tuple[int, int], ...]  # (forced literal, exact reason row ID)
+    conflict_id: int
+
+
+def attach_reason_indices(
+    source: list[list[int]],
+    additions: list[RUPWitness],
+) -> list[IndexedRUPWitness]:
+    """Find concrete source/derived row IDs for each proposed unit/conflict.
+
+    Retains every previously proved row, including solver deletion hints
+    that were ignored by annotate_drup. The output is never labeled Lean
+    verified until GeneralRUPIndexed checks every reference independently.
+    """
+    database = [_clause(row) for row in source]
+    occurrence: dict[int, list[int]] = {}
+    for i, row in enumerate(database):
+        for lit in row:
+            occurrence.setdefault(lit, []).append(i)
+    indexed: list[IndexedRUPWitness] = []
+    for item in additions:
+        assumptions = {-lit for lit in item.clause}
+        reasons: list[tuple[int, int]] = []
+        for lit in item.units:
+            matching = next((i for i in occurrence.get(lit, ())
+                             if all(x == lit or -x in assumptions
+                                    for x in database[i])), None)
+            if matching is None:
+                raise ValueError("unit lacks a present, valid indexed reason")
+            reasons.append((lit, matching))
+            assumptions.add(lit)
+        conflict = next((i for i, row in enumerate(database)
+                         if all(-x in assumptions for x in row)), None)
+        if conflict is None:
+            raise ValueError("RUP witness has no present conflict row")
+        indexed.append(IndexedRUPWitness(item.clause, tuple(reasons), conflict))
+        new_id = len(database)
+        database.append(item.clause)
+        for lit in item.clause:
+            occurrence.setdefault(lit, []).append(new_id)
+    if not indexed or indexed[-1].clause:
+        raise ValueError("indexed RUP certificate must end with empty clause")
+    return indexed
+
+
+def verify_native_indexed_witness(
+    source: list[list[int]],
+    proof: list[IndexedRUPWitness],
+) -> bool:
+    """Direct indexed reason replay for tests, never a Lean trust boundary."""
+    database = [_clause(row) for row in source]
+    for item in proof:
+        assumptions = {-lit for lit in item.clause}
+        for lit, row_id in item.units:
+            if not (0 <= row_id < len(database)):
+                return False
+            row = database[row_id]
+            if lit not in row or not all(
+                x == lit or -x in assumptions for x in row
+            ):
+                return False
+            assumptions.add(lit)
+        if not (0 <= item.conflict_id < len(database)):
+            return False
+        if not all(-lit in assumptions for lit in database[item.conflict_id]):
+            return False
+        database.append(item.clause)
+    return any(not row for row in database)
