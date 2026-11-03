@@ -232,6 +232,94 @@ theorem checkInitialRows_sortAffineRows
         checkPattern_sortVariables source row.coefficients row.rhs hHead,
         hRest]
 
+/-- Permuting the *source* side of a subsumption check preserves
+    its result as well: source-clause literal order is immaterial. -/
+theorem clauseSubsumes_perm_source
+    (candidate ordered expected : List Literal)
+    (hPerm : candidate.Perm ordered) :
+    clauseSubsumes candidate expected =
+      clauseSubsumes ordered expected := by
+  unfold clauseSubsumes
+  exact List.all_perm (fun lit => decide (lit ∈ expected)) hPerm
+
+/-- Every canonical forbidden clause for one coefficient order has a
+    literally permutation-equivalent clause after support reordering.
+    Construct it by realizing the forbidden bits as a total assignment. -/
+theorem signedClause_permutation_match
+    (vars ordered : List Nat) (rhs : Bool)
+    (hPerm : vars.Perm ordered) (hNodup : vars.Nodup)
+    (clause : List Literal)
+    (hClause : clause ∈ generateSignedClauses vars rhs) :
+    ∃ orderedClause ∈ generateSignedClauses ordered rhs,
+      clause.Perm orderedClause := by
+  change clause ∈
+    (generateForbiddenPatterns vars.length rhs).map
+      (fun bad => signForbiddenClause (List.zip vars bad)) at hClause
+  obtain ⟨bad, hBad, rfl⟩ := List.mem_map.mp hClause
+  have hMem : bad ∈ allBits vars.length :=
+    (List.mem_filter.mp hBad).1
+  have hWrong : parityBits bad ≠ rhs := by
+    simpa [generateForbiddenPatterns] using (List.mem_filter.mp hBad).2
+  have hLen : bad.length = vars.length :=
+    allBits_member_length vars.length bad hMem
+  obtain ⟨a, hMap⟩ :=
+    nodup_vars_realize_bits vars hNodup bad hLen
+  have hWrongOld : parityVars vars a ≠ rhs := by
+    simpa [parityBits_map, hMap] using hWrong
+  have hWrongNew : parityBits (ordered.map a) ≠ rhs := by
+    rw [parityBits_map, ← parityVars_perm hPerm a]
+    exact hWrongOld
+  have hMemNew : ordered.map a ∈ allBits ordered.length := by
+    simpa using allBits_complete (ordered.map a)
+  have hBadNew :
+      ordered.map a ∈ generateForbiddenPatterns ordered.length rhs := by
+    simp [generateForbiddenPatterns, hMemNew, hWrongNew]
+  refine ⟨signForbiddenClause (List.zip ordered (ordered.map a)), ?_, ?_⟩
+  · change signForbiddenClause (List.zip ordered (ordered.map a)) ∈
+      (generateForbiddenPatterns ordered.length rhs).map
+        (fun bits => signForbiddenClause (List.zip ordered bits))
+    exact List.mem_map.mpr ⟨ordered.map a, hBadNew, rfl⟩
+  · have hOriginal :
+        signForbiddenClause (List.zip vars bad) =
+          vars.map (fun v => (v, !(a v))) := by
+        rw [← hMap, signForbiddenClause_zip_map]
+    rw [hOriginal, signForbiddenClause_zip_map]
+    exact hPerm.map (fun v => (v, !(a v)))
+
+/-- Even when canonical forbidden clauses arrive in different orders and
+    with permuted literals, source-clause coverage acceptance is identical. -/
+theorem checkClauseCoverage_signedClauses_perm
+    (vars ordered : List Nat) (rhs : Bool)
+    (expected : List Literal)
+    (hPerm : vars.Perm ordered) (hNodup : vars.Nodup) :
+    checkClauseCoverage (generateSignedClauses vars rhs) expected =
+      checkClauseCoverage (generateSignedClauses ordered rhs) expected := by
+  have hOrderedNodup : ordered.Nodup :=
+    (hPerm.nodup_iff).mp hNodup
+  apply Bool.eq_iff_iff.mpr
+  constructor
+  · intro h
+    obtain ⟨clause, hc, hsub⟩ := List.any_eq_true.mp h
+    obtain ⟨target, ht, hp⟩ :=
+      signedClause_permutation_match vars ordered rhs hPerm hNodup
+        clause hc
+    apply List.any_eq_true.mpr
+    refine ⟨target, ht, ?_⟩
+    simpa only [← clauseSubsumes_perm_source clause target expected hp]
+      using hsub
+  · intro h
+    obtain ⟨clause, hc, hsub⟩ := List.any_eq_true.mp h
+    obtain ⟨target, ht, hp⟩ :=
+      signedClause_permutation_match ordered vars rhs hPerm.symm
+        hOrderedNodup clause hc
+    apply List.any_eq_true.mpr
+    refine ⟨target, ht, ?_⟩
+    simpa only [← clauseSubsumes_perm_source clause target expected hp]
+      using hsub
+
+#print axioms Witnora.TC063PatternPermutation.signedClause_permutation_match
+#print axioms Witnora.TC063PatternPermutation.checkClauseCoverage_signedClauses_perm
+
 #print axioms Witnora.TC063PatternPermutation.checkInitialRows_sortAffineRows
 
 #print axioms Witnora.TC063PatternPermutation.checkPattern_perm_of_nodup
