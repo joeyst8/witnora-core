@@ -24,6 +24,9 @@ on:
       - "witnora_core/lean_g5_gate.py"
       - "tests/test_lean_g5_gate.py"
       - "tests/test_lean_g5_wire_real.py"
+      - "witnora_core/separator_structural_priority.py"
+      - "witnora_core/separator_affine_family_theorem.py"
+      - "tests/test_separator_structural_priority.py"
       - "scripts/generate_python_g5_compiler_differential_lean.py"
       - ".github/workflows/g14-dfs-seen-enqueue.yml"
   workflow_dispatch:
@@ -47,6 +50,8 @@ jobs:
         run: lake build Witnora.G14DFSSeenEnqueue Witnora.G14DFSOuterScan Witnora.G14DFSPreseen Witnora.G14DFSOwnerLabels Witnora.G14DFSModelBridge Witnora.TC063CompletenessReduction Witnora.TC063CanonicalAffineBridge Witnora.TC063PatternPermutation Witnora.TC063CanonicalBound Witnora.TC063SparseDirectChecker Witnora.TC063SparseCover Witnora.TC063SparseG5OperationBound Witnora.TC063SparseDagResource Witnora.TC063PythonCompilerModel Witnora.TC063PythonOperationCodec
       - name: Production G5 numeric-wire gate unit and real Lean smoke tests
         run: python -m unittest tests.test_lean_g5_gate tests.test_lean_g5_wire_real -v
+      - name: Exercise structural separator prototype and independent graph oracle
+        run: python -m unittest tests.test_separator_structural_priority tests.test_separator_affine_family_theorem -v
       - name: Emit actual Python G5 compiler differential trace assertions
         run: python -m scripts.generate_python_g5_compiler_differential_lean > formal/Witnora/GeneratedPythonG5CompilerDifferential.lean
       - name: Lean-check every Python compiler differential result
