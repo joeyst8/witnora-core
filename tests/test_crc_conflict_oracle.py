@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from itertools import combinations
 import random
+from fractions import Fraction
 import unittest
 
 from tests.test_crc_orbit_oracle import (
@@ -86,6 +87,35 @@ class TestCRCConflictOracle(unittest.TestCase):
         )
         self.assertEqual(parity.models, ref)
         self.assertEqual(parity.coefficient_backend, "conflict_walsh")
+
+    def test_disjoint_exception_scopes_are_not_base_independent(self):
+        # The coherent base is a complete positive 3-CNF, which
+        # couples all six variables even though the two exceptions
+        # have disjoint supports {1,2,3} and {4,5,6}.
+        n = 6
+        boundary = tuple(range(1, n + 1))
+        base = near_complete_source(
+            n, 3, {v: True for v in boundary}, set())
+        left = (-1, 2, 3)
+        right = (-4, 5, 6)
+        one = base + (left,)
+        two = base + (right,)
+        both = base + (left, right)
+        ref_count = lambda clauses: int(
+            independent_walsh(clauses, n, 0) * (1 << n))
+        self.assertEqual((ref_count(base), ref_count(one),
+                          ref_count(two), ref_count(both)),
+                         (22, 21, 21, 20))
+        # Multiplying marginal acceptance probabilities would wrongly
+        # predict 21*21/22 instead of the true integer 20.
+        self.assertNotEqual(Fraction(21 * 21, 22), ref_count(both))
+        got = count_signed_cnf_crc(
+            both, n, max_inclusion_subsets=2,
+            enable_conflict_oracle=True)
+        self.assertIsNotNone(got)
+        self.assertEqual(got.coefficient_stats.coefficient_backend,
+                         "conflict_walsh")
+        self.assertEqual(got.models, 20)
 
     def test_free_bit_and_source_sign_adversaries(self):
         n = 7
