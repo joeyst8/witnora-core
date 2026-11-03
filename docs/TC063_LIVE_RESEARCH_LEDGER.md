@@ -437,3 +437,6 @@ Next: implement a genuine small exact weighted factor contraction
 or parity-aware reduction, benchmark total counting time/memory
 against source CNF, and only then assess any computational gain.
 No general SAT speedup or resolution of P vs NP.
+
+The bounded default CI also passed on the opt-in-large benchmark revision:
+https://github.com/joeyst8/witnora-core/actions/runs/41653374604 .
