@@ -11,6 +11,10 @@ on:
       - "tests/test_research_queue.py"
       - "tests/test_crc_orbit_oracle.py"
       - "scripts/benchmark_crc_orbit.py"
+      - "tests/test_crc_defect_oracle.py"
+      - "tests/test_crc_conflict_oracle.py"
+      - "scripts/benchmark_crc_defect.py"
+      - "scripts/benchmark_crc_conflict.py"
       - "witnora_core/crc_*.py"
       - ".github/workflows/witnora-research-queue.yml"
   workflow_dispatch:
