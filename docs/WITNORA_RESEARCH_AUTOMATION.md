@@ -11,13 +11,13 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-014 exact frozen factor-VE correctness controls.
-2. W-CRC-015 incremental indexed-VE random/analytic differential tests.
-3. W-CRC-015 indexed-versus-frozen factor-VE benchmark with Glucose3
-   witness cost and independent Ganak counting.
+1. W-CRC-015 indexed exact VE regression controls.
+2. W-CRC-016 held-out signed tree/ladder source tests versus brute counts.
+3. W-CRC-016 23-case held-out graph study with Glucose3 witness cost,
+   explicit resource refusals and independent Ganak counting.
 
 These are the **current** three approved queue tasks. W-CRC-005 through
-W-CRC-013 configurations described chronologically below are historical.
+W-CRC-014 configurations described chronologically below are historical.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -286,3 +286,24 @@ Actual subprocess task ordering and results:
 The queue wrote a JSON report and uploaded its artifact. It **still
 does not invent new hypotheses, edit source automatically, merge into
 TC-063/main, or post to ChatGPT when the turn is closed**.
+
+
+## Verified W-CRC-016 held-out completion-driven queue
+
+[Dedicated W-CRC-016 queue #41723396262](https://github.com/joeyst8/witnora-core/actions/runs/41723396262)
+finished all reviewed experiments successfully; its subprocess sequence
+was `wcrc015_indexed_unit`, `wcrc016_heldout_unit`, then
+`wcrc016_heldout_ganak`. The queue uploaded its JSON result artifact
+and remained bounded and read-only.
+
+Full W-CRC [CI #41723375350](https://github.com/joeyst8/witnora-core/actions/runs/41723375350)
+passed **95 Python test methods** and an independently counted
+23-case held-out study. Witnora completed 16/16 random-tree and
+signed-ladder cases and correctly returned incomplete on all 7
+high-width/no-cut controls. Ganak completed every case. These
+results do **not** establish general SAT performance superiority.
+
+The distinction between *automatically executing a fixed reviewed
+queue* and *autonomously inventing the next research hypothesis*
+remains critical: only the former is configured, and the queue
+does not send messages into a closed ChatGPT thread.
