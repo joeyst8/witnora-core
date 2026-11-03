@@ -32,6 +32,10 @@ ALLOWED_TASKS = {
         ("-m", "unittest", "tests.test_crc_conflict_oracle", "-v"),
     "wcrc006_conflict_ganak":
         ("-m", "scripts.benchmark_crc_conflict"),
+    "wcrc018_matched_unit":
+        ("-m", "unittest", "tests.test_crc_matched_semantics", "-v"),
+    "wcrc018_matched_ganak":
+        ("-m", "scripts.benchmark_crc_matched_semantics"),
     "wcrc017_dense_unit":
         ("-m", "unittest", "tests.test_crc_dense_semantics", "-v"),
     "wcrc017_dense_ganak":
