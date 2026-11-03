@@ -29,6 +29,7 @@ from .operator_genesis import (
     check_affine_residue_certificate,
 )
 from .xor import canonical_xor_cnf_clauses
+from .separator_structural_priority import prioritized_singletons
 
 
 VERSION = "2.22"
@@ -760,11 +761,19 @@ def check_separator_affine_certificate(
     }
 
 
-def recognize_separator_affine_family(formula: CNFFormula, *, c: int = 1, r: int = 2) -> dict[str, Any]:
+def recognize_separator_affine_family(
+    formula: CNFFormula, *, c: int = 1, r: int = 2,
+    priority: str = "structural",
+) -> dict[str, Any]:
+    if priority not in {"structural", "lexicographic"}:
+        raise ValueError("priority must be structural or lexicographic")
     variables = list(formula.variables)
+    graph = primal_graph(formula)
+    singletons = prioritized_singletons(graph) if priority == "structural" else tuple(variables)
     trace: list[dict[str, Any]] = []
     for size in range(1, min(c, len(variables)) + 1):
-        for candidate in combinations(variables, size):
+        candidates = ((v,) for v in singletons) if size == 1 else combinations(variables, size)
+        for candidate in candidates:
             components = _component_dicts(formula, list(candidate))
             ok = len(components) >= 2
             reason = "candidate accepted"
@@ -790,6 +799,8 @@ def recognize_separator_affine_family(formula: CNFFormula, *, c: int = 1, r: int
                     "separator_variables": list(candidate),
                     "components": components,
                     "trace": trace,
+                    "candidate_priority": priority,
+                    "candidates_examined": len(trace),
                     "complexity": "O(n^c * 2^c * poly(n)) for fixed c and supported affine arity r.",
                 }
     return {
@@ -797,6 +808,8 @@ def recognize_separator_affine_family(formula: CNFFormula, *, c: int = 1, r: int
         "separator_variables": [],
         "components": [],
         "trace": trace,
+        "candidate_priority": priority,
+        "candidates_examined": len(trace),
         "complexity": "Recognition is polynomial only for fixed c; no SAF(c,r) row accepted.",
     }
 
