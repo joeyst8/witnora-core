@@ -13,6 +13,7 @@ from itertools import combinations
 from witnora_core.g5_elimination_activity import (
     activity_from_g5_operations,
     ranked_pair_candidates,
+    pairwise_cross_merge_activity,
 )
 from witnora_core.operator_genesis import gaussian_eliminate_gf2
 from witnora_core.separator_affine_family_theorem import _components_after_removing
@@ -81,6 +82,9 @@ class G5ActivityCrossFamilyTest(unittest.TestCase):
                     elimination["row_operations"], mapping.values()
                 )
                 g5_pair = ranked_pair_candidates(activity)[0]
+                pairwise_pair = pairwise_cross_merge_activity(
+                    elimination["row_operations"], mapping.values()
+                )["ranked_pairs"][0]
                 numeric_pair = tuple(sorted(mapping.values())[:2])
                 graph = {v: set() for v in mapping.values()}
                 for a, b in permuted_edges:
@@ -91,20 +95,24 @@ class G5ActivityCrossFamilyTest(unittest.TestCase):
                 g5_sizes = sizes_after(graph, g5_pair)
                 numeric_sizes = sizes_after(graph, numeric_pair)
                 degree_sizes = sizes_after(graph, degree_pair)
+                pairwise_sizes = sizes_after(graph, pairwise_pair)
                 outcomes.append({
                     "trial": trial,
                     "g5_split": len(g5_sizes) > 1,
                     "numeric_split": len(numeric_sizes) > 1,
                     "degree_split": len(degree_sizes) > 1,
+                    "pairwise_split": len(pairwise_sizes) > 1,
                     "g5_largest": max(g5_sizes),
                     "numeric_largest": max(numeric_sizes),
                     "degree_largest": max(degree_sizes),
+                    "pairwise_largest": max(pairwise_sizes),
                 })
             records[name] = {
                 "trials": len(outcomes),
                 "g5_split": sum(x["g5_split"] for x in outcomes),
                 "numeric_split": sum(x["numeric_split"] for x in outcomes),
                 "degree_split": sum(x["degree_split"] for x in outcomes),
+                "pairwise_split": sum(x["pairwise_split"] for x in outcomes),
                 "g5_mean_largest": round(
                     statistics.mean(x["g5_largest"] for x in outcomes), 3
                 ),
@@ -113,6 +121,9 @@ class G5ActivityCrossFamilyTest(unittest.TestCase):
                 ),
                 "degree_mean_largest": round(
                     statistics.mean(x["degree_largest"] for x in outcomes), 3
+                ),
+                "pairwise_mean_largest": round(
+                    statistics.mean(x["pairwise_largest"] for x in outcomes), 3
                 ),
                 "g5_worse_than_degree": sum(
                     x["g5_largest"] > x["degree_largest"]
@@ -128,6 +139,7 @@ class G5ActivityCrossFamilyTest(unittest.TestCase):
                 self.assertEqual(records[name]["g5_split"], 0)
                 self.assertEqual(records[name]["numeric_split"], 0)
                 self.assertEqual(records[name]["degree_split"], 0)
+                self.assertEqual(records[name]["pairwise_split"], 0)
         print("G5_ACTIVITY_CROSSFAMILY_STUDY", json.dumps(records, sort_keys=True))
 
 
