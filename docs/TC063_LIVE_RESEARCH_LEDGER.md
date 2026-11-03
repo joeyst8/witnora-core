@@ -124,3 +124,28 @@ benchmark speedup, polynomial-time construction, or P-versus-NP conclusion is
 established. The next *bigger-fish* gate is sound CDCL proof import with source
 identity, then frozen hard non-affine and no-separator benchmarks against real
 industrial solvers.
+
+
+## 2026-11-03 universal CDCL/RUP bridge and measured limitation
+
+An independent pinned Glucose3 CDCL solver now emits genuine DRUP proofs for
+non-affine PHP(3,2), PHP(4,3), PHP(5,4). Untrusted Python elaboration turns
+addition lines into explicit propagation witnesses; Lean rechecks every
+inference using the general arbitrary-CNF `GeneralRUP.signedRup_unsat`
+theorem, with a separate ASCII-source-bound theorem
+`GeneralRUPAscii.checkAsciiRup_sound`. The Lean axiom audit reports only
+`[propext, Quot.sound]`. Unsupported RAT-only steps are not silently
+accepted; ignoring deletion hints is sound because the checker keeps the
+previously proved clauses. The accepted CDCL smoke gate and tampered-DIMACS
+rejection are in https://github.com/joeyst8/witnora-core/actions/runs/41599953956 .
+
+The frozen PHP size ladder additionally generated and *natively replayed*
+PHP(6,5) (30 variables, 81 source clauses, 140 added RUP clauses and 2,530
+propagated units). Its single-run annotation time was 251.766 ms against
+13.263 ms at PHP(5,4) (28 additions, 379 units); PHP(6,5) has **not**
+been Lean checked yet. See the source and full table at
+[General CDCL/RUP bridge](GENERAL_RUP_CDCL_BRIDGE.md) and successful
+https://github.com/joeyst8/witnora-core/actions/runs/41600247380 .
+
+This extends **sound verification** to arbitrary CNF, not efficient
+proof construction, fast industrial SAT, or any polynomial-time bound.
