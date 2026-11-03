@@ -24,6 +24,8 @@ on:
       - "tests/test_crc_heldout.py"
       - "tests/test_crc_dense_semantics.py"
       - "scripts/benchmark_crc_dense_semantics.py"
+      - "tests/test_crc_matched_semantics.py"
+      - "scripts/benchmark_crc_matched_semantics.py"
       - "scripts/benchmark_crc_defect.py"
       - "scripts/benchmark_crc_conflict.py"
       - "scripts/benchmark_crc_independence.py"
