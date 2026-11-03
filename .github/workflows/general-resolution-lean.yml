@@ -19,6 +19,9 @@ on:
       - "scripts/generate_glucose_dense_3sat_lean.py"
       - "tests/test_glucose_dense_3sat.py"
       - "witnora_core/rup_witness_import.py"
+      - "witnora_core/rup_indexed_propagation.py"
+      - "tests/test_rup_indexed_propagation.py"
+      - "scripts/benchmark_rup_indexed_propagation.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -38,6 +41,9 @@ on:
       - "scripts/generate_glucose_dense_3sat_lean.py"
       - "tests/test_glucose_dense_3sat.py"
       - "witnora_core/rup_witness_import.py"
+      - "witnora_core/rup_indexed_propagation.py"
+      - "tests/test_rup_indexed_propagation.py"
+      - "scripts/benchmark_rup_indexed_propagation.py"
       - "tests/test_general_resolution_trace.py"
       - "tests/test_general_rup_trace.py"
       - ".github/workflows/general-resolution-lean.yml"
@@ -63,7 +69,7 @@ jobs:
         working-directory: formal
         run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP Witnora.GeneralRUPAscii
       - name: Test independent proof generation and tamper rejection
-        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import tests.test_glucose_dense_3sat -v
+        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import tests.test_glucose_dense_3sat tests.test_rup_indexed_propagation -v
       - name: Generate non-affine CNF resolution examples
         run: python -m scripts.generate_general_resolution_lean > formal/Witnora/GeneratedGeneralResolution.lean
       - name: Lean-check all generated non-affine examples
@@ -87,3 +93,6 @@ jobs:
       - name: Lean-check dense no-small-separator 3SAT and positive SAT models
         working-directory: formal
         run: lake env lean Witnora/GeneratedDense3SAT.lean
+
+      - name: Compare indexed and reference DRUP annotation on frozen cases
+        run: python -m scripts.benchmark_rup_indexed_propagation
