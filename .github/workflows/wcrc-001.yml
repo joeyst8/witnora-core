@@ -26,6 +26,7 @@ on:
       - "scripts/benchmark_crc_orbit.py"
       - "scripts/benchmark_crc_symmetry_stress.py"
       - "scripts/benchmark_crc_defect.py"
+      - "scripts/benchmark_crc_conflict.py"
       - "scripts/run_witnora_research_queue.py"
       - "tests/test_research_queue.py"
       - ".github/workflows/wcrc-001.yml"
@@ -44,6 +45,7 @@ on:
       - "scripts/benchmark_crc_highcount.py"
       - "scripts/benchmark_crc_symmetry_stress.py"
       - "scripts/benchmark_crc_defect.py"
+      - "scripts/benchmark_crc_conflict.py"
       - "scripts/run_witnora_research_queue.py"
       - "tests/test_research_queue.py"
       - ".github/workflows/wcrc-001.yml"
@@ -76,3 +78,5 @@ jobs:
         run: python -m scripts.benchmark_crc_symmetry_stress
       - name: W-CRC-005 exact high-order defect coefficient pilot against Ganak
         run: python -m scripts.benchmark_crc_defect
+      - name: W-CRC-006 mixed-polarity exact coefficient pilot against Ganak
+        run: python -m scripts.benchmark_crc_conflict
