@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-006)
+name: Rust native Witnora migration differential gate (R-001 through R-007)
 
 on:
   push:
@@ -21,6 +21,9 @@ on:
       - "witnora_core/crc_rust_walsh.py"
       - "tests/test_crc_rust_walsh.py"
       - "scripts/benchmark_rust_walsh.py"
+      - "witnora_core/crc_rust_affine.py"
+      - "tests/test_crc_rust_affine.py"
+      - "scripts/benchmark_rust_affine.py"
       - ".github/workflows/rust-ve.yml"
   pull_request:
     paths:
@@ -40,6 +43,9 @@ on:
       - "witnora_core/crc_rust_walsh.py"
       - "tests/test_crc_rust_walsh.py"
       - "scripts/benchmark_rust_walsh.py"
+      - "witnora_core/crc_rust_affine.py"
+      - "tests/test_crc_rust_affine.py"
+      - "scripts/benchmark_rust_affine.py"
   workflow_dispatch:
 
 concurrency:
@@ -105,3 +111,11 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m scripts.benchmark_rust_walsh
+      - name: Verify exact native GF2 projection and sparse Fourier
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_crc_rust_affine -v
+      - name: Benchmark native affine Fourier against independent Ganak
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m scripts.benchmark_rust_affine
