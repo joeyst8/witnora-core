@@ -11,12 +11,11 @@ workflow `.github/workflows/witnora-research-queue.yml`.
 
 A single bounded job runs three approved experiments in this order:
 
-1. W-CRC-005 symmetry-defect falsification: dispersed versus
-   tetrahedral four-triple omissions with independent Ganak counts.
-2. W-CRC-005 exact high-order defect Walsh unit tests, including
-   independently enumerated full Fourier spectra and budget rejection.
-3. W-CRC-005 eight-case exact defect source-to-count versus Ganak
-   benchmark, with fail-closed execution budgets.
+1. W-CRC-005 exact defect-hypergraph Walsh unit regression.
+2. W-CRC-006 independent mixed-sign Walsh unit tests with source
+   negative controls and explicit coefficient/budget bounds.
+3. W-CRC-006 16-case source-to-count versus independent Ganak
+   benchmark, including one and two conflicting-sign exceptions.
 
 As soon as one subprocess **successfully completes**, the runner launches
 the next. If a subprocess fails or times out, it stops; it never labels a
@@ -142,3 +141,32 @@ independent W-CRC/Ganak suite:
 https://github.com/joeyst8/witnora-core/actions/runs/41710683455 .
 See docs/W_CRC_005_DEFECT_HYPERGRAPH.md for exact results.
 This is vetted task automation, not a self-generating agent.
+
+
+## Verified W-CRC-006 queue — 2026-11-03
+
+The manifest now contains the exact three W-CRC-005/006 tasks listed
+above. The whitelist and sequencing tests passed, and dedicated
+completion-driven workflow run
+https://github.com/joeyst8/witnora-core/actions/runs/41712614609
+successfully executed all three in order:
+
+- wcrc005_defect_unit PASS (0.852s)
+- wcrc006_conflict_unit PASS (0.944s)
+- wcrc006_conflict_ganak PASS (3.388s)
+
+The JSON artifact was uploaded successfully. These observed times
+come from this GitHub Actions run and exclude runner setup.
+Mock failure/timeout events visible in the preceding safety tests
+are intentional tests of fail-stop behavior, not experimental failures.
+
+The independent full W-CRC CI gate also passed 50 tests and all
+16/16 mixed-polarity Ganak comparisons:
+https://github.com/joeyst8/witnora-core/actions/runs/41711999357 .
+The exact mathematics and limits are recorded in
+docs/W_CRC_006_MIXED_POLARITY.md .
+
+This remains a **finite, read-only, non-self-modifying queue**.
+Its success does not automatically invent the next theorem or create
+a new research task. A new reviewed task requires a further draft
+commit; no automatic merge into TC-063/main occurs.
