@@ -389,7 +389,11 @@ theorem rowsSupported_sortAffineRows
   induction rows with
   | nil => rfl
   | cons row rest ih =>
-      simp [sortAffineRows, rowSupported_sortAffineRow, ih]
+      have hTail :
+          rest.all (rowSupported r ∘ sortAffineRow) =
+            rest.all (rowSupported r) := by
+        simpa only [sortAffineRows, List.all_map] using ih
+      simp [sortAffineRows, rowSupported_sortAffineRow, hTail]
 
 /-- All three booleans in the full semantic affine-extraction check
     are now invariant under deterministic sorting of Nodup supports. -/
@@ -410,9 +414,8 @@ theorem rowSupported_implies_nodup
     (h : rowSupported r row = true) :
     row.coefficients.Nodup := by
   unfold rowSupported at h
-  have hBoth := (Bool.and_eq_true.mp h).1
-  have hDup := (Bool.and_eq_true.mp hBoth).2
-  simpa using hDup
+  simp at h
+  exact h.1.2
 
 /-- Exact source-bound affine acceptance supplies all Nodup premises
     needed to apply permutation invariance to every row. -/
@@ -422,7 +425,8 @@ theorem semanticAffine_rows_nodup
     ∀ row ∈ rows, row.coefficients.Nodup := by
   have hSupport : rows.all (rowSupported r) = true := by
     unfold checkSemanticExactAffine at h
-    exact (Bool.and_eq_true.mp (Bool.and_eq_true.mp h).1).1
+    simp at h
+    exact h.1.1
   intro row hr
   exact rowSupported_implies_nodup r row
     (List.all_eq_true.mp hSupport row hr)
