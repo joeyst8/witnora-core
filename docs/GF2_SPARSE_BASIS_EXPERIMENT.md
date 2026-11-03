@@ -73,3 +73,55 @@ exact, but no general efficient SAT/#SAT or polynomial-time claim
 follows from Gaussian elimination alone.
 
 Numerical results and CI status will be appended after verification.
+
+
+## Verified outcome: sparse GF(2) row-basis counting experiment
+
+[General-resolution CI run #41660196196](https://github.com/joeyst8/witnora-core/actions/runs/41660196196)
+passed the new Lean module `GF2RowParity`, five Python
+GF(2) basis/reconstruction tests, exact contraction comparisons,
+and the existing general-CNF RUP/Glucose/Lean regressions.
+Lean reports only standard axioms
+`[propext, Classical.choice, Quot.sound]` for the two row-operation
+theorems; no `sorry` or new project axiom was introduced.
+
+In the small cases, the exact polynomial was **identical** before
+and after basis compression:
+
+| Case | Original rows | GF(2) rank / rows retained | Original exact polynomial contraction ms | Reduced ms | Full polynomial |
+|---|---:|---:|---:|---:|---|
+| Four-unit-clause collision | 6 | 3 | 1.391 | 1.141 | `1+t^4` |
+| 4v/5c planted | 6 | 5 | 4.727 | 4.086 | exact same constant |
+| 5v/7c planted | 5 | 5 | 27.755 | 28.063 | exact same constant |
+| 6v/9c planted | 8 | 8 | 71.520 | 70.147 | exact same constant |
+| 8v/12c planted | 12 | 11 | **BUDGET_EXCEEDED** | **BUDGET_EXCEEDED** | not computed |
+
+These are single-run, tiny Python timings **including basis
+certificate verification during the reduced counting call** but not
+basis construction outside the contraction timer. They are not
+industrial SAT/#SAT or asymptotic measurements. For 8v/12c both
+paths failed closed at bucket size12 over configured cap11.
+
+Large non-enumerative **construction only** (no SAT/counting):
+
+| 3-CNF | Source clauses | Original parity rows | Sparse-basis rank | Parity-kernel nullity m-rank | Basis construction/verification ms |
+|---|---:|---:|---:|---:|---:|
+| 32v/224c | 224 | 150 | 150 | 74 | 1.264 |
+| 96v/576c | 576 | 385 | 385 | 191 | 7.151 |
+| 256v/1536c | 1536 | 1,022 | 1,021 | 515 | 51.401 |
+
+The sparse-basis algorithm detects nearly **no redundant rows**
+in these larger geometry-aware random constructions. Thus a
+rank-redundancy-only strategy cannot significantly accelerate
+this family. Note the 256-variable nullity 515 describes the
+linear violation-bit space, **not** a count of realizable CNF
+violation patterns or the number of source models.
+
+### Next mathematical obstacle
+
+The row-space reduction is exact for all violation vectors, but
+the original source-CNF map x ↦ v(x) is nonlinear. Better progress
+requires exploiting the structure of **realizable** violation
+vectors and low-degree clause polynomials, or designing a new
+rank-growth/checker operator with explicit proof certificates.
+Merely dropping dependent rows is a bounded optimization.
