@@ -766,6 +766,15 @@ fn compact_certificate_hash_native(value: &Bound<'_, PyAny>) -> PyResult<(String
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn verify_certificate_file_digests_native(
+    expected: Vec<(String, String)>, files: Vec<(String, String)>,
+) -> PyResult<Option<String>> {
+    bundle_manifest::first_digest_failure(&expected, &files)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -792,6 +801,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(stable_certificate_json_native, module)?)?;
     module.add_function(wrap_pyfunction!(certificate_file_digests_native, module)?)?;
     module.add_function(wrap_pyfunction!(compact_certificate_hash_native, module)?)?;
+    module.add_function(wrap_pyfunction!(verify_certificate_file_digests_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
