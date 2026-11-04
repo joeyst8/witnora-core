@@ -16,6 +16,7 @@ on:
       - "witnora_core/crc_structural_independence.py"
       - "witnora_core/crc_conditional_independence.py"
       - "witnora_core/aux_violation_tensors.py"
+      - "witnora_core/constraint_geometry.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
@@ -27,6 +28,7 @@ on:
       - "tests/test_crc_structural_independence_rust.py"
       - "tests/test_crc_conditional_independence_rust.py"
       - "tests/test_aux_violation_tensors_rust.py"
+      - "tests/test_constraint_geometry_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -44,6 +46,7 @@ on:
       - "witnora_core/crc_structural_independence.py"
       - "witnora_core/crc_conditional_independence.py"
       - "witnora_core/aux_violation_tensors.py"
+      - "witnora_core/constraint_geometry.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
@@ -55,6 +58,7 @@ on:
       - "tests/test_crc_structural_independence_rust.py"
       - "tests/test_crc_conditional_independence_rust.py"
       - "tests/test_aux_violation_tensors_rust.py"
+      - "tests/test_constraint_geometry_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -86,7 +90,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-077 source comparisons
+      - name: Focused R-067 through R-078 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -101,3 +105,4 @@ jobs:
           python -m unittest tests.test_crc_structural_independence_rust -v
           python -m unittest tests.test_crc_conditional_independence_rust -v
           python -m unittest tests.test_aux_violation_tensors_rust -v
+          python -m unittest tests.test_constraint_geometry_rust -v

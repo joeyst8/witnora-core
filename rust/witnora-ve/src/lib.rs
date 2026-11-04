@@ -62,6 +62,7 @@ pub mod parity_compression;
 pub mod crc_structural_independence;
 pub mod crc_conditional_independence;
 pub mod aux_violation_tensors;
+pub mod constraint_geometry;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1790,6 +1791,39 @@ fn sparse_min_degree_width_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn dense_geometry_rows_native(bitmaps:Vec<String>,clause_count:usize)->PyResult<Vec<Vec<usize>>>{
+    constraint_geometry::rows_from_bitmaps(&bitmaps,clause_count).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn dense_geometry_validate_native(source:Vec<Vec<i32>>,nvars:usize,clause_count:usize,
+    digest:String,security_bits:usize,rows:Vec<Vec<usize>>)->PyResult<()>{
+    constraint_geometry::validate(&source,nvars,clause_count,&digest,security_bits,&rows)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn dense_geometry_audit_native(source:Vec<Vec<i32>>,nvars:usize,
+    rows:Vec<Vec<usize>>,max_variables:usize)->PyResult<(usize,usize,usize,usize,Vec<usize>)>{
+    constraint_geometry::audit(&source,nvars,&rows,max_variables).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn dense_geometry_singleton_bound_native(count:usize,width:usize)->PyResult<usize>{
+    constraint_geometry::singleton_bound(count,width).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn dense_geometry_row_stats_native(rows:Vec<Vec<usize>>)->(usize,f64,usize){
+    constraint_geometry::row_stats(&rows)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn finite_parity_source_digest_native(
     source:Vec<Vec<i32>>,
 ) -> String {
@@ -1890,6 +1924,11 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(aux_direct_scopes_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_exact_models_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_weight_profile_native, module)?)?;
+    module.add_function(wrap_pyfunction!(dense_geometry_rows_native, module)?)?;
+    module.add_function(wrap_pyfunction!(dense_geometry_validate_native, module)?)?;
+    module.add_function(wrap_pyfunction!(dense_geometry_audit_native, module)?)?;
+    module.add_function(wrap_pyfunction!(dense_geometry_singleton_bound_native, module)?)?;
+    module.add_function(wrap_pyfunction!(dense_geometry_row_stats_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
