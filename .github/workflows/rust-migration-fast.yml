@@ -11,12 +11,14 @@ on:
       - "witnora_core/satlib_fingerprint.py"
       - "witnora_core/spoke_collapse.py"
       - "witnora_core/ood_sat_families.py"
+      - "witnora_core/families.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
       - "tests/test_satlib_fingerprint_rust.py"
       - "tests/test_spoke_collapse_rust.py"
       - "tests/test_ood_sat_families_rust.py"
+      - "tests/test_benchmark_families_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -29,12 +31,14 @@ on:
       - "witnora_core/satlib_fingerprint.py"
       - "witnora_core/spoke_collapse.py"
       - "witnora_core/ood_sat_families.py"
+      - "witnora_core/families.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
       - "tests/test_satlib_fingerprint_rust.py"
       - "tests/test_spoke_collapse_rust.py"
       - "tests/test_ood_sat_families_rust.py"
+      - "tests/test_benchmark_families_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -66,7 +70,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-072 source comparisons
+      - name: Focused R-067 through R-073 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -76,3 +80,4 @@ jobs:
           python -m unittest tests.test_satlib_fingerprint_rust -v
           python -m unittest tests.test_spoke_collapse_rust -v
           python -m unittest tests.test_ood_sat_families_rust -v
+          python -m unittest tests.test_benchmark_families_rust -v

@@ -1,4 +1,4 @@
-# R-072 — Out-of-distribution SAT family constructors (pending compiled CI)
+# R-072 — Out-of-distribution SAT family constructors (native verified)
 
 All five canonical CNF construction kernels in `ood_sat_families.py` now have
 opt-in Rust equivalents: pigeonhole, graph coloring, bounded complete-graph
@@ -18,4 +18,7 @@ plus invalid input controls. The independent source tests continue to run.
 
 This is an experimental generator migration. No statement that a source is
 computationally hard or that Rust establishes a SAT theorem follows from
-source identity alone. Do not mark verified until native CI is green.
+source identity alone. [Focused CI #41885387466](https://github.com/joeyst8/witnora-core/actions/runs/41885387466)
+passed Rust library tests, wheel build and all R-072 source comparisons.
+The module now counts as `parallel_reference`, bringing the total to
+**50/560** verified Python-file counterparts.

@@ -2856,7 +2856,9 @@
       "path": "witnora_core/families.py",
       "sha": "97ad0dbeefd4ee154ad8cdbf046829dc94681d39",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/benchmark_families.rs",
+      "migration_note": "R-073 deterministic benchmark family kernels native, original Python RNG stream for random 2/3-CNF samples; pending compiled differential gate."
     },
     {
       "path": "witnora_core/finite_edge_certificate.py",
@@ -3070,9 +3072,9 @@
       "path": "witnora_core/ood_sat_families.py",
       "sha": "23c31039dcfd17790771878747a6a62e85b41fc6",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/ood_sat_families.rs",
-      "migration_note": "R-072 all OOD source constructor kernels native; Python retains seeded MT19937 samples. Pending CI covering exact source hashes, grids and named bundles."
+      "migration_note": "R-072 all OOD source constructors native; focused Rust CI #41885387466 green on deterministic grids, 200 planted seeded sources and named bundles; Python retains frozen MT19937 samples."
     },
     {
       "path": "witnora_core/operator_counterexamples.py",

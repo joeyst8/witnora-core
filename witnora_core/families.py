@@ -7,7 +7,7 @@ import random
 from .cnf import CNFFormula
 
 
-def make_blocked_clique_collapse_family(n: int) -> CNFFormula:
+def make_blocked_clique_collapse_family(n: int, *, backend: str = "python") -> CNFFormula:
     """Return the blocked-clique collapse family F_n.
 
     Variable mapping:
@@ -21,16 +21,21 @@ def make_blocked_clique_collapse_family(n: int) -> CNFFormula:
 
     if n < 1:
         raise ValueError("n must be at least 1")
+    if backend == "rust":
+        from witnora_ve import benchmark_family_native
+        return CNFFormula.from_raw_clauses(benchmark_family_native("clique", n, 0))
+    if backend != "python":
+        raise ValueError("unknown benchmark family backend")
 
     long_clause = list(range(1, n + 2))
     binary_clauses = [[-1, -(i + 1)] for i in range(1, n + 1)]
     return CNFFormula.from_raw_clauses([long_clause, *binary_clauses])
 
 
-def blocked_clique_collapse_family(n: int) -> CNFFormula:
+def blocked_clique_collapse_family(n: int, *, backend: str = "python") -> CNFFormula:
     """Alias with the theorem-note naming."""
 
-    return make_blocked_clique_collapse_family(n)
+    return make_blocked_clique_collapse_family(n, backend=backend)
 
 
 def _literal(var: int, positive: bool) -> int:
@@ -47,13 +52,16 @@ def _offset_formula(formula: CNFFormula, offset: int) -> list[list[int]]:
     return clauses
 
 
-def random_2sat_family(n_vars: int, n_clauses: int, seed: int) -> CNFFormula:
+def random_2sat_family(n_vars: int, n_clauses: int, seed: int, *,
+                       backend: str = "python") -> CNFFormula:
     """Generate a deterministic random 2-CNF formula."""
 
     if n_vars < 1:
         raise ValueError("n_vars must be at least 1")
     if n_clauses < 0:
         raise ValueError("n_clauses must be non-negative")
+    if backend not in ("python", "rust"):
+        raise ValueError("unknown benchmark family backend")
 
     rng = random.Random(seed)
     clauses: set[tuple[int, int]] = set()
@@ -66,16 +74,23 @@ def random_2sat_family(n_vars: int, n_clauses: int, seed: int) -> CNFFormula:
         if lit_a == -lit_b:
             continue
         clauses.add(tuple(sorted((lit_a, lit_b))))
+    if backend == "rust":
+        from witnora_ve import benchmark_sampled_clauses_native
+        return CNFFormula.from_raw_clauses(
+            benchmark_sampled_clauses_native([list(row) for row in clauses]))
     return CNFFormula.from_raw_clauses(clauses)
 
 
-def random_3sat_family(n_vars: int, n_clauses: int, seed: int) -> CNFFormula:
+def random_3sat_family(n_vars: int, n_clauses: int, seed: int, *,
+                       backend: str = "python") -> CNFFormula:
     """Generate a deterministic random 3-CNF formula."""
 
     if n_vars < 3:
         raise ValueError("n_vars must be at least 3")
     if n_clauses < 0:
         raise ValueError("n_clauses must be non-negative")
+    if backend not in ("python", "rust"):
+        raise ValueError("unknown benchmark family backend")
 
     rng = random.Random(seed)
     clauses: set[tuple[int, int, int]] = set()
@@ -87,10 +102,14 @@ def random_3sat_family(n_vars: int, n_clauses: int, seed: int) -> CNFFormula:
         if any(-lit in lits for lit in lits):
             continue
         clauses.add(lits)
+    if backend == "rust":
+        from witnora_ve import benchmark_sampled_clauses_native
+        return CNFFormula.from_raw_clauses(
+            benchmark_sampled_clauses_native([list(row) for row in clauses]))
     return CNFFormula.from_raw_clauses(clauses)
 
 
-def bounded_treewidth_chain_family(n: int) -> CNFFormula:
+def bounded_treewidth_chain_family(n: int, *, backend: str = "python") -> CNFFormula:
     """Generate a deterministic non-2-CNF formula with small primal width.
 
     The first five variables are the v0 treewidth demo core. Extra variables
@@ -100,6 +119,11 @@ def bounded_treewidth_chain_family(n: int) -> CNFFormula:
 
     if n < 5:
         raise ValueError("n must be at least 5")
+    if backend == "rust":
+        from witnora_ve import benchmark_family_native
+        return CNFFormula.from_raw_clauses(benchmark_family_native("chain", n, 0))
+    if backend != "python":
+        raise ValueError("unknown benchmark family backend")
 
     clauses = [
         [-3, -1],
@@ -115,13 +139,20 @@ def bounded_treewidth_chain_family(n: int) -> CNFFormula:
     return CNFFormula.from_raw_clauses(clauses)
 
 
-def bce_heavy_family(n: int, num_blocked_clauses: int) -> CNFFormula:
+def bce_heavy_family(n: int, num_blocked_clauses: int, *,
+                     backend: str = "python") -> CNFFormula:
     """Generate disjoint blocked-clique components with many BCE removals."""
 
     if n < 1:
         raise ValueError("n must be at least 1")
     if num_blocked_clauses < 1:
         raise ValueError("num_blocked_clauses must be at least 1")
+    if backend == "rust":
+        from witnora_ve import benchmark_family_native
+        return CNFFormula.from_raw_clauses(
+            benchmark_family_native("bce", n, num_blocked_clauses))
+    if backend != "python":
+        raise ValueError("unknown benchmark family backend")
 
     clauses: list[list[int]] = []
     offset = 0
@@ -132,10 +163,15 @@ def bce_heavy_family(n: int, num_blocked_clauses: int) -> CNFFormula:
     return CNFFormula.from_raw_clauses(clauses)
 
 
-def component_mixed_family(n: int) -> CNFFormula:
+def component_mixed_family(n: int, *, backend: str = "python") -> CNFFormula:
     """Generate independent BCE, 2-SAT, and bounded-treewidth components."""
 
     width = max(3, n)
+    if backend == "rust":
+        from witnora_ve import benchmark_family_native
+        return CNFFormula.from_raw_clauses(benchmark_family_native("mixed", n, 0))
+    if backend != "python":
+        raise ValueError("unknown benchmark family backend")
     clauses: list[list[int]] = []
     clauses.extend(_offset_formula(make_blocked_clique_collapse_family(width), 0))
 
@@ -152,17 +188,27 @@ def component_mixed_family(n: int) -> CNFFormula:
     return CNFFormula.from_raw_clauses(clauses)
 
 
-def unsat_unit_conflict_family() -> CNFFormula:
+def unsat_unit_conflict_family(*, backend: str = "python") -> CNFFormula:
     """Generate the minimal unit contradiction."""
 
+    if backend == "rust":
+        from witnora_ve import benchmark_family_native
+        return CNFFormula.from_raw_clauses(benchmark_family_native("conflict", 0, 0))
+    if backend != "python":
+        raise ValueError("unknown benchmark family backend")
     return CNFFormula.from_raw_clauses([[1], [-1]])
 
 
-def tautology_noise_family(n: int) -> CNFFormula:
+def tautology_noise_family(n: int, *, backend: str = "python") -> CNFFormula:
     """Generate tautological noise plus a deterministic unit clause."""
 
     if n < 1:
         raise ValueError("n must be at least 1")
+    if backend == "rust":
+        from witnora_ve import benchmark_family_native
+        return CNFFormula.from_raw_clauses(benchmark_family_native("tautology", n, 0))
+    if backend != "python":
+        raise ValueError("unknown benchmark family backend")
 
     clauses = [[var, -var, ((var % n) + 1)] for var in range(1, n + 1)]
     clauses.append([1])
