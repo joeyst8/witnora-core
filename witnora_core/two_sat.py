@@ -71,7 +71,15 @@ def _kosaraju(graph: dict[int, set[int]]) -> tuple[dict[int, int], list[list[int
     return comp, components
 
 
-def solve_2sat(formula: CNFFormula, logger: StepLogger | None = None) -> dict[str, Any]:
+def solve_2sat(formula: CNFFormula, logger: StepLogger | None = None, *,
+               backend: str = "python") -> dict[str, Any]:
+    if backend == "rust":
+        if logger is not None:
+            raise ValueError("native two-SAT does not emit verified proof logs yet")
+        from .two_sat_rust import solve_two_sat_in_rust
+        return solve_two_sat_in_rust(formula)
+    if backend != "python":
+        raise ValueError("unknown two-SAT backend")
     if not formula.is_2cnf:
         raise ValueError("formula is not 2-CNF")
 
