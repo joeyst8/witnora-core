@@ -175,11 +175,17 @@ pub fn verify_sparse_parity_basis(
     clause_count:i64,
     max_row_width:i64,
     input:&[Vec<i64>],
+    reported_clause_count:i64,
+    reported_original_row_count:i64,
     selected_indices:&[usize],
     cert_rows:&[Vec<i64>],
     expansions:&[String],
     ordering:&str,
 ) -> Result<(),String> {
+    if reported_clause_count!=clause_count
+        || reported_original_row_count!=input.len() as i64 {
+        return Err("basis dimensions or indexing invalid".into());
+    }
     let (m,width,rows)=checked_rows(clause_count,max_row_width,input)?;
     let (_,_,retained)=checked_rows(clause_count,max_row_width,cert_rows)?;
     let mut coefficients=Vec::new();
@@ -224,6 +230,15 @@ pub fn accepts_masks_decimal(
     Ok(accepts_masks(&parsed,&rows))
 }
 
+pub fn row_mask_decimal(input:&[i64])->Result<String,String> {
+    let mut row=Vec::new();
+    for &j in input {
+        if j<0 { return Err("negative row column".into()); }
+        row.push(j as usize);
+    }
+    Ok(row_bits(&row).to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,7 +259,7 @@ mod tests {
         let mut expansions=cert.expansions.iter().map(ToString::to_string).collect::<Vec<_>>();
         expansions[1]="0".into();
         assert!(verify_sparse_parity_basis(
-            1,1,&input,&cert.selected_indices,
+            1,1,&input,1,2,&cert.selected_indices,
             &input[0..1],&expansions,"source_order"
         ).is_err());
     }
