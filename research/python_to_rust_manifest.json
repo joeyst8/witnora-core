@@ -2521,7 +2521,9 @@
       "path": "witnora_core/aux_violation_tensors.py",
       "sha": "49b260c3a2db57347342a2048f1e87980769fe4d",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/aux_violation_tensors.rs",
+      "migration_note": "R-077 native auxiliary factor scopes, parity scopes and finite exact source/weight profiles; pending compiled differential CI."
     },
     {
       "path": "witnora_core/bce.py",

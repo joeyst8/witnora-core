@@ -35,8 +35,15 @@ class AuxBridgeProfile:
         return self.coefficients[0]
 
 
-def independent_violation_mask(cnf: CNF, assignment: int) -> int:
+def independent_violation_mask(cnf: CNF, assignment: int, *,
+                               backend: str = "python") -> int:
     """Independent literal-level evaluator for bridge regression testing."""
+    if backend == "rust":
+        from witnora_ve import finite_parity_violation_mask_native
+        return int(finite_parity_violation_mask_native(
+            [list(row) for row in cnf], str(assignment)))
+    if backend != "python":
+        raise ValueError("unknown auxiliary bridge backend")
     mask = 0
     for j, clause in enumerate(cnf):
         satisfied = False
@@ -52,6 +59,7 @@ def independent_violation_mask(cnf: CNF, assignment: int) -> int:
 
 def auxiliary_factor_scopes(
     source: list[list[int]] | CNF, sketch: SparseOddSketch,
+    *, backend: str = "python",
 ) -> list[set[int]]:
     """Scopes of local clause↔violation factors and parity-on-violation factors.
 
@@ -60,6 +68,13 @@ def auxiliary_factor_scopes(
     This does NOT include the optional unary zero selectors v_j = 0.
     """
     cnf = validate_sparse_odd_sketch(source, sketch)
+    if backend == "rust":
+        from witnora_ve import aux_local_scopes_native
+        return [set(scope) for scope in aux_local_scopes_native(
+            [list(row) for row in cnf], sketch.nvars,
+            [list(row) for row in sketch.rows])]
+    if backend != "python":
+        raise ValueError("unknown auxiliary bridge backend")
     n = sketch.nvars
     local = [{abs(lit) for lit in clause} | {n + j + 1}
              for j, clause in enumerate(cnf)]
@@ -69,20 +84,32 @@ def auxiliary_factor_scopes(
 
 def direct_parity_factor_scopes(
     source: list[list[int]] | CNF, sketch: SparseOddSketch,
+    *, backend: str = "python",
 ) -> list[set[int]]:
     cnf = validate_sparse_odd_sketch(source, sketch)
+    if backend == "rust":
+        from witnora_ve import aux_direct_scopes_native
+        return [set(scope) for scope in aux_direct_scopes_native(
+            [list(row) for row in cnf], [list(row) for row in sketch.rows])]
+    if backend != "python":
+        raise ValueError("unknown auxiliary bridge backend")
     return [{abs(lit) for j in row for lit in cnf[j]}
             for row in sketch.rows]
 
 
 def exact_source_models_small(
     source: list[list[int]] | CNF, nvars: int, *,
-    max_variables: int = 14,
+    max_variables: int = 14, backend: str = "python",
 ) -> int:
     """Exponential oracle confined to small independent test cases."""
     cnf = canonical_source(source, nvars)
     if nvars > max_variables:
         raise ValueError("exhaustive model oracle restricted to small instances")
+    if backend == "rust":
+        from witnora_ve import aux_exact_models_native
+        return aux_exact_models_native([list(row) for row in cnf], nvars, max_variables)
+    if backend != "python":
+        raise ValueError("unknown auxiliary bridge backend")
     return sum(independent_violation_mask(cnf, x) == 0
                for x in range(1 << nvars))
 
@@ -90,13 +117,21 @@ def exact_source_models_small(
 def auxiliary_weight_profile_small(
     source: list[list[int]] | CNF,
     sketch: SparseOddSketch, *,
-    max_variables: int = 14,
+    max_variables: int = 14, backend: str = "python",
 ) -> AuxBridgeProfile:
     """Enumerate Z_H(t) coefficients for TESTING only, not construction."""
     cnf = validate_sparse_odd_sketch(source, sketch)
     n = sketch.nvars
     if n > max_variables:
         raise ValueError("exhaustive auxiliary bridge restricted to small instances")
+    if backend == "rust":
+        from witnora_ve import aux_weight_profile_native
+        coefficients = aux_weight_profile_native(
+            [list(row) for row in cnf], n, [list(row) for row in sketch.rows],
+            max_variables)
+        return AuxBridgeProfile(n, len(cnf), len(sketch.rows), tuple(coefficients))
+    if backend != "python":
+        raise ValueError("unknown auxiliary bridge backend")
     coefficients = [0] * (len(cnf) + 1)
     for x in range(1 << n):
         v = independent_violation_mask(cnf, x)
@@ -108,8 +143,9 @@ def auxiliary_weight_profile_small(
 
 def constant_term_matches_source(
     source: list[list[int]] | CNF, sketch: SparseOddSketch,
+    *, backend: str = "python",
 ) -> bool:
     """Finite control for the universal (and algebraically trivial) identity."""
-    p = auxiliary_weight_profile_small(source, sketch)
+    p = auxiliary_weight_profile_small(source, sketch, backend=backend)
     return p.constant_coefficient == exact_source_models_small(
-        source, sketch.nvars)
+        source, sketch.nvars, backend=backend)

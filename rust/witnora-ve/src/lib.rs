@@ -61,6 +61,7 @@ pub mod benchmark_families;
 pub mod parity_compression;
 pub mod crc_structural_independence;
 pub mod crc_conditional_independence;
+pub mod aux_violation_tensors;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -814,6 +815,36 @@ fn crc_conditional_independence_native(source:Vec<Vec<i32>>,boundary:Vec<i32>,
     ->PyResult<Option<(bool,String,usize,usize,usize)>> {
     crc_conditional_independence::conditioned(&source,&boundary,&left,&right,
         &separator,&assignment_decimal).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn aux_local_scopes_native(source:Vec<Vec<i32>>,nvars:usize,rows:Vec<Vec<usize>>)
+    ->PyResult<Vec<Vec<usize>>> {
+    aux_violation_tensors::local_scopes(&source,nvars,&rows).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn aux_direct_scopes_native(source:Vec<Vec<i32>>,rows:Vec<Vec<usize>>)
+    ->PyResult<Vec<Vec<usize>>> {
+    aux_violation_tensors::direct_scopes(&source,&rows).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn aux_exact_models_native(source:Vec<Vec<i32>>,nvars:usize,max_variables:usize)
+    ->PyResult<u64> {
+    aux_violation_tensors::exact_source_models(&source,nvars,max_variables)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn aux_weight_profile_native(source:Vec<Vec<i32>>,nvars:usize,rows:Vec<Vec<usize>>,
+    max_variables:usize)->PyResult<Vec<u64>> {
+    aux_violation_tensors::weight_profile(&source,nvars,&rows,max_variables)
+        .map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1855,6 +1886,10 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(parity_rewrite_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_structural_independence_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_conditional_independence_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_local_scopes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_direct_scopes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_exact_models_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_weight_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
