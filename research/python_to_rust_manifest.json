@@ -3804,7 +3804,14 @@
       "scope": "Native sparse odd-column row placement with Python MT19937 jitter parity, structural validation, arbitrary-width signatures, low-weight collision search, independent 400 CNF/assignment audits and 300 induced-width cases"
     }
   ],
-  "pending_ci_milestones": [],
+  "pending_ci_milestones": [
+    {
+      "id": "R-057",
+      "status": "queued",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41861799019",
+      "scope": "Integrated native sparse odd-column matrix to sparse GF(2) original-row basis: 250 exact source-CNF/seeded matrix pipelines, finite exhaustive violation-mask preservation, independent rank, >128-bit witness stress; does not count a new migrated original Python file"
+    }
+  ],
   "completion_criteria": [
     "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
     "Every script has a Rust executable replacement or is documented as archival-only after review",
