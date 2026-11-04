@@ -13,6 +13,7 @@ pub mod right_walsh;
 pub mod left_affine;
 pub mod fused_source;
 pub mod two_sat;
+pub mod cnf;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -512,6 +513,29 @@ fn solve_two_sat_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn canonical_cnf_native(
+    clauses: Vec<Vec<i32>>,
+) -> PyResult<(Vec<Vec<i32>>, String, Vec<u32>, bool)> {
+    let normalized = cnf::CanonicalCnf::from_signed(&clauses)
+        .map_err(PyValueError::new_err)?;
+    Ok((
+        normalized.clauses.clone(), normalized.canonical_dimacs(),
+        normalized.variables(), normalized.is_2cnf(),
+    ))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn first_subsumption_native(
+    clauses: Vec<Vec<i32>>,
+) -> PyResult<Option<(Vec<i32>, Vec<i32>)>> {
+    let normalized = cnf::CanonicalCnf::from_signed(&clauses)
+        .map_err(PyValueError::new_err)?;
+    Ok(normalized.first_strict_subsumption())
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -522,5 +546,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(affine_spectrum_native, module)?)?;
     module.add_function(wrap_pyfunction!(count_source_native, module)?)?;
     module.add_function(wrap_pyfunction!(solve_two_sat_native, module)?)?;
+    module.add_function(wrap_pyfunction!(canonical_cnf_native, module)?)?;
+    module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
     Ok(())
 }
