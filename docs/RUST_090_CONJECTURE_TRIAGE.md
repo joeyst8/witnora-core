@@ -11,4 +11,5 @@ The native wheel gate compares three full studies, plus known-identity,
 unclassified-survivor, and falsified-witness controls. No automatically
 surviving identity is treated as a proof or a novel mathematical claim.
 
-Status: awaiting compiled native CI.
+Status: compiled native Rust, wheel and differential tests passed in GitHub
+Actions #41923923430.

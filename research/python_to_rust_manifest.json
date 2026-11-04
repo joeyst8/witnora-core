@@ -2640,8 +2640,11 @@
       "path": "witnora_core/conjecture_triage.py",
       "sha": "eb4d7862f590f36a9c8751f2568edc4bcef8fbef",
       "group": "witnora_core",
-      "status": "partial_native_verified",
-      "native_counterpart": "rust/witnora-ve/src/conjecture_triage.rs"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/conjecture_triage.rs",
+      "test": "tests/test_conjecture_triage_end_to_end_rust.py",
+      "verified_milestone": "R-090",
+      "migration_note": "Focused Rust CI #41923923430 passed native library, wheel and three complete adversarial triage comparisons, with explicit known, unclassified and falsified controls. Seed sampling remains reference Python infrastructure."
     },
     {
       "path": "witnora_core/constraint_geometry.py",
@@ -3907,7 +3910,7 @@
   ],
   "current_status_counts": {
     "not_migrated": 487,
-    "parallel_reference": 66,
-    "partial_native_verified": 7
+    "parallel_reference": 67,
+    "partial_native_verified": 6
   }
 }
