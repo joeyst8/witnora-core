@@ -12,4 +12,6 @@ and rank-3 source comparisons, free variable boundaries, empty source cases and
 missing-clause limits. Python remains the default baseline. This is a standard
 combinatorial identity, not evidence of a new SAT algorithm or a Lean proof.
 
-Status: focused native CI pending.
+Verified: **focused Rust CI #41917607815 passed** native library compilation,
+the Python wheel and all focused differential suites. R-085 is marked
+`parallel_reference` in the migration manifest.

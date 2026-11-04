@@ -2716,7 +2716,11 @@
       "path": "witnora_core/crc_orbit_oracle.py",
       "sha": "72ef4f0fa4dc796e70b96cc91177d931b3b039c4",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_orbit_oracle.rs",
+      "test": "tests/test_crc_orbit_oracle_rust.py",
+      "verified_milestone": "R-085",
+      "migration_note": "Focused Rust CI #41917607815 passed 140 seeded orbit-Walsh comparisons and missing-clause budget controls."
     },
     {
       "path": "witnora_core/crc_rust_affine.py",
