@@ -8,9 +8,11 @@ on:
       - "witnora_core/hard_separator_families.py"
       - "witnora_core/hidden_separator_challenge.py"
       - "witnora_core/symbolic_implication.py"
+      - "witnora_core/satlib_fingerprint.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_satlib_fingerprint_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -20,9 +22,11 @@ on:
       - "witnora_core/hard_separator_families.py"
       - "witnora_core/hidden_separator_challenge.py"
       - "witnora_core/symbolic_implication.py"
+      - "witnora_core/satlib_fingerprint.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_satlib_fingerprint_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -61,3 +65,4 @@ jobs:
           python -m unittest tests.test_hidden_separator_generator_rust -v
           python -m unittest tests.test_symbolic_implication_rust -v
           python -m unittest tests.test_hard_separator_generator_rust -v
+          python -m unittest tests.test_satlib_fingerprint_rust -v

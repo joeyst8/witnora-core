@@ -54,6 +54,7 @@ pub mod anchor_cut_audit;
 pub mod parity_cut_width;
 pub mod hidden_separator_generator;
 pub mod hard_separator_generator;
+pub mod satlib_fingerprint;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -701,6 +702,13 @@ fn make_hard_separator_case_native(
 ) -> PyResult<Vec<Vec<i32>>> {
     hard_separator_generator::generate(blocks,core_vars,width,&samples)
         .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn satlib_structural_metrics_native(source:Vec<Vec<i32>>)
+    ->PyResult<(usize,usize,usize,usize,usize,usize,usize,usize,usize)> {
+    satlib_fingerprint::structural_metrics(&source).map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1727,6 +1735,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(independent_parity_cut_width_native, module)?)?;
     module.add_function(wrap_pyfunction!(make_hidden_separator_native, module)?)?;
     module.add_function(wrap_pyfunction!(make_hard_separator_case_native, module)?)?;
+    module.add_function(wrap_pyfunction!(satlib_structural_metrics_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

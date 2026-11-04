@@ -3218,7 +3218,9 @@
       "path": "witnora_core/satlib_fingerprint.py",
       "sha": "ad299a1b7df27bd65d88f4ec5366d2850df79688",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/satlib_fingerprint.rs",
+      "migration_note": "R-070: native deterministic structural metrics and connected components; Python retains exact XOR detector, SHA-256 identity and report schema. Pending Rust CI."
     },
     {
       "path": "witnora_core/selective_lookahead_prototype.py",
