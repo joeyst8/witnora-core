@@ -34,6 +34,7 @@ def query_defect_walsh(
     max_missing: int = 6,
     max_defect_variables: int = 18,
     max_subset_checks: int = 1 << 18,
+    backend: str = "python",
 ) -> DefectWalshResult | None:
     """Return exact requested Walsh coefficients or None if unsupported.
 
@@ -56,6 +57,21 @@ def query_defect_walsh(
     if any(not isinstance(m, int) or m < 0 or (m & ~boundary_mask)
            for m in modes):
         raise ValueError("Walsh mode outside boundary")
+    if backend == "rust":
+        from witnora_ve import crc_defect_walsh_native
+        data = crc_defect_walsh_native(
+            None if normalized_violations is None else
+            [(str(z), str(o)) for z, o in normalized_violations],
+            list(boundary_variables), [str(mode) for mode in modes],
+            max_missing, max_defect_variables, max_subset_checks)
+        if data is None:
+            return None
+        rows, rank, missing, defect_vars, high = data
+        return DefectWalshResult(
+            {int(mode): Fraction(int(num), int(den)) for mode, num, den in rows},
+            rank, missing, defect_vars, high)
+    if backend != "python":
+        raise ValueError("unknown defect Walsh backend")
     if normalized_violations is None or not normalized_violations:
         return None
 
