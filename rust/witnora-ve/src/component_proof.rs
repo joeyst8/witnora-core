@@ -77,6 +77,24 @@ pub fn verify_evidence(
     Ok(None)
 }
 
+/// A valid CD proof produces a set of independently canonicalized child states.
+/// Invalid evidence is rejected before any child state is returned.
+pub fn verify_evidence_and_children(
+    source: &[Vec<i32>], output_hash: &str,
+    count: usize, edges: &[(u32, usize)],
+    logged: &[ComponentRecord],
+) -> Result<(bool, Vec<(String, Vec<Vec<i32>>)>, Option<String>), String> {
+    if let Some(reason) = verify_evidence(source, output_hash, count, edges, logged)? {
+        return Ok((false, Vec::new(), Some(reason)));
+    }
+    let mut children = Vec::with_capacity(logged.len());
+    for record in logged {
+        let child = CanonicalCnf::from_signed(&record.clauses)?;
+        children.push((record.id.to_string(), child.clauses));
+    }
+    Ok((true, children, None))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,6 +110,13 @@ mod tests {
         let hash = CanonicalCnf::from_signed(&source).unwrap().formula_hash();
         assert_eq!(verify_evidence(&source, &hash, got.count,
             &got.incidence_edges, &got.components).unwrap(), None);
+        let (ok, children, error) = verify_evidence_and_children(&source, &hash,
+            got.count, &got.incidence_edges, &got.components).unwrap();
+        assert!(ok);
+        assert_eq!(error, None);
+        assert_eq!(children.len(), 3);
+        assert_eq!(children[0].0, "0");
+        assert_eq!(children[0].1, vec![vec![]]);
         assert_eq!(verify_evidence(&source, &hash, got.count + 1,
             &got.incidence_edges, &got.components).unwrap(),
             Some("CD component count mismatch".into()));
