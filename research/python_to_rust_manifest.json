@@ -3810,6 +3810,12 @@
       "status": "queued",
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41861799019",
       "scope": "Integrated native sparse odd-column matrix to sparse GF(2) original-row basis: 250 exact source-CNF/seeded matrix pipelines, finite exhaustive violation-mask preservation, independent rank, >128-bit witness stress; does not count a new migrated original Python file"
+    },
+    {
+      "id": "R-058",
+      "status": "queued",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41863452092",
+      "scope": "Native finite clause-violation parity masks, SHA-256 source digest, greedy row selection from frozen Python seed candidate stream, exact 2^n sketch verifier and primal graph diagnostic; 400 randomized source comparisons and 140-clause big-mask stress. Not yet counted."
     }
   ],
   "completion_criteria": [
