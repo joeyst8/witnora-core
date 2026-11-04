@@ -112,7 +112,7 @@ fn verify(
             if let Some(reduced)=pivots.get(&pivot) {
                 remaining.bitxor_assign(reduced);
             } else {
-                pivots.insert(pivot,remaining);
+                pivots.insert(pivot,remaining.clone());
                 break;
             }
         }
