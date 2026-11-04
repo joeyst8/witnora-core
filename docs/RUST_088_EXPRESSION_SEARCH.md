@@ -12,4 +12,5 @@ complete holdout reports with varied candidate limits. Surviving equalities
 are explicitly unreviewed finite examples; neither novelty nor Lean theorem
 status is inferred.
 
-Status: awaiting compiled native CI.
+Status: native compilation, wheel build and focused differential comparisons passed
+in GitHub Actions run #41920638984.

@@ -2878,7 +2878,11 @@
       "path": "witnora_core/expression_conjecture_search.py",
       "sha": "32b0fbfc3a698af6c62631bbe51c5fd66565e2ae",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/expression_conjecture_search.rs",
+      "test": "tests/test_expression_conjecture_search_rust.py",
+      "verified_milestone": "R-088",
+      "migration_note": "Focused Rust CI #41920638984 passed library compilation, native wheel build, 180 seeded expression comparisons and three complete holdout reports. Graph generation remains shared Python input infrastructure."
     },
     {
       "path": "witnora_core/external_review_package_v224.py",
