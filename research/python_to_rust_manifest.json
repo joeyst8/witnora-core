@@ -2912,7 +2912,11 @@
       "path": "witnora_core/geometry_aware_parity.py",
       "sha": "9dcba9e148677dc9a624e5fb03b28db8b9025a14",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/geometry_aware_parity.rs",
+      "test": "tests/test_geometry_aware_parity_rust.py",
+      "verified_milestone": "R-079",
+      "migration_note": "Focused Rust CI #41910107259 passed 180 seeded geometry-aware incidence-row and duplicate-signature comparisons."
     },
     {
       "path": "witnora_core/gf2_sparse_row_basis.py",
