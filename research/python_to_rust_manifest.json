@@ -3592,6 +3592,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41767676653",
       "python_reference_comparisons": 1440,
       "scope": "Rust CD metadata replay emits authenticated canonical child CNFs, 1440 randomized and real fixture Python child-state/tamper parity"
+    },
+    {
+      "id": "R-035",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41768449283",
+      "python_reference_comparisons": 360,
+      "scope": "Native single-root CD stream and component-context UP proof replay versus full Python verifier; 360 seeded paths with malformed CD, IDs, assignments and final hashes"
     }
   ],
   "pending_ci_milestones": [],
