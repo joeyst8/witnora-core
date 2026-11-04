@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-027)
+name: Rust native Witnora migration differential gate (R-001 through R-028)
 
 on:
   push:
@@ -45,6 +45,7 @@ on:
       - "tests/test_bundle_manifest_rust.py"
       - "witnora_core/certificate.py"
       - "tests/test_certificate_hash_rust.py"
+      - "tests/test_certificate_verify_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -104,6 +105,7 @@ on:
       - "tests/test_bundle_manifest_rust.py"
       - "witnora_core/certificate.py"
       - "tests/test_certificate_hash_rust.py"
+      - "tests/test_certificate_verify_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -293,3 +295,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_certificate_hash_rust -v
+      - name: Verify R-028 native file-integrity checker and real tamper rejection
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_certificate_verify_rust -v
