@@ -2646,7 +2646,10 @@
       "path": "witnora_core/cost_sensitive_gate.py",
       "sha": "14be83a81dfccb48b3f291ab1b949543306eab88",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/cost_sensitive_gate.rs",
+      "test": "tests/test_cost_sensitive_gate_rust.py",
+      "verified_milestone": "R-049"
     },
     {
       "path": "witnora_core/crc_boundary.py",
@@ -3721,6 +3724,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41838667472",
       "python_reference_comparisons": 1200,
       "scope": "Native primal graph degrees/fill/XOR-degree and all 3 exact bounded DP invariant policies, 1200 seeded random formula/metadata parity cases and independent exhaustive SAT preservation"
+    },
+    {
+      "id": "R-049",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41839685826",
+      "python_reference_comparisons": 1460,
+      "scope": "Native frozen cost-sensitive 5-threshold training and adaptive/greedy gating, exact 500 randomized training dictionary and 960 inference CNF/metadata comparisons with independent SAT/UNSAT oracle"
     }
   ],
   "pending_ci_milestones": [],
@@ -3732,7 +3742,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 524,
-    "parallel_reference": 36
+    "not_migrated": 523,
+    "parallel_reference": 37
   }
 }
