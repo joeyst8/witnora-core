@@ -10,4 +10,5 @@ Differential CI checks four complete bounded reports plus empty-training
 edge cases. Passing the gate validates implementation parity, not mathematical
 novelty, Lean proof, or universal conjecture truth.
 
-Status: awaiting native GitHub CI.
+Status: native Rust compilation, wheel and all focused differential tests
+passed in GitHub Actions #41925453003.

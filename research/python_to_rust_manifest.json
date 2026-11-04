@@ -2634,7 +2634,11 @@
       "path": "witnora_core/conditional_graph_conjectures.py",
       "sha": "ffa70926a5606063e6466c26e9a4e68b290c4ed0",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/conditional_graph_conjectures.rs",
+      "test": "tests/test_conditional_graph_conjectures_rust.py",
+      "verified_milestone": "R-091",
+      "migration_note": "Focused native Rust CI #41925453003 passed compiled library, wheel and four end-to-end conditional/transformation conjecture experiments, plus empty-training controls."
     },
     {
       "path": "witnora_core/conjecture_triage.py",
@@ -3909,8 +3913,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 487,
-    "parallel_reference": 67,
+    "not_migrated": 486,
+    "parallel_reference": 68,
     "partial_native_verified": 6
   }
 }
