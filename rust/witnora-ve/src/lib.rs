@@ -46,6 +46,7 @@ pub mod sparse_parity_checks;
 pub mod eth_clause_violation_parity;
 pub mod symbolic_implication;
 pub mod targeted_graph_families;
+pub mod conjecture_triage;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -598,6 +599,24 @@ fn targeted_graph_family_native(
         "mycielski_c5" => Ok(targeted_graph_families::mycielski_c5()),
         _ => Err(PyValueError::new_err("invalid bounded graph family")),
     }
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn conjecture_normalize_native(expr: &str) -> PyResult<String> {
+    conjecture_triage::normalize_expression(expr).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn conjecture_identity_key_native(statement: &str) -> PyResult<(String, String)> {
+    conjecture_triage::identity_key(statement).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn conjecture_known_identities_native() -> Vec<(String, String)> {
+    conjecture_triage::known_identity_keys().into_iter().collect()
 }
 
 #[cfg(feature = "python")]
@@ -1612,6 +1631,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(symbolic_bound_path_native, module)?)?;
     module.add_function(wrap_pyfunction!(symbolic_normalize_native, module)?)?;
     module.add_function(wrap_pyfunction!(targeted_graph_family_native, module)?)?;
+    module.add_function(wrap_pyfunction!(conjecture_normalize_native, module)?)?;
+    module.add_function(wrap_pyfunction!(conjecture_identity_key_native, module)?)?;
+    module.add_function(wrap_pyfunction!(conjecture_known_identities_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

@@ -2634,7 +2634,8 @@
       "path": "witnora_core/conjecture_triage.py",
       "sha": "eb4d7862f590f36a9c8751f2568edc4bcef8fbef",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/conjecture_triage.rs"
     },
     {
       "path": "witnora_core/constraint_geometry.py",

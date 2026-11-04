@@ -48,6 +48,22 @@ def known_identity_keys() -> set[tuple[str, str]]:
     return {identity_key(s) for s in catalog}
 
 
+def normalize_expression_rust(expr: str) -> str:
+    """Opt-in native syntactic canonicalization; no proof promotion."""
+    from witnora_ve import conjecture_normalize_native
+    return conjecture_normalize_native(expr)
+
+
+def identity_key_rust(statement: str) -> tuple[str, str]:
+    from witnora_ve import conjecture_identity_key_native
+    return tuple(conjecture_identity_key_native(statement))
+
+
+def known_identity_keys_rust() -> set[tuple[str, str]]:
+    from witnora_ve import conjecture_known_identities_native
+    return {tuple(pair) for pair in conjecture_known_identities_native()}
+
+
 def expression_index():
     return {expression.label: expression for expression in expression_pool()}
 
