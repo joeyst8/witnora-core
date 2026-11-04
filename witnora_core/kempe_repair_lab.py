@@ -15,9 +15,15 @@ from .nonedge_matching_bound import _dsatur_greedy_coloring
 
 
 def kempe_swaps(n: int, edges: tuple[tuple[int, int], ...],
-                initial: list[int]) -> list[dict]:
+                initial: list[int], *, backend="python") -> list[dict]:
     if not _checked(n, edges, initial):
         raise ValueError("invalid initial coloring")
+    if backend == "rust":
+        from witnora_ve import kempe_swaps_native
+        return [{"coloring": colors, "swapped_colors": pair, "component": component}
+                for colors, pair, component in kempe_swaps_native(n, list(edges), initial)]
+    if backend != "python":
+        raise ValueError("unknown Kempe swap backend")
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
         neighbors[u].add(v)
@@ -55,12 +61,12 @@ def kempe_swaps(n: int, edges: tuple[tuple[int, int], ...],
 
 def kempe_repair(n: int, edges: tuple[tuple[int, int], ...],
                  initial: list[int], max_swaps: int = 90,
-                 max_nodes_each: int = 2500) -> dict:
+                 max_nodes_each: int = 2500, *, backend="python") -> dict:
     if max_swaps < 1 or max_nodes_each < 1:
         raise ValueError("invalid budgets")
     original_k = max(initial, default=-1) + 1
     attempts = 0
-    for variant in kempe_swaps(n, edges, initial):
+    for variant in kempe_swaps(n, edges, initial, backend=backend):
         if attempts >= max_swaps:
             break
         attempts += 1
@@ -74,7 +80,8 @@ def kempe_repair(n: int, edges: tuple[tuple[int, int], ...],
                     "swapped_colors": variant["swapped_colors"],
                     "component": variant["component"], "recolor_nodes": 0}
         trial = bounded_recolor(n, edges, variant["coloring"],
-                                max_changed=5, max_nodes=max_nodes_each)
+                                max_changed=5, max_nodes=max_nodes_each,
+                                backend=backend)
         if trial["improved"]:
             assert trial["bound"] == original_k - 1
             return {"bound": trial["bound"], "coloring": trial["coloring"],
@@ -88,7 +95,7 @@ def kempe_repair(n: int, edges: tuple[tuple[int, int], ...],
             "recolor_nodes": None}
 
 
-def run_kempe_experiment() -> dict:
+def run_kempe_experiment(*, backend="python") -> dict:
     orders = (10, 12, 14, 16)
     densities = (0.15, 0.30, 0.45, 0.60, 0.75)
     per_cell = 120
@@ -117,19 +124,21 @@ def run_kempe_experiment() -> dict:
                     edges = tuple((u, v) for u, v in combinations(range(n), 2)
                                   if rng.random() < density)
                     base = _dsatur_greedy_coloring(n, edges)
-                    smaller = exact_k_coloring(n, edges, base["bound"] - 1)
+                    smaller = exact_k_coloring(n, edges, base["bound"] - 1,
+                                               backend=backend)
                     stats["graphs"] += 1
                     if smaller is None:
                         continue
                     stats["dsatur_failures"] += 1
                     restarts = multistart_dsatur(n, edges, starts=8)
                     local = bounded_recolor(n, edges, base["coloring"],
-                                            max_changed=5, max_nodes=8000)
+                                            max_changed=5, max_nodes=8000,
+                                            backend=backend)
                     if min(restarts["bound"], local["bound"]) < base["bound"]:
                         stats["v22_fixed"] += 1
                         continue
                     stats["v22_unresolved"] += 1
-                    attempt = kempe_repair(n, edges, base["coloring"])
+                    attempt = kempe_repair(n, edges, base["coloring"], backend=backend)
                     stats["total_kempe_swap_attempts"] += attempt["attempts"]
                     details = {"n": n, "density": density, "index": index,
                                "edges": [list(e) for e in edges],

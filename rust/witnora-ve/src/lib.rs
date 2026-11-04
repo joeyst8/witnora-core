@@ -80,6 +80,8 @@ pub mod lean_ascii_certificate_export;
 pub mod lean_color_certificate_export;
 pub mod crc_variable_elimination;
 pub mod dsatur_adversarial_lab;
+pub mod color_repair_lab;
+pub mod kempe_repair_lab;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1935,6 +1937,21 @@ fn dsatur_exact_k_coloring_native(n:usize,edges:Vec<(usize,usize)>,k:usize)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn color_bounded_recolor_native(n:usize,edges:Vec<(usize,usize)>,initial:Vec<usize>,
+    max_changed:usize,max_nodes:usize)->PyResult<color_repair_lab::Answer>{
+    color_repair_lab::recolor(n,&edges,&initial,max_changed,max_nodes)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn kempe_swaps_native(n:usize,edges:Vec<(usize,usize)>,initial:Vec<usize>)
+    ->PyResult<Vec<kempe_repair_lab::Variant>>{
+    kempe_repair_lab::swaps(n,&edges,&initial).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2200,6 +2217,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(lean_color_emit_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_variable_eliminate_native, module)?)?;
     module.add_function(wrap_pyfunction!(dsatur_exact_k_coloring_native, module)?)?;
+    module.add_function(wrap_pyfunction!(color_bounded_recolor_native, module)?)?;
+    module.add_function(wrap_pyfunction!(kempe_swaps_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
