@@ -3104,9 +3104,9 @@
       "path": "witnora_core/parity_compression.py",
       "sha": "c63c1bd2ce65b60e99a28a012b953ed6df93048f",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/parity_compression.rs",
-      "migration_note": "R-074 native binary-XOR source extraction, BFS root-offset conflict reports, reconstruction and residual CNF rewrite; compiled differential gate pending."
+      "migration_note": "R-074 focused native CI #41887268395 passed source-bound compression, complete reports, assignment reconstruction and residual CNF rewrite across 300 seeded cases."
     },
     {
       "path": "witnora_core/parity_separator_fingerprint.py",

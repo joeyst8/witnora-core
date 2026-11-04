@@ -1,4 +1,4 @@
-# R-074 — Restricted binary-XOR component compression (native CI pending)
+# R-074 — Restricted binary-XOR component compression (native verified)
 
 The opt-in Rust backend now extracts complete source 2-XOR patterns,
 constructs deterministic BFS root-offset components, reports the first
@@ -12,3 +12,8 @@ reconstruction and residual-CNF equality; explicit empty and inconsistent
 cycle controls; and Rust unit tests. Exact Python object/digest parity is
 checked where applicable. This is an experimental transformation of the
 detected XOR part, not a proof of general CNF equivalence.
+
+[Focused CI #41887268395](https://github.com/joeyst8/witnora-core/actions/runs/41887268395)
+passed Rust library tests, wheel compilation, and R-074 native differentials.
+The module is promoted to `parallel_reference`, totaling **52/560** fully
+verified source-file counterparts. No Lean proof status was changed.
