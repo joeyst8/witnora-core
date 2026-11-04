@@ -3542,6 +3542,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41760669462",
       "python_reference_comparisons": 1200,
       "scope": "Rust native file SHA256 integrity verification, first-error parity, real SAT/UNSAT .wcert tamper detection"
+    },
+    {
+      "id": "R-029",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41761548922",
+      "python_reference_comparisons": 1600,
+      "scope": "Full SAT reconstruction across UP PLE BCE VE, randomized failure parity and real .wcert paths"
     }
   ],
   "pending_ci_milestones": [],
