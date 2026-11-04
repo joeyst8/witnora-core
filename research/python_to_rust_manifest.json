@@ -3191,7 +3191,10 @@
       "path": "witnora_core/selective_lookahead_prototype.py",
       "sha": "638fed3e0d19ea97af3bebf4c3f97c2cea0821d6",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/selective_lookahead.rs",
+      "test": "tests/test_selective_lookahead_rust.py",
+      "verified_milestone": "R-044"
     },
     {
       "path": "witnora_core/separator_affine_family_theorem.py",
@@ -3671,6 +3674,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41773562386",
       "python_reference_comparisons": 960,
       "scope": "Native adaptive bounded Davis-Putnam pivot search, full formula/metadata parity on 960 random CNFs and independent exhaustive SAT/UNSAT checks"
+    },
+    {
+      "id": "R-044",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41774007601",
+      "python_reference_comparisons": 1120,
+      "scope": "Native selective gate adaptive/greedy routing with exact 1120 randomized full CNF/feature/metadata comparisons, independent SAT parity and late nested-budget validation"
     }
   ],
   "pending_ci_milestones": [],
@@ -3682,7 +3692,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 529,
-    "parallel_reference": 31
+    "not_migrated": 528,
+    "parallel_reference": 32
   }
 }
