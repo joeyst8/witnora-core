@@ -3521,6 +3521,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41757030196",
       "python_reference_comparisons": 1600,
       "scope": "restricted certificate JSON stable UTF8 bytes and SHA256, strict supported types and escapes"
+    },
+    {
+      "id": "R-026",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41759581109",
+      "python_reference_comparisons": 1200,
+      "scope": "Rust SHA256 certificate file map plus byte-exact SAT/UNSAT/multicomponent real .wcert export verifier parity"
     }
   ],
   "pending_ci_milestones": [],
