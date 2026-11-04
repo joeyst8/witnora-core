@@ -801,15 +801,19 @@ fn reconstruct_assignment_native(
 fn replay_local_certificate_native(
     source: Vec<Vec<i32>>,
     steps: Vec<(String, usize, String, String, Vec<i32>,
-                Vec<Vec<i32>>, Vec<Vec<i32>>, (Vec<i32>, i32, String, i32))>,
+                Vec<Vec<i32>>, Vec<Vec<i32>>,
+                (Vec<i32>, i32, String, i32),
+                (Vec<u32>, Vec<(u32, u32)>, String, Vec<(u32, bool)>))>,
     width_cap: i32, final_hash: String,
 ) -> PyResult<(bool, Vec<Vec<i32>>, Option<String>)> {
     let events = steps.into_iter().map(
         |(kind, step_id, input_hash, output_hash, assigned, removed, added,
-           (subsuming, blocked_literal, proof_digest, ve_var))| {
+           (subsuming, blocked_literal, proof_digest, ve_var),
+           (tree_order, primal_edges, two_sat_status, two_sat_assignment))| {
             local_replay::LocalReplayStep {
                 kind, step_id, input_hash, output_hash, assigned, removed,
                 added, subsuming, blocked_literal, proof_digest, ve_var,
+                tree_order, primal_edges, two_sat_status, two_sat_assignment,
             }
         },
     ).collect::<Vec<_>>();
