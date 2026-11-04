@@ -12,8 +12,32 @@ def _resolvent_literals_for_log(clause: Clause, other: Clause, pivot: int) -> li
     return sorted([lit for lit in clause if lit != pivot] + [lit for lit in other if lit != -pivot])
 
 
-def blocked_clause_proof(formula: CNFFormula, clause: Clause, pivot: int) -> dict[str, Any] | None:
-    """Return a proof dict if ``clause`` is blocked on ``pivot``."""
+def _native_checked_proof(pivot: int, rows: list[tuple[list[int], list[int], bool]]) -> dict[str, Any]:
+    checked = [
+        {"against_clause": other, "resolvent": resolvent,
+         "tautological": tautological}
+        for other, resolvent, tautological in rows
+    ]
+    digest_payload = repr([
+        (item["against_clause"], item["resolvent"], item["tautological"])
+        for item in checked
+    ]).encode("utf-8")
+    return {
+        "blocked_literal": pivot, "checked_resolvents": checked,
+        "proof_digest": sha256(digest_payload).hexdigest(),
+    }
+
+
+def blocked_clause_proof(formula: CNFFormula, clause: Clause, pivot: int, *,
+                         backend: str = "python") -> dict[str, Any] | None:
+    """Return a proof dict if the clause is blocked on pivot."""
+    if backend == "rust":
+        from witnora_ve import blocked_clause_witness_native
+        result = blocked_clause_witness_native(
+            formula.to_clause_lists(), clause.to_list(), pivot)
+        return None if result is None else _native_checked_proof(*result)
+    if backend != "python":
+        raise ValueError("unknown BCE witness backend")
 
     checked: list[dict[str, Any]] = []
     for other in formula.clauses:
@@ -46,8 +70,18 @@ def blocked_clause_proof(formula: CNFFormula, clause: Clause, pivot: int) -> dic
     }
 
 
-def find_first_blocked_clause(formula: CNFFormula) -> tuple[Clause, dict[str, Any]] | None:
+def find_first_blocked_clause(formula: CNFFormula, *,
+                              backend: str = "python") -> tuple[Clause, dict[str, Any]] | None:
     """Find the first BCE-removable clause in the mandated deterministic order."""
+    if backend == "rust":
+        from witnora_ve import first_blocked_clause_native
+        result = first_blocked_clause_native(formula.to_clause_lists())
+        if result is None:
+            return None
+        clause, pivot, rows = result
+        return Clause(clause), _native_checked_proof(pivot, rows)
+    if backend != "python":
+        raise ValueError("unknown BCE search backend")
 
     ordered_clauses = sorted(formula.clauses, key=lambda c: (-len(c), c.literals))
     for clause in ordered_clauses:
