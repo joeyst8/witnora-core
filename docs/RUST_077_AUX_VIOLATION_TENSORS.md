@@ -1,4 +1,4 @@
-# R-077 — Finite auxiliary violation bridge (pending native CI)
+# R-077 — Finite auxiliary violation bridge (native verified)
 
 Native Rust computes literal-level source violation masks, local
 clause/auxiliary factor scopes, direct parity factor scopes, bounded
@@ -11,3 +11,8 @@ assignments (up to 7 source variables), scope equality, full coefficient
 equality and fail-closed bounds. The exponential oracle remains restricted
 to at most 14 variables: this is not a practical general tensor contraction
 algorithm, formal proof, or a novel SAT technique.
+
+[Focused native CI #41903530273](https://github.com/joeyst8/witnora-core/actions/runs/41903530273)
+passed Rust library tests, native wheel compilation and the complete R-077
+source comparison suite. The module is promoted to `parallel_reference`,
+bringing the total to **55/560** verified source-file counterparts.
