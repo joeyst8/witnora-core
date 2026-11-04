@@ -41,6 +41,7 @@ pub fn solve_2sat(
     }
     let nodes = 2 * nvars as usize;
     let mut normalized: Vec<Vec<i32>> = Vec::new();
+    let mut has_empty = false;
     for raw in source {
         let mut signs: BTreeSet<i32> = BTreeSet::new();
         let mut tautology = false;
@@ -60,11 +61,13 @@ pub fn solve_2sat(
             return Err("source is not 2-CNF".into());
         }
         if signs.is_empty() {
-            return Ok(None);
+            has_empty = true;
+        } else {
+            normalized.push(signs.into_iter().collect());
         }
-        normalized.push(signs.into_iter().collect());
     }
 
+    if has_empty { return Ok(None); }
     let mut edges: Vec<BTreeSet<usize>> = vec![BTreeSet::new(); nodes];
     for clause in &normalized {
         let a = index(clause[0]);
