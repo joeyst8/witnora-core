@@ -18,9 +18,17 @@ def indexed_unit_conflict_witness(
     clause: tuple[int, ...],
     *,
     max_units: int = 100000,
+    backend: str = "python",
 ) -> tuple[int, ...] | None:
     if max_units < 0:
         raise ValueError("max_units must be nonnegative")
+    if backend == "rust":
+        from witnora_ve import indexed_rup_witness_native
+        result = indexed_rup_witness_native(
+            [list(row) for row in database], list(clause), max_units)
+        return None if result is None else tuple(result)
+    if backend != "python":
+        raise ValueError("unknown indexed RUP witness backend")
     assumptions = {-lit for lit in clause}
     satisfied: list[bool] = []
     remaining: list[int] = []
