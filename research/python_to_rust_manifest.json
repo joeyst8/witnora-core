@@ -2942,12 +2942,12 @@
       "path": "witnora_core/hidden_separator_challenge.py",
       "sha": "71e8ca2d3df227fe6b490d89c6af5fbeb0c92b39",
       "group": "witnora_core",
-      "status": "partial_native_pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/anchor_cut_audit.rs",
       "additional_native_counterpart": "rust/witnora-ve/src/parity_cut_width.rs",
       "generator_native_counterpart": "rust/witnora-ve/src/hidden_separator_generator.rs",
-      "verified_functions": ["full_cnf_anchors_separated", "independent_parity_cut_width"],
-      "pending_functions": ["make_hidden_separator"]
+      "verified_functions": ["full_cnf_anchors_separated", "independent_parity_cut_width", "make_hidden_separator"],
+      "migration_note": "All three primary functions have native parallels; Python MT19937 seed stream deliberately retained at adapter boundary."
     },
     {
       "path": "witnora_core/hierarchy_formalization.py",
