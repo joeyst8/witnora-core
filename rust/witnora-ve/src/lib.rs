@@ -19,6 +19,7 @@ pub mod rup_witness;
 pub mod rup_checker;
 pub mod graph;
 pub mod treewidth;
+pub mod bce;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -612,6 +613,26 @@ fn verify_treewidth_order_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn blocked_clause_witness_native(
+    source: Vec<Vec<i32>>, clause: Vec<i32>, pivot: i32,
+) -> PyResult<Option<(i32, Vec<(Vec<i32>, Vec<i32>, bool)>)>> {
+    bce::blocked_clause_witness(&source, &clause, pivot)
+        .map(|got| got.map(|w| (w.pivot, w.checked)))
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn first_blocked_clause_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<Option<(Vec<i32>, i32, Vec<(Vec<i32>, Vec<i32>, bool)>)>> {
+    bce::first_blocked_clause(&source)
+        .map(|got| got.map(|(clause, w)| (clause, w.pivot, w.checked)))
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -631,5 +652,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(incidence_components_native, module)?)?;
     module.add_function(wrap_pyfunction!(treewidth_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_treewidth_order_native, module)?)?;
+    module.add_function(wrap_pyfunction!(blocked_clause_witness_native, module)?)?;
+    module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     Ok(())
 }
