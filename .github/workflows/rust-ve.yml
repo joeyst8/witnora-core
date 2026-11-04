@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-056)
+name: Rust native Witnora migration differential gate (R-001 through R-057)
 
 on:
   push:
@@ -76,6 +76,7 @@ on:
       - "tests/test_g5_activity_rust.py"
       - "tests/test_g5_boundary_path_rust.py"
       - "tests/test_sparse_parity_checks_rust.py"
+      - "tests/test_sparse_pipeline_rust.py"
       - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
@@ -186,6 +187,7 @@ on:
       - "tests/test_g5_activity_rust.py"
       - "tests/test_g5_boundary_path_rust.py"
       - "tests/test_sparse_parity_checks_rust.py"
+      - "tests/test_sparse_pipeline_rust.py"
       - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
@@ -511,3 +513,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_sparse_parity_checks_rust -v
+      - name: Verify R-057 native sparse matrix to GF2 basis integrated equivalence
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_sparse_pipeline_rust -v
