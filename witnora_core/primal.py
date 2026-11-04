@@ -9,7 +9,17 @@ from .cnf import CNFFormula
 Graph = dict[int, set[int]]
 
 
-def primal_graph(formula: CNFFormula) -> Graph:
+def primal_graph(formula: CNFFormula, *, backend: str = "python") -> Graph:
+    if backend == "rust":
+        from witnora_ve import primal_graph_native
+        variables, edges = primal_graph_native(formula.to_clause_lists())
+        graph: Graph = {var: set() for var in variables}
+        for a, b in edges:
+            graph[a].add(b)
+            graph[b].add(a)
+        return graph
+    if backend != "python":
+        raise ValueError("unknown primal graph backend")
     graph: Graph = {var: set() for var in formula.variables}
     for clause in formula.clauses:
         vars_in_clause = clause.variables
