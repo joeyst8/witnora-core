@@ -18,13 +18,10 @@ def _native_checked_proof(pivot: int, rows: list[tuple[list[int], list[int], boo
          "tautological": tautological}
         for other, resolvent, tautological in rows
     ]
-    digest_payload = repr([
-        (item["against_clause"], item["resolvent"], item["tautological"])
-        for item in checked
-    ]).encode("utf-8")
+    from witnora_ve import blocked_clause_digest_native
     return {
         "blocked_literal": pivot, "checked_resolvents": checked,
-        "proof_digest": sha256(digest_payload).hexdigest(),
+        "proof_digest": blocked_clause_digest_native(rows),
     }
 
 
