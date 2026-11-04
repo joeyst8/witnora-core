@@ -32,6 +32,7 @@ pub mod two_ply_lookahead;
 pub mod adaptive_lookahead;
 pub mod selective_lookahead;
 pub mod parity_separator_fingerprint;
+pub mod spoke_discovery;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1146,6 +1147,43 @@ fn parity_separator_fingerprint_native(
     Ok((result.source_sha256,result.parity_equation_supports,candidates))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn extract_binary_xor_equations_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<Vec<(i32,i32,u32)>> {
+    spoke_discovery::extract_binary_xor_equations(&source)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn extract_spoke_paths_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<Vec<(i32,i32,i32,u32,u32)>> {
+    spoke_discovery::extract_spoke_paths(&source)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn discover_parity_spoke_conflicts_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<Vec<((i32,i32),Vec<(i32,u32,Vec<(Vec<i32>,u32,Vec<Vec<i32>>)>)>)>> {
+    let conflicts=spoke_discovery::discover_parity_spoke_conflicts(&source)
+        .map_err(PyValueError::new_err)?;
+    Ok(conflicts.into_iter().map(|conflict| (
+        conflict.endpoints,
+        conflict.paths.into_iter().map(|path| (
+            path.middle,path.syndrome,
+            path.equations.into_iter().map(|eq|
+                (eq.variables,eq.rhs,eq.source_clauses)
+            ).collect(),
+        )).collect(),
+    )).collect())
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1199,5 +1237,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(cheap_pivot_features_native, module)?)?;
     module.add_function(wrap_pyfunction!(selective_pivot_native, module)?)?;
     module.add_function(wrap_pyfunction!(parity_separator_fingerprint_native, module)?)?;
+    module.add_function(wrap_pyfunction!(extract_binary_xor_equations_native, module)?)?;
+    module.add_function(wrap_pyfunction!(extract_spoke_paths_native, module)?)?;
+    module.add_function(wrap_pyfunction!(discover_parity_spoke_conflicts_native, module)?)?;
     Ok(())
 }
