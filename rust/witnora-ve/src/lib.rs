@@ -760,6 +760,12 @@ fn certificate_file_digests_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn compact_certificate_hash_native(value: &Bound<'_, PyAny>) -> PyResult<(String, String)> {
+    certificate_json::compact_certificate_hash(value)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -785,6 +791,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(build_step_record_native, module)?)?;
     module.add_function(wrap_pyfunction!(stable_certificate_json_native, module)?)?;
     module.add_function(wrap_pyfunction!(certificate_file_digests_native, module)?)?;
+    module.add_function(wrap_pyfunction!(compact_certificate_hash_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
