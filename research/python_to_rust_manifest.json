@@ -3571,6 +3571,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41765848855",
       "python_reference_comparisons": 1450,
       "scope": "2-SAT SCC SAT/UNSAT and bounded treewidth proof replay, invalid status/order rejection"
+    },
+    {
+      "id": "R-032",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41766349609",
+      "python_reference_comparisons": 1400,
+      "scope": "Full Rust CD component IDs, incidence edges, source clause indices and formula hashes with original verifier parity"
     }
   ],
   "pending_ci_milestones": [],
