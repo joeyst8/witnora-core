@@ -21,6 +21,7 @@ pub mod graph;
 pub mod treewidth;
 pub mod bce;
 pub mod simplifier;
+pub mod ve_proof;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -660,6 +661,29 @@ fn pure_step_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn eliminate_with_proof_native(
+    source: Vec<Vec<i32>>, variable: i32, width_cap: i32,
+) -> PyResult<(Vec<Vec<i32>>, bool, usize, Option<Vec<i32>>,
+               Vec<(Vec<i32>, Vec<i32>, Vec<i32>)>,
+               Vec<(Vec<i32>, Vec<i32>, Vec<i32>)>,
+               Vec<Vec<i32>>, Vec<Vec<i32>>)> {
+    let step = ve_proof::eliminate_with_proof(
+        &source, variable, width_cap,
+    ).map_err(PyValueError::new_err)?;
+    let as_tuple = |pair: ve_proof::ResolutionPair| {
+        (pair.positive, pair.negative, pair.resolvent)
+    };
+    Ok((
+        step.clauses, step.collapsed, step.width_observed,
+        step.refusal_resolvent,
+        step.discarded.into_iter().map(as_tuple).collect(),
+        step.generated.into_iter().map(as_tuple).collect(),
+        step.added, step.removed,
+    ))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -683,5 +707,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
+    module.add_function(wrap_pyfunction!(eliminate_with_proof_native, module)?)?;
     Ok(())
 }
