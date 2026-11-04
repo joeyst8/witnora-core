@@ -2566,7 +2566,8 @@
       "path": "witnora_core/cnf.py",
       "sha": "fdca9b6d5a6835c684bed6c528c381332c744289",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/cnf.rs"
     },
     {
       "path": "witnora_core/cnfgen_matrix.py",
@@ -2758,7 +2759,8 @@
       "path": "witnora_core/dimacs.py",
       "sha": "6d1a0c53f98bc86687dd7c8ff265b45b60be8104",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "native_candidate_pending_diff",
+      "native_counterpart": "rust/witnora-ve/src/dimacs_evidence.rs"
     },
     {
       "path": "witnora_core/double_kempe_lab.py",
@@ -3250,7 +3252,8 @@
       "path": "witnora_core/subsumption.py",
       "sha": "2ad614323a692c5a308eda8e0a2c2a9b08178a25",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/cnf.rs"
     },
     {
       "path": "witnora_core/symbolic_implication.py",
@@ -3298,7 +3301,7 @@
       "path": "witnora_core/two_sat.py",
       "sha": "9eb0c8033ebd9da8d69ff3742c00a0202179007b",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/two_sat.rs"
     },
     {
@@ -3378,7 +3381,8 @@
   "baseline_original_python_files": 560,
   "additional_python_interop_adapters": [
     "witnora_core/crc_rust_fused.py",
-    "witnora_core/two_sat_rust.py"
+    "witnora_core/two_sat_rust.py",
+    "witnora_core/cnf_rust.py"
   ],
   "verified_milestones": [
     {
@@ -3392,16 +3396,32 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41743900472",
       "exact_ganak_cases": 18,
       "random_source_checks": 630
+    },
+    {
+      "id": "R-009",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41744565521",
+      "mode": "standalone Rust DIMACS exact counting"
+    },
+    {
+      "id": "R-010",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41744784538",
+      "random_native_witness_checks": 2800,
+      "python_reference_comparisons": 1600,
+      "proof_certificate": "not_emitted"
+    },
+    {
+      "id": "R-011",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41745105632",
+      "python_reference_comparisons": 1600
     }
   ],
   "pending_ci_milestones": [
     {
-      "id": "R-009",
-      "scope": "standalone Python-free exact source DIMACS CLI"
-    },
-    {
-      "id": "R-010",
-      "scope": "native SCC 2-SAT decision/witness with opt-in Python bridge"
+      "id": "R-012",
+      "scope": "DIMACS source-evidence exact literal token spellings"
     }
   ],
   "completion_criteria": [
