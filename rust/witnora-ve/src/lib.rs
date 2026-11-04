@@ -34,6 +34,7 @@ pub mod selective_lookahead;
 pub mod parity_separator_fingerprint;
 pub mod spoke_discovery;
 pub mod multicut_parity_separator;
+pub mod structural_operator_invention;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1205,6 +1206,33 @@ fn bounded_parity_separators_native(
         out.trials,out.budget_exhausted))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn graph_invariants_native(
+    source:Vec<Vec<i32>>,
+) -> PyResult<Vec<(u32,usize,usize,usize)>> {
+    let formula=cnf::CanonicalCnf::from_signed(&source)
+        .map_err(PyValueError::new_err)?;
+    let stats=structural_operator_invention::graph_invariants(&formula);
+    Ok(formula.variables().into_iter().map(|v|(
+        v,stats.degree[&v],stats.fill[&v],stats.xor_degree[&v],
+    )).collect())
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn eliminate_with_policy_native(
+    source:Vec<Vec<i32>>,policy:String,
+    max_pairs:i32,max_clause_growth:i32,
+) -> PyResult<Vec<Vec<i32>>> {
+    let formula=cnf::CanonicalCnf::from_signed(&source)
+        .map_err(PyValueError::new_err)?;
+    Ok(structural_operator_invention::eliminate_with_policy(
+        &formula,&policy,max_pairs,max_clause_growth,
+    ).map_err(PyValueError::new_err)?.clauses)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1262,5 +1290,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(extract_spoke_paths_native, module)?)?;
     module.add_function(wrap_pyfunction!(discover_parity_spoke_conflicts_native, module)?)?;
     module.add_function(wrap_pyfunction!(bounded_parity_separators_native, module)?)?;
+    module.add_function(wrap_pyfunction!(graph_invariants_native, module)?)?;
+    module.add_function(wrap_pyfunction!(eliminate_with_policy_native, module)?)?;
     Ok(())
 }
