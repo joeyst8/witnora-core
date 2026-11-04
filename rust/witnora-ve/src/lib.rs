@@ -30,6 +30,7 @@ pub mod scaling_families;
 pub mod odd_xor_cycle;
 pub mod two_ply_lookahead;
 pub mod adaptive_lookahead;
+pub mod selective_lookahead;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1100,6 +1101,33 @@ fn adaptive_pivot_native(
         out.baseline_score, out.candidate_score))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn cheap_pivot_features_native(
+    source: Vec<Vec<i32>>, max_pairs: i32,
+) -> PyResult<(usize, usize, usize, usize)> {
+    let cnf = cnf::CanonicalCnf::from_signed(&source).map_err(PyValueError::new_err)?;
+    let f = selective_lookahead::cheap_pivot_features(&cnf, max_pairs);
+    Ok((f.viable_mixed_pivots, f.pure_pivots, f.variables, f.clauses))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn selective_pivot_native(
+    source: Vec<Vec<i32>>, max_pairs: i32, min_mixed_pivots: i32,
+    max_vars: i32, max_clauses: i32, expansion_budget: i32,
+) -> PyResult<(Vec<Vec<i32>>, usize, usize, usize, usize, String, usize)> {
+    let cnf = cnf::CanonicalCnf::from_signed(&source).map_err(PyValueError::new_err)?;
+    let out = selective_lookahead::selective_pivot(
+        &cnf, max_pairs, min_mixed_pivots, max_vars,
+        max_clauses, expansion_budget,
+    ).map_err(PyValueError::new_err)?;
+    Ok((out.formula.clauses, out.features.viable_mixed_pivots,
+        out.features.pure_pivots, out.features.variables,
+        out.features.clauses, out.mode.to_string(), out.expanded))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1150,5 +1178,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(elimination_options_native, module)?)?;
     module.add_function(wrap_pyfunction!(two_ply_pivot_native, module)?)?;
     module.add_function(wrap_pyfunction!(adaptive_pivot_native, module)?)?;
+    module.add_function(wrap_pyfunction!(cheap_pivot_features_native, module)?)?;
+    module.add_function(wrap_pyfunction!(selective_pivot_native, module)?)?;
     Ok(())
 }
