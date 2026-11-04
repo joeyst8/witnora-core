@@ -28,6 +28,7 @@ pub mod order_experiments;
 pub mod failed_literal_probe;
 pub mod scaling_families;
 pub mod odd_xor_cycle;
+pub mod two_ply_lookahead;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1059,6 +1060,28 @@ fn discover_odd_xor_cycle_native(
         .map(|cycle|(cycle.start,cycle.steps)))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn elimination_options_native(
+    source: Vec<Vec<i32>>, max_pairs: i32, growth_budget: i32,
+) -> PyResult<Vec<(u32, Vec<Vec<i32>>)>> {
+    let cnf = cnf::CanonicalCnf::from_signed(&source).map_err(PyValueError::new_err)?;
+    Ok(two_ply_lookahead::elimination_options(&cnf, max_pairs, growth_budget)
+        .into_iter().map(|(pivot, result)| (pivot, result.clauses)).collect())
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn two_ply_pivot_native(
+    source: Vec<Vec<i32>>, max_pairs: i32,
+    growth_budget: i32, beam_width: i32,
+) -> PyResult<Vec<Vec<i32>>> {
+    let cnf = cnf::CanonicalCnf::from_signed(&source).map_err(PyValueError::new_err)?;
+    Ok(two_ply_lookahead::two_ply_pivot(&cnf, max_pairs, growth_budget, beam_width)
+        .map_err(PyValueError::new_err)?.clauses)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1106,5 +1129,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(probe_forced_relations_native, module)?)?;
     module.add_function(wrap_pyfunction!(make_separator_scaling_case_native, module)?)?;
     module.add_function(wrap_pyfunction!(discover_odd_xor_cycle_native, module)?)?;
+    module.add_function(wrap_pyfunction!(elimination_options_native, module)?)?;
+    module.add_function(wrap_pyfunction!(two_ply_pivot_native, module)?)?;
     Ok(())
 }
