@@ -1,0 +1,68 @@
+//! R-032: full deterministic incidence-component proof metadata.
+//! All fields match the original Python component_details schema.
+
+use crate::{cnf::CanonicalCnf, graph};
+use std::collections::BTreeMap;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ComponentRecord {
+    pub id: usize,
+    pub formula_hash: String,
+    pub variables: Vec<u32>,
+    pub clauses: Vec<Vec<i32>>,
+    pub clause_indices: Vec<usize>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ComponentEvidence {
+    pub count: usize,
+    pub incidence_edges: Vec<(u32, usize)>,
+    pub components: Vec<ComponentRecord>,
+}
+
+pub fn component_evidence(source: &[Vec<i32>]) -> Result<ComponentEvidence, String> {
+    let formula = CanonicalCnf::from_signed(source)?;
+    let canonical = &formula.clauses;
+    let clause_index: BTreeMap<_, _> = canonical.iter().enumerate()
+        .map(|(i, clause)| (clause.clone(), i)).collect();
+    let mut incidence_edges = Vec::new();
+    for (i, clause) in canonical.iter().enumerate() {
+        let variables = clause.iter().map(|lit| lit.unsigned_abs())
+            .collect::<std::collections::BTreeSet<_>>();
+        for variable in variables {
+            incidence_edges.push((variable, i));
+        }
+    }
+    let components = graph::incidence_components(canonical)?
+        .into_iter().enumerate().map(|(id, clauses)| {
+            let child = CanonicalCnf::from_signed(&clauses)?;
+            let indices = child.clauses.iter().map(|clause| {
+                clause_index.get(clause).copied().ok_or_else(
+                    || "native component lost original clause".to_string())
+            }).collect::<Result<Vec<_>,_>>()?;
+            Ok(ComponentRecord {
+                id, formula_hash: child.formula_hash(),
+                variables: child.variables(),
+                clauses: child.clauses,
+                clause_indices: indices,
+            })
+        }).collect::<Result<Vec<_>,String>>()?;
+    Ok(ComponentEvidence {
+        count: components.len(), incidence_edges, components,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn disconnected_clause_indices_and_hashes() {
+        let source = vec![vec![1,2],vec![3],vec![-2,1],vec![]];
+        let got = component_evidence(&source).unwrap();
+        assert_eq!(got.count, 3);
+        assert_eq!(got.incidence_edges.len(), 5);
+        assert_eq!(got.components[0].clauses, vec![vec![]]);
+        assert_eq!(got.components[0].clause_indices, vec![0]);
+        assert!(got.components.iter().all(|c| c.formula_hash.len()==64));
+    }
+}
