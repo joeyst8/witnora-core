@@ -2772,7 +2772,8 @@
       "path": "witnora_core/drat_check.py",
       "sha": "a452ffc01f51f1c76278d9d236ee61268e45da49",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "native_candidate_pending_diff",
+      "native_counterpart": "rust/witnora-ve/src/rup_checker.rs"
     },
     {
       "path": "witnora_core/drat_trim.py",
@@ -3150,7 +3151,7 @@
       "path": "witnora_core/rup_indexed_propagation.py",
       "sha": "4f1e417e9847a38e31d8c1c9e40f1d3af8bfbc7c",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/rup_witness.rs"
     },
     {
@@ -3424,12 +3425,19 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41745396189",
       "python_reference_comparisons": 1200,
       "scope": "signed DIMACS text evidence with exact source token spellings"
+    },
+    {
+      "id": "R-013",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41745730316",
+      "python_reference_comparisons": 2000,
+      "trust": "untrusted witness producer checked by Lean separately"
     }
   ],
   "pending_ci_milestones": [
     {
-      "id": "R-013",
-      "scope": "indexed RUP unit propagation witness, untrusted until Lean rechecks"
+      "id": "R-014",
+      "scope": "native RUP-only proof checker, independent from Lean"
     }
   ],
   "completion_criteria": [
