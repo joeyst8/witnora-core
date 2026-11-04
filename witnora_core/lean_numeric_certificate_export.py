@@ -7,12 +7,23 @@ from __future__ import annotations
 from .lean_color_certificate_export import generate_default_cases, _validate
 
 
-def emit_numeric_lean(cases=None) -> str:
+def emit_numeric_lean(cases=None, *, backend="python") -> str:
     if cases is None:
         cases = generate_default_cases()
     names = [case[0] for case in cases]
     if len(names) != len(set(names)):
         raise ValueError("duplicate case name")
+    if backend == "rust":
+        from witnora_ve import lean_numeric_emit_native
+        validated = []
+        for name, n, edges, colors, clique in cases:
+            if not name.isidentifier() or not name[0].isalpha():
+                raise ValueError("invalid Lean declaration name")
+            k = _validate(n, edges, colors, clique)
+            validated.append((name, n, list(edges), list(colors), list(clique), k))
+        return lean_numeric_emit_native(validated)
+    if backend != "python":
+        raise ValueError("unknown numeric Lean exporter backend")
     lines = [
         "import Witnora.NumericEdgeListBridge",
         "",

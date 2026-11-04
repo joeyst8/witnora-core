@@ -31,6 +31,7 @@ on:
       - "witnora_core/conjecture_triage.py"
       - "witnora_core/conditional_graph_conjectures.py"
       - "witnora_core/targeted_graph_theorems.py"
+      - "witnora_core/lean_numeric_certificate_export.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
@@ -57,6 +58,7 @@ on:
       - "tests/test_conjecture_triage_end_to_end_rust.py"
       - "tests/test_conditional_graph_conjectures_rust.py"
       - "tests/test_targeted_graph_challenge_rust.py"
+      - "tests/test_lean_numeric_certificate_export_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -89,6 +91,7 @@ on:
       - "witnora_core/conjecture_triage.py"
       - "witnora_core/conditional_graph_conjectures.py"
       - "witnora_core/targeted_graph_theorems.py"
+      - "witnora_core/lean_numeric_certificate_export.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
@@ -115,6 +118,7 @@ on:
       - "tests/test_conjecture_triage_end_to_end_rust.py"
       - "tests/test_conditional_graph_conjectures_rust.py"
       - "tests/test_targeted_graph_challenge_rust.py"
+      - "tests/test_lean_numeric_certificate_export_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -146,7 +150,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-092 source comparisons
+      - name: Focused R-067 through R-093 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -176,3 +180,4 @@ jobs:
           python -m unittest tests.test_conjecture_triage_end_to_end_rust -v
           python -m unittest tests.test_conditional_graph_conjectures_rust -v
           python -m unittest tests.test_targeted_graph_challenge_rust -v
+          python -m unittest tests.test_lean_numeric_certificate_export_rust -v
