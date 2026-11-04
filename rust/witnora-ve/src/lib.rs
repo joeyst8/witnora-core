@@ -26,6 +26,7 @@ pub mod two_sat_proof;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
+pub mod local_replay;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -796,6 +797,28 @@ fn reconstruct_assignment_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn replay_local_certificate_native(
+    source: Vec<Vec<i32>>,
+    steps: Vec<(String, usize, String, String, Vec<i32>,
+                Vec<Vec<i32>>, Vec<Vec<i32>>, (Vec<i32>, i32, String, i32))>,
+    width_cap: i32, final_hash: String,
+) -> PyResult<(bool, Vec<Vec<i32>>, Option<String>)> {
+    let events = steps.into_iter().map(
+        |(kind, step_id, input_hash, output_hash, assigned, removed, added,
+           (subsuming, blocked_literal, proof_digest, ve_var))| {
+            local_replay::LocalReplayStep {
+                kind, step_id, input_hash, output_hash, assigned, removed,
+                added, subsuming, blocked_literal, proof_digest, ve_var,
+            }
+        },
+    ).collect::<Vec<_>>();
+    let out = local_replay::replay(&source, &events, width_cap, &final_hash)
+        .map_err(PyValueError::new_err)?;
+    Ok((out.verified, out.final_clauses, out.error))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -824,6 +847,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(compact_certificate_hash_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_certificate_file_digests_native, module)?)?;
     module.add_function(wrap_pyfunction!(reconstruct_assignment_native, module)?)?;
+    module.add_function(wrap_pyfunction!(replay_local_certificate_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
