@@ -14,3 +14,8 @@ Native PyO3 CI has not yet passed this port; do not count the entire
 
 No graph theorem, general SAT performance bound, or novelty result follows
 from this syntactic port.
+
+## Verification update
+
+The R-061 native differential step passed in [Rust Actions run #41868308092](https://github.com/joeyst8/witnora-core/actions/runs/41868308092).
+Syntactic normalization is native; empirical search remains Python.

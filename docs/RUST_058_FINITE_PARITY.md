@@ -34,3 +34,12 @@ equivalence. The invalid-universe negative control now uses nvars=15, beyond
 the documented bound; the nvars=2 case is explicitly asserted to pass in
 both verifiers. This is a correction to a finite test expectation, not a
 relaxation of the verifier or a mathematical theorem.
+
+## Verified Rust gate
+
+**Green:** [Rust Actions run #41868308092](https://github.com/joeyst8/witnora-core/actions/runs/41868308092)
+completed successfully, including the exact finite parity comparison,
+large-mask controls, and corrected invalid-domain test. R-058 is now a
+verified parallel source module: **45 of 560** original Python files have
+verified parallel Rust counterparts, **515** are not yet fully verified, and
+**zero** are retired. This is not a general SAT theorem or Lean refinement.

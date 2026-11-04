@@ -13,3 +13,8 @@ toolchain/PyO3 extension is unavailable. This is **not** a complete port of
 
 These fixed graph examples are finite empirical controls and do not constitute
 a graph theorem, Lean proof, or evidence of novelty.
+
+## Verification update
+
+The R-060 native differential step passed in [Rust Actions run #41868308092](https://github.com/joeyst8/witnora-core/actions/runs/41868308092).
+Only the four graph constructors are native; the search remains Python.

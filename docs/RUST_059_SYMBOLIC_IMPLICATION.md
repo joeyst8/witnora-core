@@ -18,3 +18,9 @@ assert mathematical novelty, or promote an unresolved candidate to proof.
 differential tests are locally skipped because the native extension/toolchain
 is unavailable. Counts remain 44 verified parallel counterparts, 516 Python
 files not yet verified, zero Python files retired. R-059 is pending.
+
+## Verification update
+
+The R-059 native differential step passed in [Rust Actions run #41868308092](https://github.com/joeyst8/witnora-core/actions/runs/41868308092).
+The native helpers are verified, but `derive_equality` and
+`triage_with_implications` remain Python. This is a verified partial module.

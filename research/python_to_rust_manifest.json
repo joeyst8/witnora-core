@@ -2634,7 +2634,7 @@
       "path": "witnora_core/conjecture_triage.py",
       "sha": "eb4d7862f590f36a9c8751f2568edc4bcef8fbef",
       "group": "witnora_core",
-      "status": "partial_native_pending_verification",
+      "status": "partial_native_verified",
       "native_counterpart": "rust/witnora-ve/src/conjecture_triage.rs"
     },
     {
@@ -2816,7 +2816,8 @@
       "path": "witnora_core/eth_clause_violation_parity.py",
       "sha": "0296d2d7a8191c865a777dbec7529dc7e0022dc1",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/eth_clause_violation_parity.rs"
     },
     {
       "path": "witnora_core/exact_tensor_counting.py",
@@ -3324,14 +3325,14 @@
       "path": "witnora_core/symbolic_implication.py",
       "sha": "adf3b010ceff73964bea43b1b67f95640e0ee985",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "partial_native_verified",
       "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs"
     },
     {
       "path": "witnora_core/targeted_graph_theorems.py",
       "sha": "de3c105606598f0ebceab8d21ed1ef1604b4247e",
       "group": "witnora_core",
-      "status": "partial_native_pending_verification",
+      "status": "partial_native_verified",
       "native_counterpart": "rust/witnora-ve/src/targeted_graph_families.rs"
     },
     {

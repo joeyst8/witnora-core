@@ -10,3 +10,9 @@ The integration test `tests/test_sparse_pipeline_rust.py` is committed and refer
 The test compares 250 seeded source CNFs through both native and Python stages, verifies native row-space rank via an independent pivot basis, enumerates every violation vector for small clause counts and confirms the selected basis accepts exactly those vectors accepted by the original sketch. It additionally compares every source assignment's clause-violation vector and the small finite audits, and stresses rank 136 coefficients beyond 128 bits with a synthetic row-space (explicitly **not** a valid odd-column sketch).
 
 **No test result is claimed yet.** GitHub currently serializes Rust workflow runs on the research branch with `cancel-in-progress: false`, so R-057 remains queued. Once green, move this entry to verified milestones and update the draft PR. It adds a cross-module integration check, **not a new original Python file port**: migration counts remain 44 parallel, 516 not migrated, zero retired. No source CNF-to-parity equivalence or Lean kernel theorem is claimed.
+
+## Verification update
+
+**Green:** [Rust Actions run #41868308092](https://github.com/joeyst8/witnora-core/actions/runs/41868308092)
+completed successfully. Its R-057 native sparse-matrix/GF(2) integration step
+passed. This is not an additional source-file migration.
