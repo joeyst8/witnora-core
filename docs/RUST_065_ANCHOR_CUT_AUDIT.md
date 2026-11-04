@@ -14,3 +14,10 @@ generation and the independent parity-cut-width oracle remain Python.
 This is a source-bound graph diagnostic, not a SAT/UNSAT proof, Lean
 certificate, or demonstration of mathematical novelty. Native CI is pending,
 and the entire Python source file is not fully migrated.
+
+## Verification update
+
+[Rust Actions run #41872605604](https://github.com/joeyst8/witnora-core/actions/runs/41872605604)
+completed successfully, including R-065's native full-CNF reachability gate.
+This function is verified, while additional source functions remain Python or
+await native checks.

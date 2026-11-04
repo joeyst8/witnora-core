@@ -51,6 +51,7 @@ pub mod proof_trace_metadata;
 pub mod bipartite_audit;
 pub mod incremental_xor_screen;
 pub mod anchor_cut_audit;
+pub mod parity_cut_width;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -654,6 +655,15 @@ fn full_cnf_anchors_separated_native(
     clauses: Vec<Vec<i32>>, cut: Vec<u32>, left: u32, right: u32,
 ) -> PyResult<bool> {
     anchor_cut_audit::anchors_separated(&clauses, &cut, left, right)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn independent_parity_cut_width_native(
+    supports: Vec<Vec<u32>>, limit: usize,
+) -> PyResult<Option<usize>> {
+    parity_cut_width::independent_parity_cut_width(&supports,limit)
         .map_err(PyValueError::new_err)
 }
 
@@ -1676,6 +1686,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(bipartition_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(possible_two_xor_patterns_native, module)?)?;
     module.add_function(wrap_pyfunction!(full_cnf_anchors_separated_native, module)?)?;
+    module.add_function(wrap_pyfunction!(independent_parity_cut_width_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

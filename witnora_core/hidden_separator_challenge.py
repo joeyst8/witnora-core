@@ -64,6 +64,16 @@ def independent_parity_cut_width(supports: list[tuple[int, ...]],
     return None
 
 
+def independent_parity_cut_width_rust(
+    supports: list[tuple[int, ...]], *, limit: int = 3,
+) -> int | None:
+    """Opt-in bounded native support-cut oracle, not a source-CNF proof."""
+    from witnora_ve import independent_parity_cut_width_native
+    if limit < 0 or any(v < 0 for row in supports for v in row):
+        raise ValueError("nonnegative limit and variable IDs required")
+    return independent_parity_cut_width_native([list(row) for row in supports],limit)
+
+
 def full_cnf_anchors_separated(formula: CNFFormula, cut: tuple[int, ...],
                                left_anchor: int, right_anchor: int) -> bool:
     """Independent primal-graph reachability audit after removing a cut."""
