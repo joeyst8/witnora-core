@@ -3203,7 +3203,7 @@
       "path": "witnora_core/simplify.py",
       "sha": "cc6f9ae802843d773c768b2cc6e0385efc50f3e5",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/simplifier.rs"
     },
     {
@@ -3471,14 +3471,16 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41751079781",
       "python_reference_comparisons": 1000,
       "scope": "exact BCE proof witnesses, resolvents and digest parity"
-    }
-  ],
-  "pending_ci_milestones": [
+    },
     {
       "id": "R-019",
-      "scope": "full deterministic simplifier pipeline and certificate event logs"
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41751421413",
+      "python_reference_comparisons": 1000,
+      "scope": "complete deterministic CNF simplifier decisions with exact certificate log parity"
     }
   ],
+  "pending_ci_milestones": [],
   "completion_criteria": [
     "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
     "Every script has a Rust executable replacement or is documented as archival-only after review",
