@@ -33,6 +33,7 @@ def count_component_by_elimination(
     *,
     max_factor_variables: int = 6,
     max_operations: int = 1000000,
+    backend: str = "python",
 ) -> VariableEliminationCount | None:
     """Count a signed CNF component exactly with bounded min-scope VE.
 
@@ -48,6 +49,17 @@ def count_component_by_elimination(
         raise ValueError("duplicate component variable")
     allowed = _mask(component_variables)
     clauses = tuple(violation_clauses)
+    if backend == "rust":
+        from witnora_ve import crc_variable_eliminate_native
+        native = crc_variable_eliminate_native(
+            [(str(zeros), str(ones)) for zeros, ones in clauses],
+            list(component_variables), max_factor_variables, max_operations)
+        if native is None:
+            return None
+        models, operations, maximum_width, eliminated = native
+        return VariableEliminationCount(int(models), operations, maximum_width, eliminated)
+    if backend != "python":
+        raise ValueError("unknown variable elimination backend")
     factors = []
     operations = 0
     maximum_width = 0

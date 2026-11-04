@@ -78,6 +78,7 @@ pub mod conditional_graph_conjectures;
 pub mod lean_numeric_certificate_export;
 pub mod lean_ascii_certificate_export;
 pub mod lean_color_certificate_export;
+pub mod crc_variable_elimination;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1917,6 +1918,15 @@ fn lean_color_emit_native(cases:Vec<lean_color_certificate_export::Case>)->PyRes
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn crc_variable_eliminate_native(clauses:Vec<(String,String)>,variables:Vec<usize>,
+    max_width:usize,max_operations:usize)
+    ->PyResult<Option<crc_variable_elimination::Answer>>{
+    crc_variable_elimination::count(&clauses,&variables,max_width,max_operations)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2180,6 +2190,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(lean_color_fin_values_native, module)?)?;
     module.add_function(wrap_pyfunction!(lean_color_find_clique_native, module)?)?;
     module.add_function(wrap_pyfunction!(lean_color_emit_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_variable_eliminate_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
