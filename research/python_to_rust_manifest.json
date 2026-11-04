@@ -2945,8 +2945,9 @@
       "status": "partial_native_pending_verification",
       "native_counterpart": "rust/witnora-ve/src/anchor_cut_audit.rs",
       "additional_native_counterpart": "rust/witnora-ve/src/parity_cut_width.rs",
-      "verified_functions": ["full_cnf_anchors_separated"],
-      "pending_functions": ["independent_parity_cut_width"]
+      "generator_native_counterpart": "rust/witnora-ve/src/hidden_separator_generator.rs",
+      "verified_functions": ["full_cnf_anchors_separated", "independent_parity_cut_width"],
+      "pending_functions": ["make_hidden_separator"]
     },
     {
       "path": "witnora_core/hierarchy_formalization.py",

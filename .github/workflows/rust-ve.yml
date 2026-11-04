@@ -86,6 +86,7 @@ on:
       - "tests/test_incremental_xor_screen_rust.py"
       - "tests/test_anchor_cut_audit_rust.py"
       - "tests/test_parity_cut_width_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "witnora_core/symbolic_implication.py"
       - "witnora_core/targeted_graph_theorems.py"
@@ -215,6 +216,7 @@ on:
       - "tests/test_incremental_xor_screen_rust.py"
       - "tests/test_anchor_cut_audit_rust.py"
       - "tests/test_parity_cut_width_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
       - "witnora_core/symbolic_implication.py"
       - "witnora_core/targeted_graph_theorems.py"
       - "witnora_core/conjecture_triage.py"
@@ -595,3 +597,8 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_parity_cut_width_rust -v
+
+      - name: R-067 hidden separator source generator native differential
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_hidden_separator_generator_rust -v

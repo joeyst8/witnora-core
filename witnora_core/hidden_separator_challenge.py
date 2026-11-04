@@ -37,6 +37,27 @@ def make_hidden_separator(seed: int, *, width: int = 2,
     }
 
 
+def make_hidden_separator_rust(seed: int, *, width: int = 2,
+                               cross_noise: bool = False) -> tuple[CNFFormula, dict]:
+    """Opt-in native source construction with the exact Python seed stream."""
+    from witnora_ve import make_hidden_separator_native
+    if width not in (2, 3):
+        raise ValueError("separator width must be 2 or 3")
+    boundary = tuple(range(3, 3 + width))
+    variables = sorted({1, 2, 10, 11, 20, 21, 30, 31, *boundary,
+                        *((32,) if cross_noise else ())})
+    labels = random.Random(seed).sample(range(101, 401), len(variables))
+    mapping = dict(zip(variables, labels))
+    clauses = make_hidden_separator_native(width, cross_noise, labels)
+    return CNFFormula.from_raw_clauses(clauses), {
+        "seed": seed, "width": width, "cross_noise": cross_noise,
+        "boundary": tuple(sorted(mapping[v] for v in boundary)),
+        "left_anchor": mapping[1], "right_anchor": mapping[10],
+        "left_block": tuple(sorted(mapping[v] for v in (1, 2, 20))),
+        "right_block": tuple(sorted(mapping[v] for v in (10, 11, 21))),
+    }
+
+
 def independent_parity_cut_width(supports: list[tuple[int, ...]],
                                  *, limit: int = 3) -> int | None:
     """Independent BFS oracle over equation supports; no detector reuse."""
