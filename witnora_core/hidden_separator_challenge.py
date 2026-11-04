@@ -82,3 +82,16 @@ def full_cnf_anchors_separated(formula: CNFFormula, cut: tuple[int, ...],
             reached.add(nxt)
             queue.append(nxt)
     return right_anchor not in reached
+
+
+def full_cnf_anchors_separated_rust(
+    formula: CNFFormula, cut: tuple[int, ...],
+    left_anchor: int, right_anchor: int,
+) -> bool:
+    """Opt-in native full-CNF graph audit, not a proof of SAT/UNSAT."""
+    from witnora_ve import full_cnf_anchors_separated_native
+    if any(v < 0 for v in (*cut, left_anchor, right_anchor)):
+        raise ValueError("variable IDs must be nonnegative")
+    return bool(full_cnf_anchors_separated_native(
+        formula.to_clause_lists(), list(cut), left_anchor, right_anchor
+    ))

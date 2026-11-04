@@ -2942,7 +2942,8 @@
       "path": "witnora_core/hidden_separator_challenge.py",
       "sha": "71e8ca2d3df227fe6b490d89c6af5fbeb0c92b39",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/anchor_cut_audit.rs"
     },
     {
       "path": "witnora_core/hierarchy_formalization.py",
@@ -2954,7 +2955,7 @@
       "path": "witnora_core/incremental_separator.py",
       "sha": "acd23667130ec6b936e911f6e4f156d28e0518bf",
       "group": "witnora_core",
-      "status": "partial_native_pending_verification",
+      "status": "partial_native_verified",
       "native_counterpart": "rust/witnora-ve/src/incremental_xor_screen.rs"
     },
     {

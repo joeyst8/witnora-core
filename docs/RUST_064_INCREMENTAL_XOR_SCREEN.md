@@ -11,3 +11,10 @@ source-CNF inputs, including independently generated complete XOR gadget
 controls, against the untouched Python default. Full cut selection and
 incremental SAT solving remain in Python. Native CI is pending; this is a
 partial module migration and contributes no new verified full-file count.
+
+## Verification update
+
+[Rust Actions run #41871546196](https://github.com/joeyst8/witnora-core/actions/runs/41871546196)
+completed successfully, including the R-064 native/Python XOR prefilter
+comparison. R-064 is verified as a partial module only; it does not add a
+fully migrated Python file or establish the existence of an XOR constraint.
