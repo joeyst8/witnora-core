@@ -46,3 +46,32 @@ def selective_pivot(formula: CNFFormula, *, max_pairs: int = 12,
                                  max_pairs=max_pairs)
     return greedy, {**features, "mode": "greedy",
                     "expanded": 0, "trusted": False, "promoted": False}
+
+
+def cheap_pivot_features_rust(formula: CNFFormula, *, max_pairs: int = 12) -> dict:
+    """Opt-in native feature gate, preserving the reference default."""
+    from witnora_ve import cheap_pivot_features_native
+
+    viable, pure, variables, clauses = cheap_pivot_features_native(
+        formula.to_clause_lists(), max_pairs)
+    return {"viable_mixed_pivots": viable, "pure_pivots": pure,
+            "variables": variables, "clauses": clauses}
+
+
+def selective_pivot_rust(formula: CNFFormula, *, max_pairs: int = 12,
+                         min_mixed_pivots: int = 3, max_vars: int = 25,
+                         max_clauses: int = 140, expansion_budget: int = 24
+                         ) -> tuple[CNFFormula, dict]:
+    """Opt-in native adaptive/greedy routing without a trust promotion."""
+    from witnora_ve import selective_pivot_native
+
+    (clauses, viable, pure, variables, count, mode,
+     expanded) = selective_pivot_native(
+         formula.to_clause_lists(), max_pairs, min_mixed_pivots,
+         max_vars, max_clauses, expansion_budget)
+    return CNFFormula.from_raw_clauses(clauses), {
+        "viable_mixed_pivots": viable, "pure_pivots": pure,
+        "variables": variables, "clauses": count,
+        "mode": mode, "expanded": expanded,
+        "trusted": False, "promoted": False,
+    }
