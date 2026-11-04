@@ -32,7 +32,7 @@ fn checked_resolvents(
 ) -> Option<BlockedClauseWitness> {
     let mut checked = Vec::new();
     for other in formula {
-        if other == clause || !other.contains(&-pivot) {
+        if other.as_slice() == clause || !other.contains(&-pivot) {
             continue;
         }
         let mut raw = clause.iter().filter(|&&lit| lit != pivot)
