@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-039)
+name: Rust native Witnora migration differential gate (R-001 through R-040)
 
 on:
   push:
@@ -59,6 +59,8 @@ on:
       - "tests/test_two_sat_scc_witness_rust.py"
       - "tests/test_factor_orders_rust.py"
       - "tests/test_forced_relation_rust.py"
+      - "tests/test_scaling_families_rust.py"
+      - "witnora_core/separator_scaling_families.py"
       - "witnora_core/forced_relation_probe.py"
       - "witnora_core/factor_elimination_orders.py"
       - "witnora_core/two_sat_proof.py"
@@ -135,6 +137,8 @@ on:
       - "tests/test_two_sat_scc_witness_rust.py"
       - "tests/test_factor_orders_rust.py"
       - "tests/test_forced_relation_rust.py"
+      - "tests/test_scaling_families_rust.py"
+      - "witnora_core/separator_scaling_families.py"
       - "witnora_core/forced_relation_probe.py"
       - "witnora_core/factor_elimination_orders.py"
       - "witnora_core/two_sat_proof.py"
@@ -375,3 +379,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_forced_relation_rust -v
+      - name: Verify R-040 complete fixed-boundary parity scaling family parity
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_scaling_families_rust -v
