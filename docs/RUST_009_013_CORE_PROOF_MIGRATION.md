@@ -12,9 +12,10 @@ Date: November 4, 2026. Lean TC-063 PR #121 unchanged.
 | R-011 | Canonical signed-clause normalization, DIMACS output, variables and strict subsumption | 1,600 full Python-normalization+DIMACS+subsumption differentials and native Rust unit tests | [green #41745105632](https://github.com/joeyst8/witnora-core/actions/runs/41745105632) |
 | R-012 | Exact source-evidence DIMACS parser retaining every original signed numeric token spelling, raw clause, and canonical normalized formula | 1,200 Python-original text evidence comparisons and malformed-header controls | [green #41745396189](https://github.com/joeyst8/witnora-core/actions/runs/41745396189) |
 
-R-013 has a native indexed unit-propagation/RUP-witness
-producer and randomized differential gate but is **pending that gate**;
-a Rust implementation by itself is not a verified replacement.
+R-013 has a verified native indexed unit-propagation/RUP-witness
+producer: **2,000 seeded exact Python-original witness comparisons**
+and explicit cap controls passed in [green CI #41745730316](https://github.com/joeyst8/witnora-core/actions/runs/41745730316).
+This is an untrusted witness producer, not a formal proof checker.
 
 ## Concrete interfaces
 
@@ -41,7 +42,7 @@ operation (their defaults stay Python until complete parity):
 - `solve_2sat(formula, backend="rust")`
 - `find_first_subsumption(formula, backend="rust")`
 - `parse_dimacs_with_text_evidence(text, backend="rust")`
-- `indexed_unit_conflict_witness(database, clause, backend="rust")` (R-013 pending)
+- `indexed_unit_conflict_witness(database, clause, backend="rust")` (R-013 verified)
 
 Exact original token spellings matter: a DIMACS clause such as
 `+01 -002 0` must preserve those strings in the evidence record,
