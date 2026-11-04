@@ -858,6 +858,27 @@ fn verify_component_evidence_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn verify_cd_children_native(
+    source: Vec<Vec<i32>>,
+    output_hash: String,
+    count: usize,
+    edges: Vec<(u32, usize)>,
+    logged: Vec<(usize, String, Vec<u32>, Vec<Vec<i32>>, Vec<usize>)>,
+) -> PyResult<(bool, Vec<(String, Vec<Vec<i32>>)>, Option<String>)> {
+    let records = logged.into_iter().map(
+        |(id, formula_hash, variables, clauses, clause_indices)| {
+            component_proof::ComponentRecord {
+                id, formula_hash, variables, clauses, clause_indices,
+            }
+        }
+    ).collect::<Vec<_>>();
+    component_proof::verify_evidence_and_children(
+        &source, &output_hash, count, &edges, &records,
+    ).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -889,6 +910,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(replay_local_certificate_native, module)?)?;
     module.add_function(wrap_pyfunction!(component_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_component_evidence_native, module)?)?;
+    module.add_function(wrap_pyfunction!(verify_cd_children_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
