@@ -3397,7 +3397,10 @@
       "path": "witnora_core/vertex_coupling_separator.py",
       "sha": "388987081e436190518e3c60f9e78d9f4bf357fe",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/vertex_coupling_separator.rs",
+      "test": "tests/test_vertex_coupling_rust.py",
+      "verified_milestone": "R-051"
     },
     {
       "path": "witnora_core/violation_image_anf.py",
@@ -3741,6 +3744,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41840498387",
       "python_reference_comparisons": 1500,
       "scope": "Native deterministic iterative articulation-point and cut-first exhaustive singleton ordering for TC-063: 1500 random symmetric graphs checked against Python and independent connectivity oracle, long paths and malformed controls"
+    },
+    {
+      "id": "R-051",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41841546168",
+      "python_reference_comparisons": 1000,
+      "scope": "Native two-vertex graph-cut discovery via iterative articulation scans, 900 random undirected graphs plus 100 simple-cycle family cases, exact Python parity and independent connectivity oracle, strict malformed-graph controls"
     }
   ],
   "pending_ci_milestones": [],
@@ -3752,7 +3762,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 522,
-    "parallel_reference": 38
+    "not_migrated": 521,
+    "parallel_reference": 39
   }
 }
