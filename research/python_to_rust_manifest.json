@@ -3507,6 +3507,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41753697112",
       "python_reference_comparisons": 1200,
       "scope": "Python repr-compatible BCE proof evidence digest now hashed in Rust"
+    },
+    {
+      "id": "R-024",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41756207305",
+      "python_reference_comparisons": 1200,
+      "scope": "full opt-in Rust StepLogger record construction, hashes, fields and event numbering"
     }
   ],
   "pending_ci_milestones": [],
