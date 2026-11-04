@@ -94,6 +94,7 @@ def count_signed_cnf_crc(
     enable_defect_oracle: bool = False,
     enable_conflict_oracle: bool = False,
     source_preprocessor: str = "none",
+    source_backend: str = "pipeline",
     source_extractor: str = "python",
     coefficient_backend: str = "python",
     left_backend: str = "python",
@@ -107,6 +108,40 @@ def count_signed_cnf_crc(
     define the boundary. Everything else is an internal affine/free
     variable. No source-clause information is discarded.
     """
+    if source_backend not in ("pipeline", "rust_fused"):
+        raise ValueError("unknown exact source backend")
+    if source_backend == "rust_fused":
+        if (enable_orbit_oracle or enable_defect_oracle
+                or enable_conflict_oracle or max_coefficient_states is not None):
+            raise ValueError("rust_fused supports bounded exact inclusion-exclusion only")
+        from witnora_core.crc_rust_fused import count_source_fused_in_rust
+        fused = count_source_fused_in_rust(
+            raw_clauses, nvars, source_preprocessor=source_preprocessor,
+            max_preprocess_passes=max_preprocess_passes,
+            max_preprocess_clause_visits=max_preprocess_clause_visits,
+            max_spectrum_terms=max_spectrum_terms,
+            max_inclusion_subsets=max_inclusion_subsets,
+            max_rust_coefficient_operations=max_rust_coefficient_operations,
+        )
+        if fused is None:
+            return None
+        stats = BoundaryCount(
+            models=fused.models, left_fourier_terms=fused.left_fourier_terms,
+            right_violation_terms=fused.right_violation_terms,
+            coefficient_queries=fused.left_fourier_terms,
+            internal_free_variables=fused.internal_free_variables,
+            right_components=fused.right_components,
+            coefficient_backend="rust_fused_inclusion_exclusion",
+            coefficient_states=fused.right_subset_operations,
+        )
+        return SourceCRCResult(
+            models=fused.models,
+            extracted_affine_rows=fused.extracted_affine_rows,
+            residual_clauses=fused.residual_clauses,
+            boundary_variables=fused.boundary_variables,
+            internal_variables=fused.internal_variables,
+            coefficient_stats=stats,
+        )
     if source_preprocessor not in ("none", "rust_consensus", "rust_adaptive"):
         raise ValueError("unknown exact source preprocessor")
     if source_preprocessor in ("rust_consensus", "rust_adaptive"):
