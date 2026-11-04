@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-052)
+name: Rust native Witnora migration differential gate (R-001 through R-053)
 
 on:
   push:
@@ -72,6 +72,8 @@ on:
       - "tests/test_separator_priority_rust.py"
       - "tests/test_vertex_coupling_rust.py"
       - "tests/test_global_coupling_rust.py"
+      - "tests/test_sparse_basis_rust.py"
+      - "witnora_core/gf2_sparse_row_basis.py"
       - "witnora_core/global_coupling_separator.py"
       - "witnora_core/vertex_coupling_separator.py"
       - "witnora_core/separator_structural_priority.py"
@@ -174,6 +176,8 @@ on:
       - "tests/test_separator_priority_rust.py"
       - "tests/test_vertex_coupling_rust.py"
       - "tests/test_global_coupling_rust.py"
+      - "tests/test_sparse_basis_rust.py"
+      - "witnora_core/gf2_sparse_row_basis.py"
       - "witnora_core/global_coupling_separator.py"
       - "witnora_core/vertex_coupling_separator.py"
       - "witnora_core/separator_structural_priority.py"
@@ -479,3 +483,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_global_coupling_rust -v
+      - name: Verify R-053 independent sparse GF2 row reconstruction and witnesses
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_sparse_basis_rust -v
