@@ -44,6 +44,7 @@ def audit_defect_source_independence(
     *,
     max_modes: int = 4096,
     max_missing: int = 6,
+    backend: str = "python",
 ) -> IndependenceAudit | None:
     """Verify exact independence or return a cross-moment witness.
 
@@ -52,6 +53,8 @@ def audit_defect_source_independence(
     """
     if not isinstance(max_modes, int) or max_modes < 1:
         raise ValueError("invalid Fourier mode cap")
+    if backend not in ("python", "rust"):
+        raise ValueError("unknown independence audit backend")
     bset = set(boundary_variables)
     for group in (left_group, right_group):
         if not group or len(set(group)) != len(group):
@@ -73,7 +76,12 @@ def audit_defect_source_independence(
         return None
     left_masks = _all_submasks(left_bits)
     right_masks = _all_submasks(right_bits)
-    modes = tuple(sorted(l | r for l in left_masks for r in right_masks))
+    if backend == "rust":
+        from witnora_ve import crc_independence_modes_native
+        modes = tuple(int(value) for value in crc_independence_modes_native(
+            [str(bit) for bit in left_bits], [str(bit) for bit in right_bits]))
+    else:
+        modes = tuple(sorted(l | r for l in left_masks for r in right_masks))
     base = query_defect_walsh(
         normalized, boundary_variables, modes, max_missing=max_missing)
     if base is None:
@@ -82,6 +90,18 @@ def audit_defect_source_independence(
     c0 = coefficients[0]
     if c0 <= 0:
         return None
+
+    if backend == "rust":
+        from witnora_ve import crc_independence_audit_native
+        rows = [(str(mode), str(value.numerator), str(value.denominator))
+                for mode, value in coefficients.items()]
+        failure = crc_independence_audit_native(
+            [str(bit) for bit in left_bits], [str(bit) for bit in right_bits], rows)
+        if failure is None:
+            return IndependenceAudit(True, len(modes), None, None, Fraction())
+        l, r, num, den = failure
+        return IndependenceAudit(False, len(modes), int(l), int(r),
+                                 Fraction(int(num), int(den)))
 
     for l in left_masks:
         for r in right_masks:

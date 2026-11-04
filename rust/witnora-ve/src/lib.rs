@@ -65,6 +65,7 @@ pub mod aux_violation_tensors;
 pub mod constraint_geometry;
 pub mod geometry_aware_parity;
 pub mod claim_boundary;
+pub mod crc_independence_audit;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1793,6 +1794,20 @@ fn sparse_min_degree_width_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn crc_independence_modes_native(left:Vec<String>,right:Vec<String>)->PyResult<Vec<String>>{
+    crc_independence_audit::mode_masks(&left,&right).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn crc_independence_audit_native(left:Vec<String>,right:Vec<String>,
+    coefficients:Vec<(String,String,String)>)
+    ->PyResult<Option<(String,String,String,String)>>{
+    crc_independence_audit::audit(&left,&right,&coefficients).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn claim_boundary_scan_native(text:String)->Vec<(String,String,bool)>{
     claim_boundary::scan(&text).into_iter().map(|finding|
         (finding.phrase,finding.context,finding.allowed)).collect()
@@ -1954,6 +1969,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(geometry_aware_rows_native, module)?)?;
     module.add_function(wrap_pyfunction!(geometry_primal_pairs_native, module)?)?;
     module.add_function(wrap_pyfunction!(claim_boundary_scan_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_independence_modes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_independence_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
