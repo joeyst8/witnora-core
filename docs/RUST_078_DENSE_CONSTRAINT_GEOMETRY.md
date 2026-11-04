@@ -13,4 +13,6 @@ Neither gives a polynomial-time SAT algorithm or a Lean proof.
 
 The focused CI gate runs `tests/test_constraint_geometry_rust.py` (120 seeded
 source/sketch comparisons, 201-clause bitmap, invalid sketches) alongside prior
-Rust source-differential suites. Status stays unverified until CI succeeds.
+Rust source-differential suites. **CI #41909466367 passed** all Rust library
+tests, Python native wheel compilation and focused source comparisons. R-078
+is marked `parallel_reference` in the migration manifest.

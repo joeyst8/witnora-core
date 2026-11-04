@@ -2643,7 +2643,11 @@
       "path": "witnora_core/constraint_geometry.py",
       "sha": "257dc7d22d465df377eabfeefb5cc28f041aad42",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/constraint_geometry.rs",
+      "test": "tests/test_constraint_geometry_rust.py",
+      "verified_milestone": "R-078",
+      "migration_note": "Focused Rust CI #41909466367 passed native library, wheel and 120 seeded dense parity geometry comparisons."
     },
     {
       "path": "witnora_core/cost_sensitive_gate.py",
