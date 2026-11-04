@@ -115,6 +115,37 @@ pub fn run() -> Result<(), String> {
     run_dimacs()
 }
 
+/// Native 2-SAT CLI using the same strict DIMACS reader.
+/// Witnesses are fully checked by the Rust SCC solver. No proof log is claimed.
+pub fn run_two_sat() -> Result<(), String> {
+    let mut args = std::env::args().skip(2);
+    if let Some(option) = args.next() {
+        return Err(format!("unrecognized two-SAT CLI argument: {option}"));
+    }
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input).map_err(|e| e.to_string())?;
+    let source = parse_dimacs(&input)?;
+    match witnora_ve::two_sat::solve_2sat(&source.clauses, source.nvars)? {
+        None => println!("s UNSATISFIABLE"),
+        Some(assignment) => {
+            println!("s SATISFIABLE");
+            let witness = assignment.iter().enumerate()
+                .map(|(i, value)| {
+                    let var = (i + 1) as i32;
+                    if *value { var } else { -var }
+                })
+                .map(|lit| lit.to_string())
+                .collect::<Vec<_>>().join(" ");
+            if !witness.is_empty() {
+                println!("v {witness} 0");
+            } else {
+                println!("v 0");
+            }
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
