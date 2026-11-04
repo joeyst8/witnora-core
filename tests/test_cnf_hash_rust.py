@@ -26,7 +26,7 @@ class TestRustCanonicalHash(unittest.TestCase):
                 reference = CNFFormula.from_raw_clauses(source)
                 got = canonical_hash_in_rust(source)
                 with self.subTest(n=n, source=source):
-                    self.assertEqual(got, reference.formula_hash())
+                    self.assertEqual(got, reference.formula_hash)
                     self.assertRegex(got, r"^[0-9a-f]{64}$")
                     native = canonicalize_cnf_in_rust(source)
                     self.assertEqual(got, sha256(
@@ -42,7 +42,7 @@ class TestRustCanonicalHash(unittest.TestCase):
             with self.subTest(source=source):
                 self.assertEqual(
                     canonical_hash_in_rust(source),
-                    CNFFormula.from_raw_clauses(source).formula_hash(),
+                    CNFFormula.from_raw_clauses(source).formula_hash,
                 )
 
     def test_rejects_unsafe_signed_inputs(self):
