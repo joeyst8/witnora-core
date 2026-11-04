@@ -697,6 +697,14 @@ fn solve_two_sat_proof_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn canonical_cnf_hash_native(clauses: Vec<Vec<i32>>) -> PyResult<String> {
+    let cnf = cnf::CanonicalCnf::from_signed(&clauses)
+        .map_err(PyValueError::new_err)?;
+    Ok(cnf.formula_hash())
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -708,6 +716,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_source_native, module)?)?;
     module.add_function(wrap_pyfunction!(solve_two_sat_native, module)?)?;
     module.add_function(wrap_pyfunction!(canonical_cnf_native, module)?)?;
+    module.add_function(wrap_pyfunction!(canonical_cnf_hash_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
