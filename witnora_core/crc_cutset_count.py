@@ -49,6 +49,7 @@ def count_source_by_separator(
     component_backend: str = "enumeration",
     max_ve_factor_variables: int = 6,
     max_ve_operations: int = 1000000,
+    backend: str = "python",
 ) -> CutsetModelCount | None:
     """Exact source #SAT with strict cut, component and state caps.
 
@@ -72,11 +73,13 @@ def count_source_by_separator(
         not 1 <= max_ve_factor_variables <= 16 or
         not isinstance(max_ve_operations, int) or max_ve_operations < 1):
         raise ValueError("invalid VE width or operation budget")
+    if backend not in ("python", "rust"):
+        raise ValueError("unknown cutset counting backend")
     source = tuple(tuple(c) for c in source_clauses)
     cut = discover_source_separator(
         source, boundary_variables, left_group, right_group,
         satisfying_assignment, max_separator_size=max_separator_size,
-        max_primal_edges=max_primal_edges)
+        max_primal_edges=max_primal_edges, backend=backend)
     if cut is None:
         return None
     normalized = _normalized_clauses(source, boundary_variables)
@@ -85,6 +88,17 @@ def count_source_by_separator(
     separator = cut.separator
     if (1 << len(separator)) > max_separator_branches:
         return None
+    if backend == "rust" and component_backend == "enumeration":
+        from witnora_ve import crc_cutset_enumerate_native
+        native = crc_cutset_enumerate_native(
+            [(str(z), str(o)) for z, o in normalized],
+            list(boundary_variables), list(separator),
+            max_component_variables, max_assignment_states, max_separator_branches)
+        if native is None:
+            return None
+        models, biggest, states, components = native
+        return CutsetModelCount(int(models), separator, 1 << len(separator),
+                                biggest, states, components, cut.primal_edges)
     separator_mask = sum(1 << (v - 1) for v in separator)
     remaining = tuple(v for v in boundary_variables
                       if v not in set(separator))
