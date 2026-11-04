@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-048)
+name: Rust native Witnora migration differential gate (R-001 through R-049)
 
 on:
   push:
@@ -68,6 +68,8 @@ on:
       - "tests/test_spoke_discovery_rust.py"
       - "tests/test_multicut_parity_rust.py"
       - "tests/test_invariant_policies_rust.py"
+      - "tests/test_cost_sensitive_gate_rust.py"
+      - "witnora_core/cost_sensitive_gate.py"
       - "witnora_core/structural_operator_invention.py"
       - "witnora_core/multicut_parity_separator.py"
       - "witnora_core/spoke_discovery.py"
@@ -162,6 +164,8 @@ on:
       - "tests/test_spoke_discovery_rust.py"
       - "tests/test_multicut_parity_rust.py"
       - "tests/test_invariant_policies_rust.py"
+      - "tests/test_cost_sensitive_gate_rust.py"
+      - "witnora_core/cost_sensitive_gate.py"
       - "witnora_core/structural_operator_invention.py"
       - "witnora_core/multicut_parity_separator.py"
       - "witnora_core/spoke_discovery.py"
@@ -447,3 +451,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_invariant_policies_rust -v
+      - name: Verify R-049 native cost-sensitive threshold training and inference
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_cost_sensitive_gate_rust -v
