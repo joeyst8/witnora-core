@@ -38,7 +38,7 @@ fn exact_pattern(support: &[u32], rhs: u32) -> BTreeSet<Vec<i32>> {
     clauses
 }
 
-fn exact_xor_supports(formula: &CanonicalCnf, max_k: usize) -> Vec<Vec<u32>> {
+pub(crate) fn exact_xor_supports(formula: &CanonicalCnf, max_k: usize) -> Vec<Vec<u32>> {
     let mut groups = BTreeMap::<Vec<u32>,BTreeSet<Vec<i32>>>::new();
     for clause in &formula.clauses {
         let support = clause.iter().map(|lit| lit.unsigned_abs())
@@ -63,7 +63,7 @@ fn exact_xor_supports(formula: &CanonicalCnf, max_k: usize) -> Vec<Vec<u32>> {
     equations.into_iter().map(|(support, _rhs)| support).collect()
 }
 
-fn components(supports: &[BTreeSet<u32>]) -> Vec<Vec<usize>> {
+pub(crate) fn components(supports: &[BTreeSet<u32>]) -> Vec<Vec<usize>> {
     let mut remaining = (0..supports.len()).collect::<BTreeSet<usize>>();
     let mut groups = Vec::new();
     while let Some(&start) = remaining.iter().next() {
