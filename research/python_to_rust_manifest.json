@@ -2494,7 +2494,10 @@
       "path": "witnora_core/adaptive_lookahead_prototype.py",
       "sha": "319cc19bc872d37cdf09a6d99129acb44c905e4e",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/adaptive_lookahead.rs",
+      "test": "tests/test_adaptive_lookahead_rust.py",
+      "verified_milestone": "R-043"
     },
     {
       "path": "witnora_core/anf_separator_conditioning.py",
@@ -3661,6 +3664,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41772953474",
       "python_reference_comparisons": 1200,
       "scope": "Native exact two-ply Davis-Putnam lookahead, full elimination-options and chosen-state parity on 1200 random CNFs plus independent brute-force SAT/UNSAT preservation and invalid-budget controls"
+    },
+    {
+      "id": "R-043",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41773562386",
+      "python_reference_comparisons": 960,
+      "scope": "Native adaptive bounded Davis-Putnam pivot search, full formula/metadata parity on 960 random CNFs and independent exhaustive SAT/UNSAT checks"
     }
   ],
   "pending_ci_milestones": [],
@@ -3672,7 +3682,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 530,
-    "parallel_reference": 30
+    "not_migrated": 529,
+    "parallel_reference": 31
   }
 }
