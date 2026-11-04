@@ -2524,7 +2524,7 @@
       "path": "witnora_core/bce.py",
       "sha": "1885d7ceae4f46fde6637eafecf43a65aa709805",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/bce.rs"
     },
     {
@@ -3203,7 +3203,8 @@
       "path": "witnora_core/simplify.py",
       "sha": "cc6f9ae802843d773c768b2cc6e0385efc50f3e5",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "native_candidate_pending_diff",
+      "native_counterpart": "rust/witnora-ve/src/simplifier.rs"
     },
     {
       "path": "witnora_core/soundness_theoremization.py",
@@ -3463,12 +3464,19 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41746920843",
       "python_reference_comparisons": 1000,
       "scope": "bounded width 0..4 complete elimination order search"
+    },
+    {
+      "id": "R-018",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41751079781",
+      "python_reference_comparisons": 1000,
+      "scope": "exact BCE proof witnesses, resolvents and digest parity"
     }
   ],
   "pending_ci_milestones": [
     {
-      "id": "R-018",
-      "scope": "deterministic BCE/blocked resolvents and digest parity"
+      "id": "R-019",
+      "scope": "full deterministic simplifier pipeline and certificate event logs"
     }
   ],
   "completion_criteria": [
