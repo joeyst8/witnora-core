@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-038)
+name: Rust native Witnora migration differential gate (R-001 through R-039)
 
 on:
   push:
@@ -58,6 +58,8 @@ on:
       - "tests/test_component_prefix_rust.py"
       - "tests/test_two_sat_scc_witness_rust.py"
       - "tests/test_factor_orders_rust.py"
+      - "tests/test_forced_relation_rust.py"
+      - "witnora_core/forced_relation_probe.py"
       - "witnora_core/factor_elimination_orders.py"
       - "witnora_core/two_sat_proof.py"
       - "tests/test_treewidth_rust.py"
@@ -132,6 +134,8 @@ on:
       - "tests/test_component_prefix_rust.py"
       - "tests/test_two_sat_scc_witness_rust.py"
       - "tests/test_factor_orders_rust.py"
+      - "tests/test_forced_relation_rust.py"
+      - "witnora_core/forced_relation_probe.py"
       - "witnora_core/factor_elimination_orders.py"
       - "witnora_core/two_sat_proof.py"
       - "tests/test_treewidth_rust.py"
@@ -367,3 +371,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_factor_orders_rust -v
+      - name: Verify R-039 exact bounded failed-literal probing versus Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_forced_relation_rust -v
