@@ -103,9 +103,9 @@ class TestNativeSparsePipeline(unittest.TestCase):
                 )
 
     def test_more_than_128_selected_original_rows_survive_native_pipeline(self):
-        # A synthetically supplied valid degree-three matrix with 136
-        # independent row supports stresses arbitrary precision and rank.
-        # The certificate identity is checked at the row level, not CNF.
+        # A synthetic parity-row collection with 136 independent rows
+        # stresses arbitrary precision. It is NOT a valid degree-three
+        # sketch; the certificate is checked at row-space level only.
         from witnora_core.sparse_parity_checks import SparseOddSketch
         from witnora_core.gf2_sparse_row_basis import (
             build_sparse_parity_basis_rust, verify_sparse_parity_basis_rust
