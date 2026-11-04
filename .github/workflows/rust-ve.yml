@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-012)
+name: Rust native Witnora migration differential gate (R-001 through R-013)
 
 on:
   push:
@@ -26,6 +26,8 @@ on:
       - "witnora_core/two_sat.py"
       - "witnora_core/cnf.py"
       - "witnora_core/dimacs.py"
+      - "witnora_core/rup_indexed_propagation.py"
+      - "tests/test_rup_indexed_rust.py"
       - "tests/test_dimacs_evidence_rust.py"
       - "witnora_core/cnf_rust.py"
       - "witnora_core/subsumption.py"
@@ -60,6 +62,8 @@ on:
       - "witnora_core/two_sat.py"
       - "witnora_core/cnf.py"
       - "witnora_core/dimacs.py"
+      - "witnora_core/rup_indexed_propagation.py"
+      - "tests/test_rup_indexed_rust.py"
       - "tests/test_dimacs_evidence_rust.py"
       - "witnora_core/cnf_rust.py"
       - "witnora_core/subsumption.py"
@@ -175,3 +179,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_dimacs_evidence_rust -v
+      - name: Verify R-013 indexed RUP witness against the original producer
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_rup_indexed_rust -v
