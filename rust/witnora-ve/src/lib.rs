@@ -86,6 +86,8 @@ pub mod double_kempe_lab;
 pub mod structured_coloring_study;
 pub mod color_selector_lab;
 pub mod nonedge_matching_dsatur;
+pub mod nonedge_graph_bounds;
+pub mod nonedge_matching_bound;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1993,6 +1995,20 @@ fn dsatur_greedy_coloring_native(n:usize,edges:Vec<(usize,usize)>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn nonedge_graph_bounds_native(n:usize,edges:Vec<(usize,usize)>)
+    ->PyResult<nonedge_graph_bounds::Answer>{
+    nonedge_graph_bounds::bounds(n,&edges).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn matching_color_bound_native(n:usize,edges:Vec<(usize,usize)>)
+    ->PyResult<nonedge_matching_bound::Answer>{
+    nonedge_matching_bound::matching_bound(n,&edges).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2265,6 +2281,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(color_selector_signals_native, module)?)?;
     module.add_function(wrap_pyfunction!(color_selector_triggers_native, module)?)?;
     module.add_function(wrap_pyfunction!(dsatur_greedy_coloring_native, module)?)?;
+    module.add_function(wrap_pyfunction!(nonedge_graph_bounds_native, module)?)?;
+    module.add_function(wrap_pyfunction!(matching_color_bound_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
