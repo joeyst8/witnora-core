@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-053)
+name: Rust native Witnora migration differential gate (R-001 through R-054)
 
 on:
   push:
@@ -73,6 +73,8 @@ on:
       - "tests/test_vertex_coupling_rust.py"
       - "tests/test_global_coupling_rust.py"
       - "tests/test_sparse_basis_rust.py"
+      - "tests/test_g5_activity_rust.py"
+      - "witnora_core/g5_elimination_activity.py"
       - "witnora_core/gf2_sparse_row_basis.py"
       - "witnora_core/global_coupling_separator.py"
       - "witnora_core/vertex_coupling_separator.py"
@@ -177,6 +179,8 @@ on:
       - "tests/test_vertex_coupling_rust.py"
       - "tests/test_global_coupling_rust.py"
       - "tests/test_sparse_basis_rust.py"
+      - "tests/test_g5_activity_rust.py"
+      - "witnora_core/g5_elimination_activity.py"
       - "witnora_core/gf2_sparse_row_basis.py"
       - "witnora_core/global_coupling_separator.py"
       - "witnora_core/vertex_coupling_separator.py"
@@ -487,3 +491,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_sparse_basis_rust -v
+      - name: Verify R-054 exact G5 touch and cross-side pair rankings
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_g5_activity_rust -v
