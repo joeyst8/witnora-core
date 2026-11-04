@@ -142,3 +142,60 @@ def verify_sparse_parity_basis(
 def accepts_masks(mask: int, rows: tuple[tuple[int, ...], ...]) -> bool:
     return all((mask & row_mask(row)).bit_count() % 2 == 0
                for row in rows)
+
+
+def row_mask_rust(row: tuple[int, ...]) -> int:
+    """Opt-in arbitrary-precision native parity-row bitmask."""
+    from witnora_ve import sparse_row_mask_native
+
+    return int(sparse_row_mask_native(list(row)))
+
+
+def build_sparse_parity_basis_rust(
+    sketch: SparseOddSketch, *, ordering: str = "shortest_first",
+) -> SparseBasisCertificate:
+    """Opt-in native subset basis; immutable original source rows are retained."""
+    from witnora_ve import build_sparse_parity_basis_native
+
+    chosen, rows, coefficients = build_sparse_parity_basis_native(
+        sketch.clause_count,
+        sketch.max_row_width,
+        [list(row) for row in sketch.rows],
+        ordering,
+    )
+    return SparseBasisCertificate(
+        clause_count=sketch.clause_count,
+        original_row_count=len(sketch.rows),
+        selected_indices=tuple(chosen),
+        rows=tuple(tuple(row) for row in rows),
+        expansions=tuple(int(value) for value in coefficients),
+        ordering=ordering,
+    )
+
+
+def verify_sparse_parity_basis_rust(
+    sketch: SparseOddSketch, cert: SparseBasisCertificate,
+) -> None:
+    """Native fail-closed independent witness verifier."""
+    from witnora_ve import verify_sparse_parity_basis_native
+
+    verify_sparse_parity_basis_native(
+        sketch.clause_count,
+        sketch.max_row_width,
+        [list(row) for row in sketch.rows],
+        cert.clause_count,
+        cert.original_row_count,
+        list(cert.selected_indices),
+        [list(row) for row in cert.rows],
+        [str(value) for value in cert.expansions],
+        cert.ordering,
+    )
+
+
+def accepts_masks_rust(mask: int, rows: tuple[tuple[int, ...], ...]) -> bool:
+    """Opt-in native exact acceptance for arbitrary-width violation masks."""
+    from witnora_ve import sparse_accepts_masks_native
+
+    return bool(sparse_accepts_masks_native(
+        str(mask), [list(row) for row in rows],
+    ))
