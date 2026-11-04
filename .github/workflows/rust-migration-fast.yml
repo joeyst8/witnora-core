@@ -1,0 +1,51 @@
+name: Rust migration focused differential gate
+
+on:
+  push:
+    branches:
+      - research/w-crc-001-asymmetric-v1
+    paths:
+      - "rust/witnora-ve/**"
+      - "witnora_core/hard_separator_families.py"
+      - "witnora_core/hidden_separator_challenge.py"
+      - "witnora_core/symbolic_implication.py"
+      - "tests/test_hard_separator_generator_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_symbolic_implication_rust.py"
+      - ".github/workflows/rust-migration-fast.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: witnora-rust-focused-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  focused-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Rust library tests
+        run: cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --lib
+      - name: Build Python native wheel
+        run: |
+          python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
+          maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
+          python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
+      - name: Focused R-067, R-068, and R-069 source comparisons
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: |
+          python -m unittest tests.test_hidden_separator_generator_rust -v
+          python -m unittest tests.test_symbolic_implication_rust -v
+          python -m unittest tests.test_hard_separator_generator_rust -v

@@ -1,0 +1,15 @@
+# Focused native Rust migration CI
+
+The existing full Rust migration gate runs a long collection of independent
+benchmarks and has `cancel-in-progress: false` serialization. A slow or stale
+workflow completion can hold up verification of later source-module ports.
+
+The read-only focused gate uses a **separate concurrency group**, builds the
+same Rust crate and Python wheel, runs native library tests and exercises
+R-067 hidden-separator, R-068 symbolic-implication, and R-069 planted-source
+differential tests without the unrelated Ganak benchmark suite.
+
+This is an additional gate, not a replacement for the full suite or Lean.
+It never commits, modifies certificates, merges pull requests, or declares
+mathematical proof. A green focused gate supports the named component tests;
+the broader full gate remains necessary for release-level validation.
