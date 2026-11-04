@@ -27,6 +27,7 @@ pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
 pub mod local_replay;
+pub mod component_proof;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -823,6 +824,20 @@ fn replay_local_certificate_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn component_evidence_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<(usize, Vec<(u32, usize)>,
+               Vec<(usize, String, Vec<u32>, Vec<Vec<i32>>, Vec<usize>)>)> {
+    let out = component_proof::component_evidence(&source)
+        .map_err(PyValueError::new_err)?;
+    let components = out.components.into_iter().map(|c| (
+        c.id, c.formula_hash, c.variables, c.clauses, c.clause_indices,
+    )).collect();
+    Ok((out.count, out.incidence_edges, components))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -852,6 +867,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(verify_certificate_file_digests_native, module)?)?;
     module.add_function(wrap_pyfunction!(reconstruct_assignment_native, module)?)?;
     module.add_function(wrap_pyfunction!(replay_local_certificate_native, module)?)?;
+    module.add_function(wrap_pyfunction!(component_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
