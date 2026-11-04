@@ -77,6 +77,7 @@ pub mod graph_conjecture_lab;
 pub mod conditional_graph_conjectures;
 pub mod lean_numeric_certificate_export;
 pub mod lean_ascii_certificate_export;
+pub mod lean_color_certificate_export;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1890,6 +1891,32 @@ fn lean_ascii_emit_native(cases:Vec<lean_ascii_certificate_export::Case>)->PyRes
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn lean_color_fin_values_native(name:String,var:String,n:usize,codomain:usize,
+    values:Vec<usize>)->PyResult<String>{
+    if n==0 || codomain==0 || values.len()!=n{
+        return Err(PyValueError::new_err("invalid finite value domain"));
+    }
+    Ok(lean_color_certificate_export::fin_values(&name,&var,n,codomain,&values))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn lean_color_find_clique_native(n:usize,edges:Vec<(usize,usize)>,size:usize)
+    ->Option<Vec<usize>>{
+    lean_color_certificate_export::find_clique(n,&edges,size)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn lean_color_emit_native(cases:Vec<lean_color_certificate_export::Case>)->PyResult<String>{
+    if cases.iter().any(|(_,n,_,colors,clique,k)|*n==0 || *k==0 || colors.len()!=*n || clique.len()!=*k){
+        return Err(PyValueError::new_err("invalid coloring domain"));
+    }
+    Ok(lean_color_certificate_export::emit(&cases))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2150,6 +2177,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(lean_ascii_serialize_native, module)?)?;
     module.add_function(wrap_pyfunction!(lean_ascii_bytes_native, module)?)?;
     module.add_function(wrap_pyfunction!(lean_ascii_emit_native, module)?)?;
+    module.add_function(wrap_pyfunction!(lean_color_fin_values_native, module)?)?;
+    module.add_function(wrap_pyfunction!(lean_color_find_clique_native, module)?)?;
+    module.add_function(wrap_pyfunction!(lean_color_emit_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

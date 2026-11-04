@@ -38,7 +38,12 @@ def _validate(n: int, edges: tuple[tuple[int, int], ...],
 
 
 def _fin_values(value_name: str, var: str, n: int, codomain: int,
-                values: list[int]) -> str:
+                values: list[int], *, backend="python") -> str:
+    if backend == "rust":
+        from witnora_ve import lean_color_fin_values_native
+        return lean_color_fin_values_native(value_name, var, n, codomain, values)
+    if backend != "python":
+        raise ValueError("unknown finite-value backend")
     lines = [f"def {value_name} ({var} : Fin {n}) : Fin {codomain} :="]
     if n == 1:
         lines.append(f"  {values[0]}")
@@ -91,7 +96,13 @@ def _lean_case(name: str, n: int, edges: tuple[tuple[int, int], ...],
 
 
 def find_matching_clique(n: int, edges: tuple[tuple[int, int], ...],
-                         size: int) -> tuple[int, ...] | None:
+                         size: int, *, backend="python") -> tuple[int, ...] | None:
+    if backend == "rust":
+        from witnora_ve import lean_color_find_clique_native
+        answer = lean_color_find_clique_native(n, list(edges), size)
+        return tuple(answer) if answer is not None else None
+    if backend != "python":
+        raise ValueError("unknown clique search backend")
     edge_set = set(edges)
     return next((vs for vs in combinations(range(n), size)
                  if all((u, v) in edge_set for u, v in combinations(vs, 2))), None)
@@ -118,12 +129,23 @@ def generate_default_cases() -> tuple[tuple[str, int, tuple[tuple[int, int], ...
     return tuple(cases)
 
 
-def emit_lean(cases=None) -> str:
+def emit_lean(cases=None, *, backend="python") -> str:
     if cases is None:
         cases = generate_default_cases()
     names = [case[0] for case in cases]
     if len(set(names)) != len(names):
         raise ValueError("duplicate certificate name")
+    if backend == "rust":
+        from witnora_ve import lean_color_emit_native
+        validated = []
+        for name, n, edges, colors, clique in cases:
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name):
+                raise ValueError("invalid Lean identifier")
+            k = _validate(n, edges, colors, clique)
+            validated.append((name, n, list(edges), list(colors), list(clique), k))
+        return lean_color_emit_native(validated)
+    if backend != "python":
+        raise ValueError("unknown color certificate backend")
     blocks = [
         "import Witnora.ConcreteColorCertificate",
         "",
