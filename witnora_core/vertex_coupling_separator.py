@@ -79,3 +79,32 @@ def prioritized_vertex_pairs(graph: Mapping[int, set[int]]) -> tuple[tuple[int, 
         for right in vertices[index + 1:]
         if (left, right) not in seen
     ])
+
+
+def vertex_coupling_pairs_rust(graph: Mapping[int, set[int]]) -> dict:
+    """Opt-in native exact graph-theoretic pair hints, never a G14 proof."""
+    from witnora_ve import vertex_coupling_pairs_native
+
+    count, scans, complete, pairs = vertex_coupling_pairs_native(
+        [(v, sorted(neighbors)) for v, neighbors in graph.items()])
+    return {
+        "status": DIAGNOSTIC_ONLY,
+        "strategy": "DELETE_ONE_THEN_ARTICULATION",
+        "vertex_count": count,
+        "articulation_scans": scans,
+        "complete_for_two_vertex_cuts": complete,
+        "candidates": [{"separator": list(pair)} for pair in pairs],
+        "claim_boundary": (
+            "Complete graph-theoretic two-vertex-cut hints only for "
+            "connected graphs with no articulation vertex; no SAT claim."
+        ),
+    }
+
+
+def prioritized_vertex_pairs_rust(
+        graph: Mapping[int, set[int]]) -> tuple[tuple[int, int], ...]:
+    """Opt-in native pair ordering with all source vertex pairs retained."""
+    from witnora_ve import prioritized_vertex_pairs_native
+
+    return tuple(tuple(pair) for pair in prioritized_vertex_pairs_native(
+        [(v, sorted(neighbors)) for v, neighbors in graph.items()]))
