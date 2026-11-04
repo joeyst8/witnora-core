@@ -52,6 +52,31 @@ pub fn component_evidence(source: &[Vec<i32>]) -> Result<ComponentEvidence, Stri
     })
 }
 
+/// Verify a logged CD proof record against native source evidence.
+/// Returns the first Python-compatible CD error, without claiming full
+/// component-state or SAT/UNSAT replay certification.
+pub fn verify_evidence(
+    source: &[Vec<i32>], output_hash: &str,
+    count: usize, edges: &[(u32, usize)],
+    logged: &[ComponentRecord],
+) -> Result<Option<String>, String> {
+    let formula = CanonicalCnf::from_signed(source)?;
+    if output_hash != formula.formula_hash() {
+        return Ok(Some("CD output hash mismatch".into()));
+    }
+    let expected = component_evidence(source)?;
+    if count != expected.count {
+        return Ok(Some("CD component count mismatch".into()));
+    }
+    if edges != expected.incidence_edges {
+        return Ok(Some("CD incidence edges mismatch".into()));
+    }
+    if logged != expected.components {
+        return Ok(Some("CD component contents mismatch".into()));
+    }
+    Ok(None)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -64,5 +89,11 @@ mod tests {
         assert_eq!(got.components[0].clauses, vec![vec![]]);
         assert_eq!(got.components[0].clause_indices, vec![0]);
         assert!(got.components.iter().all(|c| c.formula_hash.len()==64));
+        let hash = CanonicalCnf::from_signed(&source).unwrap().formula_hash();
+        assert_eq!(verify_evidence(&source, &hash, got.count,
+            &got.incidence_edges, &got.components).unwrap(), None);
+        assert_eq!(verify_evidence(&source, &hash, got.count + 1,
+            &got.incidence_edges, &got.components).unwrap(),
+            Some("CD component count mismatch".into()));
     }
 }
