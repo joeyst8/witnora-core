@@ -16,6 +16,7 @@ pub mod two_sat;
 pub mod cnf;
 pub mod dimacs_evidence;
 pub mod rup_witness;
+pub mod rup_checker;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -562,6 +563,18 @@ fn indexed_rup_witness_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn check_rup_subset_native(
+    original: Vec<Vec<i32>>, proof_text: String, strict_deletions: bool,
+) -> PyResult<(bool, bool, Option<usize>, Option<String>, Vec<String>)> {
+    let result = rup_checker::check_rup_text(
+        &original, &proof_text, strict_deletions,
+    ).map_err(PyValueError::new_err)?;
+    Ok((result.verified, result.empty_clause_derived, result.failed_line,
+        result.error, result.warnings))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -576,5 +589,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
+    module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
     Ok(())
 }
