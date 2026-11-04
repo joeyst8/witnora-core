@@ -2885,7 +2885,10 @@
       "path": "witnora_core/g5_elimination_activity.py",
       "sha": "39d4d55898c1e41d17dd5da9158efe5e8c272a49",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/g5_elimination_activity.rs",
+      "test": "tests/test_g5_activity_rust.py",
+      "verified_milestone": "R-054"
     },
     {
       "path": "witnora_core/geometry_aware_parity.py",
@@ -3771,6 +3774,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41844229274",
       "python_reference_comparisons": 1200,
       "scope": "Native original-row sparse GF(2) subset basis with arbitrary-precision reconstruction, 600 randomized sketches under both row orderings, finite independent parity oracle, rank >128 and tampered-certificate fail-closed tests"
+    },
+    {
+      "id": "R-054",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41845381144",
+      "python_reference_comparisons": 1000,
+      "scope": "Native indexed G5 XOR touch, cancellation, ranked variable and opposite-side pair scores; 1000 random operation streams checked against Python and independent finite score oracle with malformed input controls"
     }
   ],
   "pending_ci_milestones": [],
@@ -3782,7 +3792,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 519,
-    "parallel_reference": 41
+    "not_migrated": 518,
+    "parallel_reference": 42
   }
 }
