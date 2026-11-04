@@ -104,3 +104,27 @@ def replay_elimination_width(
             graph[u].discard(v)
         graph[v] = set()
     return width
+
+
+def elimination_order_rust(
+    scopes: list[set[int]], nvars: int, *,
+    nsource: int, mode: str = "min_degree", beam: int = 8,
+) -> OrderResult:
+    """Opt-in exact Rust replacement for this graph-fill heuristic."""
+    from witnora_ve import factor_elimination_order_native
+
+    width, added, order = factor_elimination_order_native(
+        [sorted(scope) for scope in scopes],
+        nvars, nsource, mode, beam,
+    )
+    return OrderResult(mode, int(width), int(added), tuple(order))
+
+
+def replay_elimination_width_rust(
+    scopes: list[set[int]], nvars: int, order: tuple[int, ...],
+) -> int:
+    """Independent native graph elimination width replay."""
+    from witnora_ve import replay_factor_elimination_width_native
+
+    return int(replay_factor_elimination_width_native(
+        [sorted(scope) for scope in scopes], nvars, list(order)))
