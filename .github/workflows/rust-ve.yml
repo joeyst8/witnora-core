@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-021)
+name: Rust native Witnora migration differential gate (R-001 through R-022)
 
 on:
   push:
@@ -46,6 +46,7 @@ on:
       - "witnora_core/cnf_rust.py"
       - "witnora_core/subsumption.py"
       - "tests/test_cnf_rust.py"
+      - "tests/test_cnf_hash_rust.py"
       - "witnora_core/two_sat_rust.py"
       - "tests/test_two_sat_rust.py"
       - "tests/test_crc_rust_fused.py"
@@ -96,6 +97,7 @@ on:
       - "witnora_core/cnf_rust.py"
       - "witnora_core/subsumption.py"
       - "tests/test_cnf_rust.py"
+      - "tests/test_cnf_hash_rust.py"
       - "witnora_core/two_sat_rust.py"
       - "tests/test_two_sat_rust.py"
       - "tests/test_crc_rust_fused.py"
@@ -251,3 +253,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_two_sat_proof_rust -v
+      - name: Verify R-022 native SHA-256 canonical proof hashes against Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_cnf_hash_rust -v
