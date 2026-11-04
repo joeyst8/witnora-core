@@ -39,7 +39,13 @@ VERIFIER_VERSION = "witnora-standalone-verifier-0.9.7"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
 
-def stable_json(data: Any) -> str:
+def stable_json(data: Any, *, backend: str = "python") -> str:
+    if backend == "rust":
+        from witnora_ve import stable_certificate_json_native
+        serialized, _ = stable_certificate_json_native(data)
+        return serialized
+    if backend != "python":
+        raise ValueError("unknown stable JSON backend")
     return json.dumps(data, indent=2, sort_keys=True) + "\n"
 
 
