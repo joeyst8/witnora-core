@@ -49,6 +49,7 @@ pub mod targeted_graph_families;
 pub mod conjecture_triage;
 pub mod proof_trace_metadata;
 pub mod bipartite_audit;
+pub mod incremental_xor_screen;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -637,6 +638,13 @@ fn bipartition_audit_native(
     n: usize, edges: Vec<(usize, usize)>,
 ) -> PyResult<Option<Vec<i32>>> {
     bipartite_audit::bipartition(n, &edges).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn possible_two_xor_patterns_native(clauses: Vec<Vec<i32>>) -> PyResult<bool> {
+    incremental_xor_screen::possible_two_xor_patterns(&clauses)
+        .map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1656,6 +1664,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(conjecture_known_identities_native, module)?)?;
     module.add_function(wrap_pyfunction!(native_unsat_trace_metadata_supported_native, module)?)?;
     module.add_function(wrap_pyfunction!(bipartition_audit_native, module)?)?;
+    module.add_function(wrap_pyfunction!(possible_two_xor_patterns_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

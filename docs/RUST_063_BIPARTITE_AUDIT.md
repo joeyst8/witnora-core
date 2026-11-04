@@ -14,3 +14,10 @@ caps graphs at 4096 vertices and rejects out-of-range indices.
 This is a **partial source module**, not a verified completed migration until
 native CI passes. It is a finite implementation audit of a known graph fact,
 not a new theorem, Lean proof, or complexity claim.
+
+## Verification update
+
+[Rust Actions run #41870670521](https://github.com/joeyst8/witnora-core/actions/runs/41870670521)
+completed successfully, including the R-063 native BFS partition differential
+step. The bipartition function is verified in parallel; the full DSATUR audit
+is still Python, and the file remains a partial-native-verified module.

@@ -83,12 +83,14 @@ on:
       - "tests/test_conjecture_triage_rust.py"
       - "tests/test_proof_trace_metadata_rust.py"
       - "tests/test_bipartite_audit_rust.py"
+      - "tests/test_incremental_xor_screen_rust.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "witnora_core/symbolic_implication.py"
       - "witnora_core/targeted_graph_theorems.py"
       - "witnora_core/conjecture_triage.py"
       - "witnora_core/proof_trace.py"
       - "witnora_core/dsatur_bipartite_audit.py"
+      - "witnora_core/incremental_separator.py"
       - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
@@ -207,11 +209,13 @@ on:
       - "tests/test_conjecture_triage_rust.py"
       - "tests/test_proof_trace_metadata_rust.py"
       - "tests/test_bipartite_audit_rust.py"
+      - "tests/test_incremental_xor_screen_rust.py"
       - "witnora_core/symbolic_implication.py"
       - "witnora_core/targeted_graph_theorems.py"
       - "witnora_core/conjecture_triage.py"
       - "witnora_core/proof_trace.py"
       - "witnora_core/dsatur_bipartite_audit.py"
+      - "witnora_core/incremental_separator.py"
       - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
@@ -570,3 +574,8 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_bipartite_audit_rust -v
+
+      - name: R-064 incremental XOR pattern screen native differential
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_incremental_xor_screen_rust -v
