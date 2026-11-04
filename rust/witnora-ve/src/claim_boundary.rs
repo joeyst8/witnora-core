@@ -43,7 +43,7 @@ pub fn scan(text:&str)->Vec<Finding>{
             let context_start=start.saturating_sub(400);
             let context_end=length.min(end+120);
             let before=text[offsets[context_start]..offsets[start]].to_lowercase();
-            let context=text[offsets[context_start]..offsets[context_end]];
+            let context=&text[offsets[context_start]..offsets[context_end]];
             let normalized=context.split_whitespace().collect::<Vec<_>>().join(" ");
             let whole=normalized.to_lowercase();
             let allowed=MARKERS.iter().any(|marker|before.contains(marker)||whole.contains(marker));
