@@ -15,3 +15,11 @@
 This finite enumeration is exponential and has an explicit 1..14-variable bound. A verified finite sketch cannot establish a general SAT solver speedup or new complexity theorem. Python default paths and Lean gates remain unchanged.
 
 **Pending** — not a passing-test or migrated-file claim. GitHub workflow serialized queue is delaying R-057 and R-058. Once run green, update ledger entry for `witnora_core/eth_clause_violation_parity.py`, move R-058 from pending to verified and amend PR #122. Until then, 44 parallel ports, 516 original Python files pending and 0 retired.
+
+## Compiler gate correction (2026-11-04)
+
+The Rust native workflow at commit `c3f2e4266c84e9bfaf38a405246db011595797b6`
+failed with E0277 because `sha2`'s finalized byte array did not implement
+`LowerHex`. The digest now explicitly formats each byte with two lowercase
+hexadecimal digits. This is a build fix only; native differential tests remain
+pending until the next CI run completes. No milestone is promoted by this edit.

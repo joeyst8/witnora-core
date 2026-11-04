@@ -32,7 +32,7 @@ pub fn source_digest(source:&[Vec<i32>])->String{
     raw.push(']');
     let mut hasher=Sha256::new();
     hasher.update(raw.as_bytes());
-    format!("{:x}",hasher.finalize())
+    hasher.finalize().iter().map(|byte|format!("{byte:02x}")).collect()
 }
 
 pub fn violation_mask(source:&[Vec<i32>],assignment:&BigUint)
@@ -195,6 +195,7 @@ mod tests{
         assert_eq!(sketch.satisfying_count,0);
         assert_eq!(sketch.rows.len(),2);
         assert!(verify_finite_sketch(&source,1,&sketch.rows));
-        assert_eq!(source_digest(&source).len(),64);
+        assert_eq!(source_digest(&source),
+                   "c7eedb87056b0f42d0fd624b63b5b356afdc2f22bc9ddeb3d855b7f188e1a123");
     }
 }
