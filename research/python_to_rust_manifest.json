@@ -3585,6 +3585,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41767084650",
       "python_reference_comparisons": 1200,
       "scope": "Independent Rust CD component metadata verifier, exact Python first-error parity and deliberate count/edge/hash/index tamper rejection"
+    },
+    {
+      "id": "R-034",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41767676653",
+      "python_reference_comparisons": 1440,
+      "scope": "Rust CD metadata replay emits authenticated canonical child CNFs, 1440 randomized and real fixture Python child-state/tamper parity"
     }
   ],
   "pending_ci_milestones": [],
