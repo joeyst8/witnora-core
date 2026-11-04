@@ -3,7 +3,7 @@
 //! Reject unsupported types rather than silently changing proof bytes.
 
 #[cfg(feature = "python")]
-use pyo3::{exceptions::PyValueError, prelude::*, types::{PyBool, PyDict, PyList, PyLong, PyString, PyTuple}};
+use pyo3::{exceptions::PyValueError, prelude::*, types::{PyBool, PyDict, PyList, PyInt, PyString, PyTuple}};
 use sha2::{Digest, Sha256};
 
 pub fn sha256_hex(bytes: &[u8]) -> String {
@@ -66,7 +66,7 @@ fn serialize(value: &Bound<'_, PyAny>, level: usize) -> PyResult<String> {
     if value.is_instance_of::<PyBool>() {
         return Ok(if value.extract::<bool>()? { "true" } else { "false" }.into());
     }
-    if value.is_instance_of::<PyLong>() {
+    if value.is_instance_of::<PyInt>() {
         return Ok(value.extract::<i64>().map_err(|_| {
             PyValueError::new_err("native certificate JSON integer must fit i64")
         })?.to_string());
