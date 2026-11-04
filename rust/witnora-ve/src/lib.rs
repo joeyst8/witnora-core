@@ -35,6 +35,7 @@ pub mod parity_separator_fingerprint;
 pub mod spoke_discovery;
 pub mod multicut_parity_separator;
 pub mod structural_operator_invention;
+pub mod cost_sensitive_gate;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1233,6 +1234,40 @@ fn eliminate_with_policy_native(
     ).map_err(PyValueError::new_err)?.clauses)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn choose_threshold_native(
+    rows:Vec<(i32,i32,i32,f64,f64,f64,f64)>,cost_weight:f64,
+) -> PyResult<(i32,f64,usize,usize,f64)> {
+    let observations=rows.into_iter().map(|(
+        mixed_pivots,variables,clauses,
+        adaptive_score,greedy_score,adaptive_ms,greedy_ms,
+    )|cost_sensitive_gate::Observation {
+        mixed_pivots,variables,clauses,adaptive_score,greedy_score,
+        adaptive_ms,greedy_ms,
+    }).collect::<Vec<_>>();
+    let out=cost_sensitive_gate::choose_threshold(
+        &observations,cost_weight,
+    ).map_err(PyValueError::new_err)?;
+    Ok((out.threshold,out.train_utility,
+        out.selected_train_cases,out.train_cases,out.cost_weight))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn cost_sensitive_pivot_native(
+    source:Vec<Vec<i32>>,threshold:i32,max_pairs:i32,
+) -> PyResult<(Vec<Vec<i32>>,usize,usize,usize,usize,String,usize)> {
+    let out=cost_sensitive_gate::cost_sensitive_pivot(
+        &source,threshold,max_pairs,
+    ).map_err(PyValueError::new_err)?;
+    Ok((out.formula.clauses,
+        out.features.viable_mixed_pivots,out.features.pure_pivots,
+        out.features.variables,out.features.clauses,
+        out.mode.to_string(),out.expanded))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1292,5 +1327,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(bounded_parity_separators_native, module)?)?;
     module.add_function(wrap_pyfunction!(graph_invariants_native, module)?)?;
     module.add_function(wrap_pyfunction!(eliminate_with_policy_native, module)?)?;
+    module.add_function(wrap_pyfunction!(choose_threshold_native, module)?)?;
+    module.add_function(wrap_pyfunction!(cost_sensitive_pivot_native, module)?)?;
     Ok(())
 }
