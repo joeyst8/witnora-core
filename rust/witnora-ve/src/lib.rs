@@ -12,6 +12,7 @@ pub mod source_xor;
 pub mod right_walsh;
 pub mod left_affine;
 pub mod fused_source;
+pub mod two_sat;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -503,6 +504,14 @@ fn count_source_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn solve_two_sat_native(
+    clauses: Vec<Vec<i32>>, nvars: u32,
+) -> PyResult<Option<Vec<bool>>> {
+    two_sat::solve_2sat(&clauses, nvars).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -512,5 +521,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(right_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(affine_spectrum_native, module)?)?;
     module.add_function(wrap_pyfunction!(count_source_native, module)?)?;
+    module.add_function(wrap_pyfunction!(solve_two_sat_native, module)?)?;
     Ok(())
 }
