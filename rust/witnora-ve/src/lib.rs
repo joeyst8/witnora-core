@@ -37,6 +37,7 @@ pub mod multicut_parity_separator;
 pub mod structural_operator_invention;
 pub mod cost_sensitive_gate;
 pub mod separator_structural_priority;
+pub mod vertex_coupling_separator;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1288,6 +1289,27 @@ fn prioritized_singletons_native(
         .map_err(PyValueError::new_err)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn vertex_coupling_pairs_native(
+    graph:Vec<(i32,Vec<i32>)>,
+) -> PyResult<(usize,usize,bool,Vec<(i32,i32)>)> {
+    let out=vertex_coupling_separator::vertex_coupling_pairs(&graph)
+        .map_err(PyValueError::new_err)?;
+    Ok((out.vertex_count,out.articulation_scans,
+        out.complete_for_two_vertex_cuts,out.candidates))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn prioritized_vertex_pairs_native(
+    graph:Vec<(i32,Vec<i32>)>,
+) -> PyResult<Vec<(i32,i32)>> {
+    vertex_coupling_separator::prioritized_vertex_pairs(&graph)
+        .map_err(PyValueError::new_err)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1351,5 +1373,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(cost_sensitive_pivot_native, module)?)?;
     module.add_function(wrap_pyfunction!(articulation_vertices_native, module)?)?;
     module.add_function(wrap_pyfunction!(prioritized_singletons_native, module)?)?;
+    module.add_function(wrap_pyfunction!(vertex_coupling_pairs_native, module)?)?;
+    module.add_function(wrap_pyfunction!(prioritized_vertex_pairs_native, module)?)?;
     Ok(())
 }
