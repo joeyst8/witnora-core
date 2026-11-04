@@ -115,8 +115,20 @@ def check_drat_text(
     proof_text: str,
     *,
     strict_deletions: bool = False,
+    backend: str = "python",
 ) -> dict[str, Any]:
     """Check a RUP-subset proof from the original CNF clause database."""
+    if backend == "rust":
+        from witnora_ve import check_rup_subset_native
+        verified, empty, failed, error, warnings = check_rup_subset_native(
+            original_formula.to_clause_lists(), proof_text, strict_deletions)
+        result = _result(
+            verified=verified, empty_clause_derived=empty,
+            failed_line=failed, error=error, warnings=warnings)
+        result["checker"] = "witnora_native_rust_rup_subset_v0.1"
+        return result
+    if backend != "python":
+        raise ValueError("unknown RUP-subset checker backend")
 
     active = {clause.literals for clause in original_formula.clauses}
     try:

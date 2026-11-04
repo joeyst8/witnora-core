@@ -34,11 +34,32 @@ def variable(var: int) -> Polynomial:
     return frozenset({frozenset({var})})
 
 
-def xor_polynomials(a: Polynomial, b: Polynomial) -> Polynomial:
+def _native_polynomial(poly: Polynomial) -> list[list[int]]:
+    return [list(mon) for mon in sorted((tuple(sorted(term)) for term in poly))]
+
+
+def _as_polynomial(native: list[list[int]]) -> Polynomial:
+    return frozenset(frozenset(mon) for mon in native)
+
+
+def xor_polynomials(a: Polynomial, b: Polynomial, *, backend="python") -> Polynomial:
+    if backend == "rust":
+        from witnora_ve import anf_xor_native
+        return _as_polynomial(anf_xor_native(_native_polynomial(a),
+                                             _native_polynomial(b)))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     return a.symmetric_difference(b)
 
 
-def multiply_polynomials(a: Polynomial, b: Polynomial) -> Polynomial:
+def multiply_polynomials(a: Polynomial, b: Polynomial,
+                         *, backend="python") -> Polynomial:
+    if backend == "rust":
+        from witnora_ve import anf_multiply_native
+        return _as_polynomial(anf_multiply_native(_native_polynomial(a),
+                                                  _native_polynomial(b)))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     if not a or not b:
         return ZERO
     terms: set[Monomial] = set()
@@ -102,7 +123,14 @@ def evaluate_polynomial(poly: Polynomial, assignment_bits: int) -> bool:
     return parity
 
 
-def substitute(poly: Polynomial, variable_id: int, bit: bool) -> Polynomial:
+def substitute(poly: Polynomial, variable_id: int, bit: bool,
+               *, backend="python") -> Polynomial:
+    if backend == "rust":
+        from witnora_ve import anf_substitute_native
+        return _as_polynomial(anf_substitute_native(_native_polynomial(poly),
+                                                    variable_id, bit))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     terms: set[Monomial] = set()
     for monomial in poly:
         if variable_id in monomial:
@@ -116,7 +144,14 @@ def substitute(poly: Polynomial, variable_id: int, bit: bool) -> Polynomial:
     return frozenset(terms)
 
 
-def canonical_equations(equations: tuple[Polynomial, ...]) -> tuple[Polynomial, ...]:
+def canonical_equations(equations: tuple[Polynomial, ...],
+                        *, backend="python") -> tuple[Polynomial, ...]:
+    if backend == "rust":
+        from witnora_ve import anf_canonical_equations_native
+        return tuple(_as_polynomial(x) for x in anf_canonical_equations_native(
+            [_native_polynomial(eq) for eq in equations]))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     # Duplicate zero constraints do not affect the solution set.
     distinct = set(equations)
     distinct.discard(ZERO)
@@ -139,12 +174,25 @@ def count_common_zeros(
     equations: tuple[Polynomial, ...],
     nvars: int,
     *, max_states: int = 100_000,
+    backend="python",
 ) -> ANFCountResult:
     """Exact bounded Shannon/memoized counter, not a polynomial algorithm."""
     if nvars < 0 or max_states < 1:
         raise ValueError("invalid counting bounds")
     if any(v < 1 or v > nvars for eq in equations for m in eq for v in m):
         raise ValueError("equation uses an out-of-range variable")
+    if backend == "rust":
+        from witnora_ve import anf_count_common_zeros_native
+        try:
+            count, calls, hits, maximum = anf_count_common_zeros_native(
+                [_native_polynomial(eq) for eq in equations], nvars, max_states)
+        except ValueError as exc:
+            if str(exc).startswith("max symbolic states "):
+                raise ANFCountingBudgetExceeded(str(exc)) from exc
+            raise
+        return ANFCountResult(int(count), calls, hits, maximum)
+    if backend != "python":
+        raise ValueError("unknown ANF counting backend")
     memo: dict[tuple[tuple[Polynomial, ...], tuple[int, ...]], int] = {}
     stats = {"calls": 0, "hits": 0, "maximum": 0}
 

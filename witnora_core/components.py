@@ -8,7 +8,13 @@ from typing import Any
 from .cnf import CNFFormula, Clause
 
 
-def connected_components(formula: CNFFormula) -> list[CNFFormula]:
+def connected_components(formula: CNFFormula, *, backend: str = "python") -> list[CNFFormula]:
+    if backend == "rust":
+        from witnora_ve import incidence_components_native
+        components = incidence_components_native(formula.to_clause_lists())
+        return [CNFFormula.from_raw_clauses(rows) for rows in components]
+    if backend != "python":
+        raise ValueError("unknown component backend")
     if not formula.clauses:
         return []
 
@@ -48,8 +54,23 @@ def connected_components(formula: CNFFormula) -> list[CNFFormula]:
     return [CNFFormula(component) for component in components]
 
 
-def component_details(formula: CNFFormula) -> dict[str, Any]:
-    comps = connected_components(formula)
+def component_details(formula: CNFFormula, *, backend: str = "python") -> dict[str, Any]:
+    if backend == "rust_details":
+        from witnora_ve import component_evidence_native
+        count, edges, records = component_evidence_native(formula.to_clause_lists())
+        return {
+            "component_count": count,
+            "incidence_edges": [[var, idx] for var, idx in edges],
+            "components": [
+                {
+                    "component_id": cid, "formula_hash": digest,
+                    "variables": variables, "clauses": clauses,
+                    "clause_indices": clause_indices,
+                }
+                for cid, digest, variables, clauses, clause_indices in records
+            ],
+        }
+    comps = connected_components(formula, backend=backend)
     clause_to_index = {clause.literals: idx for idx, clause in enumerate(formula.clauses)}
     return {
         "component_count": len(comps),
@@ -71,3 +92,33 @@ def component_details(formula: CNFFormula) -> dict[str, Any]:
             for idx, component in enumerate(comps)
         ],
     }
+
+
+def verify_component_evidence_in_rust(
+    formula: CNFFormula, evidence: dict[str, Any], output_hash: str,
+) -> str | None:
+    """Independent native verification of full CD step metadata.
+
+    Returns the same first-error message as Python's _verify_cd_step for
+    well-formed CD evidence; None indicates valid metadata.
+    """
+    from witnora_ve import verify_component_evidence_native
+
+    return verify_component_evidence_native(
+        formula.to_clause_lists(),
+        output_hash,
+        int(evidence.get("component_count", 0)),
+        [tuple(int(v) for v in item)
+         for item in evidence.get("incidence_edges", [])],
+        [
+            (
+                int(component["component_id"]),
+                str(component["formula_hash"]),
+                [int(v) for v in component.get("variables", [])],
+                [[int(v) for v in clause]
+                 for clause in component.get("clauses", [])],
+                [int(v) for v in component.get("clause_indices", [])],
+            )
+            for component in evidence.get("components", [])
+        ],
+    )

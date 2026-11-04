@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "description": "Finite reviewed W-CRC-018/019 source-equivalence and encoding sensitivity, with fail-stop budgets.",
+  "tasks": [
+    "wcrc018_matched_unit",
+    "wcrc019_encoding_unit",
+    "wcrc019_encoding_ganak"
+  ]
+}

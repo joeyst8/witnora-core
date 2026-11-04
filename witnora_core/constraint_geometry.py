@@ -53,7 +53,7 @@ class CollisionProfile:
 
 def build_dense_random_sketch(
     source: list[list[int]] | CNF, nvars: int, *,
-    security_bits: int = 20, seed: int | None = None,
+    security_bits: int = 20, seed: int | None = None, backend: str = "python",
 ) -> DenseParitySketch:
     """Construct r=n+security_bits rows in O(r*m), with NO SAT enumeration.
 
@@ -65,10 +65,17 @@ def build_dense_random_sketch(
         raise ValueError("security_bits must be nonnegative")
     rng = SystemRandom() if seed is None else Random(seed)
     m = len(cnf)
-    rows = []
-    for _ in range(nvars + security_bits):
-        bitmap = rng.getrandbits(m)
-        rows.append(tuple(j for j in range(m) if (bitmap >> j) & 1))
+    if backend == "rust":
+        from witnora_ve import dense_geometry_rows_native
+        bitmaps = [str(rng.getrandbits(m)) for _ in range(nvars + security_bits)]
+        rows = [tuple(row) for row in dense_geometry_rows_native(bitmaps, m)]
+    elif backend == "python":
+        rows = []
+        for _ in range(nvars + security_bits):
+            bitmap = rng.getrandbits(m)
+            rows.append(tuple(j for j in range(m) if (bitmap >> j) & 1))
+    else:
+        raise ValueError("unknown dense geometry backend")
     return DenseParitySketch(
         nvars=nvars, clause_count=m, digest=source_digest(cnf),
         security_bits=security_bits, rows=tuple(rows),
@@ -77,9 +84,20 @@ def build_dense_random_sketch(
 
 def validate_dense_sketch(
     source: list[list[int]] | CNF, sketch: DenseParitySketch,
+    *, backend: str = "python",
 ) -> CNF:
     """Bind the source to each row, but do NOT purport to prove exactness."""
     cnf = canonical_source(source, sketch.nvars)
+    if backend == "rust":
+        from witnora_ve import dense_geometry_validate_native
+        if sketch.security_bits < 0:
+            raise ValueError("incorrect row count")
+        dense_geometry_validate_native(
+            [list(row) for row in cnf], sketch.nvars, sketch.clause_count,
+            sketch.digest, sketch.security_bits, [list(row) for row in sketch.rows])
+        return cnf
+    if backend != "python":
+        raise ValueError("unknown dense geometry backend")
     if len(cnf) != sketch.clause_count or source_digest(cnf) != sketch.digest:
         raise ValueError("source identity mismatch")
     if sketch.security_bits < 0 or len(sketch.rows) != sketch.nvars + sketch.security_bits:
@@ -94,12 +112,18 @@ def validate_dense_sketch(
 
 def audit_small_collisions(
     source: list[list[int]] | CNF, sketch: DenseParitySketch,
-    *, max_variables: int = 14,
+    *, max_variables: int = 14, backend: str = "python",
 ) -> CollisionProfile:
     """EXPONENTIAL small-case audit, separate from the nonenumerative builder."""
-    cnf = validate_dense_sketch(source, sketch)
+    cnf = validate_dense_sketch(source, sketch, backend=backend)
     if sketch.nvars > max_variables:
         raise ValueError("exhaustive audit restricted to small experiments")
+    if backend == "rust":
+        from witnora_ve import dense_geometry_audit_native
+        total, models, nonmodels, fp, singleton = dense_geometry_audit_native(
+            [list(row) for row in cnf], sketch.nvars,
+            [list(row) for row in sketch.rows], max_variables)
+        return CollisionProfile(total, models, nonmodels, fp, frozenset(singleton))
     source_models = false_positives = 0
     singleton_ids: set[int] = set()
     for bits in range(1 << sketch.nvars):
@@ -122,7 +146,7 @@ def audit_small_collisions(
 
 
 def singleton_coverage_lower_bound(singleton_ids: frozenset[int],
-                                   max_row_width: int) -> int:
+                                   max_row_width: int, *, backend: str = "python") -> int:
     """A necessary row-count bound when these unit vectors are realizable.
 
     Every clause j with realizable violation vector e_j must occur in at
@@ -131,10 +155,20 @@ def singleton_coverage_lower_bound(singleton_ids: frozenset[int],
     """
     if max_row_width < 1:
         raise ValueError("max_row_width must be positive")
+    if backend == "rust":
+        from witnora_ve import dense_geometry_singleton_bound_native
+        return dense_geometry_singleton_bound_native(len(singleton_ids), max_row_width)
+    if backend != "python":
+        raise ValueError("unknown dense geometry backend")
     return ceil(len(singleton_ids) / max_row_width)
 
 
-def row_statistics(sketch: DenseParitySketch) -> tuple[int, float, int]:
+def row_statistics(sketch: DenseParitySketch, *, backend: str = "python") -> tuple[int, float, int]:
+    if backend == "rust":
+        from witnora_ve import dense_geometry_row_stats_native
+        return dense_geometry_row_stats_native([list(row) for row in sketch.rows])
+    if backend != "python":
+        raise ValueError("unknown dense geometry backend")
     sizes = [len(row) for row in sketch.rows]
     if not sizes:
         return (0, 0.0, 0)

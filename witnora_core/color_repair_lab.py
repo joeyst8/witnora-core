@@ -46,7 +46,7 @@ def multistart_dsatur(n: int, edges: tuple[tuple[int, int], ...],
 
 def bounded_recolor(n: int, edges: tuple[tuple[int, int], ...],
                     initial: list[int], max_changed: int = 5,
-                    max_nodes: int = 8000) -> dict:
+                    max_nodes: int = 8000, *, backend="python") -> dict:
     """Try to remove one color using a budgeted local Hamming-distance search.
 
     Incomplete by design. Report exhaustion rather than claiming UNSAT.
@@ -55,6 +55,14 @@ def bounded_recolor(n: int, edges: tuple[tuple[int, int], ...],
         raise ValueError("not a proper initial coloring")
     if max_changed < 0 or max_nodes < 1:
         raise ValueError("invalid budgets")
+    if backend == "rust":
+        from witnora_ve import color_bounded_recolor_native
+        bound, coloring, improved, nodes, exhausted = color_bounded_recolor_native(
+            n, list(edges), initial, max_changed, max_nodes)
+        return {"bound": bound, "coloring": coloring, "improved": improved,
+                "nodes": nodes, "exhausted": exhausted}
+    if backend != "python":
+        raise ValueError("unknown recoloring backend")
     k = max(initial, default=-1) + 1
     if k <= 1:
         return {"bound": k, "coloring": initial.copy(), "improved": False,
@@ -104,7 +112,7 @@ def bounded_recolor(n: int, edges: tuple[tuple[int, int], ...],
             "nodes": nodes, "exhausted": exhausted}
 
 
-def run_repair_experiment() -> dict:
+def run_repair_experiment(*, backend="python") -> dict:
     densities = (0.15, 0.30, 0.45, 0.60, 0.75)
     orders = (10, 12, 14, 16)
     samples_per_cell = 120
@@ -139,11 +147,13 @@ def run_repair_experiment() -> dict:
                     # An independently checked absence of any smaller coloring
                     # establishes that repair cannot improve this instance.
                     # Expensive local search is reserved for verified failures.
-                    exact_better = exact_k_coloring(n, edges, original["bound"] - 1)
+                    exact_better = exact_k_coloring(n, edges, original["bound"] - 1,
+                                                    backend=backend)
                     failed = exact_better is not None
                     if failed:
                         multistart = multistart_dsatur(n, edges, 8)
-                        recolor = bounded_recolor(n, edges, original["coloring"])
+                        recolor = bounded_recolor(n, edges, original["coloring"],
+                                                   backend=backend)
                     else:
                         multistart = {"bound": original["bound"], "coloring": original["coloring"],
                                       "restart": 0}

@@ -12,7 +12,34 @@ from .cnf import CNFFormula
 from .spoke_discovery import extract_binary_xor_equations
 
 
-def compress_binary_xor_components(formula: CNFFormula) -> dict[str, Any]:
+def compress_binary_xor_components(formula: CNFFormula, *,
+                                   backend: str = "python") -> dict[str, Any]:
+    if backend == "rust":
+        from witnora_ve import parity_compress_native
+        conflict, roots, offsets, paths, components, equations = parity_compress_native(
+            formula.to_clause_lists())
+        if conflict is not None:
+            return {
+                "operator": "PARITY_COMPONENT_COMPRESSION",
+                "status": "INCONSISTENT_XOR_EQUATIONS",
+                "formal_status": "NOT_LEAN_VERIFIED",
+                "conflict_edge": list(conflict),
+            }
+        return {
+            "operator": "PARITY_COMPONENT_COMPRESSION",
+            "status": "UNVERIFIED_STRUCTURAL_CANDIDATE",
+            "formal_status": "NOT_LEAN_VERIFIED",
+            "equations": [list(e) for e in equations],
+            "roots": [list(e) for e in roots],
+            "offsets": [list(e) for e in offsets],
+            "source_paths": [[v, [list(pair) for pair in path]] for v, path in paths],
+            "input_vertices": len(roots),
+            "component_count": components,
+            "root_variables_saved": len(roots) - components,
+            "claim_boundary": "only extracted binary XOR constraints; arbitrary CNF residual is untouched",
+        }
+    if backend != "python":
+        raise ValueError("unknown parity compression backend")
     equations = extract_binary_xor_equations(formula)
     vertices = sorted({v for u, w, _ in equations for v in (u, w)})
     adj: dict[int, list[tuple[int, int]]] = defaultdict(list)
@@ -65,7 +92,8 @@ def compress_binary_xor_components(formula: CNFFormula) -> dict[str, Any]:
     }
 
 
-def reconstruct_values(compression: dict[str, Any], root_values: dict[int, int]) -> dict[int, int]:
+def reconstruct_values(compression: dict[str, Any], root_values: dict[int, int], *,
+                       backend: str = "python") -> dict[int, int]:
     if compression.get("status") != "UNVERIFIED_STRUCTURAL_CANDIDATE":
         raise ValueError("no consistent compression certificate")
     roots = dict(compression["roots"])
@@ -73,11 +101,18 @@ def reconstruct_values(compression: dict[str, Any], root_values: dict[int, int])
     if not all(type(root_values.get(root)) is int and root_values[root] in (0, 1)
                for root in set(roots.values())):
         raise ValueError("missing or invalid root assignment")
+    if backend == "rust":
+        from witnora_ve import parity_reconstruct_native
+        return dict(parity_reconstruct_native(
+            list(roots.items()), list(offsets.items()), list(root_values.items())))
+    if backend != "python":
+        raise ValueError("unknown parity compression backend")
     return {v: root_values[root] ^ offsets[v] for v, root in roots.items()}
 
 
 def substitute_residual_formula(formula: CNFFormula,
-                                compression: dict[str, Any]) -> CNFFormula:
+                                compression: dict[str, Any], *,
+                                backend: str = "python") -> CNFFormula:
     """Syntactically substitute parity-root variables into every CNF clause.
 
     This is an experimental Python output. A tautological rewritten clause
@@ -90,6 +125,12 @@ def substitute_residual_formula(formula: CNFFormula,
         raise ValueError("no consistent parity component certificate")
     roots = dict(compression["roots"])
     offsets = dict(compression["offsets"])
+    if backend == "rust":
+        from witnora_ve import parity_rewrite_native
+        return CNFFormula.from_raw_clauses(parity_rewrite_native(
+            formula.to_clause_lists(), list(roots.items()), list(offsets.items())))
+    if backend != "python":
+        raise ValueError("unknown parity compression backend")
     rewritten = []
     for clause in formula.to_clause_lists():
         new_clause = []

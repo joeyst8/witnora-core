@@ -1,0 +1,250 @@
+name: Rust migration focused differential gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - "rust/witnora-ve/**"
+      - "witnora_core/hard_separator_families.py"
+      - "witnora_core/hidden_separator_challenge.py"
+      - "witnora_core/symbolic_implication.py"
+      - "witnora_core/satlib_fingerprint.py"
+      - "witnora_core/spoke_collapse.py"
+      - "witnora_core/ood_sat_families.py"
+      - "witnora_core/families.py"
+      - "witnora_core/parity_compression.py"
+      - "witnora_core/crc_structural_independence.py"
+      - "witnora_core/crc_conditional_independence.py"
+      - "witnora_core/aux_violation_tensors.py"
+      - "witnora_core/constraint_geometry.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "witnora_core/claim_boundary.py"
+      - "witnora_core/crc_independence_audit.py"
+      - "witnora_core/crc_defect_oracle.py"
+      - "witnora_core/crc_shannon_oracle.py"
+      - "witnora_core/crc_conflict_oracle.py"
+      - "witnora_core/crc_orbit_oracle.py"
+      - "witnora_core/crc_separator_discovery.py"
+      - "witnora_core/crc_cutset_count.py"
+      - "witnora_core/expression_conjecture_search.py"
+      - "witnora_core/graph_conjecture_lab.py"
+      - "witnora_core/conjecture_triage.py"
+      - "witnora_core/conditional_graph_conjectures.py"
+      - "witnora_core/targeted_graph_theorems.py"
+      - "witnora_core/lean_numeric_certificate_export.py"
+      - "witnora_core/lean_ascii_certificate_export.py"
+      - "witnora_core/lean_color_certificate_export.py"
+      - "witnora_core/crc_variable_elimination.py"
+      - "witnora_core/dsatur_adversarial_lab.py"
+      - "witnora_core/color_repair_lab.py"
+      - "witnora_core/kempe_repair_lab.py"
+      - "witnora_core/double_kempe_lab.py"
+      - "witnora_core/structured_coloring_study.py"
+      - "witnora_core/color_selector_lab.py"
+      - "witnora_core/nonedge_matching_bound.py"
+      - "witnora_core/violation_image_anf.py"
+      - "tests/test_hard_separator_generator_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_satlib_fingerprint_rust.py"
+      - "tests/test_spoke_collapse_rust.py"
+      - "tests/test_ood_sat_families_rust.py"
+      - "tests/test_benchmark_families_rust.py"
+      - "tests/test_parity_compression_rust.py"
+      - "tests/test_crc_structural_independence_rust.py"
+      - "tests/test_crc_conditional_independence_rust.py"
+      - "tests/test_aux_violation_tensors_rust.py"
+      - "tests/test_constraint_geometry_rust.py"
+      - "tests/test_geometry_aware_parity_rust.py"
+      - "tests/test_claim_boundary_rust.py"
+      - "tests/test_crc_independence_audit_rust.py"
+      - "tests/test_crc_defect_oracle_rust.py"
+      - "tests/test_crc_shannon_oracle_rust.py"
+      - "tests/test_crc_conflict_oracle_rust.py"
+      - "tests/test_crc_orbit_oracle_rust.py"
+      - "tests/test_crc_separator_discovery_rust.py"
+      - "tests/test_crc_cutset_count_rust.py"
+      - "tests/test_expression_conjecture_search_rust.py"
+      - "tests/test_graph_conjecture_lab_rust.py"
+      - "tests/test_conjecture_triage_end_to_end_rust.py"
+      - "tests/test_conditional_graph_conjectures_rust.py"
+      - "tests/test_targeted_graph_challenge_rust.py"
+      - "tests/test_lean_numeric_certificate_export_rust.py"
+      - "tests/test_lean_ascii_certificate_export_rust.py"
+      - "tests/test_lean_color_certificate_export_rust.py"
+      - "tests/test_crc_variable_elimination_rust.py"
+      - "tests/test_dsatur_exact_coloring_rust.py"
+      - "tests/test_color_repair_rust.py"
+      - "tests/test_kempe_repair_rust.py"
+      - "tests/test_double_kempe_rust.py"
+      - "tests/test_structured_coloring_rust.py"
+      - "tests/test_color_selector_rust.py"
+      - "tests/test_dsatur_greedy_rust.py"
+      - "tests/test_nonedge_graph_bounds_rust.py"
+      - "tests/test_nonedge_matching_bound_rust.py"
+      - "tests/test_color_confusion_rust.py"
+      - "tests/test_violation_anf_rust.py"
+      - "tests/test_anf_counter_rust.py"
+      - ".github/workflows/rust-migration-fast.yml"
+  push:
+    branches:
+      - research/w-crc-001-asymmetric-v1
+    paths:
+      - "rust/witnora-ve/**"
+      - "witnora_core/hard_separator_families.py"
+      - "witnora_core/hidden_separator_challenge.py"
+      - "witnora_core/symbolic_implication.py"
+      - "witnora_core/satlib_fingerprint.py"
+      - "witnora_core/spoke_collapse.py"
+      - "witnora_core/ood_sat_families.py"
+      - "witnora_core/families.py"
+      - "witnora_core/parity_compression.py"
+      - "witnora_core/crc_structural_independence.py"
+      - "witnora_core/crc_conditional_independence.py"
+      - "witnora_core/aux_violation_tensors.py"
+      - "witnora_core/constraint_geometry.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "witnora_core/claim_boundary.py"
+      - "witnora_core/crc_independence_audit.py"
+      - "witnora_core/crc_defect_oracle.py"
+      - "witnora_core/crc_shannon_oracle.py"
+      - "witnora_core/crc_conflict_oracle.py"
+      - "witnora_core/crc_orbit_oracle.py"
+      - "witnora_core/crc_separator_discovery.py"
+      - "witnora_core/crc_cutset_count.py"
+      - "witnora_core/expression_conjecture_search.py"
+      - "witnora_core/graph_conjecture_lab.py"
+      - "witnora_core/conjecture_triage.py"
+      - "witnora_core/conditional_graph_conjectures.py"
+      - "witnora_core/targeted_graph_theorems.py"
+      - "witnora_core/lean_numeric_certificate_export.py"
+      - "witnora_core/lean_ascii_certificate_export.py"
+      - "witnora_core/lean_color_certificate_export.py"
+      - "witnora_core/crc_variable_elimination.py"
+      - "witnora_core/dsatur_adversarial_lab.py"
+      - "witnora_core/color_repair_lab.py"
+      - "witnora_core/kempe_repair_lab.py"
+      - "witnora_core/double_kempe_lab.py"
+      - "witnora_core/structured_coloring_study.py"
+      - "witnora_core/color_selector_lab.py"
+      - "witnora_core/nonedge_matching_bound.py"
+      - "witnora_core/violation_image_anf.py"
+      - "tests/test_hard_separator_generator_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_satlib_fingerprint_rust.py"
+      - "tests/test_spoke_collapse_rust.py"
+      - "tests/test_ood_sat_families_rust.py"
+      - "tests/test_benchmark_families_rust.py"
+      - "tests/test_parity_compression_rust.py"
+      - "tests/test_crc_structural_independence_rust.py"
+      - "tests/test_crc_conditional_independence_rust.py"
+      - "tests/test_aux_violation_tensors_rust.py"
+      - "tests/test_constraint_geometry_rust.py"
+      - "tests/test_geometry_aware_parity_rust.py"
+      - "tests/test_claim_boundary_rust.py"
+      - "tests/test_crc_independence_audit_rust.py"
+      - "tests/test_crc_defect_oracle_rust.py"
+      - "tests/test_crc_shannon_oracle_rust.py"
+      - "tests/test_crc_conflict_oracle_rust.py"
+      - "tests/test_crc_orbit_oracle_rust.py"
+      - "tests/test_crc_separator_discovery_rust.py"
+      - "tests/test_crc_cutset_count_rust.py"
+      - "tests/test_expression_conjecture_search_rust.py"
+      - "tests/test_graph_conjecture_lab_rust.py"
+      - "tests/test_conjecture_triage_end_to_end_rust.py"
+      - "tests/test_conditional_graph_conjectures_rust.py"
+      - "tests/test_targeted_graph_challenge_rust.py"
+      - "tests/test_lean_numeric_certificate_export_rust.py"
+      - "tests/test_lean_ascii_certificate_export_rust.py"
+      - "tests/test_lean_color_certificate_export_rust.py"
+      - "tests/test_crc_variable_elimination_rust.py"
+      - "tests/test_dsatur_exact_coloring_rust.py"
+      - "tests/test_color_repair_rust.py"
+      - "tests/test_kempe_repair_rust.py"
+      - "tests/test_double_kempe_rust.py"
+      - "tests/test_structured_coloring_rust.py"
+      - "tests/test_color_selector_rust.py"
+      - "tests/test_dsatur_greedy_rust.py"
+      - "tests/test_nonedge_graph_bounds_rust.py"
+      - "tests/test_nonedge_matching_bound_rust.py"
+      - "tests/test_color_confusion_rust.py"
+      - "tests/test_violation_anf_rust.py"
+      - "tests/test_anf_counter_rust.py"
+      - ".github/workflows/rust-migration-fast.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: witnora-rust-focused-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  focused-native:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number == 122
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Rust library tests
+        run: cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --lib
+      - name: Build Python native wheel
+        run: |
+          python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
+          maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
+          python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
+      - name: Focused R-067 through R-108 source comparisons
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: |
+          python -m unittest tests.test_hidden_separator_generator_rust -v
+          python -m unittest tests.test_symbolic_implication_rust -v
+          python -m unittest tests.test_hard_separator_generator_rust -v
+          python -m unittest tests.test_satlib_fingerprint_rust -v
+          python -m unittest tests.test_spoke_collapse_rust -v
+          python -m unittest tests.test_ood_sat_families_rust -v
+          python -m unittest tests.test_benchmark_families_rust -v
+          python -m unittest tests.test_parity_compression_rust -v
+          python -m unittest tests.test_crc_structural_independence_rust -v
+          python -m unittest tests.test_crc_conditional_independence_rust -v
+          python -m unittest tests.test_aux_violation_tensors_rust -v
+          python -m unittest tests.test_constraint_geometry_rust -v
+          python -m unittest tests.test_geometry_aware_parity_rust -v
+          python -m unittest tests.test_claim_boundary_rust -v
+          python -m unittest tests.test_crc_independence_audit_rust -v
+          python -m unittest tests.test_crc_defect_oracle_rust -v
+          python -m unittest tests.test_crc_shannon_oracle_rust -v
+          python -m unittest tests.test_crc_conflict_oracle_rust -v
+          python -m unittest tests.test_crc_orbit_oracle_rust -v
+          python -m unittest tests.test_crc_separator_discovery_rust -v
+          python -m unittest tests.test_crc_cutset_count_rust -v
+          python -m unittest tests.test_expression_conjecture_search_rust -v
+          python -m unittest tests.test_graph_conjecture_lab_rust -v
+          python -m unittest tests.test_conjecture_triage_end_to_end_rust -v
+          python -m unittest tests.test_conditional_graph_conjectures_rust -v
+          python -m unittest tests.test_targeted_graph_challenge_rust -v
+          python -m unittest tests.test_lean_numeric_certificate_export_rust -v
+          python -m unittest tests.test_lean_ascii_certificate_export_rust -v
+          python -m unittest tests.test_lean_color_certificate_export_rust -v
+          python -m unittest tests.test_crc_variable_elimination_rust -v
+          python -m unittest tests.test_dsatur_exact_coloring_rust -v
+          python -m unittest tests.test_color_repair_rust -v
+          python -m unittest tests.test_kempe_repair_rust -v
+          python -m unittest tests.test_double_kempe_rust -v
+          python -m unittest tests.test_structured_coloring_rust -v
+          python -m unittest tests.test_color_selector_rust -v
+          python -m unittest tests.test_dsatur_greedy_rust -v
+          python -m unittest tests.test_nonedge_graph_bounds_rust -v
+          python -m unittest tests.test_nonedge_matching_bound_rust -v
+          python -m unittest tests.test_color_confusion_rust -v
+          python -m unittest tests.test_violation_anf_rust -v
+          python -m unittest tests.test_anf_counter_rust -v

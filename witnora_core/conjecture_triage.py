@@ -48,40 +48,68 @@ def known_identity_keys() -> set[tuple[str, str]]:
     return {identity_key(s) for s in catalog}
 
 
+def normalize_expression_rust(expr: str) -> str:
+    """Opt-in native syntactic canonicalization; no proof promotion."""
+    from witnora_ve import conjecture_normalize_native
+    return conjecture_normalize_native(expr)
+
+
+def identity_key_rust(statement: str) -> tuple[str, str]:
+    from witnora_ve import conjecture_identity_key_native
+    return tuple(conjecture_identity_key_native(statement))
+
+
+def known_identity_keys_rust() -> set[tuple[str, str]]:
+    from witnora_ve import conjecture_known_identities_native
+    return {tuple(pair) for pair in conjecture_known_identities_native()}
+
+
 def expression_index():
     return {expression.label: expression for expression in expression_pool()}
 
 
-def triage(*, adversarial_per_seed: int = 120) -> dict:
+def triage(*, adversarial_per_seed: int = 120, backend="python") -> dict:
     if not 1 <= adversarial_per_seed <= 300:
         raise ValueError("bounded adversarial search only")
-    base = run_expression_search()
+    base = run_expression_search(backend=backend)
     known = known_identity_keys()
     catalog_hits, unclassified, adversarially_falsified = [], [], []
     index = expression_index()
     adversarial = [(n, edges, graph_metrics(n, edges))
                    for n in (7, 8) for seed in (2107, 2239)
                    for _, edges in graphs(n, limit=adversarial_per_seed, seed=seed)]
-    for title in base["holdout_survivors"]:
-        if identity_key(title) in known:
-            catalog_hits.append(title)
-            continue
-        left, right = title.split(" = ", 1)
-        if left not in index or right not in index:
-            raise ValueError("candidate absent from generated expression grammar")
-        a, b = index[left], index[right]
-        witness = next(((n, edges, a.evaluate(row), b.evaluate(row))
-                        for n, edges, row in adversarial
-                        if a.evaluate(row) != b.evaluate(row)), None)
-        if witness is None:
-            unclassified.append(title)
-        else:
-            n, edges, lhs, rhs = witness
-            adversarially_falsified.append({
-                "conjecture": title, "n": n,
-                "edges": [list(edge) for edge in edges],
-                "left_value": lhs, "right_value": rhs,
-            })
+    if backend == "rust":
+        from witnora_ve import conjecture_triage_run_native
+        catalog_hits, unclassified, falsified = conjecture_triage_run_native(
+            base["holdout_survivors"], [(n, list(edges), metrics)
+                                        for n, edges, metrics in adversarial])
+        adversarially_falsified = [
+            {"conjecture": title, "n": n, "edges": [list(e) for e in edges],
+             "left_value": lhs, "right_value": rhs}
+            for title, n, edges, lhs, rhs in falsified]
+    elif backend != "python":
+        raise ValueError("unknown triage backend")
+    else:
+        for title in base["holdout_survivors"]:
+            if identity_key(title) in known:
+                catalog_hits.append(title)
+                continue
+            left, right = title.split(" = ", 1)
+            if left not in index or right not in index:
+                raise ValueError("candidate absent from generated expression grammar")
+            a, b = index[left], index[right]
+            witness = next(((n, edges, a.evaluate(row), b.evaluate(row))
+                            for n, edges, row in adversarial
+                            if a.evaluate(row) != b.evaluate(row)), None)
+            if witness is None:
+                unclassified.append(title)
+            else:
+                n, edges, lhs, rhs = witness
+                adversarially_falsified.append({
+                    "conjecture": title, "n": n,
+                    "edges": [list(edge) for edge in edges],
+                    "left_value": lhs, "right_value": rhs,
+                })
     queue = [{
         "statement": name,
         "status": "PENDING_FORMALIZATION",

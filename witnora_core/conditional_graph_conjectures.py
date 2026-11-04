@@ -105,7 +105,7 @@ def nonvacuous(item, training):
     return True
 
 
-def run_experiment(*, holdout_each: int = 120):
+def run_experiment(*, holdout_each: int = 120, backend="python"):
     if not 1 <= holdout_each <= 500:
         raise ValueError("invalid bounded holdout")
     training = [graph_record(n, edges) for n in range(1, 6)
@@ -113,6 +113,28 @@ def run_experiment(*, holdout_each: int = 120):
     holdout = [graph_record(n, edges) for n in (6, 7)
                for seed in (1491, 1601)
                for _, edges in graphs(n, limit=holdout_each, seed=seed)]
+    if backend == "rust":
+        from witnora_ve import conditional_graph_conjectures_run_native
+        def native_record(record):
+            return (record["n"], list(record["edges"]), record["original"],
+                    record["complement"], record["delete_vertex_0"],
+                    record["conditions"])
+        considered, candidate_count, survivors, rejected = conditional_graph_conjectures_run_native(
+            [native_record(record) for record in training],
+            [native_record(record) for record in holdout])
+        return {
+            "training_graphs": len(training), "holdout_graphs": len(holdout),
+            "templates_considered": considered,
+            "nonvacuous_training_survivors": candidate_count,
+            "holdout_survivors": survivors,
+            "falsified_on_holdout": [
+                {"conjecture": title, "n": n, "edges": [list(e) for e in edges]}
+                for title, n, edges in rejected],
+            "lean_verified": False, "novelty_verified": False,
+            "theorem_proven": False, "promoted": False,
+        }
+    if backend != "python":
+        raise ValueError("unknown conditional conjecture backend")
     candidates = [item for item in templates()
                   if nonvacuous(item, training)
                   and all(holds(item, r) for r in training)]

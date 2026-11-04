@@ -31,7 +31,16 @@ RULES = (
 
 
 def signals(n: int, edges: tuple[tuple[int, int], ...],
-            colors: list[int]) -> dict:
+            colors: list[int], *, backend="python") -> dict:
+    if backend == "rust":
+        from witnora_ve import color_selector_signals_native
+        k, clique, gap, last_size, min_class, singleton = color_selector_signals_native(
+            n, list(edges), colors)
+        return {"k": k, "clique": clique, "gap": gap,
+                "last_size": last_size, "min_class": min_class,
+                "singleton": singleton}
+    if backend != "python":
+        raise ValueError("unknown selector signal backend")
     k = max(colors, default=-1) + 1
     witnessed_clique = greedy_clique_lower_bound(n, edges)
     sizes = Counter(colors)
@@ -43,7 +52,13 @@ def signals(n: int, edges: tuple[tuple[int, int], ...],
     }
 
 
-def triggers(rule: str, f: dict) -> bool:
+def triggers(rule: str, f: dict, *, backend="python") -> bool:
+    if backend == "rust":
+        from witnora_ve import color_selector_triggers_native
+        return color_selector_triggers_native(
+            rule, f["k"], f["gap"], f["last_size"], f["min_class"], f["singleton"])
+    if backend != "python":
+        raise ValueError("unknown selector trigger backend")
     g = f["gap"] > 0
     if rule == "uncertified":
         return g
@@ -85,18 +100,34 @@ def _random_graphs(seed: int, training: bool):
                 yield "random", n, edges
 
 
-def labeled_samples(graphs):
+def labeled_samples(graphs, *, backend="python"):
     for family, n, edges in graphs:
         greedy = _dsatur_greedy_coloring(n, edges)
-        feature = signals(n, edges, greedy["coloring"])
-        failure = exact_k_coloring(n, edges, greedy["bound"] - 1) is not None
+        feature = signals(n, edges, greedy["coloring"], backend=backend)
+        failure = exact_k_coloring(n, edges, greedy["bound"] - 1,
+                                   backend=backend) is not None
         yield {"family": family, "n": n, "edges": edges,
                "dsatur": greedy, "signals": feature, "failure": failure}
 
 
-def confusion(rows: list[dict], rule: str) -> dict:
+def confusion(rows: list[dict], rule: str, *, backend="python") -> dict:
+    if backend == "rust":
+        from witnora_ve import color_selector_confusion_native
+        packed = [(row["failure"], row["signals"]["k"], row["signals"]["gap"],
+                   row["signals"]["last_size"], row["signals"]["min_class"],
+                   row["signals"]["singleton"]) for row in rows]
+        graphs, positives, selected, true_positives, missed, false_positives = (
+            color_selector_confusion_native(rule, packed))
+        return {"graphs": graphs, "failures": positives,
+                "selected": selected, "true_positives": true_positives,
+                "missed": missed, "false_positives": false_positives,
+                "recall": true_positives / positives if positives else 1.0,
+                "precision": true_positives / selected if selected else 0.0}
+    if backend != "python":
+        raise ValueError("unknown selector confusion backend")
     positives = sum(row["failure"] for row in rows)
-    candidates = [row for row in rows if triggers(rule, row["signals"])]
+    candidates = [row for row in rows if triggers(rule, row["signals"],
+                                                backend=backend)]
     true_positives = sum(row["failure"] for row in candidates)
     return {
         "graphs": len(rows), "failures": positives,
@@ -108,21 +139,24 @@ def confusion(rows: list[dict], rule: str) -> dict:
     }
 
 
-def run_selector_study() -> dict:
-    training = list(labeled_samples(_random_graphs(20261031, True)))
-    train_scores = {rule: confusion(training, rule) for rule in RULES}
+def run_selector_study(*, backend="python") -> dict:
+    training = list(labeled_samples(_random_graphs(20261031, True),
+                                    backend=backend))
+    train_scores = {rule: confusion(training, rule, backend=backend)
+                    for rule in RULES}
     viable = [rule for rule in RULES if train_scores[rule]["recall"] >= 0.95]
     # Pick smallest workload among rules satisfying predeclared train recall
     # constraint; deterministic declaration order breaks ties.
     chosen = min(viable, key=lambda rule: (train_scores[rule]["selected"],
                                          RULES.index(rule)))
-    holdout = list(labeled_samples(_random_graphs(20261101, False)))
-    structured = list(labeled_samples(structured_graphs()))
+    holdout = list(labeled_samples(_random_graphs(20261101, False),
+                                   backend=backend))
+    structured = list(labeled_samples(structured_graphs(), backend=backend))
     evaluations = {}
     for label, rows in (("holdout_random", holdout),
                         ("holdout_structured", structured)):
-        frozen = confusion(rows, chosen)
-        full = confusion(rows, "uncertified")
+        frozen = confusion(rows, chosen, backend=backend)
+        full = confusion(rows, "uncertified", backend=backend)
         baseline_time = 0.0
         conditional_time = 0.0
         repair_improvements = 0
@@ -137,18 +171,20 @@ def run_selector_study() -> dict:
             baseline_time += perf_counter() - t
             t = perf_counter()
             fresh_greedy = _dsatur_greedy_coloring(n, edges)
-            fresh_signals = signals(n, edges, fresh_greedy["coloring"])
+            fresh_signals = signals(n, edges, fresh_greedy["coloring"],
+                                    backend=backend)
             assert fresh_signals == row["signals"]
-            if triggers(chosen, fresh_signals):
-                candidate = ungated_repair(n, edges)
+            if triggers(chosen, fresh_signals, backend=backend):
+                candidate = ungated_repair(n, edges, backend=backend)
             else:
                 candidate = fresh_greedy
             conditional_time += perf_counter() - t
             improved = candidate["bound"] < row["dsatur"]["bound"]
             repair_improvements += improved
-            unresolved = exact_k_coloring(n, edges, candidate["bound"] - 1) is not None
+            unresolved = exact_k_coloring(n, edges, candidate["bound"] - 1,
+                                          backend=backend) is not None
             remaining_failures += unresolved
-            if row["failure"] and not triggers(chosen, row["signals"]) and examples["first_missed_failure"] is None:
+            if row["failure"] and not triggers(chosen, row["signals"], backend=backend) and examples["first_missed_failure"] is None:
                 examples["first_missed_failure"] = {
                     "n": n, "family": row["family"],
                     "edges": [list(e) for e in edges],

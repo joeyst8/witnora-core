@@ -59,3 +59,38 @@ def cost_sensitive_pivot(formula: CNFFormula, *, threshold: int,
     return candidate, {**features, "mode": "adaptive" if use_adaptive else "greedy",
                        "expanded": expanded, "threshold": threshold,
                        "lean_verified": False, "promoted": False}
+
+
+def choose_threshold_rust(observations: list[dict], *,
+                          cost_weight: float = 2.0) -> dict:
+    """Opt-in native fitting of the original five preregistered stumps."""
+    from witnora_ve import choose_threshold_native
+
+    packed = [
+        (row["mixed_pivots"], row["variables"], row["clauses"],
+         row["adaptive_score"], row["greedy_score"],
+         row["adaptive_ms"], row["greedy_ms"])
+        for row in observations
+    ]
+    threshold, utility, selected, cases, penalty = choose_threshold_native(
+        packed, cost_weight)
+    return {"threshold": threshold, "train_utility": utility,
+            "selected_train_cases": selected, "train_cases": cases,
+            "cost_weight": penalty, "novelty_verified": False,
+            "promoted": False}
+
+
+def cost_sensitive_pivot_rust(formula: CNFFormula, *, threshold: int,
+                              max_pairs: int = 12) -> tuple[CNFFormula, dict]:
+    """Opt-in frozen threshold decision; original Python is default."""
+    from witnora_ve import cost_sensitive_pivot_native
+
+    (clauses, viable, pure, variables, count, mode,
+     expanded) = cost_sensitive_pivot_native(
+         formula.to_clause_lists(), threshold, max_pairs)
+    return CNFFormula.from_raw_clauses(clauses), {
+        "viable_mixed_pivots": viable, "pure_pivots": pure,
+        "variables": variables, "clauses": count,
+        "mode": mode, "expanded": expanded, "threshold": threshold,
+        "lean_verified": False, "promoted": False,
+    }

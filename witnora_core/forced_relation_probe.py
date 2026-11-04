@@ -76,3 +76,30 @@ def probe_forced_relations(formula: CNFFormula, *, max_probes: int = 12
         "rule": "bounded_failed_literal_probing",
         "novelty_verified": False, "lean_verified": False, "promoted": False,
     }
+
+
+def unit_conflict_rust(formula: CNFFormula, assumed_literal: int) -> bool:
+    """Opt-in Rust assumption-propagation conflict check."""
+    from witnora_ve import unit_conflict_native
+
+    return bool(unit_conflict_native(formula.to_clause_lists(), assumed_literal))
+
+
+def probe_forced_relations_rust(
+    formula: CNFFormula, *, max_probes: int = 12,
+) -> tuple[CNFFormula, dict]:
+    """Opt-in Rust bounded failed-literal probing with original metadata."""
+    from witnora_ve import probe_forced_relations_native
+
+    clauses, checked, forced, both, source_hash, candidate_hash = (
+        probe_forced_relations_native(formula.to_clause_lists(), max_probes)
+    )
+    return CNFFormula.from_raw_clauses(clauses), {
+        "checked_variables": checked,
+        "forced_literals": list(forced),
+        "both_assumptions_conflict": bool(both),
+        "source_sha256": source_hash,
+        "candidate_sha256": candidate_hash,
+        "rule": "bounded_failed_literal_probing",
+        "novelty_verified": False, "lean_verified": False, "promoted": False,
+    }

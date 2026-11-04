@@ -39,7 +39,13 @@ VERIFIER_VERSION = "witnora-standalone-verifier-0.9.7"
 FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
 
 
-def stable_json(data: Any) -> str:
+def stable_json(data: Any, *, backend: str = "python") -> str:
+    if backend == "rust":
+        from witnora_ve import stable_certificate_json_native
+        serialized, _ = stable_certificate_json_native(data)
+        return serialized
+    if backend != "python":
+        raise ValueError("unknown stable JSON backend")
     return json.dumps(data, indent=2, sort_keys=True) + "\n"
 
 
@@ -201,11 +207,30 @@ def _with_drat_trim_result(
     return DRATExport(drat_export.proof_text, status)
 
 
+def certificate_bundle_file_hashes(
+    files: dict[str, str], *, backend: str = "python",
+) -> dict[str, dict[str, str]]:
+    """Hash exact UTF-8 certificate text payloads into the manifest file map."""
+    if backend == "rust":
+        from witnora_ve import certificate_file_digests_native
+        return {
+            name: {"sha256": digest}
+            for name, digest in certificate_file_digests_native(list(files.items()))
+        }
+    if backend != "python":
+        raise ValueError("unknown certificate bundle hash backend")
+    return {
+        name: {"sha256": sha256_text(content)}
+        for name, content in sorted(files.items())
+    }
+
+
 def _manifest(
     original_formula: CNFFormula,
     path: CollapsePath,
     files: dict[str, str],
     drat_export: DRATExport | None = None,
+    *, hash_backend: str = "python",
 ) -> dict[str, Any]:
     drat_status = drat_export.status if drat_export is not None else {
         "drat_export_status": "NOT_REQUESTED",
@@ -235,10 +260,7 @@ def _manifest(
         "external_drat": bool(drat_status.get("drat_export_status") == "EXPORTED"),
         "drat_export_status": drat_status.get("drat_export_status"),
         "xor_used": path.xor_data is not None,
-        "files": {
-            name: {"sha256": sha256_text(content)}
-            for name, content in sorted(files.items())
-        },
+        "files": certificate_bundle_file_hashes(files, backend=hash_backend),
     }
 
 
@@ -256,6 +278,7 @@ def export_certificate_bundle(
     xor_drat_max_proof_bytes: int = 5_000_000,
     xor_drat_timeout_seconds: float | None = 120.0,
     xor_elim_order: str = "gaussian",
+    hash_backend: str = "python",
 ) -> Path:
     """Write a deterministic .wcert directory or .wcert.json certificate."""
 
@@ -283,7 +306,7 @@ def export_certificate_bundle(
     if drat_export is not None and not (path.status == XOR_UNSAT_NATIVE and export_xor_drat):
         drat_export = _with_drat_trim_result(drat_export, original_text, drat_trim_path)
     files = _bundle_files(original_formula, path, original_text, drat_export)
-    manifest = _manifest(original_formula, path, files, drat_export)
+    manifest = _manifest(original_formula, path, files, drat_export, hash_backend=hash_backend)
     manifest_text = stable_json(manifest)
 
     if output.suffix == ".json":
@@ -358,7 +381,32 @@ def _fail(error: str, failed_check: str) -> dict[str, Any]:
     }
 
 
-def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
+def first_certificate_file_hash_failure(
+    expected: dict[str, dict[str, Any]],
+    files: dict[str, str], *,
+    backend: str = "python",
+) -> str | None:
+    """Return the first missing/tampered certificate text file message."""
+    if backend == "rust":
+        from witnora_ve import verify_certificate_file_digests_native
+        hashes = [
+            (name, str(meta.get("sha256")))
+            for name, meta in expected.items()
+        ]
+        return verify_certificate_file_digests_native(hashes, list(files.items()))
+    if backend != "python":
+        raise ValueError("unknown certificate file verification backend")
+    for name, meta in expected.items():
+        if name not in files:
+            return f"missing file {name}"
+        if sha256_text(files[name]) != meta.get("sha256"):
+            return f"file hash mismatch for {name}"
+    return None
+
+
+def verify_certificate_bundle(
+    path: str | Path, *, file_hash_backend: str = "python",
+) -> dict[str, Any]:
     """Verify a saved certificate package without rerunning collapse search."""
 
     try:
@@ -372,11 +420,11 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     if not manifest.get("forbidden_claims_absent", False):
         return _fail("forbidden_claims_absent is not true", "manifest")
 
-    for name, meta in manifest.get("files", {}).items():
-        if name not in files:
-            return _fail(f"missing file {name}", "file_hash")
-        if sha256_text(files[name]) != meta.get("sha256"):
-            return _fail(f"file hash mismatch for {name}", "file_hash")
+    integrity_error = first_certificate_file_hash_failure(
+        manifest.get("files", {}), files, backend=file_hash_backend,
+    )
+    if integrity_error is not None:
+        return _fail(integrity_error, "file_hash")
 
     try:
         result_data = json.loads(files["result.json"])

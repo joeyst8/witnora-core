@@ -71,3 +71,22 @@ def discover_odd_xor_cycle(formula: CNFFormula) -> dict[str, Any] | None:
         adjacency[u].append((v, rhs))
         adjacency[v].append((u, rhs))
     return None
+
+
+def discover_odd_xor_cycle_rust(formula: CNFFormula) -> dict[str, Any] | None:
+    """Opt-in native discovery; never a Lean-verified proof certificate."""
+    from witnora_ve import discover_odd_xor_cycle_native
+
+    result = discover_odd_xor_cycle_native(formula.to_clause_lists())
+    if result is None:
+        return None
+    start, steps = result
+    return {
+        "operator": "ODD_XOR_CYCLE",
+        "status": "UNVERIFIED_STRUCTURAL_CANDIDATE",
+        "formal_status": "NOT_LEAN_VERIFIED",
+        "start": start,
+        "steps": [{"next": vertex, "rhs": bit} for vertex, bit in steps],
+        "cycle_length": len(steps),
+        "reason": "closed walk requires contradictory XOR parity",
+    }

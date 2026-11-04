@@ -51,3 +51,22 @@ def two_ply_pivot(formula: CNFFormula, *, max_pairs: int = 12,
         -structural_score(formula, item[1]),
         item[1].num_clauses, len(item[0]), item[0]))
     return choices[0][1]
+
+
+def elimination_options_rust(formula: CNFFormula, *, max_pairs: int = 12,
+                             growth_budget: int = 2) -> list[tuple[int, CNFFormula]]:
+    """Opt-in native exact DP elimination options; original Python remains default."""
+    from witnora_ve import elimination_options_native
+
+    return [(pivot, CNFFormula.from_raw_clauses(rows))
+            for pivot, rows in elimination_options_native(
+                formula.to_clause_lists(), max_pairs, growth_budget)]
+
+
+def two_ply_pivot_rust(formula: CNFFormula, *, max_pairs: int = 12,
+                       growth_budget: int = 2, beam_width: int = 8) -> CNFFormula:
+    """Opt-in native heuristic; SAT equisatisfiability is not a Lean proof."""
+    from witnora_ve import two_ply_pivot_native
+
+    return CNFFormula.from_raw_clauses(two_ply_pivot_native(
+        formula.to_clause_lists(), max_pairs, growth_budget, beam_width))

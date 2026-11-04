@@ -76,7 +76,7 @@ def _allowed_context(context_before: str, full_context: str) -> bool:
     return any(marker in before or marker in whole for marker in NEGATIVE_CONTEXT_MARKERS)
 
 
-def scan_text_for_claim_boundary(text: str) -> dict[str, object]:
+def scan_text_for_claim_boundary(text: str, *, backend: str = "python") -> dict[str, object]:
     """Scan text for forbidden affirmative claim phrases.
 
     The scanner is intentionally conservative and explainable. It does not try
@@ -86,20 +86,30 @@ def scan_text_for_claim_boundary(text: str) -> dict[str, object]:
     """
 
     findings: list[ClaimBoundaryFinding] = []
-    for phrase in FORBIDDEN_AFFIRMATIVE_CLAIMS:
-        for match in _phrase_pattern(phrase).finditer(text):
-            start, end = match.span()
-            before = text[max(0, start - 400):start]
-            context = _normalise(text[max(0, start - 400):min(len(text), end + 120)])
-            allowed = _allowed_context(before, context)
-            findings.append(
-                ClaimBoundaryFinding(
-                    phrase=phrase,
-                    context=context,
-                    severity="allowed_negative_context" if allowed else "forbidden_affirmative",
-                    allowed_by_negative_context=allowed,
+    if backend == "rust":
+        from witnora_ve import claim_boundary_scan_native
+        for phrase, context, allowed in claim_boundary_scan_native(text):
+            findings.append(ClaimBoundaryFinding(
+                phrase=phrase, context=context,
+                severity="allowed_negative_context" if allowed else "forbidden_affirmative",
+                allowed_by_negative_context=allowed))
+    elif backend == "python":
+        for phrase in FORBIDDEN_AFFIRMATIVE_CLAIMS:
+            for match in _phrase_pattern(phrase).finditer(text):
+                start, end = match.span()
+                before = text[max(0, start - 400):start]
+                context = _normalise(text[max(0, start - 400):min(len(text), end + 120)])
+                allowed = _allowed_context(before, context)
+                findings.append(
+                    ClaimBoundaryFinding(
+                        phrase=phrase,
+                        context=context,
+                        severity="allowed_negative_context" if allowed else "forbidden_affirmative",
+                        allowed_by_negative_context=allowed,
+                    )
                 )
-            )
+    else:
+        raise ValueError("unknown claim-boundary backend")
 
     flagged = [finding for finding in findings if not finding.allowed_by_negative_context]
     return {
@@ -109,13 +119,14 @@ def scan_text_for_claim_boundary(text: str) -> dict[str, object]:
     }
 
 
-def scan_files_for_claim_boundary(paths: Iterable[str | Path]) -> dict[str, object]:
+def scan_files_for_claim_boundary(paths: Iterable[str | Path], *,
+                                  backend: str = "python") -> dict[str, object]:
     results: dict[str, object] = {}
     all_flagged: list[dict[str, object]] = []
     for raw_path in paths:
         path = Path(raw_path)
         text = path.read_text(encoding="utf-8")
-        result = scan_text_for_claim_boundary(text)
+        result = scan_text_for_claim_boundary(text, backend=backend)
         results[str(path)] = result
         for finding in result["flagged_phrases"]:  # type: ignore[index]
             item = dict(finding)

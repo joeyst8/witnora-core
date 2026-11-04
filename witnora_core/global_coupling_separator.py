@@ -141,3 +141,45 @@ def prioritized_global_pairs(graph: Mapping[int, set[int]]) -> tuple[tuple[int, 
     return tuple(preferred + [
         pair for pair in combinations(vertices, 2) if pair not in already
     ])
+
+
+def two_edge_cut_boundary_pairs_rust(graph: Mapping[int, set[int]]) -> dict:
+    """R-052 opt-in exact native graph witness; Python remains the default."""
+    from witnora_ve import two_edge_cut_boundary_pairs_native
+
+    vertex_count, edge_count, edge_pair_checks, rows = (
+        two_edge_cut_boundary_pairs_native(
+            [(v, sorted(neighbors)) for v, neighbors in graph.items()]
+        )
+    )
+    return {
+        "status": DIAGNOSTIC_ONLY,
+        "strategy": "TWO_EDGE_CUT_BOUNDARY",
+        "vertex_count": vertex_count,
+        "edge_count": edge_count,
+        "edge_pair_checks": edge_pair_checks,
+        "candidates": [
+            {
+                "separator": list(separator),
+                "cut_edges": [list(edge) for edge in cut_edges],
+                "edge_split_sizes": list(split_sizes),
+                "residual_component_sizes": list(residual_sizes),
+            }
+            for separator, cut_edges, split_sizes, residual_sizes in rows
+        ],
+        "claim_boundary": (
+            "Exact graph-cut candidates, not G14 recognition, a SAT answer, "
+            "or a complexity-theory result."
+        ),
+    }
+
+
+def prioritized_global_pairs_rust(
+    graph: Mapping[int, set[int]],
+) -> tuple[tuple[int, int], ...]:
+    """R-052 opt-in native ranking, preserving the exhaustive pair fallback."""
+    from witnora_ve import prioritized_global_pairs_native
+
+    return tuple(tuple(pair) for pair in prioritized_global_pairs_native(
+        [(v, sorted(neighbors)) for v, neighbors in graph.items()]
+    ))

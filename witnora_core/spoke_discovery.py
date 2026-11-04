@@ -101,3 +101,47 @@ def discover_parity_spoke_conflicts(formula: CNFFormula) -> list[dict[str, Any]]
                 "formal_status": "NOT_LEAN_VERIFIED",
             })
     return conflicts
+
+
+
+def extract_binary_xor_equations_rust(
+        formula: CNFFormula) -> list[tuple[int, int, int]]:
+    """Opt-in exact native source-bound width-two XOR extraction."""
+    from witnora_ve import extract_binary_xor_equations_native
+
+    return [tuple(row) for row in
+            extract_binary_xor_equations_native(formula.to_clause_lists())]
+
+
+def extract_spoke_paths_rust(
+        formula: CNFFormula) -> list[tuple[int, int, int, int, int]]:
+    """Opt-in native source spoke paths, ordered like the Python reference."""
+    from witnora_ve import extract_spoke_paths_native
+
+    return [tuple(row) for row in
+            extract_spoke_paths_native(formula.to_clause_lists())]
+
+
+def discover_parity_spoke_conflicts_rust(formula: CNFFormula) -> list[dict]:
+    """Opt-in native discovery; every result remains NOT_LEAN_VERIFIED."""
+    from witnora_ve import discover_parity_spoke_conflicts_native
+
+    def source_equation(packed):
+        variables, rhs, source_clauses = packed
+        return {"variables": variables, "rhs": rhs,
+                "source_clauses": source_clauses}
+
+    def path_record(packed):
+        middle, syndrome, equations = packed
+        return {"middle": middle, "syndrome": syndrome,
+                "equations": [source_equation(eq) for eq in equations]}
+
+    return [{
+        "status": "UNVERIFIED_STRUCTURAL_CANDIDATE",
+        "operator": "PARITY_SPOKE_SYNDROME",
+        "endpoints": list(endpoints),
+        "paths": [path_record(path) for path in paths],
+        "reason": "incompatible implied endpoint parities",
+        "formal_status": "NOT_LEAN_VERIFIED",
+    } for endpoints, paths in discover_parity_spoke_conflicts_native(
+        formula.to_clause_lists())]

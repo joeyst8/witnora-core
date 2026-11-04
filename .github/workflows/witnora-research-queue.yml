@@ -1,0 +1,80 @@
+name: Witnora completion-driven research queue
+
+on:
+  push:
+    branches:
+      - research/w-crc-001-asymmetric-v1
+    paths:
+      - "research/witnora_research_queue.json"
+      - "scripts/run_witnora_research_queue.py"
+      - "scripts/benchmark_crc_symmetry_stress.py"
+      - "tests/test_research_queue.py"
+      - "tests/test_crc_orbit_oracle.py"
+      - "scripts/benchmark_crc_orbit.py"
+      - "tests/test_crc_defect_oracle.py"
+      - "tests/test_crc_conflict_oracle.py"
+      - "tests/test_crc_independence_audit.py"
+      - "tests/test_crc_structural_independence.py"
+      - "tests/test_crc_conditional_independence.py"
+      - "tests/test_crc_separator_discovery.py"
+      - "tests/test_crc_cutset_count.py"
+      - "tests/test_crc_adversarial_benchmark.py"
+      - "tests/test_crc_variable_elimination.py"
+      - "tests/test_crc_variable_elimination_indexed.py"
+      - "tests/test_crc_heldout.py"
+      - "tests/test_crc_dense_semantics.py"
+      - "scripts/benchmark_crc_dense_semantics.py"
+      - "tests/test_crc_matched_semantics.py"
+      - "scripts/benchmark_crc_matched_semantics.py"
+      - "scripts/benchmark_crc_equivalent_encodings.py"
+      - "tests/test_crc_equivalent_encodings.py"
+      - "scripts/benchmark_crc_defect.py"
+      - "scripts/benchmark_crc_conflict.py"
+      - "scripts/benchmark_crc_independence.py"
+      - "scripts/benchmark_crc_structural_independence.py"
+      - "scripts/benchmark_crc_conditional_independence.py"
+      - "scripts/benchmark_crc_separator_discovery.py"
+      - "scripts/benchmark_crc_cutset_count.py"
+      - "scripts/benchmark_crc_adversarial.py"
+      - "scripts/benchmark_crc_variable_elimination.py"
+      - "scripts/benchmark_crc_variable_elimination_indexed.py"
+      - "scripts/benchmark_crc_heldout.py"
+      - "witnora_core/crc_*.py"
+      - ".github/workflows/witnora-research-queue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: witnora-research-queue-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bounded-research:
+    if: github.ref == 'refs/heads/research/w-crc-001-asymmetric-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONHASHSEED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install independent exact counter
+        run: python -m pip install --disable-pip-version-check python-sat pyganak==2.8.0
+      - name: Check queue safety and stop behavior
+        run: python -m unittest tests.test_research_queue -v
+      - name: Preview approved research tasks
+        run: python -m scripts.run_witnora_research_queue --dry-run --max-tasks 3 --budget-seconds 480
+      - name: Run each experiment immediately after its predecessor
+        run: python -m scripts.run_witnora_research_queue --max-tasks 3 --budget-seconds 480
+      - name: Preserve task results even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: witnora-research-queue-report
+          path: artifacts/witnora_research_queue_report.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -64,3 +64,34 @@ def bounded_parity_separators(formula: CNFFormula, *, max_cut: int = 3,
         "cnf_transformed": False,
         "lean_verified": False, "novelty_verified": False, "promoted": False,
     }
+
+
+def bounded_parity_separators_rust(formula: CNFFormula, *, max_cut: int = 3,
+                                   max_shared: int = 18,
+                                   max_trials: int = 2000) -> dict:
+    """Opt-in native parity incidence cuts; full-CNF cuts remain unaudited."""
+    from witnora_ve import bounded_parity_separators_native
+
+    (source_sha256, exact, cuts, smallest, considered,
+     trials, exhausted) = bounded_parity_separators_native(
+         formula.to_clause_lists(), max_cut, max_shared, max_trials)
+    candidates = [{
+        "variables": variables, "size": size,
+        "components_before": before, "components_after": after,
+        "component_equation_indices": groups,
+    } for variables, size, before, after, groups in cuts]
+    return {
+        "source_sha256": source_sha256,
+        "exact_parity_equations": exact,
+        "candidate_cuts": candidates,
+        "candidate_count": len(candidates),
+        "smallest_cut_size": smallest,
+        "shared_variables_considered": considered,
+        "trials": trials,
+        "budget_exhausted": exhausted,
+        "full_cnf_separation_verified": False,
+        "cnf_transformed": False,
+        "lean_verified": False,
+        "novelty_verified": False,
+        "promoted": False,
+    }

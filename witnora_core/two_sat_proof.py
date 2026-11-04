@@ -186,3 +186,27 @@ def build_2sat_scc_proof(
             derived_clauses=derived,
         )
     raise ValueError("no mutually reachable variable/negation pair found")
+
+
+def build_2sat_scc_proof_rust(
+    formula: CNFFormula, conflict_variable: int | None = None,
+) -> TwoSatSCCProof:
+    """Opt-in Rust 2-SAT SCC resolution proof with Python dataclass output.
+
+    Input is an already canonical CNFFormula; unlike raw iterable inputs,
+    tautological source clauses have already been removed.
+    """
+    from witnora_ve import build_2sat_scc_resolution_native
+
+    variable, positive, negative, derived = build_2sat_scc_resolution_native(
+        formula.to_clause_lists(), conflict_variable)
+    as_edges = lambda events: tuple(
+        ImplicationEdgeProof(int(a), int(b), tuple(clause))
+        for a, b, clause in events
+    )
+    return TwoSatSCCProof(
+        variable=int(variable),
+        path_pos_to_neg=as_edges(positive),
+        path_neg_to_pos=as_edges(negative),
+        derived_clauses=tuple(tuple(clause) for clause in derived),
+    )

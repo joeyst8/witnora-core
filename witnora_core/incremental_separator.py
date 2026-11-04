@@ -24,6 +24,12 @@ def possible_two_xor_patterns(formula: CNFFormula) -> bool:
                for support, n in groups.items()) >= 2
 
 
+def possible_two_xor_patterns_rust(formula: CNFFormula) -> bool:
+    """Opt-in exact prefilter; not a proof of any XOR equation."""
+    from witnora_ve import possible_two_xor_patterns_native
+    return bool(possible_two_xor_patterns_native(formula.to_clause_lists()))
+
+
 @lru_cache(maxsize=128)
 def cached_full_cut(formula: CNFFormula) -> tuple[int, ...] | None:
     if not possible_two_xor_patterns(formula):

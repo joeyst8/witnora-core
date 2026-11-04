@@ -92,7 +92,30 @@ def reconstruct_assignment(
     original_formula: CNFFormula,
     steps: list[CollapseStep],
     final_assignment: dict[int, bool],
+    *,
+    backend: str = "python",
 ) -> ReconstructionResult:
+    if backend == "rust":
+        from witnora_ve import reconstruct_assignment_native
+        packed = []
+        for step in steps:
+            data = step.reconstruction_data
+            packed.append((
+                step.type, [int(lit) for lit in step.assigned_literals],
+                list(data.get("removed_clause", [])),
+                int(data.get("blocked_literal", 0)),
+                [list(row) for row in data.get("opposite_clauses", [])],
+                int(data.get("eliminated_variable", 0)),
+                [list(row) for row in data.get("removed_clauses", [])],
+            ))
+        ok, rows, error = reconstruct_assignment_native(
+            original_formula.to_clause_lists(),
+            packed,
+            [(int(var), bool(value)) for var, value in final_assignment.items()],
+        )
+        return ReconstructionResult(bool(ok), dict(rows), error)
+    if backend != "python":
+        raise ValueError("unknown reconstruction backend")
     assignment = {int(var): bool(value) for var, value in final_assignment.items()}
 
     for step in reversed(steps):

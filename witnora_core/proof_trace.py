@@ -34,7 +34,27 @@ def is_supported_native_unsat_trace(trace: dict[str, Any] | None) -> bool:
         return False
     if trace.get("lrat_frat_status") != "NOT_EXPORTED":
         return False
-    return trace.get("unsat_reason") in {
+    reason = trace.get("unsat_reason")
+    return isinstance(reason, str) and reason in {
         UNSAT_LEVEL_EXPLICIT_EMPTY,
         UNSAT_LEVEL_2SAT_SCC,
     }
+
+
+def is_supported_native_unsat_trace_rust(trace: dict[str, Any] | None) -> bool:
+    """Opt-in native metadata screen, not a soundness/proof checker."""
+    from witnora_ve import native_unsat_trace_metadata_supported_native
+    if not trace:
+        return False
+    # Fail closed on unexpected metadata types at the Python boundary.
+    fields = ("proof_trace_format", "external_standard", "lrat_frat_status",
+              "unsat_reason")
+    if any(trace.get(field) is not None and not isinstance(trace[field], str)
+           for field in fields):
+        return False
+    return native_unsat_trace_metadata_supported_native(
+        trace.get("proof_trace_format"),
+        trace.get("depends_on_replayed_collapse_path") is True,
+        trace.get("external_standard"), trace.get("lrat_frat_status"),
+        trace.get("unsat_reason"),
+    )

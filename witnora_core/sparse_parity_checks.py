@@ -199,3 +199,99 @@ def min_degree_elimination_width(scopes: list[set[int]],
             graph[u].discard(v)
         active.remove(v)
     return maximum
+
+
+def column_signatures_rust(
+    rows: tuple[tuple[int, ...], ...], nclauses: int,
+) -> tuple[int, ...]:
+    """R-056 opt-in native arbitrary-precision odd-column bit signatures."""
+    from witnora_ve import sparse_column_signatures_native
+
+    return tuple(int(x) for x in sparse_column_signatures_native(
+        [list(row) for row in rows], nclauses
+    ))
+
+
+def validate_sparse_odd_sketch_rust(
+    source: list[list[int]] | CNF,
+    sketch: SparseOddSketch,
+) -> CNF:
+    """Source identity in Python; independent native structural validation."""
+    from witnora_ve import sparse_validate_rows_native
+
+    cnf = canonical_source(source, sketch.nvars)
+    if len(cnf) != sketch.clause_count or source_digest(cnf) != sketch.digest:
+        raise ValueError("source identity mismatch")
+    sparse_validate_rows_native(
+        sketch.clause_count, sketch.max_row_width,
+        [list(row) for row in sketch.rows],
+    )
+    return cnf
+
+
+def build_sparse_odd_sketch_rust(
+    source: list[list[int]] | CNF, nvars: int,
+    *, max_row_width: int = 5, seed: int = 73,
+    max_attempts: int = 100,
+) -> SparseOddSketch:
+    """R-056 native bounded-load placement with Python's identical seed RNG."""
+    from witnora_ve import sparse_build_rows_native
+
+    cnf = canonical_source(source, nvars)
+    if max_row_width < 1 or max_attempts < 1:
+        raise ValueError("row width and attempt count must be positive")
+    rows = sparse_build_rows_native(
+        len(cnf), max_row_width, max_attempts, Random(seed)
+    )
+    sketch = SparseOddSketch(
+        nvars, len(cnf), source_digest(cnf), max_row_width,
+        tuple(tuple(row) for row in rows),
+    )
+    validate_sparse_odd_sketch_rust(cnf, sketch)
+    return sketch
+
+
+def low_weight_collisions_rust(
+    sketch: SparseOddSketch, *, max_weight: int = 3,
+) -> int:
+    from witnora_ve import sparse_low_weight_collisions_native
+
+    return sparse_low_weight_collisions_native(
+        [list(row) for row in sketch.rows], sketch.clause_count, max_weight
+    )
+
+
+def source_row_scope_rust(source: CNF, row: tuple[int, ...]) -> int:
+    from witnora_ve import sparse_row_scope_native
+
+    return sparse_row_scope_native([list(c) for c in source], list(row))
+
+
+def audit_sparse_small_rust(
+    source: list[list[int]] | CNF,
+    sketch: SparseOddSketch, *, max_variables: int = 14,
+) -> SparseAudit:
+    """Native independent finite audit, with a 20-variable safety bound."""
+    from witnora_ve import sparse_audit_small_native
+
+    cnf = validate_sparse_odd_sketch_rust(source, sketch)
+    models, nonmodels, false_positives, max_scope, mean_scope = (
+        sparse_audit_small_native(
+            [list(clause) for clause in cnf], sketch.nvars,
+            [list(row) for row in sketch.rows], max_variables
+        )
+    )
+    return SparseAudit(
+        models, nonmodels, false_positives, max_scope, mean_scope
+    )
+
+
+def min_degree_elimination_width_rust(
+    scopes: list[set[int]], nvars: int,
+) -> int:
+    """Opt-in exact native reproduction of the min-degree induced width."""
+    from witnora_ve import sparse_min_degree_width_native
+
+    return sparse_min_degree_width_native(
+        [sorted(scope) for scope in scopes], nvars
+    )

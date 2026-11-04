@@ -32,7 +32,12 @@ class Expr:
     def complexity(self):
         return 0 if self.op == "atom" else 1
 
-    def evaluate(self, values):
+    def evaluate(self, values, *, backend="python"):
+        if backend == "rust":
+            from witnora_ve import expression_conjecture_evaluate_native
+            return expression_conjecture_evaluate_native(self.op, self.a, self.b, values)
+        if backend != "python":
+            raise ValueError("unknown expression backend")
         def value(x):
             return int(x) if x in ("0", "1", "2") else values[x]
         if self.op == "atom":
@@ -61,7 +66,7 @@ def expression_pool():
 
 
 def run_expression_search(*, holdout_per_size: int = 120,
-                          max_candidates: int = 1500):
+                          max_candidates: int = 1500, backend: str = "python"):
     if not 1 <= holdout_per_size <= 500 or not 1 <= max_candidates <= 3000:
         raise ValueError("bounded experiment only")
     train = [graph_metrics(n, edges) for n in range(1, 6)
@@ -69,6 +74,26 @@ def run_expression_search(*, holdout_per_size: int = 120,
     holdout = [(n, edges, graph_metrics(n, edges)) for n in (6, 7)
                for seed in (1733, 1847)
                for _, edges in graphs(n, limit=holdout_per_size, seed=seed)]
+    if backend == "rust":
+        from witnora_ve import expression_conjecture_run_native
+        generated, candidates, survivors, rejected = expression_conjecture_run_native(
+            train, [(n, [tuple(edge) for edge in edges], metrics)
+                    for n, edges, metrics in holdout], max_candidates)
+        return {
+            "training_graphs": len(train), "holdout_graphs": len(holdout),
+            "expressions_generated": generated,
+            "candidate_equalities_generated": candidates,
+            "candidates_evaluated": min(candidates, max_candidates),
+            "holdout_survivors": survivors,
+            "falsified_on_holdout": [
+                {"conjecture": name, "n": n, "edges": [list(e) for e in edges],
+                 "left_value": left, "right_value": right}
+                for name, n, edges, left, right in rejected],
+            "known_identity_review": "NOT_PERFORMED", "novelty_verified": False,
+            "lean_verified": False, "theorem_proven": False, "promoted": False,
+        }
+    if backend != "python":
+        raise ValueError("unknown expression backend")
     expressions = expression_pool()
     signatures = {}
     for expression in expressions:

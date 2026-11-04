@@ -11,8 +11,21 @@ class DIMACSError(CNFError):
     """Raised for invalid DIMACS input."""
 
 
-def parse_dimacs_with_text_evidence(text: str) -> tuple[CNFFormula, list[list[int]], list[int], list[str]]:
+def parse_dimacs_with_text_evidence(text: str, *,
+                                    backend: str = "python") -> tuple[CNFFormula, list[list[int]], list[int], list[str]]:
     """Return canonical formula and exact pre-normalization parsed clauses."""
+    if backend == "rust":
+        from witnora_ve import parse_dimacs_evidence_native
+        try:
+            canonical, raw, literals, spellings, canonical_dimacs = parse_dimacs_evidence_native(text)
+        except ValueError as exc:
+            raise DIMACSError(str(exc)) from exc
+        formula = CNFFormula.from_raw_clauses(canonical)
+        if formula.canonical_dimacs() != canonical_dimacs:
+            raise DIMACSError("Rust DIMACS normalization witness failed independent validation")
+        return formula, raw, literals, spellings
+    if backend != "python":
+        raise DIMACSError("unknown DIMACS parser backend")
     if not text.strip():
         raise DIMACSError("empty file")
 

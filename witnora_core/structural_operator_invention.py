@@ -84,3 +84,39 @@ def xor_boundary_elimination(formula: CNFFormula) -> CNFFormula:
 
 def max_release_elimination(formula: CNFFormula) -> CNFFormula:
     return eliminate_with_policy(formula, "max_release")
+
+
+def graph_invariants_rust(formula: CNFFormula) -> dict:
+    """Opt-in native exact graph statistics from the source CNF."""
+    from witnora_ve import graph_invariants_native
+
+    return {
+        "degree": {v: degree for v, degree, _, _ in
+                   graph_invariants_native(formula.to_clause_lists())},
+        "fill": {v: fill for v, _, fill, _ in
+                 graph_invariants_native(formula.to_clause_lists())},
+        "xor_degree": {v: xor for v, _, _, xor in
+                       graph_invariants_native(formula.to_clause_lists())},
+    }
+
+
+def eliminate_with_policy_rust(formula: CNFFormula, policy: str, *,
+                               max_pairs: int = 12,
+                               max_clause_growth: int = 2) -> CNFFormula:
+    """Opt-in native scheduling, no new SAT inference or Lean proof."""
+    from witnora_ve import eliminate_with_policy_native
+
+    return CNFFormula.from_raw_clauses(eliminate_with_policy_native(
+        formula.to_clause_lists(), policy, max_pairs, max_clause_growth))
+
+
+def min_fill_elimination_rust(formula: CNFFormula) -> CNFFormula:
+    return eliminate_with_policy_rust(formula, "min_fill")
+
+
+def xor_boundary_elimination_rust(formula: CNFFormula) -> CNFFormula:
+    return eliminate_with_policy_rust(formula, "xor_boundary")
+
+
+def max_release_elimination_rust(formula: CNFFormula) -> CNFFormula:
+    return eliminate_with_policy_rust(formula, "max_release")

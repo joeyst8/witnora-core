@@ -75,3 +75,21 @@ def adaptive_pivot(formula: CNFFormula, *, max_pairs: int = 12,
                   "depth": depth_reached, "baseline_score": score(greedy),
                   "candidate_score": score(best), "trusted": False,
                   "promoted": False}
+
+
+def adaptive_pivot_rust(formula: CNFFormula, *, max_pairs: int = 12,
+                        growth_budget: int = 2, beam_width: int = 4,
+                        expansion_budget: int = 48, max_depth: int = 3,
+                        ambiguity_margin: float = 2.0) -> tuple[CNFFormula, dict]:
+    """Opt-in native beam scheduler; original Python remains default."""
+    from witnora_ve import adaptive_pivot_native
+
+    clauses, mode, expanded, depth, baseline_score, candidate_score = (
+        adaptive_pivot_native(
+            formula.to_clause_lists(), max_pairs, growth_budget, beam_width,
+            expansion_budget, max_depth, ambiguity_margin))
+    return CNFFormula.from_raw_clauses(clauses), {
+        "mode": mode, "expanded": expanded, "depth": depth,
+        "baseline_score": baseline_score, "candidate_score": candidate_score,
+        "trusted": False, "promoted": False,
+    }

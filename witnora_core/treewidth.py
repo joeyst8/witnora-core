@@ -28,9 +28,24 @@ def _eliminate(graph: Graph, var: int) -> Graph:
     return new_graph
 
 
-def find_elimination_order(graph: Graph, width_cap: int) -> list[int] | None:
+def find_elimination_order(
+    graph: Graph, width_cap: int, *, backend: str = "python",
+    max_rust_states: int = 1000000,
+) -> list[int] | None:
     if width_cap < 0 or width_cap > 4:
         raise ValueError("Witnora-Core v0 supports c in the range 0..4")
+    if backend == "rust":
+        from witnora_ve import treewidth_order_native
+        order = treewidth_order_native(
+            [(v, sorted(neighs)) for v, neighs in sorted(graph.items())],
+            width_cap, max_rust_states)
+        if order is not None:
+            checked = verify_elimination_order(graph, order)
+            if checked is None or checked > width_cap:
+                raise AssertionError("Rust exact treewidth order failed Python replay")
+        return order
+    if backend != "python":
+        raise ValueError("unknown treewidth order backend")
 
     failed: set[tuple[tuple[int, ...], tuple[tuple[int, int], ...]]] = set()
 
@@ -61,7 +76,14 @@ def find_elimination_order(graph: Graph, width_cap: int) -> list[int] | None:
     return order
 
 
-def verify_elimination_order(graph: Graph, order: list[int]) -> int | None:
+def verify_elimination_order(graph: Graph, order: list[int], *,
+                             backend: str = "python") -> int | None:
+    if backend == "rust":
+        from witnora_ve import verify_treewidth_order_native
+        return verify_treewidth_order_native(
+            [(v, sorted(neighs)) for v, neighs in sorted(graph.items())], order)
+    if backend != "python":
+        raise ValueError("unknown treewidth verifier backend")
     current: Graph = {var: set(neighs) for var, neighs in graph.items()}
     if sorted(order) != sorted(current):
         return None

@@ -19,7 +19,15 @@ def _popcount(mask: int) -> int:
     return mask.bit_count()
 
 
-def matching_color_bound(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
+def matching_color_bound(n: int, edges: tuple[tuple[int, int], ...],
+                         *, backend="python") -> dict:
+    if backend == "rust":
+        from witnora_ve import matching_color_bound_native
+        bound, cover, paired, coloring = matching_color_bound_native(n, list(edges))
+        return {"bound": bound, "cover": cover, "paired_nonedges": paired,
+                "coloring": coloring}
+    if backend != "python":
+        raise ValueError("unknown matching-bound backend")
     if not 0 <= n <= 11:
         raise ValueError("bounded study only")
     edge_set = set(edges)
@@ -98,7 +106,13 @@ def matching_color_bound(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
 
 
 
-def _connected_components(n: int, edges: tuple[tuple[int, int], ...]) -> list[list[int]]:
+def _connected_components(n: int, edges: tuple[tuple[int, int], ...],
+                          *, backend="python") -> list[list[int]]:
+    if backend == "rust":
+        from witnora_ve import nonedge_graph_bounds_native
+        return nonedge_graph_bounds_native(n, list(edges))[0]
+    if backend != "python":
+        raise ValueError("unknown graph-bounds backend")
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
         neighbors[u].add(v)
@@ -121,7 +135,13 @@ def _connected_components(n: int, edges: tuple[tuple[int, int], ...]) -> list[li
     return components
 
 
-def _is_two_connected(n: int, edges: tuple[tuple[int, int], ...]) -> bool:
+def _is_two_connected(n: int, edges: tuple[tuple[int, int], ...],
+                      *, backend="python") -> bool:
+    if backend == "rust":
+        from witnora_ve import nonedge_graph_bounds_native
+        return nonedge_graph_bounds_native(n, list(edges))[1]
+    if backend != "python":
+        raise ValueError("unknown graph-bounds backend")
     """A connected graph with at least three vertices and no cut vertex."""
     if n < 3 or len(_connected_components(n, edges)) != 1:
         return False
@@ -144,7 +164,13 @@ def _is_two_connected(n: int, edges: tuple[tuple[int, int], ...]) -> bool:
     return True
 
 
-def _brooks_componentwise_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+def _brooks_componentwise_bound(n: int, edges: tuple[tuple[int, int], ...],
+                                *, backend="python") -> int:
+    if backend == "rust":
+        from witnora_ve import nonedge_graph_bounds_native
+        return nonedge_graph_bounds_native(n, list(edges))[2]
+    if backend != "python":
+        raise ValueError("unknown graph-bounds backend")
     """Brooks' theorem on each connected component (K1 uses one color)."""
     components = _connected_components(n, edges)
     answer = 0
@@ -165,7 +191,13 @@ def _brooks_componentwise_bound(n: int, edges: tuple[tuple[int, int], ...]) -> i
     return answer
 
 
-def _degeneracy_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+def _degeneracy_bound(n: int, edges: tuple[tuple[int, int], ...],
+                      *, backend="python") -> int:
+    if backend == "rust":
+        from witnora_ve import nonedge_graph_bounds_native
+        return nonedge_graph_bounds_native(n, list(edges))[3]
+    if backend != "python":
+        raise ValueError("unknown graph-bounds backend")
     """Degeneracy plus one from repeatedly removing a minimum-degree vertex."""
     if n == 0:
         return 0
@@ -182,8 +214,15 @@ def _degeneracy_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     return degeneracy + 1
 
 
-def _dsatur_greedy_coloring(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
+def _dsatur_greedy_coloring(n: int, edges: tuple[tuple[int, int], ...],
+                            *, backend="python") -> dict:
     """Deterministic DSATUR greedy coloring, with a checked witness."""
+    if backend == "rust":
+        from witnora_ve import dsatur_greedy_coloring_native
+        bound, coloring = dsatur_greedy_coloring_native(n, list(edges))
+        return {"bound": bound, "coloring": coloring}
+    if backend != "python":
+        raise ValueError("unknown DSATUR backend")
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
         neighbors[u].add(v)

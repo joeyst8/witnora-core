@@ -34,8 +34,15 @@ class ParitySpoke:
         return self.left ^ self.right
 
 
-def spoke_cnf(spokes: tuple[ParitySpoke, ...]) -> CNFFormula:
+def spoke_cnf(spokes: tuple[ParitySpoke, ...], *,
+              backend: str = "python") -> CNFFormula:
     """Exactly two width-2 XOR encodings per distinct middle variable."""
+    if backend == "rust":
+        from witnora_ve import spoke_cnf_native
+        return CNFFormula.from_raw_clauses(spoke_cnf_native(
+            [(s.middle, s.left, s.right) for s in spokes]))
+    if backend != "python":
+        raise ValueError("unknown spoke backend")
     mids = [spoke.middle for spoke in spokes]
     if len(set(mids)) != len(mids):
         raise ValueError("spoke intermediates must be distinct")
@@ -47,9 +54,26 @@ def spoke_cnf(spokes: tuple[ParitySpoke, ...]) -> CNFFormula:
 
 
 def collapse_spokes(
-    formula: CNFFormula, spokes: tuple[ParitySpoke, ...]
+    formula: CNFFormula, spokes: tuple[ParitySpoke, ...], *,
+    backend: str = "python",
 ) -> dict[str, object]:
     """Check exact scope before using the signature contradiction rule."""
+    if backend == "rust":
+        if type(spokes) is not tuple or not spokes:
+            return {"status": "UNSUPPORTED"}
+        from witnora_ve import collapse_spokes_native
+        status, indices, syndromes, assignment = collapse_spokes_native(
+            formula.to_clause_lists(),
+            [(s.middle, s.left, s.right) for s in spokes])
+        if status == "UNSAT_BY_SPOKE_SYNDROME":
+            return {"status": status, "conflicting_indices": indices,
+                    "syndromes": syndromes,
+                    "claim_boundary": "exact generated spoke CNF; independent Lean theorem"}
+        if status == "SAT_WITH_WITNESS":
+            return {"status": status, "assignment": dict(assignment)}
+        return {"status": "UNSUPPORTED"}
+    if backend != "python":
+        raise ValueError("unknown spoke backend")
     if type(spokes) is not tuple or not spokes:
         return {"status": "UNSUPPORTED"}
     try:
@@ -78,11 +102,12 @@ def collapse_spokes(
     return {"status": "SAT_WITH_WITNESS", "assignment": assignment}
 
 
-def make_spoke_family(count: int, *, contradictory: bool) -> tuple[CNFFormula, tuple[ParitySpoke, ...]]:
+def make_spoke_family(count: int, *, contradictory: bool,
+                      backend: str = "python") -> tuple[CNFFormula, tuple[ParitySpoke, ...]]:
     if type(count) is not int or count < 2:
         raise ValueError("need at least two spokes")
     spokes = tuple(
         ParitySpoke(i + 3, i % 2, (i % 2) ^ (int(contradictory) if i == count - 1 else 0))
         for i in range(count)
     )
-    return spoke_cnf(spokes), spokes
+    return spoke_cnf(spokes, backend=backend), spokes
