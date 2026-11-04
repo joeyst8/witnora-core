@@ -65,7 +65,7 @@ impl CanonicalCnf {
 
     pub fn formula_hash(&self) -> String {
         let digest = Sha256::digest(self.canonical_dimacs().as_bytes());
-        format!("{digest:x}")
+        digest.iter().map(|byte| format!("{byte:02x}")).collect()
     }
 
     pub fn clause_satisfied(clause: &[i32], assignment: &BTreeMap<u32, bool>) -> bool {
