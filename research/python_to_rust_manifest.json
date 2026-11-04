@@ -3308,7 +3308,9 @@
       "path": "witnora_core/two_sat_proof.py",
       "sha": "8d933bf15a284e8e3e974f6eb3b4ad477a1f256a",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/two_sat_scc_witness.rs",
+      "migration_note": "Complete SCC contradiction path and resolution witness for canonical CNFFormula; original raw iterable normalization and Python trust remain references."
     },
     {
       "path": "witnora_core/two_sat.py",
@@ -3606,6 +3608,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41769073739",
       "python_reference_comparisons": 240,
       "scope": "Root local prefix + independent CD replay + component-local suffix with exact global step IDs and first-error parity across 240 seeded full Python verifier cases"
+    },
+    {
+      "id": "R-037",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41769668057",
+      "python_reference_comparisons": 1600,
+      "scope": "Port previously untouched two_sat_proof.py native BFS source-annotated SCC contradiction and complementary resolution clauses; 1600 unsat CNFs exact proof parity"
     }
   ],
   "pending_ci_milestones": [],
@@ -3617,7 +3626,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 536,
-    "parallel_reference": 24
+    "not_migrated": 535,
+    "parallel_reference": 25
   }
 }
