@@ -11,4 +11,5 @@ prefix and cyclic case ordering, 180 randomized finite-value declarations,
 150 clique searches, and malformed color/identifier rejection. Lean kernel
 verification remains separate from the exporter and is not replaced.
 
-Status: awaiting compiled native Rust CI.
+Status: compiled native Rust library, wheel, and all differential tests passed
+in GitHub Actions #41929896950.

@@ -3059,7 +3059,11 @@
       "path": "witnora_core/lean_color_certificate_export.py",
       "sha": "5c79ee33e4eae003e710af2eb4371d9fbce32ad8",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/lean_color_certificate_export.rs",
+      "test": "tests/test_lean_color_certificate_export_rust.py",
+      "verified_milestone": "R-095",
+      "migration_note": "Focused Rust CI #41929896950 passed library, wheel, exact Lean source report parity, 180 randomized Fin declarations, 150 clique searches and malformed certificate checks. Lean still checks proofs."
     },
     {
       "path": "witnora_core/lean_compressed_g14_gate.py",
@@ -3924,8 +3928,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 484,
-    "parallel_reference": 71,
+    "not_migrated": 483,
+    "parallel_reference": 72,
     "partial_native_verified": 5
   }
 }
