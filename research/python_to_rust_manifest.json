@@ -3315,7 +3315,8 @@
       "path": "witnora_core/ve.py",
       "sha": "ea1e0519cb5d457df07f0f68377a5b12b12abe43",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "native_candidate_pending_diff",
+      "native_counterpart": "rust/witnora-ve/src/ve_proof.rs"
     },
     {
       "path": "witnora_core/verification_report.py",
@@ -3480,7 +3481,12 @@
       "scope": "complete deterministic CNF simplifier decisions with exact certificate log parity"
     }
   ],
-  "pending_ci_milestones": [],
+  "pending_ci_milestones": [
+    {
+      "id": "R-020",
+      "scope": "exact proof-aware VE and 1300 source/order differentials"
+    }
+  ],
   "completion_criteria": [
     "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
     "Every script has a Rust executable replacement or is documented as archival-only after review",
