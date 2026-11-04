@@ -23,14 +23,19 @@ from witnora_core.sparse_parity_checks import (
 from witnora_core.eth_clause_violation_parity import CNF, source_digest
 
 
-def source_primal_pairs(cnf: CNF) -> set[tuple[int, int]]:
+def source_primal_pairs(cnf: CNF, *, backend: str = "python") -> set[tuple[int, int]]:
+    if backend == "rust":
+        from witnora_ve import geometry_primal_pairs_native
+        return set(geometry_primal_pairs_native([list(row) for row in cnf]))
+    if backend != "python":
+        raise ValueError("unknown geometry backend")
     return {tuple(sorted((abs(a), abs(b))))
             for clause in cnf for a, b in combinations(clause, 2)}
 
 
 def geometry_aware_sparse_sketch(
     source: list[list[int]] | CNF, nvars: int, *,
-    max_row_width: int = 5,
+    max_row_width: int = 5, backend: str = "python",
 ) -> SparseOddSketch:
     """Deterministic incidence-bucket construction; NO SAT enumeration."""
     cnf = canonical_source(source, nvars)
@@ -39,6 +44,17 @@ def geometry_aware_sparse_sketch(
     if any(len(c) != 3 or len({abs(lit) for lit in c}) != 3
            for c in cnf):
         raise ValueError("geometry-aware prototype supports distinct 3-CNF only")
+    if backend == "rust":
+        from witnora_ve import geometry_aware_rows_native
+        rows = geometry_aware_rows_native(
+            [list(row) for row in cnf], nvars, max_row_width)
+        sketch = SparseOddSketch(nvars=nvars, clause_count=len(cnf),
+            digest=source_digest(cnf), max_row_width=max_row_width,
+            rows=tuple(tuple(row) for row in rows))
+        validate_sparse_odd_sketch(cnf, sketch)
+        return sketch
+    if backend != "python":
+        raise ValueError("unknown geometry backend")
     m = len(cnf)
     incident: dict[int, list[int]] = {v: [] for v in range(1, nvars + 1)}
     scopes = [frozenset(abs(lit) for lit in clause) for clause in cnf]
