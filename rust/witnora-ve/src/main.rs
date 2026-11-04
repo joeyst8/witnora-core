@@ -1,3 +1,5 @@
+mod dimacs;
+
 use std::io::{self, Read};
 use witnora_ve::count_component;
 
@@ -58,6 +60,13 @@ fn run() -> Result<(), String> {
 }
 
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("--fused-dimacs") {
+        if let Err(e) = dimacs::run() {
+            eprintln!("ERROR: {e}");
+            std::process::exit(2);
+        }
+        return;
+    }
     if let Err(e) = run() {
         eprintln!("ERROR: {e}");
         std::process::exit(2);
