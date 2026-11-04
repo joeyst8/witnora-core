@@ -2754,7 +2754,11 @@
       "path": "witnora_core/crc_shannon_oracle.py",
       "sha": "339b56b988c8a2ef55e3ae8962395bfcbdd7893a",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_shannon_oracle.rs",
+      "test": "tests/test_crc_shannon_oracle_rust.py",
+      "verified_milestone": "R-083",
+      "migration_note": "Focused Rust CI #41916191993 passed 160 seeded memoized Shannon/Walsh differential comparisons with cap and high-bit controls."
     },
     {
       "path": "witnora_core/crc_source.py",

@@ -12,4 +12,6 @@ and sparse global variable IDs up to 256. CI also reruns all preceding native
 source comparisons. This recursion remains exponential in the worst case and
 is not a Lean-certified polynomial SAT algorithm.
 
-Status: native CI pending.
+Verified: **focused Rust CI #41916191993 passed** native library tests,
+the Python-accessible wheel and all prior focused source comparisons. The
+manifest records R-083 as `parallel_reference`.
