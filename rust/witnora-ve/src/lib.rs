@@ -33,6 +33,7 @@ pub mod adaptive_lookahead;
 pub mod selective_lookahead;
 pub mod parity_separator_fingerprint;
 pub mod spoke_discovery;
+pub mod multicut_parity_separator;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1184,6 +1185,26 @@ fn discover_parity_spoke_conflicts_native(
     )).collect())
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn bounded_parity_separators_native(
+    source:Vec<Vec<i32>>,max_cut:i32,max_shared:i32,max_trials:i32,
+) -> PyResult<(String,usize,
+               Vec<(Vec<u32>,usize,usize,usize,Vec<Vec<usize>>)>,
+               Option<usize>,usize,usize,bool)> {
+    let out=multicut_parity_separator::bounded_parity_separators(
+        &source,max_cut,max_shared,max_trials,
+    ).map_err(PyValueError::new_err)?;
+    let cuts=out.candidate_cuts.into_iter().map(|c|(
+        c.variables,c.size,c.components_before,c.components_after,
+        c.component_equation_indices,
+    )).collect();
+    Ok((out.source_sha256,out.exact_parity_equations,cuts,
+        out.smallest_cut_size,out.shared_variables_considered,
+        out.trials,out.budget_exhausted))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1240,5 +1261,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(extract_binary_xor_equations_native, module)?)?;
     module.add_function(wrap_pyfunction!(extract_spoke_paths_native, module)?)?;
     module.add_function(wrap_pyfunction!(discover_parity_spoke_conflicts_native, module)?)?;
+    module.add_function(wrap_pyfunction!(bounded_parity_separators_native, module)?)?;
     Ok(())
 }
