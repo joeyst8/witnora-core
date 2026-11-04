@@ -20,7 +20,51 @@ def eliminate_variable(
     var: int,
     width_cap: int,
     logger: StepLogger | None = None,
+    *,
+    backend: str = "python",
 ) -> tuple[str, CNFFormula, dict[str, Any]]:
+    if backend == "rust":
+        from witnora_ve import eliminate_with_proof_native
+        (output_clauses, collapsed, width_observed, refused,
+         discarded, generated, added, removed) = eliminate_with_proof_native(
+            formula.to_clause_lists(), var, width_cap)
+        if not collapsed:
+            return NO_COLLAPSE, formula, {
+                "status": NO_COLLAPSE,
+                "eliminated_variable": var,
+                "reason": "resolvent_exceeds_width_cap",
+                "resolvent": refused,
+                "width_cap": width_cap,
+            }
+        output = CNFFormula(output_clauses)
+        def entries(pairs):
+            return [
+                {"positive_clause": pos, "negative_clause": neg,
+                 "resolvent": resolvent}
+                for pos, neg, resolvent in pairs
+            ]
+        details = {
+            "status": "OK", "eliminated_variable": var,
+            "width_cap": width_cap, "width_observed": width_observed,
+            "tautological_resolvents_discarded": entries(discarded),
+            "generated_resolvents": entries(generated),
+            "added_resolvents": added,
+        }
+        if logger is not None:
+            logger.append(
+                "VE", formula, output, details=details,
+                removed_clauses=removed, added_clauses=added,
+                reconstruction_data={
+                    "eliminated_variable": var,
+                    "removed_clauses": removed,
+                    "added_resolvents": added,
+                    "input_formula_hash": formula.formula_hash,
+                    "output_formula_hash": output.formula_hash,
+                },
+            )
+        return "OK", output, details
+    if backend != "python":
+        raise ValueError("unknown variable elimination backend")
     pos = [clause for clause in formula.clauses if var in clause]
     neg = [clause for clause in formula.clauses if -var in clause]
     removed = sorted(pos + neg, key=lambda c: c.literals)
@@ -107,10 +151,11 @@ def run_variable_elimination(
     order: list[int],
     width_cap: int,
     logger: StepLogger | None = None,
+    *, backend: str = "python",
 ) -> tuple[str, CNFFormula, dict[str, Any]]:
     current = formula
     for var in order:
-        status, current, details = eliminate_variable(current, var, width_cap, logger)
+        status, current, details = eliminate_variable(current, var, width_cap, logger, backend=backend)
         if status != "OK":
             return status, current, details
         if current.contains_empty_clause:
