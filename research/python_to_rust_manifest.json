@@ -3254,7 +3254,10 @@
       "path": "witnora_core/spoke_discovery.py",
       "sha": "2aeb4e21f40268eaf605a5012a86ea739e10941a",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/spoke_discovery.rs",
+      "test": "tests/test_spoke_discovery_rust.py",
+      "verified_milestone": "R-046"
     },
     {
       "path": "witnora_core/strictness_proof.py",
@@ -3691,6 +3694,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41774804239",
       "python_reference_comparisons": 1150,
       "scope": "Source-exact 2..6-arity XOR separator fingerprint: 1050 randomized CNF Python parity, 100 planted hubs, high-arity and incomplete-pattern controls, observational metadata only"
+    },
+    {
+      "id": "R-046",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41836911014",
+      "python_reference_comparisons": 1300,
+      "scope": "Native source-exact binary XOR equation, spoke path and conflicting-syndrome candidate discovery; 1200 seeded random sources, 100 planted contradictions, source clause witnesses validated independently; Lean trust unchanged"
     }
   ],
   "pending_ci_milestones": [],
@@ -3702,7 +3712,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 527,
-    "parallel_reference": 33
+    "not_migrated": 526,
+    "parallel_reference": 34
   }
 }
