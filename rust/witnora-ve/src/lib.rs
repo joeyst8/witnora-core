@@ -24,6 +24,7 @@ pub mod simplifier;
 pub mod ve_proof;
 pub mod two_sat_proof;
 pub mod two_sat_scc_witness;
+pub mod order_experiments;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -993,6 +994,27 @@ fn build_2sat_scc_resolution_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn factor_elimination_order_native(
+    scopes: Vec<Vec<i32>>, nvars: i32, nsource: i32,
+    mode: String, beam: i32,
+) -> PyResult<(usize, usize, Vec<i32>)> {
+    let result=order_experiments::elimination_order(
+        &scopes,nvars,nsource,&mode,beam,
+    ).map_err(PyValueError::new_err)?;
+    Ok((result.induced_width,result.added_fill_edges,result.order))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn replay_factor_elimination_width_native(
+    scopes: Vec<Vec<i32>>, nvars: i32, order: Vec<i32>,
+) -> PyResult<usize> {
+    order_experiments::replay_elimination_width(&scopes,nvars,&order)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -1033,5 +1055,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(eliminate_with_proof_native, module)?)?;
     module.add_function(wrap_pyfunction!(solve_two_sat_proof_native, module)?)?;
     module.add_function(wrap_pyfunction!(build_2sat_scc_resolution_native, module)?)?;
+    module.add_function(wrap_pyfunction!(factor_elimination_order_native, module)?)?;
+    module.add_function(wrap_pyfunction!(replay_factor_elimination_width_native, module)?)?;
     Ok(())
 }
