@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-035)
+name: Rust native Witnora migration differential gate (R-001 through R-036)
 
 on:
   push:
@@ -55,6 +55,7 @@ on:
       - "tests/test_component_verify_rust.py"
       - "tests/test_component_children_rust.py"
       - "tests/test_component_stream_rust.py"
+      - "tests/test_component_prefix_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -124,6 +125,7 @@ on:
       - "tests/test_component_verify_rust.py"
       - "tests/test_component_children_rust.py"
       - "tests/test_component_stream_rust.py"
+      - "tests/test_component_prefix_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -345,3 +347,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_component_stream_rust -v
+      - name: Verify R-036 pre-CD root transitions and component streams against Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_component_prefix_rust -v
