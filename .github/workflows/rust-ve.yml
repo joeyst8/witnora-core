@@ -87,6 +87,7 @@ on:
       - "tests/test_anchor_cut_audit_rust.py"
       - "tests/test_parity_cut_width_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_hard_separator_generator_rust.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "witnora_core/symbolic_implication.py"
       - "witnora_core/targeted_graph_theorems.py"
@@ -217,6 +218,7 @@ on:
       - "tests/test_anchor_cut_audit_rust.py"
       - "tests/test_parity_cut_width_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_hard_separator_generator_rust.py"
       - "witnora_core/symbolic_implication.py"
       - "witnora_core/targeted_graph_theorems.py"
       - "witnora_core/conjecture_triage.py"
@@ -602,3 +604,8 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_hidden_separator_generator_rust -v
+
+      - name: R-069 planted hard separator source native differential
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_hard_separator_generator_rust -v

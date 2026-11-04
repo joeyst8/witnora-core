@@ -2936,7 +2936,9 @@
       "path": "witnora_core/hard_separator_families.py",
       "sha": "16c3b1f0048a761806679324f4eef1926708d576",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/hard_separator_generator.rs",
+      "migration_note": "Python MT19937 source-clause samples retained; Rust deterministic exact-XOR construction and canonical CNF assembly pending CI."
     },
     {
       "path": "witnora_core/hidden_separator_challenge.py",
