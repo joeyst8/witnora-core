@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-042)
+name: Rust native Witnora migration differential gate (R-001 through R-043)
 
 on:
   push:
@@ -62,6 +62,8 @@ on:
       - "tests/test_scaling_families_rust.py"
       - "tests/test_odd_xor_cycle_rust.py"
       - "tests/test_two_ply_rust.py"
+      - "tests/test_adaptive_lookahead_rust.py"
+      - "witnora_core/adaptive_lookahead_prototype.py"
       - "witnora_core/lookahead_pivot_prototype.py"
       - "witnora_core/cycle_discovery.py"
       - "witnora_core/separator_scaling_families.py"
@@ -144,6 +146,8 @@ on:
       - "tests/test_scaling_families_rust.py"
       - "tests/test_odd_xor_cycle_rust.py"
       - "tests/test_two_ply_rust.py"
+      - "tests/test_adaptive_lookahead_rust.py"
+      - "witnora_core/adaptive_lookahead_prototype.py"
       - "witnora_core/lookahead_pivot_prototype.py"
       - "witnora_core/cycle_discovery.py"
       - "witnora_core/separator_scaling_families.py"
@@ -399,3 +403,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_two_ply_rust -v
+      - name: Verify R-043 adaptive bounded search parity and SAT preservation
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_adaptive_lookahead_rust -v
