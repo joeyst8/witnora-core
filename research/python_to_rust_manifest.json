@@ -3315,7 +3315,7 @@
       "path": "witnora_core/ve.py",
       "sha": "ea1e0519cb5d457df07f0f68377a5b12b12abe43",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/ve_proof.rs"
     },
     {
@@ -3479,12 +3479,19 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41751421413",
       "python_reference_comparisons": 1000,
       "scope": "complete deterministic CNF simplifier decisions with exact certificate log parity"
+    },
+    {
+      "id": "R-020",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41752174357",
+      "python_reference_comparisons": 1300,
+      "scope": "variable-elimination resolvents, refusals, full order replay, certificate logs"
     }
   ],
   "pending_ci_milestones": [
     {
-      "id": "R-020",
-      "scope": "exact proof-aware VE and 1300 source/order differentials"
+      "id": "R-021",
+      "scope": "full 2-SAT SCC graph/component/certificate metadata parity"
     }
   ],
   "completion_criteria": [
