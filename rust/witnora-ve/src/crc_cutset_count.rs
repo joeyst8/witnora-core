@@ -50,7 +50,7 @@ pub fn count(normalized:&[(String,String)],boundary:&[usize],separator:&[usize],
     let mut largest_component_count=0usize;
     for branch in 0..branches{
         let condition=separator.iter().enumerate()
-            .filter(|(i,_)|(branch>>i)&1!=0)
+            .filter(|(i,_)|(branch>>*i)&1!=0)
             .fold(BigUint::zero(),|acc,(_,&v)|acc|mask_bit(v));
         let missing_separator_bits=&separator_mask ^ &condition;
         let mut residual=Vec::new();
@@ -105,7 +105,7 @@ pub fn count(normalized:&[(String,String)],boundary:&[usize],separator:&[usize],
             states+=attempts;
             let mut models=0usize;
             for packed in 0..attempts{
-                let bits=vars.iter().enumerate().filter(|(i,_)|(packed>>i)&1!=0)
+                let bits=vars.iter().enumerate().filter(|(i,_)|(packed>>*i)&1!=0)
                     .fold(BigUint::zero(),|acc,(_,&v)|acc|mask_bit(v));
                 if local.iter().all(|(z,o)|
                     !((&bits & z).is_zero() && (&bits & o)==*o)){
