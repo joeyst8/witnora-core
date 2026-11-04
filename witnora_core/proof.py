@@ -207,11 +207,30 @@ def _with_drat_trim_result(
     return DRATExport(drat_export.proof_text, status)
 
 
+def certificate_bundle_file_hashes(
+    files: dict[str, str], *, backend: str = "python",
+) -> dict[str, dict[str, str]]:
+    """Hash exact UTF-8 certificate text payloads into the manifest file map."""
+    if backend == "rust":
+        from witnora_ve import certificate_file_digests_native
+        return {
+            name: {"sha256": digest}
+            for name, digest in certificate_file_digests_native(list(files.items()))
+        }
+    if backend != "python":
+        raise ValueError("unknown certificate bundle hash backend")
+    return {
+        name: {"sha256": sha256_text(content)}
+        for name, content in sorted(files.items())
+    }
+
+
 def _manifest(
     original_formula: CNFFormula,
     path: CollapsePath,
     files: dict[str, str],
     drat_export: DRATExport | None = None,
+    *, hash_backend: str = "python",
 ) -> dict[str, Any]:
     drat_status = drat_export.status if drat_export is not None else {
         "drat_export_status": "NOT_REQUESTED",
@@ -241,10 +260,7 @@ def _manifest(
         "external_drat": bool(drat_status.get("drat_export_status") == "EXPORTED"),
         "drat_export_status": drat_status.get("drat_export_status"),
         "xor_used": path.xor_data is not None,
-        "files": {
-            name: {"sha256": sha256_text(content)}
-            for name, content in sorted(files.items())
-        },
+        "files": certificate_bundle_file_hashes(files, backend=hash_backend),
     }
 
 
@@ -262,6 +278,7 @@ def export_certificate_bundle(
     xor_drat_max_proof_bytes: int = 5_000_000,
     xor_drat_timeout_seconds: float | None = 120.0,
     xor_elim_order: str = "gaussian",
+    hash_backend: str = "python",
 ) -> Path:
     """Write a deterministic .wcert directory or .wcert.json certificate."""
 
@@ -289,7 +306,7 @@ def export_certificate_bundle(
     if drat_export is not None and not (path.status == XOR_UNSAT_NATIVE and export_xor_drat):
         drat_export = _with_drat_trim_result(drat_export, original_text, drat_trim_path)
     files = _bundle_files(original_formula, path, original_text, drat_export)
-    manifest = _manifest(original_formula, path, files, drat_export)
+    manifest = _manifest(original_formula, path, files, drat_export, hash_backend=hash_backend)
     manifest_text = stable_json(manifest)
 
     if output.suffix == ".json":
