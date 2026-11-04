@@ -11,4 +11,5 @@ The differential gate compares three complete bounded challenges, a triangle
 invariant evaluation and malformed input. Counterexamples are empirical
 refutations only; surviving claims are not automatically proved or novel.
 
-Status: awaiting native CI.
+Status: native Rust library, extension wheel and complete differential tests
+passed in GitHub Actions #41926333458.

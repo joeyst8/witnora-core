@@ -3414,8 +3414,11 @@
       "path": "witnora_core/targeted_graph_theorems.py",
       "sha": "de3c105606598f0ebceab8d21ed1ef1604b4247e",
       "group": "witnora_core",
-      "status": "partial_native_verified",
-      "native_counterpart": "rust/witnora-ve/src/targeted_graph_families.rs"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/targeted_graph_families.rs",
+      "test": "tests/test_targeted_graph_challenge_rust.py",
+      "verified_milestone": "R-092",
+      "migration_note": "Focused Rust CI #41926333458 passed native library, wheel and three full targeted graph challenge reports. R-060 family constructors are now joined by native R-092 invariant and falsification evaluation."
     },
     {
       "path": "witnora_core/tc063_theorem_hardening.py",
@@ -3914,7 +3917,7 @@
   ],
   "current_status_counts": {
     "not_migrated": 486,
-    "parallel_reference": 68,
-    "partial_native_verified": 6
+    "parallel_reference": 69,
+    "partial_native_verified": 5
   }
 }
