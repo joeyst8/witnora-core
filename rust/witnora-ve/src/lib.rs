@@ -76,6 +76,7 @@ pub mod expression_conjecture_search;
 pub mod graph_conjecture_lab;
 pub mod conditional_graph_conjectures;
 pub mod lean_numeric_certificate_export;
+pub mod lean_ascii_certificate_export;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1866,6 +1867,29 @@ fn lean_numeric_emit_native(cases:Vec<lean_numeric_certificate_export::Case>)->S
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn lean_ascii_serialize_native(n:usize,edges:Vec<(usize,usize)>,
+    colors:Vec<usize>,clique:Vec<usize>,k:usize)->PyResult<Vec<u8>>{
+    if n==0 || k==0{return Err(PyValueError::new_err("positive graph/order required"));}
+    Ok(lean_ascii_certificate_export::serialize(n,&edges,&colors,&clique,k))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn lean_ascii_bytes_native(data:Vec<u8>)->String{
+    lean_ascii_certificate_export::lean_bytes(&data)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn lean_ascii_emit_native(cases:Vec<lean_ascii_certificate_export::Case>)->PyResult<String>{
+    if cases.iter().any(|(_,n,_,_,_,k)|*n==0 || *k==0){
+        return Err(PyValueError::new_err("positive graph/order required"));
+    }
+    Ok(lean_ascii_certificate_export::emit(&cases))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2123,6 +2147,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(conditional_graph_conjectures_run_native, module)?)?;
     module.add_function(wrap_pyfunction!(targeted_graph_challenge_native, module)?)?;
     module.add_function(wrap_pyfunction!(lean_numeric_emit_native, module)?)?;
+    module.add_function(wrap_pyfunction!(lean_ascii_serialize_native, module)?)?;
+    module.add_function(wrap_pyfunction!(lean_ascii_bytes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(lean_ascii_emit_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

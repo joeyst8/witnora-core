@@ -11,9 +11,15 @@ from .lean_color_certificate_export import _validate, generate_default_cases
 
 
 def serialize_ascii_certificate(n: int, edges: tuple[tuple[int, int], ...],
-                                colors: list[int], clique: tuple[int, ...]) -> bytes:
+                                colors: list[int], clique: tuple[int, ...],
+                                *, backend="python") -> bytes:
     """Canonical N|K|edges|colors|clique, with zero-based max indices."""
     k = _validate(n, edges, colors, clique)
+    if backend == "rust":
+        from witnora_ve import lean_ascii_serialize_native
+        return bytes(lean_ascii_serialize_native(n, list(edges), list(colors), list(clique), k))
+    if backend != "python":
+        raise ValueError("unknown ASCII exporter backend")
     fields = (
         str(n - 1),
         str(k - 1),
@@ -24,16 +30,32 @@ def serialize_ascii_certificate(n: int, edges: tuple[tuple[int, int], ...],
     return "|".join(fields).encode("ascii")
 
 
-def lean_bytes(data: bytes) -> str:
+def lean_bytes(data: bytes, *, backend="python") -> str:
+    if backend == "rust":
+        from witnora_ve import lean_ascii_bytes_native
+        return lean_ascii_bytes_native(list(data))
+    if backend != "python":
+        raise ValueError("unknown ASCII byte backend")
     return "[" + ", ".join(str(b) for b in data) + "]"
 
 
-def emit_ascii_lean(cases=None) -> str:
+def emit_ascii_lean(cases=None, *, backend="python") -> str:
     if cases is None:
         cases = generate_default_cases()
     names = [case[0] for case in cases]
     if len(names) != len(set(names)):
         raise ValueError("duplicate case name")
+    if backend == "rust":
+        from witnora_ve import lean_ascii_emit_native
+        validated = []
+        for name, n, edges, colors, clique in cases:
+            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", name):
+                raise ValueError("invalid Lean declaration name")
+            k = _validate(n, edges, colors, clique)
+            validated.append((name, n, list(edges), list(colors), list(clique), k))
+        return lean_ascii_emit_native(validated)
+    if backend != "python":
+        raise ValueError("unknown ASCII exporter backend")
     lines = [
         "import Witnora.KernelAsciiNumericCertificate",
         "",
