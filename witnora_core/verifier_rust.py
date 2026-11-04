@@ -50,3 +50,37 @@ def replay_local_certificate_in_rust(
         original.to_clause_lists(), packed, int(width_cap), final_formula_hash,
     )
     return bool(ok), CNFFormula.from_raw_clauses(clauses), error
+
+
+def verify_cd_step_in_rust(
+    step: CollapseStep, current: CNFFormula,
+) -> tuple[bool, dict[str, CNFFormula], str | None]:
+    """Verify a CD step in Rust and materialize only authenticated children.
+
+    Opt-in, non-recursive: the trusted Python verifier remains the default
+    for certificate DAGs and final SAT/UNSAT outcomes.
+    """
+    if step.type != "CD":
+        raise ValueError("native CD verifier only accepts CD steps")
+    from witnora_ve import verify_cd_children_native
+
+    details = step.details
+    verified, children, error = verify_cd_children_native(
+        current.to_clause_lists(), step.output_formula_hash,
+        int(details.get("component_count", 0)),
+        [tuple(int(v) for v in edge)
+         for edge in details.get("incidence_edges", [])],
+        [
+            (
+                int(record["component_id"]), str(record["formula_hash"]),
+                [int(v) for v in record.get("variables", [])],
+                [[int(v) for v in clause] for clause in record.get("clauses", [])],
+                [int(idx) for idx in record.get("clause_indices", [])],
+            )
+            for record in details.get("components", [])
+        ],
+    )
+    return bool(verified), {
+        component_id: CNFFormula.from_raw_clauses(clauses)
+        for component_id, clauses in children
+    }, error
