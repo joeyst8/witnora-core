@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-024)
+name: Rust native Witnora migration differential gate (R-001 through R-025)
 
 on:
   push:
@@ -40,6 +40,8 @@ on:
       - "tests/test_bce_digest_rust.py"
       - "witnora_core/certificate.py"
       - "tests/test_step_logger_rust.py"
+      - "witnora_core/proof.py"
+      - "tests/test_certificate_json_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -94,6 +96,8 @@ on:
       - "tests/test_bce_digest_rust.py"
       - "witnora_core/certificate.py"
       - "tests/test_step_logger_rust.py"
+      - "witnora_core/proof.py"
+      - "tests/test_certificate_json_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -271,3 +275,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_step_logger_rust -v
+      - name: Verify R-025 byte-exact stable certificate JSON and SHA256 against Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_certificate_json_rust -v
