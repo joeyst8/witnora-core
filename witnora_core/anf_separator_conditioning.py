@@ -165,7 +165,8 @@ def count_common_zeros_conditioned(
         max_candidate_checks=max_candidate_checks, backend=backend)
     if selected is None:
         r = count_common_zeros_structured(equations, nvars,
-                                           max_states=max_states)
+                                           max_states=max_states,
+                                           backend=backend)
         return SeparatorCountResult(
             r.satisfying_assignments, (), False, 1, r.unique_states,
             r.component_splits, r.cofactor_hits, r.forced_assignments,
@@ -183,13 +184,14 @@ def count_common_zeros_conditioned(
             # x_v=0 means the polynomial x_v must vanish;
             # x_v=1 means the polynomial 1+x_v must vanish.
             pin = variable(v)
-            pins.append(xor_polynomials(ONE, pin) if bit else pin)
+            pins.append(xor_polynomials(ONE, pin, backend=backend) if bit else pin)
         budget = max_states - states
         if budget < 1:
             raise ANFCountingBudgetExceeded(
                 f"max total symbolic states {max_states} exceeded")
         r = count_common_zeros_structured(
-            equations + tuple(pins), nvars, max_states=budget)
+            equations + tuple(pins), nvars, max_states=budget,
+            backend=backend)
         total += r.satisfying_assignments
         states += r.unique_states
         splits += r.component_splits
