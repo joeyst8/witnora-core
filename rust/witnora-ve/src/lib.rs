@@ -89,6 +89,7 @@ pub mod nonedge_matching_dsatur;
 pub mod nonedge_graph_bounds;
 pub mod nonedge_matching_bound;
 pub mod violation_image_anf;
+pub mod anf_separator_conditioning;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2046,6 +2047,14 @@ fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn anf_residual_component_sizes_native(scopes:Vec<String>,removed_mask:String)
+    ->PyResult<Vec<usize>>{
+    anf_separator_conditioning::component_sizes(&scopes,&removed_mask)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2326,6 +2335,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(anf_substitute_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_canonical_equations_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

@@ -47,8 +47,15 @@ def polynomial_scopes(equations: tuple[Polynomial, ...]) -> tuple[int, ...]:
 
 def residual_component_sizes(
     scopes: tuple[int, ...], removed_mask: int,
+    *, backend="python",
 ) -> tuple[int, ...]:
     """Connected component sizes after conditioning away variables."""
+    if backend == "rust":
+        from witnora_ve import anf_residual_component_sizes_native
+        return tuple(anf_residual_component_sizes_native(
+            [str(scope) for scope in scopes], str(removed_mask)))
+    if backend != "python":
+        raise ValueError("unknown ANF separator backend")
     parent: dict[int, int] = {}
 
     def root(a: int) -> int:
@@ -84,6 +91,7 @@ def find_bounded_separator(
     *,
     max_separator_size: int = 2,
     max_candidate_checks: int = 1_000,
+    backend="python",
 ) -> tuple[tuple[int, ...] | None, int]:
     """Find a small set whose removal produces >=2 nonempty components.
 
@@ -98,7 +106,7 @@ def find_bounded_separator(
         active |= scope
     if active >> nvars:
         raise ValueError("equation uses an out-of-range variable")
-    if len(residual_component_sizes(scopes, 0)) != 1:
+    if len(residual_component_sizes(scopes, 0, backend=backend)) != 1:
         return None, 0
 
     variables = tuple(v for v in range(1, nvars + 1)
@@ -120,7 +128,7 @@ def find_bounded_separator(
                 return (best[1] if best else None), checked
             checked += 1
             removed = sum(1 << (v - 1) for v in selected)
-            sizes = residual_component_sizes(scopes, removed)
+            sizes = residual_component_sizes(scopes, removed, backend=backend)
             if len(sizes) < 2:
                 continue
             # Prefer balanced decompositions, then more components.
@@ -139,13 +147,14 @@ def count_common_zeros_conditioned(
     max_states: int = 100_000,
     max_separator_size: int = 2,
     max_candidate_checks: int = 1_000,
+    backend="python",
 ) -> SeparatorCountResult:
     """Exact #solutions, using small-separator conditioning if found."""
     if max_states < 1:
         raise ValueError("max_states must be positive")
     selected, checks = find_bounded_separator(
         equations, nvars, max_separator_size=max_separator_size,
-        max_candidate_checks=max_candidate_checks)
+        max_candidate_checks=max_candidate_checks, backend=backend)
     if selected is None:
         r = count_common_zeros_structured(equations, nvars,
                                            max_states=max_states)

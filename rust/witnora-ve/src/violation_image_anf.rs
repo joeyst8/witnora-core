@@ -60,7 +60,9 @@ struct Counter{
 impl Counter{
  fn solve(&mut self,system:&[Polynomial],remaining:&[usize])->Result<BigUint,String>{
   let current=canonical_equations(system);
-  if current.iter().any(|eq|eq==&vec![vec![]]){return Ok(BigUint::zero());}
+  if current.iter().any(|eq|eq.len()==1 && eq[0].is_empty()){
+   return Ok(BigUint::zero());
+  }
   if current.is_empty(){return Ok(BigUint::one()<<remaining.len());}
   let key=(current.clone(),remaining.to_vec());
   if let Some(cached)=self.memo.get(&key){self.hits+=1;return Ok(cached.clone());}
