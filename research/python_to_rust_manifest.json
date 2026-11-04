@@ -2807,7 +2807,11 @@
       "path": "witnora_core/crc_variable_elimination.py",
       "sha": "87b92534ee56e86b4c051fe37dc59d0587864602",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_variable_elimination.rs",
+      "test": "tests/test_crc_variable_elimination_rust.py",
+      "verified_milestone": "R-096",
+      "migration_note": "Focused Rust CI #41931233354 passed compiled native library and wheel, 360 seeded signed-CNF variable-elimination parity cases, budget controls, and high bit positions through variable 256."
     },
     {
       "path": "witnora_core/cycle_discovery.py",
@@ -3928,8 +3932,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 483,
-    "parallel_reference": 72,
+    "not_migrated": 482,
+    "parallel_reference": 73,
     "partial_native_verified": 5
   }
 }

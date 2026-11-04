@@ -13,4 +13,7 @@ out-of-range masks, and high bit masks up to variable ID 256. The algorithm rema
 exponential in intermediate factor width and makes no general #SAT
 performance breakthrough claim.
 
-Status: awaiting native CI.
+Status: native library compilation, extension build and exact differential
+tests passed in GitHub Actions #41931233354. The earlier run #41930825246
+found an out-of-contract variable-ID-257 fixture, corrected to ID 256 before
+the successful rerun.
