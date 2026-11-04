@@ -3322,7 +3322,8 @@
       "path": "witnora_core/symbolic_implication.py",
       "sha": "adf3b010ceff73964bea43b1b67f95640e0ee985",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs"
     },
     {
       "path": "witnora_core/targeted_graph_theorems.py",

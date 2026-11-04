@@ -41,6 +41,12 @@ def bound_path(smaller: str, larger: str) -> list[str] | None:
     return None
 
 
+def bound_path_rust(smaller: str, larger: str) -> list[str] | None:
+    """Opt-in native evaluation of the same finite axiom graph."""
+    from witnora_ve import symbolic_bound_path_native
+    return symbolic_bound_path_native(smaller, larger)
+
+
 def normalize(expression) -> tuple[str, list[str]]:
     if expression.op == "atom":
         return expression.a, []
@@ -59,6 +65,15 @@ def normalize(expression) -> tuple[str, list[str]]:
         if path is not None:
             return (b if op == "min" else a), path
     return expression.label, []
+
+
+def normalize_rust(expression) -> tuple[str, list[str]]:
+    """Opt-in syntactic normalization; never constitutes formal verification."""
+    from witnora_ve import symbolic_normalize_native
+    value, rules = symbolic_normalize_native(
+        expression.op, expression.a, expression.b, expression.label
+    )
+    return value, rules
 
 
 def derive_equality(title: str) -> dict:

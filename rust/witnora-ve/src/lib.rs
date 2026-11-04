@@ -44,6 +44,7 @@ pub mod g5_elimination_activity;
 pub mod g5_boundary_path_signal;
 pub mod sparse_parity_checks;
 pub mod eth_clause_violation_parity;
+pub mod symbolic_implication;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -569,6 +570,18 @@ fn first_subsumption_native(
     let normalized = cnf::CanonicalCnf::from_signed(&clauses)
         .map_err(PyValueError::new_err)?;
     Ok(normalized.first_strict_subsumption())
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn symbolic_bound_path_native(smaller: &str, larger: &str) -> Option<Vec<String>> {
+    symbolic_implication::bound_path(smaller, larger)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn symbolic_normalize_native(op: &str, a: &str, b: &str, label: &str) -> (String, Vec<String>) {
+    symbolic_implication::normalize(op, a, b, label)
 }
 
 #[cfg(feature = "python")]
@@ -1580,6 +1593,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(canonical_cnf_native, module)?)?;
     module.add_function(wrap_pyfunction!(canonical_cnf_hash_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
+    module.add_function(wrap_pyfunction!(symbolic_bound_path_native, module)?)?;
+    module.add_function(wrap_pyfunction!(symbolic_normalize_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
