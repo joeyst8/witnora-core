@@ -2857,7 +2857,11 @@
       "path": "witnora_core/dsatur_adversarial_lab.py",
       "sha": "c8ccbb97cea1b96e988204bb30d09df3b4770640",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/dsatur_adversarial_lab.rs",
+      "test": "tests/test_dsatur_exact_coloring_rust.py",
+      "verified_milestone": "R-097",
+      "migration_note": "Focused Rust CI #41932752484 passed compiled library, wheel and 360 exact randomized k-coloring witness comparisons, family witnesses up to 16 vertices, chromatic certificates and malformed controls."
     },
     {
       "path": "witnora_core/dsatur_bipartite_audit.py",
@@ -3932,8 +3936,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 482,
-    "parallel_reference": 73,
+    "not_migrated": 481,
+    "parallel_reference": 74,
     "partial_native_verified": 5
   }
 }

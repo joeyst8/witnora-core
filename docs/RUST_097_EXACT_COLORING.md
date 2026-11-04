@@ -11,4 +11,5 @@ families up to 16 vertices, full chromatic certificates and malformed cases.
 The exhaustive decision procedure is exponential; this is an implementation
 migration and supplies neither a complexity breakthrough nor a Lean theorem.
 
-Status: native CI pending.
+Status: Rust library compilation, native wheel and focused differential gate
+passed in GitHub Actions #41932752484.
