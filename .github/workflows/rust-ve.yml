@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-013)
+name: Rust native Witnora migration differential gate (R-001 through R-014)
 
 on:
   push:
@@ -27,6 +27,8 @@ on:
       - "witnora_core/cnf.py"
       - "witnora_core/dimacs.py"
       - "witnora_core/rup_indexed_propagation.py"
+      - "witnora_core/drat_check.py"
+      - "tests/test_rup_checker_rust.py"
       - "tests/test_rup_indexed_rust.py"
       - "tests/test_dimacs_evidence_rust.py"
       - "witnora_core/cnf_rust.py"
@@ -63,6 +65,8 @@ on:
       - "witnora_core/cnf.py"
       - "witnora_core/dimacs.py"
       - "witnora_core/rup_indexed_propagation.py"
+      - "witnora_core/drat_check.py"
+      - "tests/test_rup_checker_rust.py"
       - "tests/test_rup_indexed_rust.py"
       - "tests/test_dimacs_evidence_rust.py"
       - "witnora_core/cnf_rust.py"
@@ -183,3 +187,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_rup_indexed_rust -v
+      - name: Verify R-014 exact RUP-subset replay decisions and warnings against Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_rup_checker_rust -v
