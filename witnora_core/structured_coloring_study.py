@@ -79,8 +79,14 @@ def structured_graphs(seed: int = 20261102, per_family: int = 60):
         yield "k_tree", n, _edges_from_set(edges)
 
 
-def greedy_clique_lower_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
+def greedy_clique_lower_bound(n: int, edges: tuple[tuple[int, int], ...],
+                              *, backend="python") -> int:
     """Return the size of an actual clique, hence a certified chi lower bound."""
+    if backend == "rust":
+        from witnora_ve import greedy_clique_lower_bound_native
+        return greedy_clique_lower_bound_native(n, list(edges))
+    if backend != "python":
+        raise ValueError("unknown greedy clique backend")
     if n == 0:
         return 0
     adjacency = [set() for _ in range(n)]
@@ -100,38 +106,40 @@ def greedy_clique_lower_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int
     return best
 
 
-def ungated_repair(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
+def ungated_repair(n: int, edges: tuple[tuple[int, int], ...],
+                   *, backend="python") -> dict:
     """No chromatic-oracle calls, with capped local search per ordinary graph."""
     base = _dsatur_greedy_coloring(n, edges)
     best = {"bound": base["bound"], "coloring": base["coloring"], "stage": "dsatur"}
     # A witnessed clique of size k certifies that a proper k-coloring is
     # optimal; no exact chromatic oracle or speculative repair is needed.
-    if greedy_clique_lower_bound(n, edges) == base["bound"]:
+    if greedy_clique_lower_bound(n, edges, backend=backend) == base["bound"]:
         return {**best, "stage": "clique_certified"}
     multi = multistart_dsatur(n, edges, starts=8)
     if multi["bound"] < best["bound"]:
         best = {**multi, "stage": "multistart"}
     if best["bound"] == base["bound"]:
         local = bounded_recolor(n, edges, base["coloring"],
-                                max_changed=5, max_nodes=3000)
+                                max_changed=5, max_nodes=3000, backend=backend)
         if local["bound"] < best["bound"]:
             best = {**local, "stage": "local_recolor"}
     if best["bound"] == base["bound"]:
         single = kempe_repair(n, edges, base["coloring"],
-                              max_swaps=25, max_nodes_each=400)
+                              max_swaps=25, max_nodes_each=400, backend=backend)
         if single["bound"] < best["bound"]:
             best = {**single, "stage": "single_kempe"}
     if best["bound"] == base["bound"]:
         double = double_kempe_repair(n, edges, base["coloring"],
                                     first_limit=8, second_limit=8,
-                                    total_limit=40, recolor_nodes=300)
+                                    total_limit=40, recolor_nodes=300,
+                                    backend=backend)
         if double["bound"] < best["bound"]:
             best = {**double, "stage": "double_kempe"}
     assert _checked(n, edges, best["coloring"])
     return best
 
 
-def run_structured_study() -> dict:
+def run_structured_study(*, backend="python") -> dict:
     plan = {"seed": 20261102, "families": ["planted_coloring", "bipartite",
             "circulant", "line_graph", "k_tree"], "per_family": 60,
             "total": 300, "oracle_gated": False}
@@ -149,12 +157,14 @@ def run_structured_study() -> dict:
         base = _dsatur_greedy_coloring(n, edges)
         stats["dsatur_seconds"] += perf_counter() - start
         start = perf_counter()
-        repaired = ungated_repair(n, edges)
+        repaired = ungated_repair(n, edges, backend=backend)
         stats["repair_seconds"] += perf_counter() - start
 
         # Scoring oracle called only AFTER the full repair decision.
-        better_than_greedy = exact_k_coloring(n, edges, base["bound"] - 1)
-        better_than_repair = exact_k_coloring(n, edges, repaired["bound"] - 1)
+        better_than_greedy = exact_k_coloring(n, edges, base["bound"] - 1,
+                                             backend=backend)
+        better_than_repair = exact_k_coloring(n, edges, repaired["bound"] - 1,
+                                             backend=backend)
         dsatur_failed = better_than_greedy is not None
         repair_failed = better_than_repair is not None
         improved = repaired["bound"] < base["bound"]

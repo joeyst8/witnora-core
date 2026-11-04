@@ -2603,7 +2603,11 @@
       "path": "witnora_core/color_repair_lab.py",
       "sha": "2d4b3563767fccee4cbbfdc12ce15f4fe066a978",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/color_repair_lab.rs",
+      "test": "tests/test_color_repair_rust.py",
+      "verified_milestone": "R-098",
+      "migration_note": "Focused Rust CI #41933655931 passed native bounded recolor exact-result, visit accounting and search budget comparisons. Seeded multistart DSATUR still runs in Python."
     },
     {
       "path": "witnora_core/color_selector_lab.py",
@@ -3045,7 +3049,11 @@
       "path": "witnora_core/kempe_repair_lab.py",
       "sha": "080b3de240b204657ea7b4239f4bc5bb6ace14c3",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/kempe_repair_lab.rs",
+      "test": "tests/test_kempe_repair_rust.py",
+      "verified_milestone": "R-099",
+      "migration_note": "Focused Rust CI #41933655931 passed deterministic Kempe component swap comparisons and combined native recolor outcomes. Python experiment sampling and control flow retained."
     },
     {
       "path": "witnora_core/lean_ascii_certificate_export.py",
@@ -3936,8 +3944,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 481,
-    "parallel_reference": 74,
-    "partial_native_verified": 5
+    "not_migrated": 479,
+    "parallel_reference": 75,
+    "partial_native_verified": 6
   }
 }

@@ -82,6 +82,8 @@ pub mod crc_variable_elimination;
 pub mod dsatur_adversarial_lab;
 pub mod color_repair_lab;
 pub mod kempe_repair_lab;
+pub mod double_kempe_lab;
+pub mod structured_coloring_study;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1952,6 +1954,21 @@ fn kempe_swaps_native(n:usize,edges:Vec<(usize,usize)>,initial:Vec<usize>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn double_kempe_repair_native(n:usize,edges:Vec<(usize,usize)>,original:Vec<usize>,
+    first_limit:usize,second_limit:usize,total_limit:usize,recolor_nodes:usize)
+    ->PyResult<double_kempe_lab::Answer>{
+    double_kempe_lab::repair(n,&edges,&original,first_limit,second_limit,total_limit,recolor_nodes)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn greedy_clique_lower_bound_native(n:usize,edges:Vec<(usize,usize)>)->PyResult<usize>{
+    structured_coloring_study::greedy_clique(n,&edges).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2219,6 +2236,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(dsatur_exact_k_coloring_native, module)?)?;
     module.add_function(wrap_pyfunction!(color_bounded_recolor_native, module)?)?;
     module.add_function(wrap_pyfunction!(kempe_swaps_native, module)?)?;
+    module.add_function(wrap_pyfunction!(double_kempe_repair_native, module)?)?;
+    module.add_function(wrap_pyfunction!(greedy_clique_lower_bound_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

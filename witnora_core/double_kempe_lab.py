@@ -17,11 +17,22 @@ from .nonedge_matching_bound import _dsatur_greedy_coloring
 def double_kempe_repair(n: int, edges: tuple[tuple[int, int], ...],
                         original: list[int], first_limit: int = 30,
                         second_limit: int = 30, total_limit: int = 500,
-                        recolor_nodes: int = 1200) -> dict:
+                        recolor_nodes: int = 1200, *, backend="python") -> dict:
     if any(x < 1 for x in (first_limit, second_limit, total_limit, recolor_nodes)):
         raise ValueError("positive search budgets required")
     if not _checked(n, edges, original):
         raise ValueError("invalid initial proper coloring")
+    if backend == "rust":
+        from witnora_ve import double_kempe_repair_native
+        (bound, coloring, improved, attempts, first_swap, second_swap,
+         recolor_count) = double_kempe_repair_native(
+            n, list(edges), original, first_limit, second_limit,
+            total_limit, recolor_nodes)
+        return {"bound": bound, "coloring": coloring, "improved": improved,
+                "attempts": attempts, "first_swap": first_swap,
+                "second_swap": second_swap, "recolor_nodes": recolor_count}
+    if backend != "python":
+        raise ValueError("unknown double Kempe backend")
     original_k = max(original, default=-1) + 1
     attempts = 0
     visited = {tuple(original)}
@@ -64,7 +75,7 @@ def double_kempe_repair(n: int, edges: tuple[tuple[int, int], ...],
             "second_swap": [], "recolor_nodes": None}
 
 
-def run_double_kempe_experiment() -> dict:
+def run_double_kempe_experiment(*, backend="python") -> dict:
     orders = (10, 12, 14, 16)
     densities = (0.15, 0.30, 0.45, 0.60, 0.75)
     per_cell = 120
@@ -91,22 +102,26 @@ def run_double_kempe_experiment() -> dict:
                     edges = tuple((u, v) for u, v in combinations(range(n), 2)
                                   if rng.random() < density)
                     base = _dsatur_greedy_coloring(n, edges)
-                    better = exact_k_coloring(n, edges, base["bound"] - 1)
+                    better = exact_k_coloring(n, edges, base["bound"] - 1,
+                                              backend=backend)
                     stats["graphs"] += 1
                     if better is None:
                         continue
                     stats["dsatur_failures"] += 1
                     multi = multistart_dsatur(n, edges)
-                    recolor = bounded_recolor(n, edges, base["coloring"])
+                    recolor = bounded_recolor(n, edges, base["coloring"],
+                                             backend=backend)
                     if min(multi["bound"], recolor["bound"]) < base["bound"]:
                         stats["v22_fixed"] += 1
                         continue
-                    single = kempe_repair(n, edges, base["coloring"])
+                    single = kempe_repair(n, edges, base["coloring"],
+                                          backend=backend)
                     if single["improved"]:
                         stats["v23_additional_fixed"] += 1
                         continue
                     stats["v23_unresolved"] += 1
-                    attempt = double_kempe_repair(n, edges, base["coloring"])
+                    attempt = double_kempe_repair(n, edges, base["coloring"],
+                                                  backend=backend)
                     stats["double_swap_attempts"] += attempt["attempts"]
                     details = {"n": n, "density": density, "index": index,
                                "edges": [list(e) for e in edges],
