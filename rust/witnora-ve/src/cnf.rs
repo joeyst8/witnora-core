@@ -5,6 +5,7 @@
 //! and tautological clauses are discarded. An empty clause is retained.
 
 use std::collections::{BTreeMap, BTreeSet};
+use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CanonicalCnf {
@@ -62,6 +63,11 @@ impl CanonicalCnf {
         out
     }
 
+    pub fn formula_hash(&self) -> String {
+        let digest = Sha256::digest(self.canonical_dimacs().as_bytes());
+        format!("{digest:x}")
+    }
+
     pub fn clause_satisfied(clause: &[i32], assignment: &BTreeMap<u32, bool>) -> bool {
         clause.iter().any(|&lit| {
             assignment.get(&lit.unsigned_abs()).is_some_and(|&value| value == (lit > 0))
@@ -104,6 +110,7 @@ mod tests {
         let cnf = CanonicalCnf::from_signed(&src).unwrap();
         assert_eq!(cnf.clauses, vec![vec![], vec![-2, 1, 3]]);
         assert_eq!(cnf.canonical_dimacs(), "p cnf 3 2\n0\n-2 1 3 0\n");
+        assert_eq!(cnf.formula_hash().len(), 64);
         assert!(cnf.has_empty_clause());
         assert!(!cnf.is_2cnf());
     }
