@@ -1,7 +1,8 @@
 //! R-030: independently replay deterministic, non-component CNF proof steps.
 //! Scope: UP, PLE, SUB, BCE and VE only. No SAT/UNSAT status claim is made.
 
-use crate::{bce, cnf::CanonicalCnf, simplifier, ve_proof};
+use crate::{bce, cnf::CanonicalCnf, graph, simplifier, treewidth, two_sat_proof, ve_proof};
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Debug)]
 pub struct LocalReplayStep {
@@ -16,6 +17,10 @@ pub struct LocalReplayStep {
     pub blocked_literal: i32,
     pub proof_digest: String,
     pub ve_var: i32,
+    pub tree_order: Vec<u32>,
+    pub primal_edges: Vec<(u32, u32)>,
+    pub two_sat_status: String,
+    pub two_sat_assignment: Vec<(u32, bool)>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -119,6 +124,46 @@ pub fn replay(
                     }
                 }
             },
+            "TREEWIDTH_SOLVE" => {
+                let (variables, edges) = graph::primal_variables_and_edges(&current.clauses)?;
+                let mut adj: BTreeMap<u32, BTreeSet<u32>> = variables.iter()
+                    .map(|&v| (v, BTreeSet::new())).collect();
+                for &(a,b) in &edges {
+                    adj.get_mut(&a).unwrap().insert(b);
+                    adj.get_mut(&b).unwrap().insert(a);
+                }
+                let packed = adj.into_iter().map(|(v, n)| (v, n.into_iter().collect()))
+                    .collect::<Vec<(u32, Vec<u32>)>>();
+                let width = treewidth::verify_elimination_order(&packed, &step.tree_order)?;
+                if width.is_some_and(|w| w <= width_cap.max(0) as usize)
+                    && step.output_hash == current.formula_hash()
+                    && step.primal_edges == edges {
+                    Ok(current.clone())
+                } else {
+                    Err("TREEWIDTH_SOLVE order verification failed".into())
+                }
+            },
+            "2SAT_SOLVE" => {
+                let result = two_sat_proof::solve_2sat_proof(&current.clauses)?;
+                let status = if result.sat { "SAT" } else { "UNSAT" };
+                if status != step.two_sat_status {
+                    Err("2SAT_SOLVE status mismatch".into())
+                } else if status == "SAT" {
+                    let logged = step.two_sat_assignment.iter().copied()
+                        .collect::<BTreeMap<_,_>>();
+                    let computed = result.assignment.iter().copied()
+                        .collect::<BTreeMap<_,_>>();
+                    if logged == computed && step.output_hash == current.formula_hash() {
+                        Ok(current.clone())
+                    } else {
+                        Err("2SAT_SOLVE assignment mismatch".into())
+                    }
+                } else if step.output_hash != current.formula_hash() {
+                    Err("2SAT_SOLVE hash mismatch".into())
+                } else {
+                    Ok(current.clone())
+                }
+            },
             "VE" => {
                 let ve = ve_proof::eliminate_with_proof(
                     &current.clauses, step.ve_var, width_cap)?;
@@ -169,6 +214,8 @@ mod tests {
             removed: vec![vec![1], vec![-1, 2]],
             added: vec![vec![2]], subsuming: vec![],
             blocked_literal: 0, proof_digest: String::new(), ve_var: 0,
+            tree_order: vec![], primal_edges: vec![],
+            two_sat_status: String::new(), two_sat_assignment: vec![],
         };
         assert!(replay(&src, &[step.clone()], 2, &final_formula.formula_hash())
                 .unwrap().verified);
