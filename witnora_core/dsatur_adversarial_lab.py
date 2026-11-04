@@ -14,12 +14,17 @@ from .graph_conjecture_lab import graph_metrics
 
 
 def exact_k_coloring(n: int, edges: tuple[tuple[int, int], ...],
-                     k: int) -> list[int] | None:
+                     k: int, *, backend="python") -> list[int] | None:
     """Exhaustive k-colorability with color-symmetry pruning; n <= 16."""
     if not 0 <= n <= 16 or k < 0:
         raise ValueError("supported n <= 16 and nonnegative k")
     if len(set(edges)) != len(edges) or any(not 0 <= u < v < n for u, v in edges):
         raise ValueError("invalid simple graph")
+    if backend == "rust":
+        from witnora_ve import dsatur_exact_k_coloring_native
+        return dsatur_exact_k_coloring_native(n, list(edges), k)
+    if backend != "python":
+        raise ValueError("unknown exact coloring backend")
     if n == 0:
         return [] if k >= 0 else None
     if k == 0:
@@ -58,16 +63,16 @@ def exact_k_coloring(n: int, edges: tuple[tuple[int, int], ...],
 
 
 def chromatic_certificate(n: int, edges: tuple[tuple[int, int], ...],
-                          upper: int) -> dict:
+                          upper: int, *, backend="python") -> dict:
     """Return first feasible k and its witness, with all smaller k ruled out."""
     for k in range(0, upper + 1):
-        witness = exact_k_coloring(n, edges, k)
+        witness = exact_k_coloring(n, edges, k, backend=backend)
         if witness is not None:
             return {"chi": k, "coloring": witness, "lower_k_unsat_checked": True}
     raise AssertionError("provided upper bound is not feasible")
 
 
-def run_adversarial_search() -> dict:
+def run_adversarial_search(*, backend="python") -> dict:
     # Fixed sample plan before inspecting results.
     densities = (0.15, 0.30, 0.45, 0.60, 0.75)
     per_cell = 120
@@ -87,7 +92,7 @@ def run_adversarial_search() -> dict:
             edges = tuple((u, v) for u, v in combinations(range(n), 2)
                           if rng.random() < p)
             chi = graph_metrics(n, edges)["chi"]
-            actual = chromatic_certificate(n, edges, n)["chi"]
+            actual = chromatic_certificate(n, edges, n, backend=backend)["chi"]
             assert actual == chi, (n, edges, actual, chi)
             stats["small_exact_crosschecks"] += 1
 
@@ -102,10 +107,10 @@ def run_adversarial_search() -> dict:
                 key = str(density)
                 stats["by_density"][key] = stats["by_density"].get(key, 0) + 1
 
-                improved = exact_k_coloring(n, edges, greedy["bound"] - 1)
+                improved = exact_k_coloring(n, edges, greedy["bound"] - 1, backend=backend)
                 if improved is None:
                     continue
-                exact = chromatic_certificate(n, edges, greedy["bound"] - 1)
+                exact = chromatic_certificate(n, edges, greedy["bound"] - 1, backend=backend)
                 assert exact["chi"] < greedy["bound"]
                 stats["failures"] += 1
                 matching = None
