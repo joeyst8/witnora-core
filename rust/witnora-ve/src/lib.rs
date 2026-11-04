@@ -68,6 +68,7 @@ pub mod claim_boundary;
 pub mod crc_independence_audit;
 pub mod crc_defect_oracle;
 pub mod crc_shannon_oracle;
+pub mod crc_conflict_oracle;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1796,6 +1797,25 @@ fn sparse_min_degree_width_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn crc_conflict_prepare_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
+    modes:Vec<String>,max_clauses:usize,max_variables:usize,max_base_modes:usize)
+    ->PyResult<Option<(Vec<(String,String)>,Vec<String>,Vec<i64>,Vec<String>,usize,usize)>>{
+    let result=crc_conflict_oracle::prepare(&normalized,&boundary,&modes,
+        max_clauses,max_variables,max_base_modes).map_err(PyValueError::new_err)?;
+    Ok(result.map(|r|(r.base,r.local_masks,r.values,r.needed,r.exceptions,r.variables)))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn crc_conflict_convolve_native(modes:Vec<String>,local_masks:Vec<String>,
+    values:Vec<i64>,coefficients:Vec<(String,String,String)>,q:usize)
+    ->PyResult<Vec<(String,String,String)>>{
+    crc_conflict_oracle::convolve(&modes,&local_masks,&values,&coefficients,q)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_shannon_walsh_native(normalized:Option<Vec<(String,String)>>,
     boundary:Vec<usize>,modes:Vec<String>,max_states:usize)
     ->PyResult<Option<(Vec<(String,String,String)>,usize,usize)>>{
@@ -1994,6 +2014,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(crc_independence_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_defect_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_shannon_walsh_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_conflict_prepare_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_conflict_convolve_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

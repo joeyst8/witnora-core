@@ -37,6 +37,7 @@ def query_conflict_walsh(
     max_exception_variables: int = 6,
     max_base_mode_queries: int = 4096,
     max_missing: int = 6,
+    backend: str = "python",
 ) -> ConflictWalshResult | None:
     """Exact normalized Walsh response to a few conflicting-sign clauses."""
     if (not isinstance(max_exception_clauses, int) or max_exception_clauses < 0 or
@@ -55,6 +56,30 @@ def query_conflict_walsh(
     if any(not isinstance(m, int) or m < 0 or (m & ~boundary_mask)
            for m in modes):
         raise ValueError("Walsh mode outside boundary")
+    if backend == "rust":
+        from witnora_ve import crc_conflict_prepare_native, crc_conflict_convolve_native
+        prepared = crc_conflict_prepare_native(
+            [] if normalized_violations is None else
+            [(str(z), str(o)) for z, o in normalized_violations],
+            list(boundary_variables), [str(m) for m in modes],
+            max_exception_clauses, max_exception_variables, max_base_mode_queries)
+        if prepared is None:
+            return None
+        base, masks, values, needed, exception_count, q = prepared
+        base_result = query_defect_walsh(
+            tuple((int(z), int(o)) for z, o in base), boundary_variables,
+            tuple(int(m) for m in needed), max_missing=max_missing, backend="rust")
+        if base_result is None:
+            return None
+        rows = crc_conflict_convolve_native(
+            [str(mode) for mode in modes], masks, values,
+            [(str(mode), str(value.numerator), str(value.denominator))
+             for mode, value in base_result.coefficients.items()], q)
+        return ConflictWalshResult(
+            {int(mode): Fraction(int(num), int(den)) for mode, num, den in rows},
+            exception_count, q, base_result.missing_clauses, len(needed))
+    if backend != "python":
+        raise ValueError("unknown conflict Walsh backend")
     if not normalized_violations:
         return None
     rank = (normalized_violations[0][0] |
