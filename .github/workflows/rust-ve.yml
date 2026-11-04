@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-019)
+name: Rust native Witnora migration differential gate (R-001 through R-020)
 
 on:
   push:
@@ -32,6 +32,8 @@ on:
       - "witnora_core/treewidth.py"
       - "witnora_core/bce.py"
       - "witnora_core/simplify.py"
+      - "witnora_core/ve.py"
+      - "tests/test_ve_proof_rust.py"
       - "tests/test_simplify_rust.py"
       - "tests/test_bce_rust.py"
       - "tests/test_treewidth_rust.py"
@@ -79,6 +81,8 @@ on:
       - "witnora_core/treewidth.py"
       - "witnora_core/bce.py"
       - "witnora_core/simplify.py"
+      - "witnora_core/ve.py"
+      - "tests/test_ve_proof_rust.py"
       - "tests/test_simplify_rust.py"
       - "tests/test_bce_rust.py"
       - "tests/test_treewidth_rust.py"
@@ -237,3 +241,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_simplify_rust -v
+      - name: Verify R-020 exact variable elimination proof events and order replays
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_ve_proof_rust -v
