@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-010)
+name: Rust native Witnora migration differential gate (R-001 through R-011)
 
 on:
   push:
@@ -24,6 +24,10 @@ on:
       - "witnora_core/crc_rust_affine.py"
       - "witnora_core/crc_rust_fused.py"
       - "witnora_core/two_sat.py"
+      - "witnora_core/cnf.py"
+      - "witnora_core/cnf_rust.py"
+      - "witnora_core/subsumption.py"
+      - "tests/test_cnf_rust.py"
       - "witnora_core/two_sat_rust.py"
       - "tests/test_two_sat_rust.py"
       - "tests/test_crc_rust_fused.py"
@@ -52,6 +56,10 @@ on:
       - "witnora_core/crc_rust_affine.py"
       - "witnora_core/crc_rust_fused.py"
       - "witnora_core/two_sat.py"
+      - "witnora_core/cnf.py"
+      - "witnora_core/cnf_rust.py"
+      - "witnora_core/subsumption.py"
+      - "tests/test_cnf_rust.py"
       - "witnora_core/two_sat_rust.py"
       - "tests/test_two_sat_rust.py"
       - "tests/test_crc_rust_fused.py"
@@ -155,3 +163,7 @@ jobs:
           test "$result" = "$(printf 's SATISFIABLE\nv 1 -2 0')"
           result="$(printf 'p cnf 1 2\n1 0\n-1 0\n' | rust/witnora-ve/target/release/witnora-ve --two-sat-dimacs)"
           test "$result" = 's UNSATISFIABLE'
+      - name: Verify R-011 canonical CNF and subsumption against Python reference
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_cnf_rust -v
