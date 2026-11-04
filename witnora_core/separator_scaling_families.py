@@ -25,3 +25,20 @@ def make_scaling_case(blocks_per_side: int, width: int) -> tuple[CNFFormula, dic
         "parity_equations": 2 * blocks_per_side,
         "expected_boundary": boundary,
     }
+
+
+def make_scaling_case_rust(
+    blocks_per_side: int, width: int,
+) -> tuple[CNFFormula, dict]:
+    """Opt-in Rust scaling-family construction; same complete CNF schema."""
+    from witnora_ve import make_separator_scaling_case_native
+
+    clauses, actual_width, blocks, equations, boundary = (
+        make_separator_scaling_case_native(blocks_per_side, width)
+    )
+    return CNFFormula.from_raw_clauses(clauses), {
+        "width": actual_width,
+        "blocks_per_side": blocks,
+        "parity_equations": equations,
+        "expected_boundary": tuple(boundary),
+    }
