@@ -15,4 +15,5 @@ manifest can promote R-089.
 
 These are finite-graph hypotheses, not proved theorems or verified novelty.
 
-Status: awaiting compiled native CI.
+Status: native Rust compilation, wheel build and all differential comparisons
+passed in GitHub Actions #41922704686.

@@ -2976,7 +2976,11 @@
       "path": "witnora_core/graph_conjecture_lab.py",
       "sha": "22600a030b44e43c827a6964e17441aa4754ca6c",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/graph_conjecture_lab.rs",
+      "test": "tests/test_graph_conjecture_lab_rust.py",
+      "verified_milestone": "R-089",
+      "migration_note": "Focused Rust CI #41922704686 passed native library and wheel builds, 500 seeded exact graph metrics, invalid controls and three full conjecture reports; shared seeded graph sampling remains Python-managed."
     },
     {
       "path": "witnora_core/graph_separator_lift.py",
@@ -3902,8 +3906,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 488,
-    "parallel_reference": 65,
+    "not_migrated": 487,
+    "parallel_reference": 66,
     "partial_native_verified": 7
   }
 }
