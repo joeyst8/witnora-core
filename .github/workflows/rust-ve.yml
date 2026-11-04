@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-016)
+name: Rust native Witnora migration differential gate (R-001 through R-017)
 
 on:
   push:
@@ -29,6 +29,8 @@ on:
       - "witnora_core/rup_indexed_propagation.py"
       - "witnora_core/drat_check.py"
       - "witnora_core/primal.py"
+      - "witnora_core/treewidth.py"
+      - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
       - "tests/test_rup_checker_rust.py"
@@ -70,6 +72,8 @@ on:
       - "witnora_core/rup_indexed_propagation.py"
       - "witnora_core/drat_check.py"
       - "witnora_core/primal.py"
+      - "witnora_core/treewidth.py"
+      - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
       - "tests/test_rup_checker_rust.py"
@@ -213,3 +217,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_graph_rust -v
+      - name: Verify R-017 exact bounded treewidth orders against Python search
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_treewidth_rust -v
