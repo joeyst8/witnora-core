@@ -42,6 +42,7 @@ pub mod global_coupling_separator;
 pub mod gf2_sparse_row_basis;
 pub mod g5_elimination_activity;
 pub mod g5_boundary_path_signal;
+pub mod sparse_parity_checks;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1438,6 +1439,77 @@ fn g5_boundary_path_signal_native(
     Ok((report.xor_operations,candidates))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_column_signatures_native(
+    rows:Vec<Vec<usize>>,clause_count:usize,
+) -> PyResult<Vec<String>> {
+    sparse_parity_checks::column_signatures(&rows,clause_count)
+        .map(|rows|rows.iter().map(ToString::to_string).collect())
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_validate_rows_native(
+    clause_count:usize,max_width:usize,rows:Vec<Vec<usize>>,
+) -> PyResult<()> {
+    sparse_parity_checks::validate_rows(clause_count,max_width,&rows)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_build_rows_native(
+    py:Python<'_>,
+    clause_count:usize,max_width:usize,max_attempts:usize,rng:Py<PyAny>,
+) -> PyResult<Vec<Vec<usize>>> {
+    sparse_parity_checks::build_sparse_odd_rows(
+        clause_count,max_width,max_attempts,||{
+            rng.call_method0(py,"random").map_err(|e|e.to_string())?
+                .extract::<f64>(py).map_err(|e|e.to_string())
+        },
+    ).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_low_weight_collisions_native(
+    rows:Vec<Vec<usize>>,clause_count:usize,max_weight:i64,
+) -> PyResult<usize> {
+    sparse_parity_checks::low_weight_collisions(&rows,clause_count,max_weight)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_row_scope_native(
+    source:Vec<Vec<i32>>,row:Vec<usize>,
+) -> PyResult<usize> {
+    sparse_parity_checks::source_row_scope(&source,&row)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_audit_small_native(
+    source:Vec<Vec<i32>>,nvars:usize,rows:Vec<Vec<usize>>,max_variables:i64,
+) -> PyResult<(usize,usize,usize,usize,f64)> {
+    sparse_parity_checks::audit_sparse_small(
+        &source,nvars,&rows,max_variables,
+    ).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_min_degree_width_native(
+    scopes:Vec<Vec<i64>>,nvars:i64,
+) -> PyResult<usize> {
+    sparse_parity_checks::min_degree_elimination_width(&scopes,nvars)
+        .map_err(PyValueError::new_err)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1513,5 +1585,12 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(g5_ranked_pairs_native, module)?)?;
     module.add_function(wrap_pyfunction!(g5_cross_merge_native, module)?)?;
     module.add_function(wrap_pyfunction!(g5_boundary_path_signal_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_column_signatures_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_validate_rows_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_build_rows_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_low_weight_collisions_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_row_scope_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_audit_small_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_min_degree_width_native, module)?)?;
     Ok(())
 }
