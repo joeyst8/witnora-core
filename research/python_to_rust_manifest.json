@@ -3070,7 +3070,9 @@
       "path": "witnora_core/ood_sat_families.py",
       "sha": "23c31039dcfd17790771878747a6a62e85b41fc6",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/ood_sat_families.rs",
+      "migration_note": "R-072 all OOD source constructor kernels native; Python retains seeded MT19937 samples. Pending CI covering exact source hashes, grids and named bundles."
     },
     {
       "path": "witnora_core/operator_counterexamples.py",

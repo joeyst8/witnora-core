@@ -56,6 +56,7 @@ pub mod hidden_separator_generator;
 pub mod hard_separator_generator;
 pub mod satlib_fingerprint;
 pub mod spoke_collapse;
+pub mod ood_sat_families;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -723,6 +724,41 @@ fn spoke_cnf_native(spokes:Vec<(i32,i32,i32)>)->PyResult<Vec<Vec<i32>>> {
 fn collapse_spokes_native(source:Vec<Vec<i32>>,spokes:Vec<(i32,i32,i32)>)
     ->PyResult<spoke_collapse::Verdict> {
     Ok(spoke_collapse::classify(&source,&spokes))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ood_pigeonhole_native(pigeons:i32,holes:i32)->PyResult<Vec<Vec<i32>>> {
+    ood_sat_families::pigeonhole(pigeons,holes).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ood_graph_coloring_native(vertices:i32,edges:Vec<(i32,i32)>,colors:i32)
+    ->PyResult<Vec<Vec<i32>>> {
+    ood_sat_families::graph_coloring(vertices,&edges,colors).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ood_tseitin_complete_native(vertices:i32,contradictory:bool)
+    ->PyResult<Vec<Vec<i32>>> {
+    ood_sat_families::tseitin_complete_graph(vertices,contradictory)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ood_n_queens_native(n:i32)->PyResult<Vec<Vec<i32>>> {
+    ood_sat_families::n_queens(n).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ood_planted_samples_native(n:i32,witness:Vec<bool>,rows:Vec<Vec<i32>>)
+    ->PyResult<Vec<Vec<i32>>> {
+    ood_sat_families::planted_from_samples(n,&witness,&rows)
+        .map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1752,6 +1788,11 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(satlib_structural_metrics_native, module)?)?;
     module.add_function(wrap_pyfunction!(spoke_cnf_native, module)?)?;
     module.add_function(wrap_pyfunction!(collapse_spokes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ood_pigeonhole_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ood_graph_coloring_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ood_tseitin_complete_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ood_n_queens_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ood_planted_samples_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
