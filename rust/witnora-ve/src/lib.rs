@@ -45,6 +45,7 @@ pub mod g5_boundary_path_signal;
 pub mod sparse_parity_checks;
 pub mod eth_clause_violation_parity;
 pub mod symbolic_implication;
+pub mod targeted_graph_families;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -582,6 +583,21 @@ fn symbolic_bound_path_native(smaller: &str, larger: &str) -> Option<Vec<String>
 #[pyfunction]
 fn symbolic_normalize_native(op: &str, a: &str, b: &str, label: &str) -> (String, Vec<String>) {
     symbolic_implication::normalize(op, a, b, label)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn targeted_graph_family_native(
+    family: &str, a: usize, b: usize,
+) -> PyResult<(usize, Vec<(usize, usize)>)> {
+    match family {
+        "cycle" if a >= 3 && a <= 100 => Ok(targeted_graph_families::cycle(a)),
+        "wheel" if a >= 4 && a <= 100 => Ok(targeted_graph_families::wheel(a)),
+        "bipartite" if a >= 1 && b >= 1 && a <= 100 && b <= 100 =>
+            Ok(targeted_graph_families::complete_bipartite(a, b)),
+        "mycielski_c5" => Ok(targeted_graph_families::mycielski_c5()),
+        _ => Err(PyValueError::new_err("invalid bounded graph family")),
+    }
 }
 
 #[cfg(feature = "python")]
@@ -1595,6 +1611,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
     module.add_function(wrap_pyfunction!(symbolic_bound_path_native, module)?)?;
     module.add_function(wrap_pyfunction!(symbolic_normalize_native, module)?)?;
+    module.add_function(wrap_pyfunction!(targeted_graph_family_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

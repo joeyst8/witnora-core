@@ -79,8 +79,10 @@ on:
       - "tests/test_sparse_pipeline_rust.py"
       - "tests/test_finite_parity_rust.py"
       - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_targeted_graph_families_rust.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "witnora_core/symbolic_implication.py"
+      - "witnora_core/targeted_graph_theorems.py"
       - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
@@ -195,7 +197,9 @@ on:
       - "tests/test_finite_parity_rust.py"
       - "witnora_core/eth_clause_violation_parity.py"
       - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_targeted_graph_families_rust.py"
       - "witnora_core/symbolic_implication.py"
+      - "witnora_core/targeted_graph_theorems.py"
       - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
@@ -534,3 +538,8 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_symbolic_implication_rust -v
+
+      - name: R-060 targeted graph families native differential
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_targeted_graph_families_rust -v

@@ -35,6 +35,13 @@ def mycielski_c5():
     return 11, tuple(sorted(edges))
 
 
+def graph_family_rust(family: str, a: int = 0, b: int = 0):
+    """Opt-in native graph construction for finite counterexample searches."""
+    from witnora_ve import targeted_graph_family_native
+    n, edges = targeted_graph_family_native(family, a, b)
+    return n, tuple(tuple(edge) for edge in edges)
+
+
 def special_graphs():
     for n in range(1, 12):
         yield f"complete_{n}", n, tuple(combinations(range(n), 2))

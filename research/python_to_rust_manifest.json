@@ -3329,7 +3329,8 @@
       "path": "witnora_core/targeted_graph_theorems.py",
       "sha": "de3c105606598f0ebceab8d21ed1ef1604b4247e",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/targeted_graph_families.rs"
     },
     {
       "path": "witnora_core/tc063_theorem_hardening.py",
