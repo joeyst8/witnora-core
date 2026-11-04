@@ -2837,7 +2837,9 @@
       "path": "witnora_core/factor_elimination_orders.py",
       "sha": "42d8dbfc1a994e4ffc10150b325bb978f3ccdce8",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/order_experiments.rs",
+      "migration_note": "All four greedy graph order modes and replay width ported, bounded native universe; original Python default retained."
     },
     {
       "path": "witnora_core/families.py",
@@ -3615,6 +3617,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41769668057",
       "python_reference_comparisons": 1600,
       "scope": "Port previously untouched two_sat_proof.py native BFS source-annotated SCC contradiction and complementary resolution clauses; 1600 unsat CNFs exact proof parity"
+    },
+    {
+      "id": "R-038",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41770204244",
+      "python_reference_comparisons": 1600,
+      "scope": "Port untouched factor_elimination_orders.py graph fill heuristics: min degree, source/aux first, beam min-fill, independent permutation width replay"
     }
   ],
   "pending_ci_milestones": [],
@@ -3626,7 +3635,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 535,
-    "parallel_reference": 25
+    "not_migrated": 534,
+    "parallel_reference": 26
   }
 }
