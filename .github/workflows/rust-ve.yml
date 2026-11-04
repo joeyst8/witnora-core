@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-040)
+name: Rust native Witnora migration differential gate (R-001 through R-041)
 
 on:
   push:
@@ -60,6 +60,8 @@ on:
       - "tests/test_factor_orders_rust.py"
       - "tests/test_forced_relation_rust.py"
       - "tests/test_scaling_families_rust.py"
+      - "tests/test_odd_xor_cycle_rust.py"
+      - "witnora_core/cycle_discovery.py"
       - "witnora_core/separator_scaling_families.py"
       - "witnora_core/forced_relation_probe.py"
       - "witnora_core/factor_elimination_orders.py"
@@ -138,6 +140,8 @@ on:
       - "tests/test_factor_orders_rust.py"
       - "tests/test_forced_relation_rust.py"
       - "tests/test_scaling_families_rust.py"
+      - "tests/test_odd_xor_cycle_rust.py"
+      - "witnora_core/cycle_discovery.py"
       - "witnora_core/separator_scaling_families.py"
       - "witnora_core/forced_relation_probe.py"
       - "witnora_core/factor_elimination_orders.py"
@@ -383,3 +387,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_scaling_families_rust -v
+      - name: Verify R-041 exact native odd XOR cycle discovery against Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_odd_xor_cycle_rust -v
