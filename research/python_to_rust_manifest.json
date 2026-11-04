@@ -2856,9 +2856,9 @@
       "path": "witnora_core/families.py",
       "sha": "97ad0dbeefd4ee154ad8cdbf046829dc94681d39",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/benchmark_families.rs",
-      "migration_note": "R-073 deterministic benchmark family kernels native, original Python RNG stream for random 2/3-CNF samples; pending compiled differential gate."
+      "migration_note": "R-073 focused native CI #41885949696 verified deterministic benchmark generators and 400 frozen-seed random 2/3-CNF source comparisons. Python RNG stream retained."
     },
     {
       "path": "witnora_core/finite_edge_certificate.py",
