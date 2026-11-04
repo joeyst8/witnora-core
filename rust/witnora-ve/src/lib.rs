@@ -84,6 +84,8 @@ pub mod color_repair_lab;
 pub mod kempe_repair_lab;
 pub mod double_kempe_lab;
 pub mod structured_coloring_study;
+pub mod color_selector_lab;
+pub mod nonedge_matching_dsatur;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1969,6 +1971,28 @@ fn greedy_clique_lower_bound_native(n:usize,edges:Vec<(usize,usize)>)->PyResult<
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn color_selector_signals_native(n:usize,edges:Vec<(usize,usize)>,colors:Vec<isize>)
+    ->PyResult<color_selector_lab::Signals>{
+    color_selector_lab::signals(n,&edges,&colors).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn color_selector_triggers_native(rule:String,k:isize,gap:isize,
+    last_size:usize,min_class:usize,singleton:usize)->PyResult<bool>{
+    color_selector_lab::triggers(&rule,k,gap,last_size,min_class,singleton)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn dsatur_greedy_coloring_native(n:usize,edges:Vec<(usize,usize)>)
+    ->PyResult<(usize,Vec<usize>)>{
+    nonedge_matching_dsatur::greedy(n,&edges).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2238,6 +2262,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(kempe_swaps_native, module)?)?;
     module.add_function(wrap_pyfunction!(double_kempe_repair_native, module)?)?;
     module.add_function(wrap_pyfunction!(greedy_clique_lower_bound_native, module)?)?;
+    module.add_function(wrap_pyfunction!(color_selector_signals_native, module)?)?;
+    module.add_function(wrap_pyfunction!(color_selector_triggers_native, module)?)?;
+    module.add_function(wrap_pyfunction!(dsatur_greedy_coloring_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

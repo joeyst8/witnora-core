@@ -2836,7 +2836,11 @@
       "path": "witnora_core/double_kempe_lab.py",
       "sha": "0e9abed32c639e2c94ecb1570d7a38cda9103f6a",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/double_kempe_lab.rs",
+      "test": "tests/test_double_kempe_rust.py",
+      "verified_milestone": "R-100",
+      "migration_note": "Focused native CI #41934106459 passed bounded two-step Kempe exact-output comparisons and Rust library tests. Python seeded sampling remains."
     },
     {
       "path": "witnora_core/drat_check.py",
@@ -3414,7 +3418,11 @@
       "path": "witnora_core/structured_coloring_study.py",
       "sha": "d178d77c9f1736bc108aaea48558d237ee6b90a9",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/structured_coloring_study.rs",
+      "test": "tests/test_structured_coloring_rust.py",
+      "verified_milestone": "R-101",
+      "migration_note": "Focused native CI #41934106459 passed 320 greedy-clique comparisons and 64 ungated pipeline comparisons. Seeded graph construction and multistart DSATUR remain Python."
     },
     {
       "path": "witnora_core/submit_release_finalize_v226.py",
@@ -3944,8 +3952,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 479,
-    "parallel_reference": 75,
-    "partial_native_verified": 6
+    "not_migrated": 477,
+    "parallel_reference": 76,
+    "partial_native_verified": 7
   }
 }

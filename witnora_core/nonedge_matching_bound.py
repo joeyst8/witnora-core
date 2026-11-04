@@ -182,8 +182,15 @@ def _degeneracy_bound(n: int, edges: tuple[tuple[int, int], ...]) -> int:
     return degeneracy + 1
 
 
-def _dsatur_greedy_coloring(n: int, edges: tuple[tuple[int, int], ...]) -> dict:
+def _dsatur_greedy_coloring(n: int, edges: tuple[tuple[int, int], ...],
+                            *, backend="python") -> dict:
     """Deterministic DSATUR greedy coloring, with a checked witness."""
+    if backend == "rust":
+        from witnora_ve import dsatur_greedy_coloring_native
+        bound, coloring = dsatur_greedy_coloring_native(n, list(edges))
+        return {"bound": bound, "coloring": coloring}
+    if backend != "python":
+        raise ValueError("unknown DSATUR backend")
     neighbors = [set() for _ in range(n)]
     for u, v in edges:
         neighbors[u].add(v)
