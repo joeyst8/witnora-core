@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-031)
+name: Rust native Witnora migration differential gate (R-001 through R-032)
 
 on:
   push:
@@ -51,6 +51,7 @@ on:
       - "witnora_core/verifier_rust.py"
       - "tests/test_local_replay_rust.py"
       - "tests/test_solver_replay_rust.py"
+      - "tests/test_component_evidence_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -116,6 +117,7 @@ on:
       - "witnora_core/verifier_rust.py"
       - "tests/test_local_replay_rust.py"
       - "tests/test_solver_replay_rust.py"
+      - "tests/test_component_evidence_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -321,3 +323,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_solver_replay_rust -v
+      - name: Verify R-032 complete native component metadata against Python replay
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_component_evidence_rust -v
