@@ -1988,6 +1988,14 @@ fn color_selector_triggers_native(rule:String,k:isize,gap:isize,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn color_selector_confusion_native(rule:String,
+    rows:Vec<(bool,isize,isize,usize,usize,usize)>)
+    ->PyResult<(usize,usize,usize,usize,usize,usize)>{
+    color_selector_lab::confusion(&rule,&rows).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn dsatur_greedy_coloring_native(n:usize,edges:Vec<(usize,usize)>)
     ->PyResult<(usize,Vec<usize>)>{
     nonedge_matching_dsatur::greedy(n,&edges).map_err(PyValueError::new_err)
@@ -2280,6 +2288,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(greedy_clique_lower_bound_native, module)?)?;
     module.add_function(wrap_pyfunction!(color_selector_signals_native, module)?)?;
     module.add_function(wrap_pyfunction!(color_selector_triggers_native, module)?)?;
+    module.add_function(wrap_pyfunction!(color_selector_confusion_native, module)?)?;
     module.add_function(wrap_pyfunction!(dsatur_greedy_coloring_native, module)?)?;
     module.add_function(wrap_pyfunction!(nonedge_graph_bounds_native, module)?)?;
     module.add_function(wrap_pyfunction!(matching_color_bound_native, module)?)?;

@@ -81,6 +81,7 @@ on:
       - "tests/test_dsatur_greedy_rust.py"
       - "tests/test_nonedge_graph_bounds_rust.py"
       - "tests/test_nonedge_matching_bound_rust.py"
+      - "tests/test_color_confusion_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -163,6 +164,7 @@ on:
       - "tests/test_dsatur_greedy_rust.py"
       - "tests/test_nonedge_graph_bounds_rust.py"
       - "tests/test_nonedge_matching_bound_rust.py"
+      - "tests/test_color_confusion_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -194,7 +196,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-105 source comparisons
+      - name: Focused R-067 through R-106 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -237,3 +239,4 @@ jobs:
           python -m unittest tests.test_dsatur_greedy_rust -v
           python -m unittest tests.test_nonedge_graph_bounds_rust -v
           python -m unittest tests.test_nonedge_matching_bound_rust -v
+          python -m unittest tests.test_color_confusion_rust -v

@@ -111,6 +111,20 @@ def labeled_samples(graphs, *, backend="python"):
 
 
 def confusion(rows: list[dict], rule: str, *, backend="python") -> dict:
+    if backend == "rust":
+        from witnora_ve import color_selector_confusion_native
+        packed = [(row["failure"], row["signals"]["k"], row["signals"]["gap"],
+                   row["signals"]["last_size"], row["signals"]["min_class"],
+                   row["signals"]["singleton"]) for row in rows]
+        graphs, positives, selected, true_positives, missed, false_positives = (
+            color_selector_confusion_native(rule, packed))
+        return {"graphs": graphs, "failures": positives,
+                "selected": selected, "true_positives": true_positives,
+                "missed": missed, "false_positives": false_positives,
+                "recall": true_positives / positives if positives else 1.0,
+                "precision": true_positives / selected if selected else 0.0}
+    if backend != "python":
+        raise ValueError("unknown selector confusion backend")
     positives = sum(row["failure"] for row in rows)
     candidates = [row for row in rows if triggers(rule, row["signals"],
                                                 backend=backend)]

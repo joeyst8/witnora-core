@@ -33,8 +33,25 @@ pub fn triggers(rule:&str,k:isize,gap:isize,last_size:usize,min_class:usize,sing
  Ok(result)
 }
 
+/// R-106: count true/false candidate decisions without changing any rule.
+pub fn confusion(rule:&str,rows:&[(bool,isize,isize,usize,usize,usize)])
+ ->Result<(usize,usize,usize,usize,usize,usize),String>{
+ let positives=rows.iter().filter(|r|r.0).count();
+ let mut selected=0;let mut true_positive=0;
+ for &(failure,k,gap,last_size,min_class,singleton) in rows{
+  if triggers(rule,k,gap,last_size,min_class,singleton)?{
+   selected+=1;
+   if failure{true_positive+=1;}
+  }
+ }
+ Ok((rows.len(),positives,selected,true_positive,
+     positives-true_positive,selected-true_positive))
+}
+
 #[cfg(test)]mod tests{use super::*;#[test]fn signals_and_rules(){
  assert_eq!(signals(3,&[(0,1),(1,2)],&[0,1,0]).unwrap(),(2,2,0,1,1,1));
  assert_eq!(triggers("uncertified",2,0,1,1,1).unwrap(),false);
  assert_eq!(triggers("gap_ge_2",5,2,1,1,2).unwrap(),true);
+ assert_eq!(confusion("uncertified",&[(true,3,1,1,1,1),
+  (false,2,0,1,1,1)]).unwrap(),(2,1,1,1,0,0));
 }}

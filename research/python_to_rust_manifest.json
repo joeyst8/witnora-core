@@ -2613,7 +2613,11 @@
       "path": "witnora_core/color_selector_lab.py",
       "sha": "b52777ad570db95c2282c91e05e6b698eb3f649d",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/color_selector_lab.rs",
+      "test": "tests/test_color_selector_rust.py",
+      "verified_milestone": "R-102",
+      "migration_note": "Focused native CI #41934598441 passed all ten selector rule comparisons and native feature extraction. Experiment sampling, confusion aggregation and timing remain Python."
     },
     {
       "path": "witnora_core/compare.py",
@@ -3153,7 +3157,11 @@
       "path": "witnora_core/nonedge_matching_bound.py",
       "sha": "bd575d34a5215e4d20ca6a495dd9643d09943067",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/nonedge_matching_dsatur.rs",
+      "test": "tests/test_dsatur_greedy_rust.py",
+      "verified_milestone": "R-103",
+      "migration_note": "Focused native CI #41934598441 passed 440 DSATUR exact coloring comparisons. Additional R-104 graph bound and R-105 matching paths await a separate native CI gate."
     },
     {
       "path": "witnora_core/obstruction_dual.py",
@@ -3952,8 +3960,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 477,
+    "not_migrated": 475,
     "parallel_reference": 76,
-    "partial_native_verified": 7
+    "partial_native_verified": 9
   }
 }
