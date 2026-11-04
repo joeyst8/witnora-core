@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-015)
+name: Rust native Witnora migration differential gate (R-001 through R-016)
 
 on:
   push:
@@ -28,6 +28,9 @@ on:
       - "witnora_core/dimacs.py"
       - "witnora_core/rup_indexed_propagation.py"
       - "witnora_core/drat_check.py"
+      - "witnora_core/primal.py"
+      - "witnora_core/components.py"
+      - "tests/test_graph_rust.py"
       - "tests/test_rup_checker_rust.py"
       - "tests/test_rup_indexed_rust.py"
       - "tests/test_dimacs_evidence_rust.py"
@@ -66,6 +69,9 @@ on:
       - "witnora_core/dimacs.py"
       - "witnora_core/rup_indexed_propagation.py"
       - "witnora_core/drat_check.py"
+      - "witnora_core/primal.py"
+      - "witnora_core/components.py"
+      - "tests/test_graph_rust.py"
       - "tests/test_rup_checker_rust.py"
       - "tests/test_rup_indexed_rust.py"
       - "tests/test_dimacs_evidence_rust.py"
@@ -203,3 +209,7 @@ jobs:
             echo "Expected invalid proof to exit nonzero"
             exit 1
           fi
+      - name: Verify R-016 primal graph, components and hashes against Python
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_graph_rust -v
