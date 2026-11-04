@@ -140,3 +140,87 @@ def is_complete_primal(source: list[list[int]] | CNF, nvars: int) -> bool:
         for x, y in combinations(clause, 2):
             edges.add(tuple(sorted((abs(x), abs(y)))))
     return len(edges) == nvars * (nvars - 1) // 2
+
+
+def source_digest_rust(source: CNF) -> str:
+    """R-058 native SHA-256 of the canonical compact JSON clause stream."""
+    from witnora_ve import finite_parity_source_digest_native
+
+    return finite_parity_source_digest_native([list(clause) for clause in source])
+
+
+def violation_mask_rust(source: CNF, assignment_bits: int) -> int:
+    """Native exact unbounded clause-violation mask."""
+    from witnora_ve import finite_parity_violation_mask_native
+
+    return int(finite_parity_violation_mask_native(
+        [list(clause) for clause in source], str(assignment_bits)
+    ))
+
+
+def parity_accepts_rust(
+    violations: int, rows: tuple[tuple[int, ...], ...],
+) -> bool:
+    from witnora_ve import finite_parity_accepts_native
+
+    return bool(finite_parity_accepts_native(
+        str(violations), [list(row) for row in rows]
+    ))
+
+
+def build_finite_sketch_rust(
+    source: list[list[int]] | CNF, nvars: int, *,
+    seed: int = 73, candidates_per_width: int = 100,
+    max_rows: int | None = None,
+) -> FiniteParitySketch:
+    """Native finite greedy separator using the frozen Python seed stream."""
+    from witnora_ve import finite_parity_build_native
+
+    cnf = _canonical(source, nvars)
+    if candidates_per_width < 1:
+        raise ValueError("need positive candidates_per_width")
+    if max_rows is not None and max_rows < 0:
+        raise ValueError("max_rows must be nonnegative")
+    rng = Random(seed)
+    sampled = set()
+    for width in range(2, min(5, len(cnf)) + 1):
+        for _ in range(candidates_per_width):
+            sampled.add(tuple(sorted(rng.sample(range(len(cnf)), width))))
+    rows, survivors, models = finite_parity_build_native(
+        [list(clause) for clause in cnf], nvars,
+        [list(row) for row in sampled], max_rows
+    )
+    return FiniteParitySketch(
+        nvars, len(cnf), source_digest_rust(cnf),
+        tuple(tuple(row) for row in rows),
+        tuple(survivors), models,
+    )
+
+
+def verify_finite_sketch_rust(
+    source: list[list[int]] | CNF, sketch: FiniteParitySketch,
+) -> bool:
+    """Native exhaustive SAT-equivalence audit, fail closed."""
+    from witnora_ve import finite_parity_verify_native
+
+    try:
+        cnf = _canonical(source, sketch.nvars)
+    except (TypeError, ValueError):
+        return False
+    if len(cnf) != sketch.clause_count or source_digest_rust(cnf) != sketch.digest:
+        return False
+    return bool(finite_parity_verify_native(
+        [list(clause) for clause in cnf], sketch.nvars,
+        [list(row) for row in sketch.rows]
+    ))
+
+
+def is_complete_primal_rust(
+    source: list[list[int]] | CNF, nvars: int,
+) -> bool:
+    """Native finite source-graph completeness diagnostic."""
+    from witnora_ve import finite_parity_complete_primal_native
+
+    return bool(finite_parity_complete_primal_native(
+        [list(clause) for clause in source], nvars
+    ))
