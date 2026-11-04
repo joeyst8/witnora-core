@@ -22,6 +22,7 @@ pub mod treewidth;
 pub mod bce;
 pub mod simplifier;
 pub mod ve_proof;
+pub mod two_sat_proof;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -684,6 +685,18 @@ fn eliminate_with_proof_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn solve_two_sat_proof_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<(bool, bool, Option<u32>, Vec<(i32,i32)>,
+               Vec<Vec<i32>>, Vec<(u32,bool)>, usize)> {
+    let out = two_sat_proof::solve_2sat_proof(&source)
+        .map_err(PyValueError::new_err)?;
+    Ok((out.sat, out.empty_clause, out.conflict_variable,
+        out.edges, out.components, out.assignment, out.node_count))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -708,5 +721,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(eliminate_with_proof_native, module)?)?;
+    module.add_function(wrap_pyfunction!(solve_two_sat_proof_native, module)?)?;
     Ok(())
 }
