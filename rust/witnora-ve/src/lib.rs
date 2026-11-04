@@ -26,6 +26,7 @@ pub mod two_sat_proof;
 pub mod two_sat_scc_witness;
 pub mod order_experiments;
 pub mod failed_literal_probe;
+pub mod scaling_families;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1037,6 +1038,17 @@ fn probe_forced_relations_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn make_separator_scaling_case_native(
+    blocks_per_side: i32, width: i32,
+) -> PyResult<(Vec<Vec<i32>>,i32,i32,i32,Vec<i32>)> {
+    let x=scaling_families::make_scaling_case(blocks_per_side,width)
+        .map_err(PyValueError::new_err)?;
+    Ok((x.clauses,x.width,x.blocks_per_side,x.parity_equations,
+        x.expected_boundary))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -1081,5 +1093,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(replay_factor_elimination_width_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_conflict_native, module)?)?;
     module.add_function(wrap_pyfunction!(probe_forced_relations_native, module)?)?;
+    module.add_function(wrap_pyfunction!(make_separator_scaling_case_native, module)?)?;
     Ok(())
 }
