@@ -20,6 +20,7 @@ pub mod rup_checker;
 pub mod graph;
 pub mod treewidth;
 pub mod bce;
+pub mod simplifier;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -633,6 +634,32 @@ fn first_blocked_clause_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn unit_step_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<Option<(Vec<Vec<i32>>, i32, Vec<Vec<i32>>,
+                      Vec<(Vec<i32>, Vec<i32>)>, bool)>> {
+    simplifier::unit_step(&source)
+        .map(|got| got.map(|out| (
+            out.clauses, out.literal, out.satisfied,
+            out.shortened, out.conflict,
+        )))
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn pure_step_native(
+    source: Vec<Vec<i32>>,
+) -> PyResult<Option<(Vec<Vec<i32>>, i32, Vec<Vec<i32>>)>> {
+    simplifier::pure_step(&source)
+        .map(|got| got.map(|out| (
+            out.clauses, out.literal, out.removed,
+        )))
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -654,5 +681,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(verify_treewidth_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(blocked_clause_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
+    module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
+    module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
     Ok(())
 }
