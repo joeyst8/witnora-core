@@ -55,6 +55,21 @@ def connected_components(formula: CNFFormula, *, backend: str = "python") -> lis
 
 
 def component_details(formula: CNFFormula, *, backend: str = "python") -> dict[str, Any]:
+    if backend == "rust_details":
+        from witnora_ve import component_evidence_native
+        count, edges, records = component_evidence_native(formula.to_clause_lists())
+        return {
+            "component_count": count,
+            "incidence_edges": [[var, idx] for var, idx in edges],
+            "components": [
+                {
+                    "component_id": cid, "formula_hash": digest,
+                    "variables": variables, "clauses": clauses,
+                    "clause_indices": clause_indices,
+                }
+                for cid, digest, variables, clauses, clause_indices in records
+            ],
+        }
     comps = connected_components(formula, backend=backend)
     clause_to_index = {clause.literals: idx for idx, clause in enumerate(formula.clauses)}
     return {
