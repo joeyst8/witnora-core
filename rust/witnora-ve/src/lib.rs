@@ -29,6 +29,7 @@ pub mod failed_literal_probe;
 pub mod scaling_families;
 pub mod odd_xor_cycle;
 pub mod two_ply_lookahead;
+pub mod adaptive_lookahead;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1082,6 +1083,23 @@ fn two_ply_pivot_native(
         .map_err(PyValueError::new_err)?.clauses)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn adaptive_pivot_native(
+    source: Vec<Vec<i32>>, max_pairs: i32, growth_budget: i32,
+    beam_width: i32, expansion_budget: i32, max_depth: i32,
+    ambiguity_margin: f64,
+) -> PyResult<(Vec<Vec<i32>>, String, usize, usize, f64, f64)> {
+    let cnf = cnf::CanonicalCnf::from_signed(&source).map_err(PyValueError::new_err)?;
+    let out = adaptive_lookahead::adaptive_pivot(
+        &cnf, max_pairs, growth_budget, beam_width, expansion_budget,
+        max_depth, ambiguity_margin,
+    ).map_err(PyValueError::new_err)?;
+    Ok((out.formula.clauses, out.mode.to_string(), out.expanded, out.depth,
+        out.baseline_score, out.candidate_score))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1131,5 +1149,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(discover_odd_xor_cycle_native, module)?)?;
     module.add_function(wrap_pyfunction!(elimination_options_native, module)?)?;
     module.add_function(wrap_pyfunction!(two_ply_pivot_native, module)?)?;
+    module.add_function(wrap_pyfunction!(adaptive_pivot_native, module)?)?;
     Ok(())
 }
