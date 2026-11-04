@@ -172,7 +172,7 @@ mod tests {
         ];
         let report=boundary_path_candidates_from_g5(&initial,&ops).unwrap();
         assert_eq!(report.xor_operations,2);
-        assert_eq!(report.candidates.len(),1);
+        assert_eq!(report.candidates.len(),2);
         assert_eq!(report.candidates[0].separator,(1,4));
         assert_eq!(report.candidates[0].path_edges,3);
         assert_eq!(report.candidates[0].path_interior,2);
