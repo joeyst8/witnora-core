@@ -2746,7 +2746,9 @@
       "path": "witnora_core/crc_structural_independence.py",
       "sha": "8408bd447703e33b81a0a22794286b979288f241",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/crc_structural_independence.rs",
+      "migration_note": "R-075 native exact normalized signed-source check, bounded 256-bit witness test and primal-component sufficient independence audit; pending compiled differential CI."
     },
     {
       "path": "witnora_core/crc_variable_elimination_indexed.py",

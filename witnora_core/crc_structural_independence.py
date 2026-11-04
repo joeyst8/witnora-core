@@ -31,6 +31,7 @@ def audit_structural_source_independence(
     left_group: tuple[int, ...],
     right_group: tuple[int, ...],
     satisfying_assignment: int,
+    *, backend: str = "python",
 ) -> StructuralIndependenceAudit | None:
     """Return a sufficient source-relative independence certificate.
 
@@ -57,6 +58,15 @@ def audit_structural_source_independence(
             raise ValueError("group references non-boundary variable")
     if set(left_group) & set(right_group):
         raise ValueError("groups overlap")
+
+    if backend == "rust":
+        from witnora_ve import crc_structural_independence_native
+        native = crc_structural_independence_native(
+            [list(row) for row in source_clauses], list(boundary_variables),
+            list(left_group), list(right_group), str(satisfying_assignment))
+        return (None if native is None else StructuralIndependenceAudit(*native))
+    if backend != "python":
+        raise ValueError("unknown structural independence backend")
 
     clauses = _normalized_clauses(source_clauses, boundary_variables)
     if clauses is None:
