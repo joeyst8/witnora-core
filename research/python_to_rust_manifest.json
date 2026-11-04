@@ -2897,7 +2897,10 @@
       "path": "witnora_core/gf2_sparse_row_basis.py",
       "sha": "636069561072219c8b9933093aa03d63c6f3993b",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/gf2_sparse_row_basis.rs",
+      "test": "tests/test_sparse_basis_rust.py",
+      "verified_milestone": "R-053"
     },
     {
       "path": "witnora_core/global_coupling_separator.py",
@@ -3761,6 +3764,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41842971721",
       "python_reference_comparisons": 1000,
       "scope": "Native exact two-edge cut witness metadata and deterministic exhaustive-pair ordering; 900 randomized graphs and 100 planted cycles checked against Python plus an independent connectivity/boundary oracle"
+    },
+    {
+      "id": "R-053",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41844229274",
+      "python_reference_comparisons": 1200,
+      "scope": "Native original-row sparse GF(2) subset basis with arbitrary-precision reconstruction, 600 randomized sketches under both row orderings, finite independent parity oracle, rank >128 and tampered-certificate fail-closed tests"
     }
   ],
   "pending_ci_milestones": [],
@@ -3772,7 +3782,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 520,
-    "parallel_reference": 40
+    "not_migrated": 519,
+    "parallel_reference": 41
   }
 }
