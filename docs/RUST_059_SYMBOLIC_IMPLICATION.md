@@ -37,3 +37,17 @@ but invoke Rust for classification and known axioms. The new gate checks
 Once CI passes, every public symbolic-implication computation has a tested
 native path and the module can be promoted from partial to parallel reference.
 No syntactic derivation is upgraded to a Lean theorem or novelty claim.
+
+## R-068 verification and promotion
+
+The named R-059/R-068 native differential step in [Actions run #41876688818](https://github.com/joeyst8/witnora-core/actions/runs/41876688818)
+completed successfully: all 800 equality comparisons and the full report
+matched the Python reference. The job API also reported every remaining
+step, including post-run cleanup, as successfully completed, though its
+aggregate run status still read `in_progress` at inspection time.
+
+All four public symbolic-implication computations now have verified opt-in
+Rust paths. The ledger records this as the **47th verified parallel Python
+module** (47/560); 513 are not fully migrated, and zero are retired. This
+promotion rests on the specific successful native gate, not a claim that the
+overall workflow status had finalized.

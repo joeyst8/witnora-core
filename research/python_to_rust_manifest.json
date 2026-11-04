@@ -3332,10 +3332,10 @@
       "path": "witnora_core/symbolic_implication.py",
       "sha": "adf3b010ceff73964bea43b1b67f95640e0ee985",
       "group": "witnora_core",
-      "status": "partial_native_verified",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs",
-      "verified_functions": ["bound_path", "normalize"],
-      "pending_functions": ["derive_equality", "triage_with_implications"]
+      "verified_functions": ["bound_path", "normalize", "derive_equality", "triage_with_implications"],
+      "migration_note": "Full symbolic classification parallel path passed R-068 CI step; Python grammar/search inputs preserved."
     },
     {
       "path": "witnora_core/targeted_graph_theorems.py",
