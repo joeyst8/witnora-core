@@ -14,6 +14,7 @@ pub mod left_affine;
 pub mod fused_source;
 pub mod two_sat;
 pub mod cnf;
+pub mod dimacs_evidence;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -536,6 +537,20 @@ fn first_subsumption_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn parse_dimacs_evidence_native(
+    text: String,
+) -> PyResult<(Vec<Vec<i32>>, Vec<Vec<i32>>, Vec<i32>, Vec<String>, String)> {
+    let parsed = dimacs_evidence::parse_text_evidence(&text)
+        .map_err(PyValueError::new_err)?;
+    Ok((
+        parsed.canonical.clauses.clone(), parsed.raw_clauses,
+        parsed.literal_stream, parsed.literal_spellings,
+        parsed.canonical.canonical_dimacs(),
+    ))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -548,5 +563,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(solve_two_sat_native, module)?)?;
     module.add_function(wrap_pyfunction!(canonical_cnf_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
+    module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     Ok(())
 }
