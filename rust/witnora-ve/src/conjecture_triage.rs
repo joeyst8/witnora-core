@@ -2,6 +2,52 @@
 //! No output from this module constitutes a theorem or novelty claim.
 
 use std::collections::BTreeSet;
+use std::collections::BTreeMap;
+
+pub type Adversarial=(usize,Vec<(usize,usize)>,BTreeMap<String,i64>);
+pub type Falsified=(String,usize,Vec<(usize,usize)>,i64,i64);
+
+fn eval_label(label:&str,row:&BTreeMap<String,i64>)->Result<i64,String>{
+ if label.starts_with("min(") || label.starts_with("max("){
+  let op=&label[..3];
+  if !label.ends_with(')'){return Err("candidate absent from generated expression grammar".into());}
+  let (a,b)=label[4..label.len()-1].split_once(',')
+     .ok_or("candidate absent from generated expression grammar")?;
+  return crate::expression_conjecture_search::evaluate(op,a,b,row);
+ }
+ if label.starts_with('(') && label.ends_with(')'){
+  let inner=&label[1..label.len()-1];
+  for op in ['+','-','*']{
+   if let Some((a,b))=inner.split_once(op){
+    return crate::expression_conjecture_search::evaluate(&op.to_string(),a,b,row);
+   }
+  }
+ }
+ if ["n","m","alpha","tau","omega","chi","nu","delta","0","1","2"].contains(&label){
+  return crate::expression_conjecture_search::evaluate("atom",label,"",row);
+ }
+ Err("candidate absent from generated expression grammar".into())
+}
+
+pub fn triage(survivors:&[String],adversarial:&[Adversarial])
+ ->Result<(Vec<String>,Vec<String>,Vec<Falsified>),String>{
+ let known=known_identity_keys();
+ let mut catalog=Vec::new();let mut unclassified=Vec::new();let mut falsified=Vec::new();
+ for statement in survivors{
+  if known.contains(&identity_key(statement)?){catalog.push(statement.clone());continue;}
+  let (a,b)=statement.split_once(" = ")
+   .ok_or("candidate absent from generated expression grammar")?;
+  let mut witness=None;
+  for (n,edges,row) in adversarial{
+   let lhs=eval_label(a,row)?;let rhs=eval_label(b,row)?;
+   if lhs!=rhs{witness=Some((*n,edges.clone(),lhs,rhs));break;}
+  }
+  if let Some((n,edges,lhs,rhs))=witness{
+   falsified.push((statement.clone(),n,edges,lhs,rhs));
+  }else{unclassified.push(statement.clone());}
+ }
+ catalog.sort();unclassified.sort();Ok((catalog,unclassified,falsified))
+}
 
 pub fn normalize_expression(expr: &str) -> Result<String, String> {
     let expr = expr.trim();
