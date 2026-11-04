@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-036)
+name: Rust native Witnora migration differential gate (R-001 through R-037)
 
 on:
   push:
@@ -56,6 +56,8 @@ on:
       - "tests/test_component_children_rust.py"
       - "tests/test_component_stream_rust.py"
       - "tests/test_component_prefix_rust.py"
+      - "tests/test_two_sat_scc_witness_rust.py"
+      - "witnora_core/two_sat_proof.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -126,6 +128,8 @@ on:
       - "tests/test_component_children_rust.py"
       - "tests/test_component_stream_rust.py"
       - "tests/test_component_prefix_rust.py"
+      - "tests/test_two_sat_scc_witness_rust.py"
+      - "witnora_core/two_sat_proof.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -351,3 +355,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_component_prefix_rust -v
+      - name: Verify R-037 independent native 2-SAT SCC resolution proof provenance
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_two_sat_scc_witness_rust -v
