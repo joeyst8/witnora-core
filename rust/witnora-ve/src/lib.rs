@@ -69,6 +69,7 @@ pub mod crc_independence_audit;
 pub mod crc_defect_oracle;
 pub mod crc_shannon_oracle;
 pub mod crc_conflict_oracle;
+pub mod crc_orbit_oracle;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1797,6 +1798,15 @@ fn sparse_min_degree_width_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn crc_orbit_walsh_native(normalized:Option<Vec<(String,String)>>,
+    boundary:Vec<usize>,modes:Vec<String>,max_missing:usize)
+    ->PyResult<Option<(Vec<(String,String,String)>,usize,usize,usize)>>{
+    crc_orbit_oracle::query(normalized,&boundary,&modes,max_missing)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_conflict_prepare_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     modes:Vec<String>,max_clauses:usize,max_variables:usize,max_base_modes:usize)
     ->PyResult<Option<(Vec<(String,String)>,Vec<String>,Vec<i64>,Vec<String>,usize,usize)>>{
@@ -2016,6 +2026,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(crc_shannon_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_conflict_prepare_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_conflict_convolve_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_orbit_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

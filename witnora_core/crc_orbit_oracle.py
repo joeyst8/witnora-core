@@ -47,6 +47,7 @@ def query_orbit_walsh(
     modes: tuple[int, ...],
     *,
     max_missing: int = 3,
+    backend: str = "python",
 ) -> OrbitWalshResult | None:
     """Exact Walsh coefficients on one near-complete signed r-hypergraph.
 
@@ -66,6 +67,20 @@ def query_orbit_walsh(
     if any(not isinstance(mode, int) or mode < 0 or (mode & ~boundary_mask)
            for mode in modes):
         raise ValueError("mode outside boundary")
+    if backend == "rust":
+        from witnora_ve import crc_orbit_walsh_native
+        data = crc_orbit_walsh_native(
+            None if normalized_violations is None else
+            [(str(z), str(o)) for z, o in normalized_violations],
+            list(boundary_variables), [str(m) for m in modes], max_missing)
+        if data is None:
+            return None
+        rows, rank, missing, active = data
+        return OrbitWalshResult(
+            {int(m): Fraction(int(n), int(d)) for m, n, d in rows},
+            rank, missing, active)
+    if backend != "python":
+        raise ValueError("unknown orbit Walsh backend")
     if normalized_violations is None or not normalized_violations:
         return None
 
