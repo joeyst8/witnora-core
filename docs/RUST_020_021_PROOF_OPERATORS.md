@@ -30,7 +30,7 @@ original Python final formulas, decisions, details and every
 This is the proof-producing *resolution* operator, distinct from
 the exact model-counting VE kernel ported in R-001/R-002.
 
-## R-021: complete 2-SAT SCC certificate metadata, pending
+## R-021: verified complete 2-SAT SCC certificate metadata
 
 The original native R-010 SCC solver returned exact SAT/UNSAT and
 witnesses but deliberately refused Python certificate logging.
@@ -43,9 +43,12 @@ It is exposed as
 with the original Python `StepLogger` still handling hashes and
 event serialization.
 
-Acceptance requires exact equality of source results and every
-logged certificate record on **1,000 randomized 2-CNF instances**.
-The dedicated R-021 gate is pending.
+[Green R-021 CI #41752584529](https://github.com/joeyst8/witnora-core/actions/runs/41752584529)
+passed **1,000 full randomized 2-CNF comparisons**, confirming exact
+SAT/UNSAT outcomes, implication-edge order, Kosaraju SCC component
+order, assignments, conflict data, and every existing Python
+certificate-log record. The earlier Rust proof-free solver remains
+available separately.
 
 ## Scope limits
 
