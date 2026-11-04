@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-047)
+name: Rust native Witnora migration differential gate (R-001 through R-048)
 
 on:
   push:
@@ -67,6 +67,8 @@ on:
       - "tests/test_parity_separator_fingerprint_rust.py"
       - "tests/test_spoke_discovery_rust.py"
       - "tests/test_multicut_parity_rust.py"
+      - "tests/test_invariant_policies_rust.py"
+      - "witnora_core/structural_operator_invention.py"
       - "witnora_core/multicut_parity_separator.py"
       - "witnora_core/spoke_discovery.py"
       - "witnora_core/parity_separator_fingerprint.py"
@@ -159,6 +161,8 @@ on:
       - "tests/test_parity_separator_fingerprint_rust.py"
       - "tests/test_spoke_discovery_rust.py"
       - "tests/test_multicut_parity_rust.py"
+      - "tests/test_invariant_policies_rust.py"
+      - "witnora_core/structural_operator_invention.py"
       - "witnora_core/multicut_parity_separator.py"
       - "witnora_core/spoke_discovery.py"
       - "witnora_core/parity_separator_fingerprint.py"
@@ -439,3 +443,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_multicut_parity_rust -v
+      - name: Verify R-048 native graph invariants and all elimination policies
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_invariant_policies_rust -v
