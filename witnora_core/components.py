@@ -92,3 +92,33 @@ def component_details(formula: CNFFormula, *, backend: str = "python") -> dict[s
             for idx, component in enumerate(comps)
         ],
     }
+
+
+def verify_component_evidence_in_rust(
+    formula: CNFFormula, evidence: dict[str, Any], output_hash: str,
+) -> str | None:
+    """Independent native verification of full CD step metadata.
+
+    Returns the same first-error message as Python's _verify_cd_step for
+    well-formed CD evidence; None indicates valid metadata.
+    """
+    from witnora_ve import verify_component_evidence_native
+
+    return verify_component_evidence_native(
+        formula.to_clause_lists(),
+        output_hash,
+        int(evidence.get("component_count", 0)),
+        [tuple(int(v) for v in item)
+         for item in evidence.get("incidence_edges", [])],
+        [
+            (
+                int(component["component_id"]),
+                str(component["formula_hash"]),
+                [int(v) for v in component.get("variables", [])],
+                [[int(v) for v in clause]
+                 for clause in component.get("clauses", [])],
+                [int(v) for v in component.get("clause_indices", [])],
+            )
+            for component in evidence.get("components", [])
+        ],
+    )
