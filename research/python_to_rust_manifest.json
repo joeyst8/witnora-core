@@ -3287,9 +3287,9 @@
       "path": "witnora_core/spoke_collapse.py",
       "sha": "e387aeb3592692fa8d665f9cb298d083d7a918b2",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/spoke_collapse.rs",
-      "migration_note": "R-071 Rust exact 2-XOR spoke CNF assembly, restricted source recognition and SAT witness/UNSAT contradiction. Awaiting focused compiled differential CI."
+      "migration_note": "R-071 focused CI #41883904480 verified exact 2-XOR spoke CNF assembly, restricted source recognition and SAT witness/UNSAT contradiction across 500 seeded instances and adversarial controls."
     },
     {
       "path": "witnora_core/spoke_discovery.py",
