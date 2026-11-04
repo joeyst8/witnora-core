@@ -3272,7 +3272,10 @@
       "path": "witnora_core/structural_operator_invention.py",
       "sha": "f04239975699ab3a899ece7ebed7771be7956b33",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/structural_operator_invention.rs",
+      "test": "tests/test_invariant_policies_rust.py",
+      "verified_milestone": "R-048"
     },
     {
       "path": "witnora_core/structured_coloring_study.py",
@@ -3711,6 +3714,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41837865088",
       "python_reference_comparisons": 1080,
       "scope": "Native exact parity-incidence 1..3 variable cut search, 960 randomized full metadata cases and 120 planted minimal cuts, budget-exhaustion and safety flags parity; not full CNF proof"
+    },
+    {
+      "id": "R-048",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41838667472",
+      "python_reference_comparisons": 1200,
+      "scope": "Native primal graph degrees/fill/XOR-degree and all 3 exact bounded DP invariant policies, 1200 seeded random formula/metadata parity cases and independent exhaustive SAT preservation"
     }
   ],
   "pending_ci_milestones": [],
@@ -3722,7 +3732,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 525,
-    "parallel_reference": 35
+    "not_migrated": 524,
+    "parallel_reference": 36
   }
 }
