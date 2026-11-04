@@ -3902,7 +3902,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 516,
-    "parallel_reference": 44
+    "not_migrated": 488,
+    "parallel_reference": 65,
+    "partial_native_verified": 7
   }
 }
