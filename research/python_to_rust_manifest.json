@@ -2810,7 +2810,8 @@
       "path": "witnora_core/dsatur_bipartite_audit.py",
       "sha": "0ccd7672531a54e52c1abba14f547c38d2f32600",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/bipartite_audit.rs"
     },
     {
       "path": "witnora_core/eth_clause_violation_parity.py",
@@ -3131,7 +3132,7 @@
       "path": "witnora_core/proof_trace.py",
       "sha": "95908993d648a760d69889f87ea6131c25e57fb3",
       "group": "witnora_core",
-      "status": "partial_native_pending_verification",
+      "status": "partial_native_verified",
       "native_counterpart": "rust/witnora-ve/src/proof_trace_metadata.rs"
     },
     {

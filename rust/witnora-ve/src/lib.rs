@@ -48,6 +48,7 @@ pub mod symbolic_implication;
 pub mod targeted_graph_families;
 pub mod conjecture_triage;
 pub mod proof_trace_metadata;
+pub mod bipartite_audit;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -628,6 +629,14 @@ fn native_unsat_trace_metadata_supported_native(
 ) -> bool {
     proof_trace_metadata::is_supported(format.as_deref(), replayed,
         external.as_deref(), lrat_frat.as_deref(), reason.as_deref())
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn bipartition_audit_native(
+    n: usize, edges: Vec<(usize, usize)>,
+) -> PyResult<Option<Vec<i32>>> {
+    bipartite_audit::bipartition(n, &edges).map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1646,6 +1655,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(conjecture_identity_key_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_known_identities_native, module)?)?;
     module.add_function(wrap_pyfunction!(native_unsat_trace_metadata_supported_native, module)?)?;
+    module.add_function(wrap_pyfunction!(bipartition_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

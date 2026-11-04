@@ -20,3 +20,10 @@ that the original Python reference raised `TypeError` for an unhashable
 `unsat_reason` list/dict. The Python reference now fails closed (returns
 False) for non-string reasons, consistent with the Rust opt-in wrapper.
 This is input hardening, not acceptance of a new trace or a proof claim.
+
+## Verification update
+
+The revised [Rust Actions run #41869646019](https://github.com/joeyst8/witnora-core/actions/runs/41869646019)
+completed successfully, including the R-062 native differential step. The
+metadata recognizer is verified as a **partial** native port. The migration
+count remains 45 fully verified Python counterparts, zero retired.

@@ -34,6 +34,14 @@ def bipartition(n: int, edges: tuple[tuple[int, int], ...]) -> list[int] | None:
     return parts
 
 
+def bipartition_rust(n: int, edges: tuple[tuple[int, int], ...]) -> list[int] | None:
+    """Opt-in native BFS partition check; Python remains the audit default."""
+    from witnora_ve import bipartition_audit_native
+    if n < 0 or n > 4096:
+        raise ValueError("vertex budget exceeded")
+    return bipartition_audit_native(n, list(edges))
+
+
 def run_bipartite_audit() -> dict:
     stats = {"exhaustive_graphs": 0, "exhaustive_bipartite": 0,
              "random_bipartite": 0, "dsatur_violations": 0,
