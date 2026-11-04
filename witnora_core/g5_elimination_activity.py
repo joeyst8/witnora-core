@@ -127,3 +127,77 @@ def pairwise_cross_merge_activity(
         "scores": {pair: scores[pair] for pair in pairs},
         "cross_merge_events": events,
     }
+
+
+def _g5_native_rows(operations: Iterable[Mapping[str, Any]]):
+    """Canonical native transport, preserving source support validation."""
+    result = []
+    for operation in operations:
+        kind = operation.get("operation")
+        if kind == "SWAP_ROWS":
+            result.append(("SWAP_ROWS", [], []))
+        elif kind == "ADD_ROW_XOR":
+            before = _support(operation.get("before"))
+            source = _support(operation.get("source"))
+            result.append(("ADD_ROW_XOR", sorted(before), sorted(source)))
+        else:
+            raise ValueError("unsupported G5 operation kind")
+    return result
+
+
+def _g5_native_universe(variables: Iterable[int]) -> tuple[int, ...]:
+    universe = tuple(sorted(set(variables)))
+    if any(type(v) is not int or v <= 0 for v in universe):
+        raise ValueError("variables must be positive integer IDs")
+    return universe
+
+
+def activity_from_g5_operations_rust(
+    operations: Iterable[Mapping[str, Any]],
+    variables: Iterable[int],
+) -> dict[str, Any]:
+    """R-054 opt-in native exact activity and cancellation counts."""
+    from witnora_ve import g5_activity_native
+
+    universe = _g5_native_universe(variables)
+    ranked, touches, cancellations, count, top = g5_activity_native(
+        _g5_native_rows(operations), list(universe)
+    )
+    return {
+        "ranked_variables": tuple(ranked),
+        "touches": dict(touches),
+        "cancellations": dict(cancellations),
+        "xor_operations": count,
+        "top_pair": tuple(top),
+        "status": "DIAGNOSTIC_ONLY",
+    }
+
+
+def ranked_pair_candidates_rust(activity: Mapping[str, Any], limit: int | None = None):
+    """R-054 native diagnostic ranking, all candidate pairs retained."""
+    from witnora_ve import g5_ranked_pairs_native
+
+    if limit is not None and (type(limit) is not int or limit < 0):
+        raise ValueError("limit must be a nonnegative integer")
+    return tuple(tuple(pair) for pair in g5_ranked_pairs_native(
+        list(activity["ranked_variables"]), limit
+    ))
+
+
+def pairwise_cross_merge_activity_rust(
+    operations: Iterable[Mapping[str, Any]],
+    variables: Iterable[int],
+) -> dict[str, Any]:
+    """R-054 native exact source-target exclusive variable pair scores."""
+    from witnora_ve import g5_cross_merge_native
+
+    universe = _g5_native_universe(variables)
+    ranked, scores, count = g5_cross_merge_native(
+        _g5_native_rows(operations), list(universe)
+    )
+    return {
+        "status": "DIAGNOSTIC_ONLY",
+        "ranked_pairs": tuple(tuple(pair) for pair in ranked),
+        "scores": {tuple(pair): value for pair, value in scores},
+        "cross_merge_events": count,
+    }
