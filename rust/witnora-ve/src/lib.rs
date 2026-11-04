@@ -72,6 +72,7 @@ pub mod crc_conflict_oracle;
 pub mod crc_orbit_oracle;
 pub mod crc_separator_discovery;
 pub mod crc_cutset_count;
+pub mod expression_conjecture_search;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1800,6 +1801,23 @@ fn sparse_min_degree_width_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn expression_conjecture_evaluate_native(op:String,a:String,b:String,
+    metrics:BTreeMap<String,i64>)->PyResult<i64>{
+    expression_conjecture_search::evaluate(&op,&a,&b,&metrics)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn expression_conjecture_run_native(training:Vec<BTreeMap<String,i64>>,
+    holdout:Vec<expression_conjecture_search::Holdout>,max_candidates:usize)
+    ->PyResult<(usize,usize,Vec<String>,Vec<expression_conjecture_search::Rejected>)>{
+    expression_conjecture_search::run(&training,&holdout,max_candidates)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2049,6 +2067,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(crc_orbit_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_separator_discover_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_cutset_enumerate_native, module)?)?;
+    module.add_function(wrap_pyfunction!(expression_conjecture_evaluate_native, module)?)?;
+    module.add_function(wrap_pyfunction!(expression_conjecture_run_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
