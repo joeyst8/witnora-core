@@ -146,6 +146,40 @@ pub fn run_two_sat() -> Result<(), String> {
     Ok(())
 }
 
+/// Python-free RUP-only DRAT-style proof check. Returns true only
+/// after the original-CNF database derives the empty clause by RUP.
+/// This does not implement general RAT and is not a Lean kernel.
+pub fn run_rup_check_files() -> Result<bool, String> {
+    let args: Vec<_> = std::env::args().skip(2).collect();
+    if args.len() < 2 || args.len() > 3 {
+        return Err("usage: --check-rup SOURCE.cnf PROOF.drat [--strict-deletions]".into());
+    }
+    let strict = if args.len() == 3 {
+        if args[2] != "--strict-deletions" {
+            return Err("unknown native RUP CLI option".into());
+        }
+        true
+    } else { false };
+    let original = std::fs::read_to_string(&args[0])
+        .map_err(|e| format!("cannot read source CNF: {e}"))?;
+    let proof = std::fs::read_to_string(&args[1])
+        .map_err(|e| format!("cannot read RUP proof: {e}"))?;
+    let normalized = witnora_ve::dimacs_evidence::parse_text_evidence(&original)?;
+    let result = witnora_ve::rup_checker::check_rup_text(
+        &normalized.canonical.clauses, &proof, strict,
+    )?;
+    if result.verified {
+        println!("s VERIFIED_RUP_SUBSET");
+        Ok(true)
+    } else {
+        println!("s INVALID_RUP_SUBSET");
+        if let Some(error) = result.error {
+            eprintln!("c RUP-only checker rejected proof: {error}");
+        }
+        Ok(false)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
