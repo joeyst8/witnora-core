@@ -381,7 +381,32 @@ def _fail(error: str, failed_check: str) -> dict[str, Any]:
     }
 
 
-def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
+def first_certificate_file_hash_failure(
+    expected: dict[str, dict[str, Any]],
+    files: dict[str, str], *,
+    backend: str = "python",
+) -> str | None:
+    """Return the first missing/tampered certificate text file message."""
+    if backend == "rust":
+        from witnora_ve import verify_certificate_file_digests_native
+        hashes = [
+            (name, str(meta.get("sha256")))
+            for name, meta in expected.items()
+        ]
+        return verify_certificate_file_digests_native(hashes, list(files.items()))
+    if backend != "python":
+        raise ValueError("unknown certificate file verification backend")
+    for name, meta in expected.items():
+        if name not in files:
+            return f"missing file {name}"
+        if sha256_text(files[name]) != meta.get("sha256"):
+            return f"file hash mismatch for {name}"
+    return None
+
+
+def verify_certificate_bundle(
+    path: str | Path, *, file_hash_backend: str = "python",
+) -> dict[str, Any]:
     """Verify a saved certificate package without rerunning collapse search."""
 
     try:
@@ -395,11 +420,11 @@ def verify_certificate_bundle(path: str | Path) -> dict[str, Any]:
     if not manifest.get("forbidden_claims_absent", False):
         return _fail("forbidden_claims_absent is not true", "manifest")
 
-    for name, meta in manifest.get("files", {}).items():
-        if name not in files:
-            return _fail(f"missing file {name}", "file_hash")
-        if sha256_text(files[name]) != meta.get("sha256"):
-            return _fail(f"file hash mismatch for {name}", "file_hash")
+    integrity_error = first_certificate_file_hash_failure(
+        manifest.get("files", {}), files, backend=file_hash_backend,
+    )
+    if integrity_error is not None:
+        return _fail(integrity_error, "file_hash")
 
     try:
         result_data = json.loads(files["result.json"])
