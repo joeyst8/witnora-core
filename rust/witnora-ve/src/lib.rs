@@ -25,6 +25,7 @@ pub mod ve_proof;
 pub mod two_sat_proof;
 pub mod two_sat_scc_witness;
 pub mod order_experiments;
+pub mod failed_literal_probe;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1015,6 +1016,27 @@ fn replay_factor_elimination_width_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn unit_conflict_native(
+    source: Vec<Vec<i32>>, assumed_literal: i32,
+) -> PyResult<bool> {
+    failed_literal_probe::unit_conflict(&source,assumed_literal)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn probe_forced_relations_native(
+    source: Vec<Vec<i32>>, max_probes: i32,
+) -> PyResult<(Vec<Vec<i32>>, usize, Vec<i32>, bool, String, String)> {
+    let result=failed_literal_probe::probe_forced_relations(&source,max_probes)
+        .map_err(PyValueError::new_err)?;
+    Ok((result.clauses,result.checked_variables,result.forced_literals,
+        result.both_assumptions_conflict,result.source_hash,
+        result.candidate_hash))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -1057,5 +1079,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(build_2sat_scc_resolution_native, module)?)?;
     module.add_function(wrap_pyfunction!(factor_elimination_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(replay_factor_elimination_width_native, module)?)?;
+    module.add_function(wrap_pyfunction!(unit_conflict_native, module)?)?;
+    module.add_function(wrap_pyfunction!(probe_forced_relations_native, module)?)?;
     Ok(())
 }
