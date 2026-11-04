@@ -11,4 +11,5 @@ prefixes and permutations, 200 randomized raw byte vectors, source
 serialization, and invalid input rejection. Lean is still responsible for
 checking generated theorem proofs; emission alone proves nothing.
 
-Status: awaiting compiled Rust CI.
+Status: native compilation, extension wheel, and all byte-exact differential
+tests passed in GitHub Actions #41928847718.

@@ -3043,7 +3043,11 @@
       "path": "witnora_core/lean_ascii_certificate_export.py",
       "sha": "9a1267a076b6ee43cf02aa04ff25e22ab02776af",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/lean_ascii_certificate_export.rs",
+      "test": "tests/test_lean_ascii_certificate_export_rust.py",
+      "verified_milestone": "R-094",
+      "migration_note": "Focused Rust CI #41928847718 passed native library, wheel, byte-exact complete ASCII Lean source comparisons, 200 seeded byte vectors, invalid controls; Lean proof checker unchanged."
     },
     {
       "path": "witnora_core/lean_cnf_gate.py",
@@ -3920,8 +3924,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 485,
-    "parallel_reference": 70,
+    "not_migrated": 484,
+    "parallel_reference": 71,
     "partial_native_verified": 5
   }
 }
