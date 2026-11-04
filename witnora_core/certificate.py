@@ -256,7 +256,10 @@ class CollapseStep:
 
 
 class StepLogger:
-    def __init__(self) -> None:
+    def __init__(self, *, backend: str = "python") -> None:
+        if backend not in {"python", "rust"}:
+            raise ValueError("unknown certificate StepLogger backend")
+        self.backend = backend
         self.steps: list[CollapseStep] = []
 
     def append(
@@ -271,17 +274,27 @@ class StepLogger:
         assigned_literals: list[int] | None = None,
         reconstruction_data: dict[str, Any] | None = None,
     ) -> CollapseStep:
-        step = CollapseStep(
-            step_id=len(self.steps) + 1,
-            type=step_type,
-            input_formula_hash=input_formula.formula_hash,
-            output_formula_hash=output_formula.formula_hash,
-            details=details or {},
-            removed_clauses=removed_clauses or [],
-            added_clauses=added_clauses or [],
-            assigned_literals=assigned_literals or [],
-            reconstruction_data=reconstruction_data or {},
-        )
+        if self.backend == "rust":
+            from witnora_ve import build_step_record_native
+            record = build_step_record_native(
+                len(self.steps) + 1, step_type,
+                input_formula.to_clause_lists(), output_formula.to_clause_lists(),
+                details or {}, removed_clauses or [], added_clauses or [],
+                assigned_literals or [], reconstruction_data or {},
+            )
+            step = CollapseStep(**record)
+        else:
+            step = CollapseStep(
+                step_id=len(self.steps) + 1,
+                type=step_type,
+                input_formula_hash=input_formula.formula_hash,
+                output_formula_hash=output_formula.formula_hash,
+                details=details or {},
+                removed_clauses=removed_clauses or [],
+                added_clauses=added_clauses or [],
+                assigned_literals=assigned_literals or [],
+                reconstruction_data=reconstruction_data or {},
+            )
         self.steps.append(step)
         return step
 
