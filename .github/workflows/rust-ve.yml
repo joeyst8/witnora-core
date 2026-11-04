@@ -558,7 +558,7 @@ jobs:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_finite_parity_rust -v
 
-      - name: R-059 symbolic axiom triage native differential
+      - name: R-059 and R-068 symbolic implication end-to-end native differential
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_symbolic_implication_rust -v

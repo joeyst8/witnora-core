@@ -51,6 +51,27 @@ pub fn normalize(op: &str, a: &str, b: &str, label: &str) -> (String, Vec<String
     (label.to_owned(), vec![])
 }
 
+pub fn derive_pair(
+    left: (&str,&str,&str,&str), right: (&str,&str,&str,&str),
+) -> (String,String,Vec<String>,String) {
+    let (ln,lr)=normalize(left.0,left.1,left.2,left.3);
+    let (rn,rr)=normalize(right.0,right.1,right.2,right.3);
+    let references=lr.into_iter().chain(rr).collect::<BTreeSet<_>>()
+        .into_iter().collect();
+    let classification=if ln==rn {
+        "DERIVABLE_RELATIVE_TO_LISTED_AXIOMS"
+    } else {"UNRESOLVED_BY_THIS_RULE_SET"};
+    (ln,rn,references,classification.to_owned())
+}
+
+pub fn known_axioms() -> Vec<String> {
+    let mut bounds=BOUNDS.iter().map(|(a,b)|format!("{a}<={b}"))
+        .collect::<Vec<_>>();
+    bounds.sort();
+    bounds.extend(["alpha+tau=n".into(),"n-tau=alpha".into(),"n-alpha=tau".into()]);
+    bounds
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -62,5 +83,8 @@ mod tests {
                    ("n".into(), vec!["alpha+tau=n".into()]));
         assert_eq!(normalize("max", "alpha", "n", "max(alpha,n)"),
                    ("n".into(), vec!["alpha<=n".into()]));
+        assert_eq!(derive_pair(("+","alpha","tau","(alpha+tau)"),
+            ("max","n","alpha","max(n,alpha)")).3,
+            "DERIVABLE_RELATIVE_TO_LISTED_AXIOMS");
     }
 }

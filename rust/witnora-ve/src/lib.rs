@@ -594,6 +594,22 @@ fn symbolic_normalize_native(op: &str, a: &str, b: &str, label: &str) -> (String
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn symbolic_derive_pair_native(
+    left:(String,String,String,String),right:(String,String,String,String),
+) -> (String,String,Vec<String>,String) {
+    symbolic_implication::derive_pair(
+        (&left.0,&left.1,&left.2,&left.3),
+        (&right.0,&right.1,&right.2,&right.3))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn symbolic_known_axioms_native() -> Vec<String> {
+    symbolic_implication::known_axioms()
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn targeted_graph_family_native(
     family: &str, a: usize, b: usize,
 ) -> PyResult<(usize, Vec<(usize, usize)>)> {
@@ -1688,6 +1704,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
     module.add_function(wrap_pyfunction!(symbolic_bound_path_native, module)?)?;
     module.add_function(wrap_pyfunction!(symbolic_normalize_native, module)?)?;
+    module.add_function(wrap_pyfunction!(symbolic_derive_pair_native, module)?)?;
+    module.add_function(wrap_pyfunction!(symbolic_known_axioms_native, module)?)?;
     module.add_function(wrap_pyfunction!(targeted_graph_family_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_normalize_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_identity_key_native, module)?)?;

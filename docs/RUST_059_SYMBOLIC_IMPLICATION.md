@@ -24,3 +24,16 @@ files not yet verified, zero Python files retired. R-059 is pending.
 The R-059 native differential step passed in [Rust Actions run #41868308092](https://github.com/joeyst8/witnora-core/actions/runs/41868308092).
 The native helpers are verified, but `derive_equality` and
 `triage_with_implications` remain Python. This is a verified partial module.
+
+## R-068 — Complete native classification path (pending CI)
+
+Extends R-059 with native equality-pair normalization, deduplicated sorted
+axiom references and known-axiom catalog construction. The opt-in Python
+`derive_equality_rust` and `triage_with_implications_rust` adapters retain the
+same finite expression grammar and pre-existing Python hypothesis search,
+but invoke Rust for classification and known axioms. The new gate checks
+800 seeded grammar equalities, full report equality, and malformed titles.
+
+Once CI passes, every public symbolic-implication computation has a tested
+native path and the module can be promoted from partial to parallel reference.
+No syntactic derivation is upgraded to a Lean theorem or novelty claim.

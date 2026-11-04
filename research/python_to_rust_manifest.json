@@ -3333,7 +3333,9 @@
       "sha": "adf3b010ceff73964bea43b1b67f95640e0ee985",
       "group": "witnora_core",
       "status": "partial_native_verified",
-      "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs"
+      "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs",
+      "verified_functions": ["bound_path", "normalize"],
+      "pending_functions": ["derive_equality", "triage_with_implications"]
     },
     {
       "path": "witnora_core/targeted_graph_theorems.py",

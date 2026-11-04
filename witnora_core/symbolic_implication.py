@@ -97,6 +97,26 @@ def derive_equality(title: str) -> dict:
     }
 
 
+def derive_equality_rust(title: str) -> dict:
+    """Opt-in native equality classification relative to the fixed axioms."""
+    from witnora_ve import symbolic_derive_pair_native
+    index = {expr.label: expr for expr in expression_pool()}
+    left, right = title.split(" = ", 1)
+    if left not in index or right not in index:
+        raise ValueError("non-grammar expression")
+    def fields(expr):
+        return expr.op, expr.a, expr.b, expr.label
+    ln, rn, references, classification = symbolic_derive_pair_native(
+        fields(index[left]), fields(index[right])
+    )
+    return {
+        "conjecture": title, "left_normal_form": ln,
+        "right_normal_form": rn, "axiom_references": references,
+        "classification": classification, "lean_verified": False,
+        "novelty_verified": False, "theorem_proven": False,
+    }
+
+
 def triage_with_implications() -> dict:
     previous = triage()
     derived = []
@@ -111,6 +131,31 @@ def triage_with_implications() -> dict:
         "unresolved": unresolved,
         "known_axioms": sorted(f"{a}<={b}" for a, b in KNOWN_BOUNDS)
                         + ["alpha+tau=n", "n-tau=alpha", "n-alpha=tau"],
+        "axioms_formally_verified_in_this_experiment": False,
+        "lean_review_queue": [{
+            "statement": row["conjecture"],
+            "status": "PENDING_FORMALIZATION_AND_PRIOR_ART_REVIEW",
+            "lean_verified": False, "novelty_verified": False,
+        } for row in unresolved[:10]],
+        "lean_verified": False, "novelty_verified": False,
+        "theorem_proven": False, "promoted": False,
+    }
+
+
+def triage_with_implications_rust() -> dict:
+    """Opt-in native classification, preserving Python's research inputs."""
+    from witnora_ve import symbolic_known_axioms_native
+    previous = triage()
+    derived, unresolved = [], []
+    for title in previous["unclassified_survivors"]:
+        result = derive_equality_rust(title)
+        (derived if result["classification"].startswith("DERIVABLE")
+         else unresolved).append(result)
+    return {
+        "original_unclassified": len(previous["unclassified_survivors"]),
+        "derived_relative_to_axioms": derived,
+        "unresolved": unresolved,
+        "known_axioms": symbolic_known_axioms_native(),
         "axioms_formally_verified_in_this_experiment": False,
         "lean_review_queue": [{
             "statement": row["conjecture"],

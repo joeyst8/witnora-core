@@ -1,10 +1,13 @@
 """R-059: all-grammar comparison of opt-in native symbolic implication."""
 import os
+import random
 import unittest
 
 from witnora_core.expression_conjecture_search import expression_pool
 from witnora_core.symbolic_implication import (
     KNOWN_BOUNDS, bound_path, bound_path_rust, normalize, normalize_rust,
+    derive_equality, derive_equality_rust,
+    triage_with_implications, triage_with_implications_rust,
 )
 
 
@@ -24,6 +27,18 @@ class SymbolicImplicationRustTests(unittest.TestCase):
                 with self.subTest(smaller=smaller, larger=larger):
                     self.assertEqual(bound_path_rust(smaller, larger),
                                      bound_path(smaller, larger))
+
+    def test_random_grammar_equalities_and_complete_report(self):
+        expressions=[x.label for x in expression_pool()]
+        rng=random.Random(5902026)
+        for case in range(800):
+            left,right=rng.choices(expressions,k=2)
+            title=f"{left} = {right}"
+            with self.subTest(case=case):
+                self.assertEqual(derive_equality_rust(title),derive_equality(title))
+        self.assertEqual(triage_with_implications_rust(),triage_with_implications())
+        with self.assertRaises(ValueError):
+            derive_equality_rust("not-in-grammar = n")
 
 
 if __name__ == "__main__":
