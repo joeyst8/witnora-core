@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-020)
+name: Rust native Witnora migration differential gate (R-001 through R-021)
 
 on:
   push:
@@ -34,6 +34,7 @@ on:
       - "witnora_core/simplify.py"
       - "witnora_core/ve.py"
       - "tests/test_ve_proof_rust.py"
+      - "tests/test_two_sat_proof_rust.py"
       - "tests/test_simplify_rust.py"
       - "tests/test_bce_rust.py"
       - "tests/test_treewidth_rust.py"
@@ -83,6 +84,7 @@ on:
       - "witnora_core/simplify.py"
       - "witnora_core/ve.py"
       - "tests/test_ve_proof_rust.py"
+      - "tests/test_two_sat_proof_rust.py"
       - "tests/test_simplify_rust.py"
       - "tests/test_bce_rust.py"
       - "tests/test_treewidth_rust.py"
@@ -245,3 +247,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_ve_proof_rust -v
+      - name: Verify R-021 complete native two-SAT SCC proof metadata and logs
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_two_sat_proof_rust -v
