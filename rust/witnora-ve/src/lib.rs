@@ -705,6 +705,14 @@ fn canonical_cnf_hash_native(clauses: Vec<Vec<i32>>) -> PyResult<String> {
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn blocked_clause_digest_native(
+    rows: Vec<(Vec<i32>, Vec<i32>, bool)>,
+) -> PyResult<String> {
+    Ok(bce::checked_proof_digest(&rows))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -726,6 +734,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(treewidth_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_treewidth_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(blocked_clause_witness_native, module)?)?;
+    module.add_function(wrap_pyfunction!(blocked_clause_digest_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
