@@ -16,3 +16,13 @@ Until GitHub native CI passes, this is a pending parallel source module,
 not a verified additional file. The planted witness establishes SAT for
 those constructed instances; the word “hard” in the experiment name is
 not a proof of computational hardness or a complexity-theory result.
+
+## Native fixture correction
+
+The focused [Rust run #41880243498](https://github.com/joeyst8/witnora-core/actions/runs/41880243498)
+compiled the crate and passed 95 library tests, but the R-069 unit fixture
+incorrectly reused a first-block clause on the second block. The native
+generator correctly returned `invalid planted signed clause`. The fixture
+now uses block-specific variables and separately asserts rejection of the
+cross-block contamination. The 96-case Python/native differential gate still
+requires a fresh CI run before promotion.

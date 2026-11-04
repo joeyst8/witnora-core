@@ -48,9 +48,15 @@ mod tests {
     use super::*;
     #[test]
     fn grid_and_invalid_rows() {
-        let rows=vec![vec![vec![100,101,102];76];2];
+        let rows=vec![
+            vec![vec![100,101,102];76],
+            vec![vec![200,201,202];76],
+        ];
         assert!(!generate(2,18,2,&rows).unwrap().is_empty());
         assert!(generate(3,18,2,&rows).is_err());
         assert!(generate(2,18,2,&[]).is_err());
+        let mut invalid=rows.clone();
+        invalid[1][0]=vec![100,101,102];
+        assert!(generate(2,18,2,&invalid).is_err());
     }
 }
