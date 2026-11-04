@@ -23,6 +23,7 @@ pub mod bce;
 pub mod simplifier;
 pub mod ve_proof;
 pub mod two_sat_proof;
+pub mod two_sat_scc_witness;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -975,6 +976,23 @@ fn replay_prefixed_component_certificate_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn build_2sat_scc_resolution_native(
+    source: Vec<Vec<i32>>, requested_variable: Option<i32>,
+) -> PyResult<(u32, Vec<(i32,i32,Vec<i32>)>,
+               Vec<(i32,i32,Vec<i32>)>, Vec<Vec<i32>>)> {
+    let proof = two_sat_scc_witness::build_2sat_scc_resolution_proof(
+        &source, requested_variable,
+    ).map_err(PyValueError::new_err)?;
+    let packed = |edges: Vec<two_sat_scc_witness::ProofEdge>| {
+        edges.into_iter().map(|edge|
+            (edge.source, edge.target, edge.clause)).collect::<Vec<_>>()
+    };
+    Ok((proof.variable,packed(proof.path_pos_to_neg),
+        packed(proof.path_neg_to_pos),proof.derived_clauses))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -1014,5 +1032,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(eliminate_with_proof_native, module)?)?;
     module.add_function(wrap_pyfunction!(solve_two_sat_proof_native, module)?)?;
+    module.add_function(wrap_pyfunction!(build_2sat_scc_resolution_native, module)?)?;
     Ok(())
 }
