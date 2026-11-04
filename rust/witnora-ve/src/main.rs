@@ -60,6 +60,17 @@ fn run() -> Result<(), String> {
 }
 
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("--check-rup") {
+        match dimacs::run_rup_check_files() {
+            Ok(true) => {},
+            Ok(false) => std::process::exit(1),
+            Err(e) => {
+                eprintln!("ERROR: {e}");
+                std::process::exit(2);
+            },
+        }
+        return;
+    }
     if std::env::args().nth(1).as_deref() == Some("--two-sat-dimacs") {
         if let Err(e) = dimacs::run_two_sat() {
             eprintln!("ERROR: {e}");
