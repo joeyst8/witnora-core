@@ -50,3 +50,9 @@ def first_subsumption_in_rust(
         return None
     left, right = got
     return Clause(left), Clause(right)
+
+
+def canonical_hash_in_rust(raw_clauses: Iterable[Iterable[int]]) -> str:
+    """Return the Rust SHA-256 hash of Python-compatible canonical DIMACS bytes."""
+    from witnora_ve import canonical_cnf_hash_native
+    return canonical_cnf_hash_native(_native_clauses(raw_clauses))
