@@ -86,9 +86,10 @@ class TestRustFusedSource(unittest.TestCase):
         self.assertIsNone(count_source_fused_in_rust(
             [[1, 2]], 2, source_preprocessor="none",
             max_inclusion_subsets=1))
-        self.assertIsNone(count_source_fused_in_rust(
-            [[1, 2]], 2, source_preprocessor="rust_consensus",
-            max_preprocess_passes=0))
+        with self.assertRaises(ValueError):
+            count_source_fused_in_rust(
+                [[1, 2]], 2, source_preprocessor="rust_consensus",
+                max_preprocess_passes=0)
         for bad in ([[3]], [[0]], [[True]], [[-4]]):
             with self.assertRaises(ValueError):
                 count_source_fused_in_rust(bad, 2)
