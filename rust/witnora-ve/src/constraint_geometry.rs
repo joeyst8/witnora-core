@@ -8,7 +8,7 @@ pub fn rows_from_bitmaps(bitmaps:&[String], clause_count:usize)->Result<Vec<Vec<
     bitmaps.iter().map(|raw|{
         let bits=BigUint::parse_bytes(raw.as_bytes(),10).ok_or("invalid bitmap")?;
         if (&bits >> clause_count)!=BigUint::zero(){return Err("bitmap exceeds clause count".into());}
-        Ok((0..clause_count).filter(|j|(( &bits >> j)&BigUint::one())==BigUint::one()).collect())
+        Ok((0..clause_count).filter(|j|((&bits >> *j)&BigUint::one())==BigUint::one()).collect())
     }).collect()
 }
 
@@ -24,7 +24,7 @@ pub fn audit(source:&[Vec<i32>],nvars:usize,rows:&[Vec<usize>],max_variables:usi
         let mask=violation_mask(source,&BigUint::from(assignment))?;
         if mask.is_zero(){models+=1;continue;}
         let positions:Vec<usize>=mask.iter_u32_digits().enumerate().flat_map(|(word_idx,word)|{
-            (0..32).filter(move |bit| ((word>>bit)&1)==1).map(move |bit|word_idx*32+bit)
+            (0..32).filter(move |bit| ((word>>*bit)&1)==1).map(move |bit|word_idx*32+bit)
         }).collect();
         if positions.len()==1{singleton.insert(positions[0]);}
         if parity_accepts(&mask,rows){false_positives+=1;}
