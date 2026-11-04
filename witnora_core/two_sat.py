@@ -73,6 +73,44 @@ def _kosaraju(graph: dict[int, set[int]]) -> tuple[dict[int, int], list[list[int
 
 def solve_2sat(formula: CNFFormula, logger: StepLogger | None = None, *,
                backend: str = "python") -> dict[str, Any]:
+    if backend == "rust_proof":
+        if not formula.is_2cnf:
+            raise ValueError("formula is not 2-CNF")
+        from witnora_ve import solve_two_sat_proof_native
+        sat, empty, conflict, edges, sccs, pairs, nodes = solve_two_sat_proof_native(
+            formula.to_clause_lists())
+        if empty:
+            details = {"status": "UNSAT", "reason": "empty_clause"}
+            if logger is not None:
+                logger.append("2SAT_SOLVE", formula, formula, details=details)
+            return {"status": "UNSAT", "assignment": {}, "details": details}
+        if not sat:
+            details = {
+                "status": "UNSAT", "conflict_variable": conflict,
+                "num_implication_nodes": nodes,
+                "num_implication_edges": len(edges),
+                "edges": [[src, dst] for src, dst in edges],
+                "sccs": sccs,
+            }
+            if logger is not None:
+                logger.append("2SAT_SOLVE", formula, formula, details=details)
+            return {"status": "UNSAT", "assignment": {}, "details": details}
+        assignment = {var: bool(value) for var, value in pairs}
+        if not formula_satisfied(formula, assignment):
+            raise AssertionError("Rust 2-SAT proof assignment failed CNF replay")
+        details = {
+            "status": "SAT", "num_implication_nodes": nodes,
+            "num_implication_edges": len(edges),
+            "edges": [[src, dst] for src, dst in edges],
+            "sccs": sccs,
+            "assignment": {str(v): assignment[v] for v in sorted(assignment)},
+        }
+        if logger is not None:
+            logger.append(
+                "2SAT_SOLVE", formula, formula, details=details,
+                reconstruction_data={"assignment": details["assignment"]},
+            )
+        return {"status": "SAT", "assignment": assignment, "details": details}
     if backend == "rust":
         if logger is not None:
             raise ValueError("native two-SAT does not emit verified proof logs yet")
