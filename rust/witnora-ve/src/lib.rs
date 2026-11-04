@@ -712,6 +712,37 @@ fn blocked_clause_digest_native(
     Ok(bce::checked_proof_digest(&rows))
 }
 
+/// R-024: build the canonical certificate step record in Rust.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn build_step_record_native(
+    py: Python<'_>, step_id: usize, step_type: String,
+    input_clauses: Vec<Vec<i32>>, output_clauses: Vec<Vec<i32>>,
+    details: Py<PyAny>, removed_clauses: Vec<Vec<i32>>,
+    added_clauses: Vec<Vec<i32>>, assigned_literals: Vec<i32>,
+    reconstruction_data: Py<PyAny>,
+) -> PyResult<Py<PyAny>> {
+    use pyo3::types::PyDict;
+    if step_id == 0 {
+        return Err(PyValueError::new_err("certificate step id must be positive"));
+    }
+    let input = cnf::CanonicalCnf::from_signed(&input_clauses)
+        .map_err(PyValueError::new_err)?;
+    let output = cnf::CanonicalCnf::from_signed(&output_clauses)
+        .map_err(PyValueError::new_err)?;
+    let record = PyDict::new(py);
+    record.set_item("step_id", step_id)?;
+    record.set_item("type", step_type)?;
+    record.set_item("input_formula_hash", input.formula_hash())?;
+    record.set_item("output_formula_hash", output.formula_hash())?;
+    record.set_item("details", details)?;
+    record.set_item("removed_clauses", removed_clauses)?;
+    record.set_item("added_clauses", added_clauses)?;
+    record.set_item("assigned_literals", assigned_literals)?;
+    record.set_item("reconstruction_data", reconstruction_data)?;
+    Ok(record.into_any().unbind())
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -735,6 +766,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(verify_treewidth_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(blocked_clause_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(blocked_clause_digest_native, module)?)?;
+    module.add_function(wrap_pyfunction!(build_step_record_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
