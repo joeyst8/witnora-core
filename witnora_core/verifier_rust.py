@@ -153,3 +153,76 @@ def replay_root_component_certificate_in_rust(
         records, events, int(width_cap), final_formula_hash,
     )
     return bool(ok), CNFFormula.from_raw_clauses(clauses), error
+
+
+def replay_prefixed_component_certificate_in_rust(
+    original: CNFFormula,
+    steps: list[CollapseStep],
+    width_cap: int,
+    final_formula_hash: str,
+) -> tuple[bool, CNFFormula, str | None]:
+    """Replay local root steps, one CD, and post-CD component-local steps.
+
+    Nested component splits and final SAT/UNSAT certification remain excluded.
+    """
+    cd_indices = [idx for idx, step in enumerate(steps) if step.type == "CD"]
+    if len(cd_indices) != 1:
+        raise ValueError("native prefixed replay requires exactly one CD")
+    pos = cd_indices[0]
+    cd = steps[pos]
+    if cd.details.get("parent_component_id") is not None:
+        raise ValueError("native prefixed replay does not support nested CD")
+    from witnora_ve import replay_prefixed_component_certificate_native
+
+    def packed(step: CollapseStep):
+        if step.type not in SUPPORTED:
+            raise ValueError(f"unsupported native local replay step {step.type}")
+        return (
+            step.type, int(step.step_id),
+            step.input_formula_hash, step.output_formula_hash,
+            list(step.assigned_literals),
+            [list(c) for c in step.removed_clauses],
+            [list(c) for c in step.added_clauses],
+            (
+                list(step.details.get("subsuming_clause", [])),
+                int(step.details.get("blocked_literal", 0)),
+                str(step.details.get("proof_digest", "")),
+                int(step.reconstruction_data.get("eliminated_variable", 0)),
+            ),
+            (
+                [int(var) for var in step.details.get("elimination_order", [])],
+                [tuple(int(v) for v in edge) for edge in
+                 step.details.get("primal_edges", [])],
+                str(step.details.get("status", "")),
+                [(int(var), bool(value)) for var, value in
+                 step.details.get("assignment", {}).items()],
+            ),
+        )
+
+    details = cd.details
+    records = [
+        (
+            int(row["component_id"]), str(row["formula_hash"]),
+            [int(var) for var in row.get("variables", [])],
+            [[int(var) for var in clause] for clause in row.get("clauses", [])],
+            [int(idx) for idx in row.get("clause_indices", [])],
+        )
+        for row in details.get("components", [])
+    ]
+    suffix = [
+        (
+            str(step.details["component_id"])
+            if step.details.get("component_id") is not None else None,
+            packed(step),
+        )
+        for step in steps[pos+1:]
+    ]
+    ok, clauses, error = replay_prefixed_component_certificate_native(
+        original.to_clause_lists(), [packed(step) for step in steps[:pos]],
+        int(cd.step_id), cd.input_formula_hash, cd.output_formula_hash,
+        int(details.get("component_count", 0)),
+        [tuple(int(v) for v in edge) for edge
+         in details.get("incidence_edges", [])],
+        records, suffix, int(width_cap), final_formula_hash,
+    )
+    return bool(ok), CNFFormula.from_raw_clauses(clauses), error
