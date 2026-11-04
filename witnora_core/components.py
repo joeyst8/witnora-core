@@ -8,7 +8,13 @@ from typing import Any
 from .cnf import CNFFormula, Clause
 
 
-def connected_components(formula: CNFFormula) -> list[CNFFormula]:
+def connected_components(formula: CNFFormula, *, backend: str = "python") -> list[CNFFormula]:
+    if backend == "rust":
+        from witnora_ve import incidence_components_native
+        components = incidence_components_native(formula.to_clause_lists())
+        return [CNFFormula.from_raw_clauses(rows) for rows in components]
+    if backend != "python":
+        raise ValueError("unknown component backend")
     if not formula.clauses:
         return []
 
@@ -48,8 +54,8 @@ def connected_components(formula: CNFFormula) -> list[CNFFormula]:
     return [CNFFormula(component) for component in components]
 
 
-def component_details(formula: CNFFormula) -> dict[str, Any]:
-    comps = connected_components(formula)
+def component_details(formula: CNFFormula, *, backend: str = "python") -> dict[str, Any]:
+    comps = connected_components(formula, backend=backend)
     clause_to_index = {clause.literals: idx for idx, clause in enumerate(formula.clauses)}
     return {
         "component_count": len(comps),
