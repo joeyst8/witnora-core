@@ -2772,7 +2772,7 @@
       "path": "witnora_core/drat_check.py",
       "sha": "a452ffc01f51f1c76278d9d236ee61268e45da49",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/rup_checker.rs"
     },
     {
@@ -3432,12 +3432,19 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41745730316",
       "python_reference_comparisons": 2000,
       "trust": "untrusted witness producer checked by Lean separately"
+    },
+    {
+      "id": "R-014",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41746152046",
+      "python_reference_comparisons": 1200,
+      "scope": "independent RUP-only proof replay; Lean checker remains trusted"
     }
   ],
   "pending_ci_milestones": [
     {
-      "id": "R-014",
-      "scope": "native RUP-only proof checker, independent from Lean"
+      "id": "R-015",
+      "scope": "fully standalone Python-free RUP-only file checking CLI"
     }
   ],
   "completion_criteria": [
