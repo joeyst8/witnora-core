@@ -12,4 +12,6 @@ positive and negative independence cases, and high-bit exact-fraction controls.
 The Python reference remains the default. This is not general SAT independence
 or a Lean proof.
 
-Status: awaiting compiled Rust CI verification.
+Verified: **focused Rust CI #41912550912 passed** all library, Python native
+wheel, source differential and high-bit rational controls. R-081 is marked
+`parallel_reference` in the migration manifest.

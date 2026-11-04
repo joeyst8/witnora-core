@@ -2698,7 +2698,11 @@
       "path": "witnora_core/crc_independence_audit.py",
       "sha": "63c33f0e30564783510fbccc242a613d0cd59ad1",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_independence_audit.rs",
+      "test": "tests/test_crc_independence_audit_rust.py",
+      "verified_milestone": "R-081",
+      "migration_note": "Focused Rust CI #41912550912 passed 120 seeded source Fourier moment comparisons and high-bit rational controls."
     },
     {
       "path": "witnora_core/crc_orbit_oracle.py",
