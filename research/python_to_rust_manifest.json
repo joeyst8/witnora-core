@@ -2615,9 +2615,10 @@
       "group": "witnora_core",
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/color_selector_lab.rs",
-      "test": "tests/test_color_selector_rust.py",
-      "verified_milestone": "R-102",
-      "migration_note": "Focused native CI #41934598441 passed all ten selector rule comparisons and native feature extraction. Experiment sampling, confusion aggregation and timing remain Python."
+      "test": "tests/test_color_confusion_rust.py",
+      "verified_milestone": "R-106",
+      "verified_milestones": ["R-102", "R-106"],
+      "migration_note": "Focused native CI #41934598441 passed all selector features and rules; CI #41935280778 passed full confusion reports on 90 seeded datasets. Experiment sampling, timing and selection workflow remain Python."
     },
     {
       "path": "witnora_core/compare.py",
@@ -3158,10 +3159,12 @@
       "sha": "bd575d34a5215e4d20ca6a495dd9643d09943067",
       "group": "witnora_core",
       "status": "partial_native_verified",
-      "rust_counterpart": "rust/witnora-ve/src/nonedge_matching_dsatur.rs",
-      "test": "tests/test_dsatur_greedy_rust.py",
-      "verified_milestone": "R-103",
-      "migration_note": "Focused native CI #41934598441 passed 440 DSATUR exact coloring comparisons. Additional R-104 graph bound and R-105 matching paths await a separate native CI gate."
+      "rust_counterpart": "rust/witnora-ve/src/nonedge_matching_bound.rs",
+      "native_additional_counterparts": ["rust/witnora-ve/src/nonedge_matching_dsatur.rs", "rust/witnora-ve/src/nonedge_graph_bounds.rs"],
+      "test": "tests/test_nonedge_matching_bound_rust.py",
+      "verified_milestone": "R-105",
+      "verified_milestones": ["R-103", "R-104", "R-105"],
+      "migration_note": "Focused native CI #41934598441 passed 440 DSATUR witnesses; CI #41934932659 passed four graph-bound functions on 350 cases and 150 complete cover/nonedge matching witnesses. Experiment generation and composite baselines remain Python."
     },
     {
       "path": "witnora_core/obstruction_dual.py",

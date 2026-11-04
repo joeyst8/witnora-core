@@ -42,6 +42,7 @@ on:
       - "witnora_core/structured_coloring_study.py"
       - "witnora_core/color_selector_lab.py"
       - "witnora_core/nonedge_matching_bound.py"
+      - "witnora_core/violation_image_anf.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
@@ -82,6 +83,8 @@ on:
       - "tests/test_nonedge_graph_bounds_rust.py"
       - "tests/test_nonedge_matching_bound_rust.py"
       - "tests/test_color_confusion_rust.py"
+      - "tests/test_violation_anf_rust.py"
+      - "tests/test_anf_counter_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -125,6 +128,7 @@ on:
       - "witnora_core/structured_coloring_study.py"
       - "witnora_core/color_selector_lab.py"
       - "witnora_core/nonedge_matching_bound.py"
+      - "witnora_core/violation_image_anf.py"
       - "tests/test_hard_separator_generator_rust.py"
       - "tests/test_hidden_separator_generator_rust.py"
       - "tests/test_symbolic_implication_rust.py"
@@ -165,6 +169,8 @@ on:
       - "tests/test_nonedge_graph_bounds_rust.py"
       - "tests/test_nonedge_matching_bound_rust.py"
       - "tests/test_color_confusion_rust.py"
+      - "tests/test_violation_anf_rust.py"
+      - "tests/test_anf_counter_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -196,7 +202,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-106 source comparisons
+      - name: Focused R-067 through R-108 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -240,3 +246,5 @@ jobs:
           python -m unittest tests.test_nonedge_graph_bounds_rust -v
           python -m unittest tests.test_nonedge_matching_bound_rust -v
           python -m unittest tests.test_color_confusion_rust -v
+          python -m unittest tests.test_violation_anf_rust -v
+          python -m unittest tests.test_anf_counter_rust -v

@@ -88,6 +88,7 @@ pub mod color_selector_lab;
 pub mod nonedge_matching_dsatur;
 pub mod nonedge_graph_bounds;
 pub mod nonedge_matching_bound;
+pub mod violation_image_anf;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2017,6 +2018,34 @@ fn matching_color_bound_native(n:usize,edges:Vec<(usize,usize)>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn anf_xor_native(left:Vec<Vec<usize>>,right:Vec<Vec<usize>>)
+    ->Vec<Vec<usize>>{violation_image_anf::xor(&left,&right)}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn anf_multiply_native(left:Vec<Vec<usize>>,right:Vec<Vec<usize>>)
+    ->Vec<Vec<usize>>{violation_image_anf::multiply(&left,&right)}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn anf_substitute_native(poly:Vec<Vec<usize>>,variable:usize,bit:bool)
+    ->Vec<Vec<usize>>{violation_image_anf::substitute(&poly,variable,bit)}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn anf_canonical_equations_native(equations:Vec<Vec<Vec<usize>>>)
+    ->Vec<Vec<Vec<usize>>>{violation_image_anf::canonical_equations(&equations)}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
+    nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
+    violation_image_anf::count_zeros(&equations,nvars,max_states)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2292,6 +2321,11 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(dsatur_greedy_coloring_native, module)?)?;
     module.add_function(wrap_pyfunction!(nonedge_graph_bounds_native, module)?)?;
     module.add_function(wrap_pyfunction!(matching_color_bound_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_xor_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_multiply_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_substitute_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_canonical_equations_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
