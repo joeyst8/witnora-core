@@ -2756,7 +2756,11 @@
       "path": "witnora_core/crc_separator_discovery.py",
       "sha": "f96ad35ae31f0891402e5dfce67676a7ad89427d",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_separator_discovery.rs",
+      "test": "tests/test_crc_separator_discovery_rust.py",
+      "verified_milestone": "R-086",
+      "migration_note": "Focused Rust CI #41918502858 passed 180 seeded primal-flow min-cut, augmentation and source-certificate comparisons."
     },
     {
       "path": "witnora_core/crc_shannon_oracle.py",

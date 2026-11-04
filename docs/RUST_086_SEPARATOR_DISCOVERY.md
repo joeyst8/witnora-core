@@ -14,4 +14,6 @@ Focused differential cases: 180 seeded source graphs, direct group edges,
 disconnected cases, high-capacity terminal arcs, invalid witnesses and budgets.
 This is standard graph max flow, not a general #SAT speedup or a Lean proof.
 
-Status: focused native CI pending.
+Verified: **focused Rust CI #41918502858 passed** Rust library tests, native
+wheel build and focused differential suites. R-086 is recorded as
+`parallel_reference` in the migration manifest.
