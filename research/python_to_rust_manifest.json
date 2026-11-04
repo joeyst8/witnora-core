@@ -2524,7 +2524,8 @@
       "path": "witnora_core/bce.py",
       "sha": "1885d7ceae4f46fde6637eafecf43a65aa709805",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "native_candidate_pending_diff",
+      "native_counterpart": "rust/witnora-ve/src/bce.rs"
     },
     {
       "path": "witnora_core/benchmark_artifact.py",
@@ -3464,7 +3465,12 @@
       "scope": "bounded width 0..4 complete elimination order search"
     }
   ],
-  "pending_ci_milestones": [],
+  "pending_ci_milestones": [
+    {
+      "id": "R-018",
+      "scope": "deterministic BCE/blocked resolvents and digest parity"
+    }
+  ],
   "completion_criteria": [
     "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
     "Every script has a Rust executable replacement or is documented as archival-only after review",
