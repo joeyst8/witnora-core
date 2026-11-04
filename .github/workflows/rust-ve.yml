@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-011)
+name: Rust native Witnora migration differential gate (R-001 through R-012)
 
 on:
   push:
@@ -25,6 +25,8 @@ on:
       - "witnora_core/crc_rust_fused.py"
       - "witnora_core/two_sat.py"
       - "witnora_core/cnf.py"
+      - "witnora_core/dimacs.py"
+      - "tests/test_dimacs_evidence_rust.py"
       - "witnora_core/cnf_rust.py"
       - "witnora_core/subsumption.py"
       - "tests/test_cnf_rust.py"
@@ -57,6 +59,8 @@ on:
       - "witnora_core/crc_rust_fused.py"
       - "witnora_core/two_sat.py"
       - "witnora_core/cnf.py"
+      - "witnora_core/dimacs.py"
+      - "tests/test_dimacs_evidence_rust.py"
       - "witnora_core/cnf_rust.py"
       - "witnora_core/subsumption.py"
       - "tests/test_cnf_rust.py"
@@ -167,3 +171,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_cnf_rust -v
+      - name: Verify R-012 native DIMACS exact source spellings and raw clause evidence
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_dimacs_evidence_rust -v
