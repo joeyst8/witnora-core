@@ -3340,7 +3340,9 @@
       "path": "witnora_core/verifier.py",
       "sha": "23344b573bc95cdc9b2a2de1dacaa6d07ff8f6ab",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/local_replay.rs",
+      "migration_note": "Only deterministic non-component operations; complete Python verifier remains authoritative."
     },
     {
       "path": "witnora_core/verify_certificate.py",
@@ -3555,6 +3557,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41761548922",
       "python_reference_comparisons": 1600,
       "scope": "Full SAT reconstruction across UP PLE BCE VE, randomized failure parity and real .wcert paths"
+    },
+    {
+      "id": "R-030",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41765312867",
+      "python_reference_comparisons": 2000,
+      "scope": "Rust replay of UP/PLE/SUB/BCE/VE certificate steps with seeded valid and tampered case parity"
     }
   ],
   "pending_ci_milestones": [],
@@ -3566,7 +3575,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 537,
-    "parallel_reference": 23
+    "not_migrated": 536,
+    "parallel_reference": 24
   }
 }
