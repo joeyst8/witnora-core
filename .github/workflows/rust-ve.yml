@@ -149,3 +149,9 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_two_sat_rust -v
+      - name: Verify standalone native two-SAT SAT witnesses and contradictions
+        run: |
+          result="$(printf 'p cnf 2 2\n1 0\n-2 0\n' | rust/witnora-ve/target/release/witnora-ve --two-sat-dimacs)"
+          test "$result" = "$(printf 's SATISFIABLE\nv 1 -2 0')"
+          result="$(printf 'p cnf 1 2\n1 0\n-1 0\n' | rust/witnora-ve/target/release/witnora-ve --two-sat-dimacs)"
+          test "$result" = 's UNSATISFIABLE'
