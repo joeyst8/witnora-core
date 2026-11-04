@@ -25,6 +25,7 @@ pub mod ve_proof;
 pub mod two_sat_proof;
 pub mod certificate_json;
 pub mod bundle_manifest;
+pub mod reconstruction;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -775,6 +776,26 @@ fn verify_certificate_file_digests_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn reconstruct_assignment_native(
+    source: Vec<Vec<i32>>,
+    steps: Vec<(String, Vec<i32>, Vec<i32>, i32, Vec<Vec<i32>>, i32, Vec<Vec<i32>>)>,
+    final_assignment: Vec<(u32, bool)>,
+) -> PyResult<(bool, Vec<(u32, bool)>, Option<String>)> {
+    let steps = steps.into_iter().map(
+        |(kind, assigned, bce_removed, bce_pivot, bce_opposites, ve_var, ve_removed)| {
+            reconstruction::ReconstructionStep {
+                kind, assigned, bce_removed, bce_pivot, bce_opposites,
+                ve_var, ve_removed,
+            }
+        },
+    ).collect::<Vec<_>>();
+    let out = reconstruction::reconstruct(&source, &steps, &final_assignment)
+        .map_err(PyValueError::new_err)?;
+    Ok((out.ok, out.assignment.into_iter().collect(), out.error))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -802,6 +823,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(certificate_file_digests_native, module)?)?;
     module.add_function(wrap_pyfunction!(compact_certificate_hash_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_certificate_file_digests_native, module)?)?;
+    module.add_function(wrap_pyfunction!(reconstruct_assignment_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
