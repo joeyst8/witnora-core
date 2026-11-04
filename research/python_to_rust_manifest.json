@@ -2903,7 +2903,10 @@
       "path": "witnora_core/global_coupling_separator.py",
       "sha": "23a22bdb0b56420551f2f77365945261cb6fcb30",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/global_coupling_separator.rs",
+      "test": "tests/test_global_coupling_rust.py",
+      "verified_milestone": "R-052"
     },
     {
       "path": "witnora_core/graph_conjecture_lab.py",
@@ -3751,6 +3754,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41841546168",
       "python_reference_comparisons": 1000,
       "scope": "Native two-vertex graph-cut discovery via iterative articulation scans, 900 random undirected graphs plus 100 simple-cycle family cases, exact Python parity and independent connectivity oracle, strict malformed-graph controls"
+    },
+    {
+      "id": "R-052",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41842971721",
+      "python_reference_comparisons": 1000,
+      "scope": "Native exact two-edge cut witness metadata and deterministic exhaustive-pair ordering; 900 randomized graphs and 100 planted cycles checked against Python plus an independent connectivity/boundary oracle"
     }
   ],
   "pending_ci_milestones": [],
@@ -3762,7 +3772,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 521,
-    "parallel_reference": 39
+    "not_migrated": 520,
+    "parallel_reference": 40
   }
 }
