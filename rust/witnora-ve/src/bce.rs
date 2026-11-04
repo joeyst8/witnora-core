@@ -5,6 +5,7 @@
 //! during migration; no unsupported proof claim is emitted.
 
 use crate::cnf::CanonicalCnf;
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -12,6 +13,22 @@ pub struct BlockedClauseWitness {
     pub pivot: i32,
     /// (other source clause, sorted raw resolvent, tautological)
     pub checked: Vec<(Vec<i32>, Vec<i32>, bool)>,
+}
+
+/// Exact Python repr of [(against_clause, resolvent, tautological), ...],
+/// hashed as UTF-8. This is a certificate compatibility format, not a new proof.
+pub fn checked_proof_digest(rows: &[(Vec<i32>, Vec<i32>, bool)]) -> String {
+    fn py_list(items: &[i32]) -> String {
+        let parts = items.iter().map(i32::to_string).collect::<Vec<_>>();
+        format!("[{}]", parts.join(", "))
+    }
+    let repr = rows.iter().map(|(other, resolvent, tautological)| {
+        format!("({}, {}, {})", py_list(other), py_list(resolvent),
+            if *tautological { "True" } else { "False" })
+    }).collect::<Vec<_>>();
+    let payload = format!("[{}]", repr.join(", "));
+    let digest = Sha256::digest(payload.as_bytes());
+    digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 fn is_tautological(literals: &[i32]) -> bool {
@@ -95,6 +112,20 @@ mod tests {
             &[vec![1, 2], vec![-1, 3]], &[1, 2], 1).unwrap();
         assert!(unblocked.is_none());
         assert!(first_blocked_clause(&[vec![1]]).unwrap().is_some());
+    }
+
+    #[test]
+    fn native_digest_exact_python_repr_examples() {
+        let empty = checked_proof_digest(&[]);
+        let expected = Sha256::digest(b"[]");
+        let expected_hex: String = expected.iter()
+            .map(|byte| format!("{byte:02x}")).collect();
+        assert_eq!(empty, expected_hex);
+        let rows = vec![(vec![-2, 1], vec![-1, 1, 2], true)];
+        let expected = Sha256::digest(b"[([-2, 1], [-1, 1, 2], True)]");
+        let expected_hex: String = expected.iter()
+            .map(|byte| format!("{byte:02x}")).collect();
+        assert_eq!(checked_proof_digest(&rows), expected_hex);
     }
 
     #[test]
