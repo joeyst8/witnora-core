@@ -1,6 +1,17 @@
 name: Rust migration focused differential gate
 
 on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - "rust/witnora-ve/**"
+      - "witnora_core/hard_separator_families.py"
+      - "witnora_core/hidden_separator_challenge.py"
+      - "witnora_core/symbolic_implication.py"
+      - "tests/test_hard_separator_generator_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_symbolic_implication_rust.py"
+      - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
       - research/w-crc-001-asymmetric-v1
@@ -24,6 +35,7 @@ permissions:
 
 jobs:
   focused-native:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number == 122
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
