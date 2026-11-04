@@ -2879,7 +2879,10 @@
       "path": "witnora_core/g5_boundary_path_signal.py",
       "sha": "a5de6dfc26844b3f302aeb68ef7db905c37c74f2",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/g5_boundary_path_signal.rs",
+      "test": "tests/test_g5_boundary_path_rust.py",
+      "verified_milestone": "R-055"
     },
     {
       "path": "witnora_core/g5_elimination_activity.py",
@@ -3781,6 +3784,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41845381144",
       "python_reference_comparisons": 1000,
       "scope": "Native indexed G5 XOR touch, cancellation, ranked variable and opposite-side pair scores; 1000 random operation streams checked against Python and independent finite score oracle with malformed input controls"
+    },
+    {
+      "id": "R-055",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41846655928",
+      "python_reference_comparisons": 1000,
+      "scope": "Native indexed G5 XOR snapshot replay and original-edge provenance path hints; 900 seeded valid random operation streams plus 100 planted simple paths with independent BFS/simple-path witness oracle, malformed replay rejection"
     }
   ],
   "pending_ci_milestones": [],
@@ -3792,7 +3802,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 518,
-    "parallel_reference": 42
+    "not_migrated": 517,
+    "parallel_reference": 43
   }
 }
