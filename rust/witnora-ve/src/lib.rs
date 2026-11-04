@@ -2055,6 +2055,16 @@ fn anf_residual_component_sizes_native(scopes:Vec<String>,removed_mask:String)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn anf_find_bounded_separator_native(equations:Vec<Vec<Vec<usize>>>,
+    nvars:usize,max_separator_size:usize,max_candidate_checks:usize)
+    ->PyResult<(Option<Vec<usize>>,usize)>{
+    anf_separator_conditioning::find_separator(
+        &equations,nvars,max_separator_size,max_candidate_checks)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2336,6 +2346,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(anf_canonical_equations_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

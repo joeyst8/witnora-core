@@ -87,6 +87,7 @@ on:
       - "tests/test_violation_anf_rust.py"
       - "tests/test_anf_counter_rust.py"
       - "tests/test_anf_separator_rust.py"
+      - "tests/test_anf_separator_search_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -175,6 +176,7 @@ on:
       - "tests/test_violation_anf_rust.py"
       - "tests/test_anf_counter_rust.py"
       - "tests/test_anf_separator_rust.py"
+      - "tests/test_anf_separator_search_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -206,7 +208,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-109 source comparisons
+      - name: Focused R-067 through R-110 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -253,3 +255,4 @@ jobs:
           python -m unittest tests.test_violation_anf_rust -v
           python -m unittest tests.test_anf_counter_rust -v
           python -m unittest tests.test_anf_separator_rust -v
+          python -m unittest tests.test_anf_separator_search_rust -v

@@ -100,6 +100,14 @@ def find_bounded_separator(
     """
     if nvars < 0 or max_separator_size < 0 or max_candidate_checks < 1:
         raise ValueError("invalid separator search bounds")
+    if backend == "rust":
+        from witnora_ve import anf_find_bounded_separator_native
+        selected, checked = anf_find_bounded_separator_native(
+            [[list(sorted(mon)) for mon in sorted(eq, key=lambda m: tuple(sorted(m)))]
+             for eq in equations], nvars, max_separator_size, max_candidate_checks)
+        return (tuple(selected) if selected is not None else None), checked
+    if backend != "python":
+        raise ValueError("unknown ANF separator search backend")
     scopes = polynomial_scopes(equations)
     active = 0
     for scope in scopes:
