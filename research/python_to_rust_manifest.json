@@ -2662,9 +2662,9 @@
       "path": "witnora_core/crc_conditional_independence.py",
       "sha": "3ccc752d40046a38c17bdefde5e1bca93f5634a9",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/crc_conditional_independence.rs",
-      "migration_note": "R-076 source-bound conditional structural separation under verified witness, arbitrary-precision separator mask and residual CNF checking; awaiting native differential CI."
+      "migration_note": "R-076 focused Rust CI #41888295075 passed source-conditioned model validity, arbitrary-precision masks and residual component equivalence on 350 seeded cases."
     },
     {
       "path": "witnora_core/crc_conflict_oracle.py",
@@ -2748,9 +2748,9 @@
       "path": "witnora_core/crc_structural_independence.py",
       "sha": "8408bd447703e33b81a0a22794286b979288f241",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/crc_structural_independence.rs",
-      "migration_note": "R-075 native exact normalized signed-source check, bounded 256-bit witness test and primal-component sufficient independence audit; pending compiled differential CI."
+      "migration_note": "R-075 corrected BigUint borrow; focused Rust CI #41888295075 passed exact source, 256-bit witness and primal-component sufficient independence controls."
     },
     {
       "path": "witnora_core/crc_variable_elimination_indexed.py",

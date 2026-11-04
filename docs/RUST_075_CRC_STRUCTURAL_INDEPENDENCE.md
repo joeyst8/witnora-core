@@ -1,4 +1,4 @@
-# R-075 — Exact source-relative structural independence (native CI pending)
+# R-075 — Exact source-relative structural independence (native verified)
 
 The new Rust backend checks normalized signed source clauses, validates
 an offered 256-bit boundary assignment, rejects a falsified witness and
@@ -15,3 +15,7 @@ and tautological clauses, invalid-input checks and a 256-bit boundary
 control. Exact equality with the Python report and rejection semantics is
 required before promoting this module. Neither finite tests nor primal
 connectivity constitute a general SAT algorithm or a Lean proof.
+
+[Focused CI #41888295075](https://github.com/joeyst8/witnora-core/actions/runs/41888295075)
+passed the compiled Rust library, wheel build and R-075 native differential
+cases after correcting an earlier BigUint borrow compile error.
