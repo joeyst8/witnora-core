@@ -2863,7 +2863,9 @@
       "path": "witnora_core/forced_relation_probe.py",
       "sha": "aa9e2ed985b037531e0363c6d7ae50a82cbaee16",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/failed_literal_probe.rs",
+      "migration_note": "Assumption unit conflict, bounded failed-literal SAT-equivalence inference and audit metadata verified; Python remains default."
     },
     {
       "path": "witnora_core/g5_boundary_path_signal.py",
@@ -3624,6 +3626,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41770204244",
       "python_reference_comparisons": 1600,
       "scope": "Port untouched factor_elimination_orders.py graph fill heuristics: min degree, source/aux first, beam min-fill, independent permutation width replay"
+    },
+    {
+      "id": "R-039",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41770881275",
+      "python_reference_comparisons": 1000,
+      "scope": "Port bounded failed-literal probe core to Rust, exact 1000 Python unit conflict and full metadata/CNF parity cases, adversarial budgets"
     }
   ],
   "pending_ci_milestones": [],
@@ -3635,7 +3644,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 534,
-    "parallel_reference": 26
+    "not_migrated": 533,
+    "parallel_reference": 27
   }
 }
