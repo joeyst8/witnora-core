@@ -3293,7 +3293,7 @@
       "path": "witnora_core/treewidth.py",
       "sha": "0875d8f4f0d5ac9bf1cacd2059be0acf3c3efb38",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/treewidth.rs"
     },
     {
@@ -3455,14 +3455,16 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41746679206",
       "python_reference_comparisons": 1200,
       "scope": "primal graph, incidence components and component hashes"
-    }
-  ],
-  "pending_ci_milestones": [
+    },
     {
       "id": "R-017",
-      "scope": "exact bounded treewidth ordering and width verification"
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41746920843",
+      "python_reference_comparisons": 1000,
+      "scope": "bounded width 0..4 complete elimination order search"
     }
   ],
+  "pending_ci_milestones": [],
   "completion_criteria": [
     "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
     "Every script has a Rust executable replacement or is documented as archival-only after review",
