@@ -90,6 +90,7 @@ pub mod nonedge_graph_bounds;
 pub mod nonedge_matching_bound;
 pub mod violation_image_anf;
 pub mod anf_separator_conditioning;
+pub mod anf_structured_counter;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2065,6 +2066,14 @@ fn anf_find_bounded_separator_native(equations:Vec<Vec<Vec<usize>>>,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn anf_count_structured_native(equations:Vec<Vec<Vec<usize>>>,
+    nvars:usize,max_states:usize)->PyResult<anf_structured_counter::Answer>{
+    anf_structured_counter::count(&equations,nvars,max_states)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2347,6 +2356,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_count_structured_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

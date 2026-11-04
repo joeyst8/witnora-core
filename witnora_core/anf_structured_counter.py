@@ -36,12 +36,26 @@ def count_common_zeros_structured(
     nvars: int,
     *,
     max_states: int = 100_000,
+    backend="python",
 ) -> StructuredANFCountResult:
     """Count all common zeros, with a strict budget on unique states."""
     if nvars < 0 or max_states < 1:
         raise ValueError("invalid counting bounds")
     if any(v < 1 or v > nvars for p in equations for m in p for v in m):
         raise ValueError("equation uses an out-of-range variable")
+    if backend == "rust":
+        from witnora_ve import anf_count_structured_native
+        from witnora_core.violation_image_anf import _native_polynomial
+        try:
+            result = anf_count_structured_native(
+                [_native_polynomial(eq) for eq in equations], nvars, max_states)
+        except ValueError as exc:
+            if str(exc).startswith("max symbolic states "):
+                raise ANFCountingBudgetExceeded(str(exc)) from exc
+            raise
+        return StructuredANFCountResult(int(result[0]), *result[1:])
+    if backend != "python":
+        raise ValueError("unknown structured ANF backend")
 
     def compile_poly(poly: Polynomial) -> MaskPolynomial:
         return frozenset(
