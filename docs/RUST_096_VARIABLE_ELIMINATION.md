@@ -9,7 +9,7 @@ explicit `backend="rust"` selects the native implementation.
 
 The differential gate checks 360 seeded signed CNF sources (including
 unsorted component-variable order), all budget combinations, empty and
-out-of-range masks, and masks above 128 and 256 bits. The algorithm remains
+out-of-range masks, and high bit masks up to variable ID 256. The algorithm remains
 exponential in intermediate factor width and makes no general #SAT
 performance breakthrough claim.
 

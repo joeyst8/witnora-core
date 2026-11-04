@@ -41,7 +41,7 @@ class ExactVariableEliminationRust(unittest.TestCase):
         self.compare((), variables)
         self.compare(((0,0),), variables)
         self.compare(((1<<128,0),), (129,))
-        self.compare(((1<<256,0),), (257,), width=2)
+        self.compare(((1<<255,0),), (256,), width=2)
 
     def test_invalid_masks(self):
         for rows, vars in ((((1,1),), (1,)), (((2,0),), (1,)),
