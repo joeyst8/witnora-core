@@ -3599,6 +3599,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41768449283",
       "python_reference_comparisons": 360,
       "scope": "Native single-root CD stream and component-context UP proof replay versus full Python verifier; 360 seeded paths with malformed CD, IDs, assignments and final hashes"
+    },
+    {
+      "id": "R-036",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41769073739",
+      "python_reference_comparisons": 240,
+      "scope": "Root local prefix + independent CD replay + component-local suffix with exact global step IDs and first-error parity across 240 seeded full Python verifier cases"
     }
   ],
   "pending_ci_milestones": [],
