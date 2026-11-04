@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-028)
+name: Rust native Witnora migration differential gate (R-001 through R-029)
 
 on:
   push:
@@ -46,6 +46,8 @@ on:
       - "witnora_core/certificate.py"
       - "tests/test_certificate_hash_rust.py"
       - "tests/test_certificate_verify_rust.py"
+      - "witnora_core/reconstruction.py"
+      - "tests/test_reconstruction_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -106,6 +108,8 @@ on:
       - "witnora_core/certificate.py"
       - "tests/test_certificate_hash_rust.py"
       - "tests/test_certificate_verify_rust.py"
+      - "witnora_core/reconstruction.py"
+      - "tests/test_reconstruction_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -299,3 +303,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_certificate_verify_rust -v
+      - name: Verify R-029 complete SAT assignment reconstruction and error parity
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_reconstruction_rust -v
