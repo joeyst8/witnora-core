@@ -17,6 +17,7 @@ pub mod cnf;
 pub mod dimacs_evidence;
 pub mod rup_witness;
 pub mod rup_checker;
+pub mod graph;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -575,6 +576,22 @@ fn check_rup_subset_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn primal_graph_native(
+    clauses: Vec<Vec<i32>>,
+) -> PyResult<(Vec<u32>, Vec<(u32, u32)>)> {
+    graph::primal_variables_and_edges(&clauses).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn incidence_components_native(
+    clauses: Vec<Vec<i32>>,
+) -> PyResult<Vec<Vec<Vec<i32>>>> {
+    graph::incidence_components(&clauses).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -590,5 +607,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
+    module.add_function(wrap_pyfunction!(primal_graph_native, module)?)?;
+    module.add_function(wrap_pyfunction!(incidence_components_native, module)?)?;
     Ok(())
 }
