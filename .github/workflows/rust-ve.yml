@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-055)
+name: Rust native Witnora migration differential gate (R-001 through R-056)
 
 on:
   push:
@@ -75,6 +75,8 @@ on:
       - "tests/test_sparse_basis_rust.py"
       - "tests/test_g5_activity_rust.py"
       - "tests/test_g5_boundary_path_rust.py"
+      - "tests/test_sparse_parity_checks_rust.py"
+      - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
       - "witnora_core/gf2_sparse_row_basis.py"
@@ -183,6 +185,8 @@ on:
       - "tests/test_sparse_basis_rust.py"
       - "tests/test_g5_activity_rust.py"
       - "tests/test_g5_boundary_path_rust.py"
+      - "tests/test_sparse_parity_checks_rust.py"
+      - "witnora_core/sparse_parity_checks.py"
       - "witnora_core/g5_boundary_path_signal.py"
       - "witnora_core/g5_elimination_activity.py"
       - "witnora_core/gf2_sparse_row_basis.py"
@@ -503,3 +507,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_g5_boundary_path_rust -v
+      - name: Verify R-056 sparse odd-column construction, signatures and audits
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_sparse_parity_checks_rust -v
