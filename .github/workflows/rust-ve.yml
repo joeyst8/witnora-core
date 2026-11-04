@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-030)
+name: Rust native Witnora migration differential gate (R-001 through R-031)
 
 on:
   push:
@@ -50,6 +50,7 @@ on:
       - "tests/test_reconstruction_rust.py"
       - "witnora_core/verifier_rust.py"
       - "tests/test_local_replay_rust.py"
+      - "tests/test_solver_replay_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -114,6 +115,7 @@ on:
       - "tests/test_reconstruction_rust.py"
       - "witnora_core/verifier_rust.py"
       - "tests/test_local_replay_rust.py"
+      - "tests/test_solver_replay_rust.py"
       - "tests/test_treewidth_rust.py"
       - "witnora_core/components.py"
       - "tests/test_graph_rust.py"
@@ -315,3 +317,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_local_replay_rust -v
+      - name: Verify R-031 native 2-SAT and treewidth certificate replay and tampering
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_solver_replay_rust -v
