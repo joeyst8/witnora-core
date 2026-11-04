@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-014)
+name: Rust native Witnora migration differential gate (R-001 through R-015)
 
 on:
   push:
@@ -191,3 +191,15 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_rup_checker_rust -v
+      - name: Verify Python-free RUP proof replay CLI accepts proof and rejects false proof
+        run: |
+          fixture_dir="$(mktemp -d)"
+          printf 'p cnf 1 2\n1 0\n-1 0\n' > "$fixture_dir/unsat.cnf"
+          printf '0\n' > "$fixture_dir/proof.drat"
+          result="$(rust/witnora-ve/target/release/witnora-ve --check-rup "$fixture_dir/unsat.cnf" "$fixture_dir/proof.drat")"
+          test "$result" = 's VERIFIED_RUP_SUBSET'
+          printf 'p cnf 1 1\n1 0\n' > "$fixture_dir/sat.cnf"
+          if rust/witnora-ve/target/release/witnora-ve --check-rup "$fixture_dir/sat.cnf" "$fixture_dir/proof.drat"; then
+            echo "Expected invalid proof to exit nonzero"
+            exit 1
+          fi
