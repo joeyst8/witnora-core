@@ -106,7 +106,7 @@ pub fn build_finite_sketch(
                 m|=BigUint::one()<<j;m
             });
             let rejected=remaining.iter().filter(|s|{
-                (s & &mask).iter_u32_digits().map(|v|v.count_ones())
+                (*s & &mask).iter_u32_digits().map(|v|v.count_ones())
                     .sum::<u32>()%2==1
             }).count();
             if rejected>best_rejected{
@@ -124,7 +124,7 @@ pub fn build_finite_sketch(
         };
         rows.push(chosen);
         remaining.retain(|s|{
-            (s & &best_mask).iter_u32_digits().map(|v|v.count_ones())
+            (&*s & &best_mask).iter_u32_digits().map(|v|v.count_ones())
                 .sum::<u32>()%2==0
         });
         survivors.push(remaining.len());
