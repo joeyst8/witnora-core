@@ -3130,7 +3130,8 @@
       "path": "witnora_core/proof_trace.py",
       "sha": "95908993d648a760d69889f87ea6131c25e57fb3",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/proof_trace_metadata.rs"
     },
     {
       "path": "witnora_core/proof.py",

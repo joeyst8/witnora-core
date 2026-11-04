@@ -47,6 +47,7 @@ pub mod eth_clause_violation_parity;
 pub mod symbolic_implication;
 pub mod targeted_graph_families;
 pub mod conjecture_triage;
+pub mod proof_trace_metadata;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -617,6 +618,16 @@ fn conjecture_identity_key_native(statement: &str) -> PyResult<(String, String)>
 #[pyfunction]
 fn conjecture_known_identities_native() -> Vec<(String, String)> {
     conjecture_triage::known_identity_keys().into_iter().collect()
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn native_unsat_trace_metadata_supported_native(
+    format: Option<String>, replayed: bool, external: Option<String>,
+    lrat_frat: Option<String>, reason: Option<String>,
+) -> bool {
+    proof_trace_metadata::is_supported(format.as_deref(), replayed,
+        external.as_deref(), lrat_frat.as_deref(), reason.as_deref())
 }
 
 #[cfg(feature = "python")]
@@ -1634,6 +1645,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(conjecture_normalize_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_identity_key_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_known_identities_native, module)?)?;
+    module.add_function(wrap_pyfunction!(native_unsat_trace_metadata_supported_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
