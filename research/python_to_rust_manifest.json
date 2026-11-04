@@ -3298,7 +3298,8 @@
       "path": "witnora_core/two_sat.py",
       "sha": "9eb0c8033ebd9da8d69ff3742c00a0202179007b",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "native_candidate_pending_diff",
+      "native_counterpart": "rust/witnora-ve/src/two_sat.rs"
     },
     {
       "path": "witnora_core/ve.py",
@@ -3372,5 +3373,42 @@
       "group": "witnora_core",
       "status": "not_migrated"
     }
+  ],
+  "last_updated": "2026-11-04",
+  "baseline_original_python_files": 560,
+  "additional_python_interop_adapters": [
+    "witnora_core/crc_rust_fused.py",
+    "witnora_core/two_sat_rust.py"
+  ],
+  "verified_milestones": [
+    {
+      "id": "R-001..R-007",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41741754634"
+    },
+    {
+      "id": "R-008",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41743900472",
+      "exact_ganak_cases": 18,
+      "random_source_checks": 630
+    }
+  ],
+  "pending_ci_milestones": [
+    {
+      "id": "R-009",
+      "scope": "standalone Python-free exact source DIMACS CLI"
+    },
+    {
+      "id": "R-010",
+      "scope": "native SCC 2-SAT decision/witness with opt-in Python bridge"
+    }
+  ],
+  "completion_criteria": [
+    "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
+    "Every script has a Rust executable replacement or is documented as archival-only after review",
+    "Rust test coverage replaces original Python regression/proof gates without loss of checks",
+    "All CI and release workflows use Rust for runtime; Lean proof/certificate trust boundaries remain valid",
+    "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ]
 }
