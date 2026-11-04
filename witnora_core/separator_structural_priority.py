@@ -78,3 +78,20 @@ def prioritized_singletons(graph: Mapping[int, set[int]]) -> tuple[int, ...]:
     first = sorted(cuts, key=lambda v: (-len(graph[v]), v))
     remainder = sorted(v for v in graph if v not in cuts)
     return tuple(first + remainder)
+
+
+
+def articulation_vertices_rust(graph: Mapping[int, set[int]]) -> tuple[int, ...]:
+    """Opt-in native articulation hints; original Python remains default."""
+    from witnora_ve import articulation_vertices_native
+
+    return tuple(articulation_vertices_native(
+        [(v, sorted(neighbors)) for v, neighbors in graph.items()]))
+
+
+def prioritized_singletons_rust(graph: Mapping[int, set[int]]) -> tuple[int, ...]:
+    """Opt-in native cut-first permutation with exhaustive singleton fallback."""
+    from witnora_ve import prioritized_singletons_native
+
+    return tuple(prioritized_singletons_native(
+        [(v, sorted(neighbors)) for v, neighbors in graph.items()]))
