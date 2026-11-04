@@ -39,6 +39,7 @@ pub mod cost_sensitive_gate;
 pub mod separator_structural_priority;
 pub mod vertex_coupling_separator;
 pub mod global_coupling_separator;
+pub mod gf2_sparse_row_basis;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1334,6 +1335,59 @@ fn prioritized_global_pairs_native(
         .map_err(PyValueError::new_err)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_row_mask_native(
+    row:Vec<i64>,
+) -> PyResult<String> {
+    gf2_sparse_row_basis::row_mask_decimal(&row).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn build_sparse_parity_basis_native(
+    clause_count:i64, max_row_width:i64, rows:Vec<Vec<i64>>, ordering:String,
+) -> PyResult<(Vec<usize>,Vec<Vec<usize>>,Vec<String>)> {
+    let cert=gf2_sparse_row_basis::build_sparse_parity_basis(
+        clause_count,max_row_width,&rows,&ordering,
+    ).map_err(PyValueError::new_err)?;
+    Ok((
+        cert.selected_indices,
+        cert.rows,
+        cert.expansions.iter().map(ToString::to_string).collect(),
+    ))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn verify_sparse_parity_basis_native(
+    clause_count:i64,
+    max_row_width:i64,
+    rows:Vec<Vec<i64>>,
+    cert_clause_count:i64,
+    cert_original_row_count:i64,
+    selected_indices:Vec<usize>,
+    retained_rows:Vec<Vec<i64>>,
+    expansions:Vec<String>,
+    ordering:String,
+) -> PyResult<()> {
+    gf2_sparse_row_basis::verify_sparse_parity_basis(
+        clause_count,max_row_width,&rows,
+        cert_clause_count,cert_original_row_count,
+        &selected_indices,&retained_rows,&expansions,&ordering,
+    ).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn sparse_accepts_masks_native(
+    mask:String, rows:Vec<Vec<i64>>,
+) -> PyResult<bool> {
+    gf2_sparse_row_basis::accepts_masks_decimal(&mask,&rows)
+        .map_err(PyValueError::new_err)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1401,5 +1455,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(prioritized_vertex_pairs_native, module)?)?;
     module.add_function(wrap_pyfunction!(two_edge_cut_boundary_pairs_native, module)?)?;
     module.add_function(wrap_pyfunction!(prioritized_global_pairs_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_row_mask_native, module)?)?;
+    module.add_function(wrap_pyfunction!(build_sparse_parity_basis_native, module)?)?;
+    module.add_function(wrap_pyfunction!(verify_sparse_parity_basis_native, module)?)?;
+    module.add_function(wrap_pyfunction!(sparse_accepts_masks_native, module)?)?;
     Ok(())
 }
