@@ -3528,6 +3528,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41759581109",
       "python_reference_comparisons": 1200,
       "scope": "Rust SHA256 certificate file map plus byte-exact SAT/UNSAT/multicomponent real .wcert export verifier parity"
+    },
+    {
+      "id": "R-027",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41760143662",
+      "python_reference_comparisons": 1200,
+      "scope": "exact compact sorted-key JSON SHA256 certificate identity; SAT/UNSAT real certificate parity"
     }
   ],
   "pending_ci_milestones": [],
