@@ -3535,6 +3535,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41760143662",
       "python_reference_comparisons": 1200,
       "scope": "exact compact sorted-key JSON SHA256 certificate identity; SAT/UNSAT real certificate parity"
+    },
+    {
+      "id": "R-028",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41760669462",
+      "python_reference_comparisons": 1200,
+      "scope": "Rust native file SHA256 integrity verification, first-error parity, real SAT/UNSAT .wcert tamper detection"
     }
   ],
   "pending_ci_milestones": [],
