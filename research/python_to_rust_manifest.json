@@ -3578,6 +3578,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41766349609",
       "python_reference_comparisons": 1400,
       "scope": "Full Rust CD component IDs, incidence edges, source clause indices and formula hashes with original verifier parity"
+    },
+    {
+      "id": "R-033",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41767084650",
+      "python_reference_comparisons": 1200,
+      "scope": "Independent Rust CD component metadata verifier, exact Python first-error parity and deliberate count/edge/hash/index tamper rejection"
     }
   ],
   "pending_ci_milestones": [],
