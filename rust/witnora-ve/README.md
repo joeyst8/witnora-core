@@ -229,3 +229,63 @@ a general #SAT breakthrough. Full report:
   integer as a formal proof certificate.
 - Port additional algorithms only after this stage is verified,
   benchmarked, and reviewed.
+
+## R-008 — one-call fused native source-CNF counting
+
+Unlike R-001..R-007, which were separate native kernels coordinated by Python,
+`count_source_native` performs **the entire bounded exact source-CNF pipeline
+inside one Rust call**: optional exact source preprocessing, complete small XOR
+recognition, GF(2) projection, sparse left Fourier, right inclusion-exclusion
+Walsh coefficients, and exact contraction. Python merely passes signed clauses
+and receives one arbitrary-precision decimal count plus diagnostics.
+
+Opt in through the public Python API:
+
+```python
+from witnora_core.crc_source import count_signed_cnf_crc
+
+result = count_signed_cnf_crc(
+    [[1, 2], [1, -2]], 2,
+    source_backend="rust_fused",
+    source_preprocessor="rust_adaptive",
+)
+assert result is not None and result.models == 2
+```
+
+All budgets are explicit. An infeasible exact computation returns `None`
+(`INCOMPLETE`), never an approximate answer; malformed sources raise errors.
+This backend uses the bounded exact inclusion-exclusion right-side family
+only. The original Python pipeline is retained for differential checking.
+
+CI commands after building/installing the native extension:
+
+```sh
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \\
+  python -m unittest tests.test_crc_rust_fused -v
+WITNORA_RUST_VE_BIN=rust/witnora-ve/target/release/witnora-ve \\
+  python -m scripts.benchmark_rust_fused
+```
+
+## R-009 — standalone Rust DIMACS counting (no Python)
+
+After `cargo build --release --manifest-path rust/witnora-ve/Cargo.toml`,
+pipe a standard DIMACS CNF directly to the Rust executable:
+
+```sh
+printf 'p cnf 2 2\\n1 0\\n-2 0\\n' | \\
+  rust/witnora-ve/target/release/witnora-ve --fused-dimacs
+# s mc 1
+```
+
+Options include `--preprocess none|rust_consensus|rust_adaptive`,
+`--max-preprocess-passes`, `--max-preprocess-clause-visits`,
+`--max-spectrum-terms`, `--max-inclusion-subsets`, and
+`--max-coefficient-operations`. Standard output is `s mc MODEL_COUNT`
+for exact counts or `s INCOMPLETE` for bounded refusals. Errors use
+a nonzero exit code. The former custom `p witnora-ve` CLI remains compatible.
+
+Neither module claims a universal exact #SAT speedup; the residual
+right-side inclusion-exclusion method is intentionally budget limited.
+The project-wide transition also includes 560 original Python modules,
+scripts, and tests, tracked in `research/python_to_rust_manifest.json`.
+These two milestones do **not** complete that full migration.
