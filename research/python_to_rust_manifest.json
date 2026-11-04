@@ -3011,7 +3011,10 @@
       "path": "witnora_core/lookahead_pivot_prototype.py",
       "sha": "e6e739a3fea5f93d254153d41c810d4472d66231",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/two_ply_lookahead.rs",
+      "test": "tests/test_two_ply_rust.py",
+      "verified_milestone": "R-042"
     },
     {
       "path": "witnora_core/multicut_parity_separator.py",
@@ -3651,6 +3654,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41772221307",
       "python_reference_comparisons": 1150,
       "scope": "Native exact-source odd XOR cycle candidate discovery, 1050 seeded random CNF parity and 100 planted contradictory triangles, source-bound edge validation"
+    },
+    {
+      "id": "R-042",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41772953474",
+      "python_reference_comparisons": 1200,
+      "scope": "Native exact two-ply Davis-Putnam lookahead, full elimination-options and chosen-state parity on 1200 random CNFs plus independent brute-force SAT/UNSAT preservation and invalid-budget controls"
     }
   ],
   "pending_ci_milestones": [],
@@ -3662,7 +3672,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 531,
-    "parallel_reference": 29
+    "not_migrated": 530,
+    "parallel_reference": 30
   }
 }
