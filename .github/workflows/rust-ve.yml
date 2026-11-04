@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-044)
+name: Rust native Witnora migration differential gate (R-001 through R-045)
 
 on:
   push:
@@ -64,6 +64,8 @@ on:
       - "tests/test_two_ply_rust.py"
       - "tests/test_adaptive_lookahead_rust.py"
       - "tests/test_selective_lookahead_rust.py"
+      - "tests/test_parity_separator_fingerprint_rust.py"
+      - "witnora_core/parity_separator_fingerprint.py"
       - "witnora_core/selective_lookahead_prototype.py"
       - "witnora_core/adaptive_lookahead_prototype.py"
       - "witnora_core/lookahead_pivot_prototype.py"
@@ -150,6 +152,8 @@ on:
       - "tests/test_two_ply_rust.py"
       - "tests/test_adaptive_lookahead_rust.py"
       - "tests/test_selective_lookahead_rust.py"
+      - "tests/test_parity_separator_fingerprint_rust.py"
+      - "witnora_core/parity_separator_fingerprint.py"
       - "witnora_core/selective_lookahead_prototype.py"
       - "witnora_core/adaptive_lookahead_prototype.py"
       - "witnora_core/lookahead_pivot_prototype.py"
@@ -415,3 +419,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_selective_lookahead_rust -v
+      - name: Verify R-045 exact parity fingerprint against Python and planted hubs
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_parity_separator_fingerprint_rust -v
