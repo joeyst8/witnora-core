@@ -58,6 +58,7 @@ pub mod satlib_fingerprint;
 pub mod spoke_collapse;
 pub mod ood_sat_families;
 pub mod benchmark_families;
+pub mod parity_compression;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -772,6 +773,27 @@ fn benchmark_family_native(kind:String,n:i32,count:i32)->PyResult<Vec<Vec<i32>>>
 #[pyfunction]
 fn benchmark_sampled_clauses_native(rows:Vec<Vec<i32>>)->PyResult<Vec<Vec<i32>>> {
     benchmark_families::canonical_samples(&rows).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn parity_compress_native(source:Vec<Vec<i32>>)
+    ->PyResult<parity_compression::Compression> {
+    parity_compression::compress(&source).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn parity_reconstruct_native(roots:Vec<(i32,i32)>,offsets:Vec<(i32,u32)>,
+    values:Vec<(i32,u32)>)->PyResult<Vec<(i32,u32)>> {
+    parity_compression::reconstruct(&roots,&offsets,&values).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn parity_rewrite_native(source:Vec<Vec<i32>>,roots:Vec<(i32,i32)>,
+    offsets:Vec<(i32,u32)>)->PyResult<Vec<Vec<i32>>> {
+    parity_compression::rewrite(&source,&roots,&offsets).map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1808,6 +1830,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(ood_planted_samples_native, module)?)?;
     module.add_function(wrap_pyfunction!(benchmark_family_native, module)?)?;
     module.add_function(wrap_pyfunction!(benchmark_sampled_clauses_native, module)?)?;
+    module.add_function(wrap_pyfunction!(parity_compress_native, module)?)?;
+    module.add_function(wrap_pyfunction!(parity_reconstruct_native, module)?)?;
+    module.add_function(wrap_pyfunction!(parity_rewrite_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
