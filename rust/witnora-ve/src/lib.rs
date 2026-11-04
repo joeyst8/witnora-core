@@ -27,6 +27,7 @@ pub mod two_sat_scc_witness;
 pub mod order_experiments;
 pub mod failed_literal_probe;
 pub mod scaling_families;
+pub mod odd_xor_cycle;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1049,6 +1050,16 @@ fn make_separator_scaling_case_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn discover_odd_xor_cycle_native(
+    source:Vec<Vec<i32>>,
+) -> PyResult<Option<(i32,Vec<(i32,u32)>)>> {
+    Ok(odd_xor_cycle::discover_odd_xor_cycle(&source)
+        .map_err(PyValueError::new_err)?
+        .map(|cycle|(cycle.start,cycle.steps)))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -1094,5 +1105,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(unit_conflict_native, module)?)?;
     module.add_function(wrap_pyfunction!(probe_forced_relations_native, module)?)?;
     module.add_function(wrap_pyfunction!(make_separator_scaling_case_native, module)?)?;
+    module.add_function(wrap_pyfunction!(discover_odd_xor_cycle_native, module)?)?;
     Ok(())
 }
