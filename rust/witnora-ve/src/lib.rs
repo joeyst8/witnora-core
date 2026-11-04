@@ -18,6 +18,7 @@ pub mod dimacs_evidence;
 pub mod rup_witness;
 pub mod rup_checker;
 pub mod graph;
+pub mod treewidth;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -592,6 +593,25 @@ fn incidence_components_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn treewidth_order_native(
+    graph: Vec<(u32, Vec<u32>)>, width_cap: usize, max_states: usize,
+) -> PyResult<Option<Vec<u32>>> {
+    treewidth::find_elimination_order(
+        &graph, width_cap, max_states,
+    ).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn verify_treewidth_order_native(
+    graph: Vec<(u32, Vec<u32>)>, order: Vec<u32>,
+) -> PyResult<Option<usize>> {
+    treewidth::verify_elimination_order(&graph, &order)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -609,5 +629,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;
     module.add_function(wrap_pyfunction!(primal_graph_native, module)?)?;
     module.add_function(wrap_pyfunction!(incidence_components_native, module)?)?;
+    module.add_function(wrap_pyfunction!(treewidth_order_native, module)?)?;
+    module.add_function(wrap_pyfunction!(verify_treewidth_order_native, module)?)?;
     Ok(())
 }
