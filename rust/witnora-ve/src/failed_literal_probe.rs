@@ -97,13 +97,14 @@ pub fn probe_forced_relations(source: &[Vec<i32>], max_probes: i32)
         }
     }
     let simplified=unit_propagation(&augmented.clauses)?;
+    let candidate_hash=simplified.formula_hash();
     Ok(ProbeOutcome{
         clauses:simplified.clauses,
         checked_variables:checked,
         forced_literals:forced,
         both_assumptions_conflict:both,
         source_hash:original.formula_hash(),
-        candidate_hash:simplified.formula_hash(),
+        candidate_hash,
     })
 }
 
