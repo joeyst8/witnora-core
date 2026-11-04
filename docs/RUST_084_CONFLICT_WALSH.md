@@ -12,4 +12,6 @@ mixed-sign 3-CNF instances, free boundary variables, nonexceptional controls,
 and resource caps. This is fixed-parameter experiment logic, not a general
 SAT complexity improvement or Lean theorem.
 
-Status: focused native CI pending.
+Verified: **focused Rust CI #41916911179 passed** library compilation,
+native wheel build and all Python/Rust source-differential comparisons. R-084
+is marked `parallel_reference` in the migration manifest.

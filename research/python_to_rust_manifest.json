@@ -2680,7 +2680,11 @@
       "path": "witnora_core/crc_conflict_oracle.py",
       "sha": "a087b8b19f271276321f5f2e20716651fb505181",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_conflict_oracle.rs",
+      "test": "tests/test_crc_conflict_oracle_rust.py",
+      "verified_milestone": "R-084",
+      "migration_note": "Focused Rust CI #41916911179 passed 100 seeded mixed-polarity Walsh correction comparisons and resource-bound controls."
     },
     {
       "path": "witnora_core/crc_cutset_count.py",
