@@ -34,7 +34,8 @@ def is_supported_native_unsat_trace(trace: dict[str, Any] | None) -> bool:
         return False
     if trace.get("lrat_frat_status") != "NOT_EXPORTED":
         return False
-    return trace.get("unsat_reason") in {
+    reason = trace.get("unsat_reason")
+    return isinstance(reason, str) and reason in {
         UNSAT_LEVEL_EXPLICIT_EMPTY,
         UNSAT_LEVEL_2SAT_SCC,
     }

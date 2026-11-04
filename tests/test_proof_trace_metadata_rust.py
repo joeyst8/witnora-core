@@ -35,5 +35,18 @@ class NativeProofTraceMetadataRustTests(unittest.TestCase):
         self.assertFalse(is_supported_native_unsat_trace_rust(None))
 
 
+class NativeProofTraceMalformedReferenceTests(unittest.TestCase):
+    def test_unhashable_unsat_reason_fails_closed(self):
+        base = {
+            "proof_trace_format": "WITNORA_NATIVE_UNSAT_TRACE_V1",
+            "depends_on_replayed_collapse_path": True,
+            "external_standard": "NONE", "lrat_frat_status": "NOT_EXPORTED",
+        }
+        for reason in ([], {}, ["EXPLICIT_EMPTY_CLAUSE"]):
+            self.assertFalse(is_supported_native_unsat_trace(
+                dict(base, unsat_reason=reason)
+            ))
+
+
 if __name__ == "__main__":
     unittest.main()

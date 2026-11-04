@@ -11,3 +11,12 @@ The native differential gate covers both recognized UNSAT reason strings,
 Native PyO3 CI must pass before the function is treated as verified. The
 source `proof_trace.py` remains partially migrated because the native proof
 trace property comes from its Python certificate model.
+
+## Malformed-input gate correction
+
+GitHub Rust run [#41868911840](https://github.com/joeyst8/witnora-core/actions/runs/41868911840)
+compiled and passed preceding R-057 through R-061 steps, but R-062 uncovered
+that the original Python reference raised `TypeError` for an unhashable
+`unsat_reason` list/dict. The Python reference now fails closed (returns
+False) for non-string reasons, consistent with the Rust opt-in wrapper.
+This is input hardening, not acceptance of a new trace or a proof claim.
