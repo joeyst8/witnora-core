@@ -42,7 +42,9 @@ input/operational errors. Output identifies only
 
 The standalone command reads and canonicalizes the original DIMACS
 text in Rust and performs all proof replay there; no Python wheel is
-needed. Its dedicated end-to-end CLI smoke gate is still **pending**.
+needed. [Green R-015 CI #41746389876](https://github.com/joeyst8/witnora-core/actions/runs/41746389876)
+verified an actual file-based valid proof and a deliberately false proof,
+including the required nonzero exit status for the latter.
 
 ## Important trust limitations
 
