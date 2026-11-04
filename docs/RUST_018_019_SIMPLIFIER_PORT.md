@@ -21,7 +21,7 @@ the hash implementation has migrated.
 passed native Rust unit tests and **1,000 seeded original-Python
 comparisons**, including exact digest equality.
 
-## R-019 — complete mathematical simplifier path, gate pending
+## R-019 — verified complete mathematical simplifier path
 
 `rust/witnora-ve/src/simplifier.rs` implements exact deterministic
 unit-propagation and pure-literal steps with all source clause
@@ -37,10 +37,12 @@ route then uses native backends for:
 
 The existing Python `StepLogger` and immutable formula hashes are
 retained for the transitional proof/certificate trust boundary.
-R-019 acceptance requires each full source formula to yield exactly
-the same status, output CNF, and **every logged certificate step**
-as the original all-Python route, not just identical SAT status.
-The dedicated end-to-end gate is running.
+[Green R-019 CI #41751421413](https://github.com/joeyst8/witnora-core/actions/runs/41751421413)
+passed **1,000 seeded full-source differentials**: exact source
+status, output CNF, unit and pure step decisions, and **every
+logged certificate event** matched the unchanged all-Python route.
+This does not port the underlying Python SHA-256 and logger
+serialization; these remain transitional proof-boundary components.
 
 ## Limits and next work
 
