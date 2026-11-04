@@ -15,6 +15,7 @@ pub mod fused_source;
 pub mod two_sat;
 pub mod cnf;
 pub mod dimacs_evidence;
+pub mod rup_witness;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -551,6 +552,16 @@ fn parse_dimacs_evidence_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn indexed_rup_witness_native(
+    database: Vec<Vec<i32>>, target_clause: Vec<i32>, max_units: usize,
+) -> PyResult<Option<Vec<i32>>> {
+    rup_witness::indexed_unit_conflict_witness(
+        &database, &target_clause, max_units,
+    ).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -564,5 +575,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(canonical_cnf_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_subsumption_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
+    module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     Ok(())
 }
