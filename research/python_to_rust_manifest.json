@@ -3486,14 +3486,16 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41752174357",
       "python_reference_comparisons": 1300,
       "scope": "variable-elimination resolvents, refusals, full order replay, certificate logs"
-    }
-  ],
-  "pending_ci_milestones": [
+    },
     {
       "id": "R-021",
-      "scope": "full 2-SAT SCC graph/component/certificate metadata parity"
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41752584529",
+      "python_reference_comparisons": 1000,
+      "scope": "SCC graph, full 2-SAT proof metadata and exact StepLogger parity"
     }
   ],
+  "pending_ci_milestones": [],
   "completion_criteria": [
     "Every original core algorithm either has a semantic Rust counterpart verified against reference or is explicitly retired with evidence",
     "Every script has a Rust executable replacement or is documented as archival-only after review",
