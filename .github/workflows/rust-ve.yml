@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-007)
+name: Rust native Witnora migration differential gate (R-001 through R-008)
 
 on:
   push:
@@ -22,6 +22,9 @@ on:
       - "tests/test_crc_rust_walsh.py"
       - "scripts/benchmark_rust_walsh.py"
       - "witnora_core/crc_rust_affine.py"
+      - "witnora_core/crc_rust_fused.py"
+      - "tests/test_crc_rust_fused.py"
+      - "scripts/benchmark_rust_fused.py"
       - "tests/test_crc_rust_affine.py"
       - "scripts/benchmark_rust_affine.py"
       - ".github/workflows/rust-ve.yml"
@@ -44,6 +47,9 @@ on:
       - "tests/test_crc_rust_walsh.py"
       - "scripts/benchmark_rust_walsh.py"
       - "witnora_core/crc_rust_affine.py"
+      - "witnora_core/crc_rust_fused.py"
+      - "tests/test_crc_rust_fused.py"
+      - "scripts/benchmark_rust_fused.py"
       - "tests/test_crc_rust_affine.py"
       - "scripts/benchmark_rust_affine.py"
   workflow_dispatch:
@@ -119,3 +125,11 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m scripts.benchmark_rust_affine
+      - name: Verify complete one-call Rust source counting against brute force and staged path
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_crc_rust_fused -v
+      - name: Benchmark exact fused source-to-count against staged Rust and independent Ganak
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m scripts.benchmark_rust_fused
