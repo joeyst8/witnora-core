@@ -159,3 +159,73 @@ def boundary_path_candidates_from_g5(
             "and actual balance are not inferred and require independent G14 checks."
         ),
     }
+
+
+def boundary_path_candidates_from_g5_rust(
+    initial_rows: Iterable[Mapping[str, Any]],
+    operations: Iterable[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """R-055 opt-in native G5 indexed-provenance path replay.
+
+    Dynamic Python mapping validation remains at the adapter boundary;
+    all XOR state, snapshots, parity provenance and path checks run in Rust.
+    """
+    from witnora_ve import g5_boundary_path_signal_native
+
+    initial = list(initial_rows)
+    original = []
+    for row in initial:
+        edge = _support(row)
+        if len(edge) != 2:
+            raise ValueError("path signal requires binary initial XOR rows")
+        original.append(sorted(edge))
+    normalized = []
+    for operation in operations:
+        kind = operation.get("operation")
+        if kind == "SWAP_ROWS":
+            a = _index(operation.get("row_a"), len(initial))
+            b = _index(operation.get("row_b"), len(initial))
+            snapshot = None
+            if "rows_after" in operation:
+                rows_after = operation["rows_after"]
+                if not isinstance(rows_after, list) or len(rows_after) != len(initial):
+                    raise ValueError("G5 swap snapshot disagrees with live slots")
+                snapshot = [sorted(_support(row)) for row in rows_after]
+            normalized.append(("SWAP_ROWS", a, b, [], [], [], snapshot))
+        elif kind == "ADD_ROW_XOR":
+            target = _index(operation.get("target_row"), len(initial))
+            source = _index(operation.get("source_row"), len(initial))
+            if target == source:
+                raise ValueError("self-XOR is not an indexed G5 operation")
+            normalized.append((
+                "ADD_ROW_XOR", target, source,
+                sorted(_support(operation.get("before"))),
+                sorted(_support(operation.get("source"))),
+                sorted(_support(operation.get("after"))),
+                None,
+            ))
+        else:
+            raise ValueError("unsupported G5 operation kind")
+    xor_count, candidates = g5_boundary_path_signal_native(
+        original, normalized
+    )
+    return {
+        "status": DIAGNOSTIC_ONLY,
+        "strategy": "INDEXED_G5_PROVENANCE_BOUNDARY_PATH",
+        "initial_edge_rows": len(initial),
+        "xor_operations": xor_count,
+        "candidates": [
+            {
+                "separator": tuple(pair),
+                "path_interior": interior,
+                "path_edges": edges,
+                "balance_proxy": proxy,
+                "operation_index": index,
+            }
+            for pair, interior, edges, proxy, index in candidates
+        ],
+        "claim_boundary": (
+            "Provenance path is verified from G5 snapshots; separator validity "
+            "and actual balance are not inferred and require independent G14 checks."
+        ),
+    }
