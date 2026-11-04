@@ -24,6 +24,7 @@ pub mod simplifier;
 pub mod ve_proof;
 pub mod two_sat_proof;
 pub mod certificate_json;
+pub mod bundle_manifest;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -751,6 +752,14 @@ fn stable_certificate_json_native(value: &Bound<'_, PyAny>) -> PyResult<(String,
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn certificate_file_digests_native(
+    files: Vec<(String, String)>,
+) -> PyResult<Vec<(String, String)>> {
+    bundle_manifest::file_digests(&files).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -775,6 +784,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(blocked_clause_digest_native, module)?)?;
     module.add_function(wrap_pyfunction!(build_step_record_native, module)?)?;
     module.add_function(wrap_pyfunction!(stable_certificate_json_native, module)?)?;
+    module.add_function(wrap_pyfunction!(certificate_file_digests_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
