@@ -31,6 +31,7 @@ pub mod odd_xor_cycle;
 pub mod two_ply_lookahead;
 pub mod adaptive_lookahead;
 pub mod selective_lookahead;
+pub mod parity_separator_fingerprint;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1128,6 +1129,23 @@ fn selective_pivot_native(
         out.features.clauses, out.mode.to_string(), out.expanded))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn parity_separator_fingerprint_native(
+    source: Vec<Vec<i32>>, max_k: i32,
+) -> PyResult<(String, Vec<Vec<u32>>,
+               Vec<(u32,usize,usize,usize,Vec<Vec<usize>>)>)> {
+    let result=parity_separator_fingerprint::parity_separator_fingerprint(
+        &source,max_k,
+    ).map_err(PyValueError::new_err)?;
+    let candidates=result.separator_candidates.into_iter().map(|c| (
+        c.variable,c.parity_equations_incident,c.components_before,
+        c.components_after,c.component_equation_indices,
+    )).collect();
+    Ok((result.source_sha256,result.parity_equation_supports,candidates))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1180,5 +1198,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(adaptive_pivot_native, module)?)?;
     module.add_function(wrap_pyfunction!(cheap_pivot_features_native, module)?)?;
     module.add_function(wrap_pyfunction!(selective_pivot_native, module)?)?;
+    module.add_function(wrap_pyfunction!(parity_separator_fingerprint_native, module)?)?;
     Ok(())
 }
