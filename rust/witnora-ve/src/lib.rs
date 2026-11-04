@@ -922,6 +922,59 @@ fn replay_root_component_certificate_native(
 }
 
 #[cfg(feature = "python")]
+#[pyfunction]
+fn replay_prefixed_component_certificate_native(
+    source: Vec<Vec<i32>>,
+    prefix: Vec<(String, usize, String, String, Vec<i32>,
+                 Vec<Vec<i32>>, Vec<Vec<i32>>,
+                 (Vec<i32>, i32, String, i32),
+                 (Vec<u32>, Vec<(u32, u32)>, String, Vec<(u32, bool)>))>,
+    cd_step_id: usize, cd_input_hash: String, cd_output_hash: String,
+    count: usize, edges: Vec<(u32, usize)>,
+    records: Vec<(usize, String, Vec<u32>, Vec<Vec<i32>>, Vec<usize>)>,
+    suffix: Vec<(Option<String>,
+                 (String, usize, String, String, Vec<i32>,
+                  Vec<Vec<i32>>, Vec<Vec<i32>>,
+                  (Vec<i32>, i32, String, i32),
+                  (Vec<u32>, Vec<(u32, u32)>, String, Vec<(u32, bool)>)))>,
+    width_cap: i32, final_hash: String,
+) -> PyResult<(bool, Vec<Vec<i32>>, Option<String>)> {
+    let unpack = |packed: (
+        String, usize, String, String, Vec<i32>, Vec<Vec<i32>>,
+        Vec<Vec<i32>>, (Vec<i32>, i32, String, i32),
+        (Vec<u32>, Vec<(u32,u32)>, String, Vec<(u32,bool)>),
+    )| {
+        let (kind, step_id, input_hash, output_hash, assigned, removed,
+             added, (subsuming, blocked_literal, proof_digest, ve_var),
+             (tree_order, primal_edges, two_sat_status, two_sat_assignment))
+            = packed;
+        local_replay::LocalReplayStep {
+            kind, step_id, input_hash, output_hash, assigned, removed,
+            added, subsuming, blocked_literal, proof_digest, ve_var,
+            tree_order, primal_edges, two_sat_status, two_sat_assignment,
+        }
+    };
+    let events = prefix.into_iter().map(unpack).collect::<Vec<_>>();
+    let scoped = suffix.into_iter().map(|(component_id, step)| {
+        component_context_replay::ContextLocalStep {
+            component_id, step: unpack(step),
+        }
+    }).collect::<Vec<_>>();
+    let full_records = records.into_iter().map(
+        |(id, formula_hash, variables, clauses, clause_indices)| {
+            component_proof::ComponentRecord {
+                id, formula_hash, variables, clauses, clause_indices,
+            }
+        }
+    ).collect::<Vec<_>>();
+    let out = component_context_replay::replay_prefixed_root_cd(
+        &source, &events, cd_step_id, &cd_input_hash, &cd_output_hash,
+        count, &edges, &full_records, &scoped, width_cap, &final_hash,
+    ).map_err(PyValueError::new_err)?;
+    Ok((out.verified, out.final_clauses, out.error))
+}
+
+#[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(count_component_native, module)?)?;
@@ -955,6 +1008,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(verify_component_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_cd_children_native, module)?)?;
     module.add_function(wrap_pyfunction!(replay_root_component_certificate_native, module)?)?;
+    module.add_function(wrap_pyfunction!(replay_prefixed_component_certificate_native, module)?)?;
     module.add_function(wrap_pyfunction!(first_blocked_clause_native, module)?)?;
     module.add_function(wrap_pyfunction!(unit_step_native, module)?)?;
     module.add_function(wrap_pyfunction!(pure_step_native, module)?)?;
