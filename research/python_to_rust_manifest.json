@@ -3229,7 +3229,10 @@
       "path": "witnora_core/separator_structural_priority.py",
       "sha": "2d4a1923833b640565646d39954f2220f50cfad5",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/separator_structural_priority.rs",
+      "test": "tests/test_separator_priority_rust.py",
+      "verified_milestone": "R-050"
     },
     {
       "path": "witnora_core/simplify.py",
@@ -3731,6 +3734,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41839685826",
       "python_reference_comparisons": 1460,
       "scope": "Native frozen cost-sensitive 5-threshold training and adaptive/greedy gating, exact 500 randomized training dictionary and 960 inference CNF/metadata comparisons with independent SAT/UNSAT oracle"
+    },
+    {
+      "id": "R-050",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41840498387",
+      "python_reference_comparisons": 1500,
+      "scope": "Native deterministic iterative articulation-point and cut-first exhaustive singleton ordering for TC-063: 1500 random symmetric graphs checked against Python and independent connectivity oracle, long paths and malformed controls"
     }
   ],
   "pending_ci_milestones": [],
@@ -3742,7 +3752,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 523,
-    "parallel_reference": 37
+    "not_migrated": 522,
+    "parallel_reference": 38
   }
 }
