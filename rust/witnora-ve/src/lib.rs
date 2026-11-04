@@ -41,6 +41,7 @@ pub mod vertex_coupling_separator;
 pub mod global_coupling_separator;
 pub mod gf2_sparse_row_basis;
 pub mod g5_elimination_activity;
+pub mod g5_boundary_path_signal;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1420,6 +1421,23 @@ fn g5_cross_merge_native(
     Ok((report.ranked_pairs,report.scores,report.cross_merge_events))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn g5_boundary_path_signal_native(
+    initial:Vec<Vec<i64>>,
+    operations:Vec<g5_boundary_path_signal::Operation>,
+) -> PyResult<(usize,Vec<((i64,i64),usize,usize,usize,usize)>)> {
+    let report=g5_boundary_path_signal::boundary_path_candidates_from_g5(
+        &initial,&operations,
+    ).map_err(PyValueError::new_err)?;
+    let candidates=report.candidates.into_iter().map(|row| (
+        row.separator,row.path_interior,row.path_edges,row.balance_proxy,
+        row.operation_index,
+    )).collect();
+    Ok((report.xor_operations,candidates))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1494,5 +1512,6 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(g5_activity_native, module)?)?;
     module.add_function(wrap_pyfunction!(g5_ranked_pairs_native, module)?)?;
     module.add_function(wrap_pyfunction!(g5_cross_merge_native, module)?)?;
+    module.add_function(wrap_pyfunction!(g5_boundary_path_signal_native, module)?)?;
     Ok(())
 }
