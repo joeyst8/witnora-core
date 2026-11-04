@@ -3493,6 +3493,20 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41752584529",
       "python_reference_comparisons": 1000,
       "scope": "SCC graph, full 2-SAT proof metadata and exact StepLogger parity"
+    },
+    {
+      "id": "R-022",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41753697112",
+      "python_reference_comparisons": 1600,
+      "scope": "native SHA256 canonical DIMACS formula proof hash, exact Python parity"
+    },
+    {
+      "id": "R-023",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41753697112",
+      "python_reference_comparisons": 1200,
+      "scope": "Python repr-compatible BCE proof evidence digest now hashed in Rust"
     }
   ],
   "pending_ci_milestones": [],
