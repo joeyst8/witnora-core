@@ -2690,7 +2690,11 @@
       "path": "witnora_core/crc_cutset_count.py",
       "sha": "90459daada640a679e7a3e7a310e4c233b943071",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "native_counterpart": "rust/witnora-ve/src/crc_cutset_count.rs",
+      "test": "tests/test_crc_cutset_count_rust.py",
+      "verified_milestone": "R-087",
+      "migration_note": "Focused Rust CI #41919476830 passed 180 seeded exact cutset enumeration comparisons. VE variants remain Python-managed."
     },
     {
       "path": "witnora_core/crc_defect_oracle.py",

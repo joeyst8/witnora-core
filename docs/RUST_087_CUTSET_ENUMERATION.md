@@ -16,4 +16,6 @@ Focused differential coverage: 180 seeded signed-source cases, star, XOR and
 disconnected examples, budget failures and exact field equality. No broad
 SAT speedup or formal proof is claimed.
 
-Status: native CI pending; do not count as fully migrated.
+Verified: **focused Rust CI #41919476830 passed** library compilation,
+native wheel and all cutset enumeration differential comparisons. Manifest
+status is `partial_native_verified`, not `parallel_reference`.
