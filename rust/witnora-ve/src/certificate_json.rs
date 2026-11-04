@@ -117,6 +117,60 @@ pub fn stable_json(value: &Bound<'_, PyAny>) -> PyResult<(String, String)> {
     Ok((serialized, hash))
 }
 
+#[cfg(feature = "python")]
+fn compact(value: &Bound<'_, PyAny>, depth: usize) -> PyResult<String> {
+    if depth > 64 {
+        return Err(PyValueError::new_err("native certificate JSON maximum depth exceeded"));
+    }
+    if value.is_none() {
+        return Ok("null".into());
+    }
+    if value.is_instance_of::<PyBool>() {
+        return Ok(if value.extract::<bool>()? { "true" } else { "false" }.into());
+    }
+    if value.is_instance_of::<PyInt>() {
+        return Ok(value.extract::<i64>().map_err(|_| {
+            PyValueError::new_err("native certificate JSON integer must fit i64")
+        })?.to_string());
+    }
+    if let Ok(s) = value.downcast::<PyString>() {
+        return Ok(quoted(&s.to_str()?));
+    }
+    if let Ok(items) = value.downcast::<PyList>() {
+        let parts = items.iter().map(|item| compact(&item, depth + 1))
+            .collect::<PyResult<Vec<_>>>()?;
+        return Ok(format!("[{}]", parts.join(",")));
+    }
+    if let Ok(items) = value.downcast::<PyTuple>() {
+        let parts = items.iter().map(|item| compact(&item, depth + 1))
+            .collect::<PyResult<Vec<_>>>()?;
+        return Ok(format!("[{}]", parts.join(",")));
+    }
+    if let Ok(dict) = value.downcast::<PyDict>() {
+        let mut ordered = Vec::new();
+        for (key, val) in dict.iter() {
+            let key: String = key.extract().map_err(|_| {
+                PyValueError::new_err("native certificate JSON requires string object keys")
+            })?;
+            ordered.push((key, val));
+        }
+        ordered.sort_by(|a, b| a.0.cmp(&b.0));
+        let mut parts = Vec::new();
+        for (key, val) in ordered.iter() {
+            parts.push(format!("{}:{}", quoted(key), compact(val, depth + 1)?));
+        }
+        return Ok(format!("{{{}}}", parts.join(",")));
+    }
+    Err(PyValueError::new_err("unsupported native certificate JSON value type"))
+}
+
+#[cfg(feature = "python")]
+pub fn compact_certificate_hash(value: &Bound<'_, PyAny>) -> PyResult<(String, String)> {
+    let text = compact(value, 0)?;
+    let hash = sha256_hex(text.as_bytes());
+    Ok((text, hash))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
