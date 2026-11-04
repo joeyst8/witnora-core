@@ -38,6 +38,7 @@ def discover_source_separator(
     *,
     max_separator_size: int = 4,
     max_primal_edges: int = 10000,
+    backend: str = "python",
 ) -> DiscoveredSeparator | None:
     """Return a verified minimum A-B primal vertex cut within budgets.
 
@@ -68,6 +69,41 @@ def discover_source_separator(
            (satisfying_assignment & o) == o
            for z, o in normalized):
         return None
+
+    if backend == "rust":
+        from witnora_ve import crc_separator_discover_native
+        cut = crc_separator_discover_native(
+            [(str(z), str(o)) for z, o in normalized],
+            list(boundary_variables), list(left_group), list(right_group),
+            max_separator_size, max_primal_edges)
+        if cut is None:
+            return None
+        separator, flow, edge_count, augmentations = cut
+        separator = tuple(separator)
+        graph = {v: set() for v in boundary_variables}
+        for zeros, ones in normalized:
+            scope = zeros | ones
+            vertices = [v for v in boundary_variables if scope & (1 << (v - 1))]
+            for u, v in combinations(sorted(vertices), 2):
+                graph[u].add(v)
+                graph[v].add(u)
+        seen, pending = set(left), deque(sorted(left))
+        while pending:
+            at = pending.popleft()
+            for other in graph[at] - set(separator):
+                if other not in seen:
+                    seen.add(other)
+                    pending.append(other)
+        if seen & right:
+            raise AssertionError("derived cut does not separate groups")
+        certificate = audit_conditioned_source_independence(
+            source, boundary_variables, left_group, right_group,
+            separator, satisfying_assignment)
+        if certificate is None or not certificate.separated_after_conditioning:
+            raise AssertionError("source-relative conditional certificate mismatch")
+        return DiscoveredSeparator(separator, flow, edge_count, augmentations, certificate)
+    if backend != "python":
+        raise ValueError("unknown separator discovery backend")
 
     graph = {v: set() for v in boundary_variables}
     edges = set()
