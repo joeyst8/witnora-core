@@ -36,6 +36,7 @@ pub mod spoke_discovery;
 pub mod multicut_parity_separator;
 pub mod structural_operator_invention;
 pub mod cost_sensitive_gate;
+pub mod separator_structural_priority;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1268,6 +1269,25 @@ fn cost_sensitive_pivot_native(
         out.mode.to_string(),out.expanded))
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn articulation_vertices_native(
+    graph:Vec<(i32,Vec<i32>)>,
+) -> PyResult<Vec<i32>> {
+    separator_structural_priority::articulation_vertices(&graph)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn prioritized_singletons_native(
+    graph:Vec<(i32,Vec<i32>)>,
+) -> PyResult<Vec<i32>> {
+    separator_structural_priority::prioritized_singletons(&graph)
+        .map_err(PyValueError::new_err)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1329,5 +1349,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(eliminate_with_policy_native, module)?)?;
     module.add_function(wrap_pyfunction!(choose_threshold_native, module)?)?;
     module.add_function(wrap_pyfunction!(cost_sensitive_pivot_native, module)?)?;
+    module.add_function(wrap_pyfunction!(articulation_vertices_native, module)?)?;
+    module.add_function(wrap_pyfunction!(prioritized_singletons_native, module)?)?;
     Ok(())
 }
