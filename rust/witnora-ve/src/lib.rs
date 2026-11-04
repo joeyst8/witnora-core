@@ -67,6 +67,7 @@ pub mod geometry_aware_parity;
 pub mod claim_boundary;
 pub mod crc_independence_audit;
 pub mod crc_defect_oracle;
+pub mod crc_shannon_oracle;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1795,6 +1796,15 @@ fn sparse_min_degree_width_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn crc_shannon_walsh_native(normalized:Option<Vec<(String,String)>>,
+    boundary:Vec<usize>,modes:Vec<String>,max_states:usize)
+    ->PyResult<Option<(Vec<(String,String,String)>,usize,usize)>>{
+    crc_shannon_oracle::query(normalized,&boundary,&modes,max_states)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_defect_walsh_native(normalized:Option<Vec<(String,String)>>,
     boundary:Vec<usize>,modes:Vec<String>,max_missing:usize,
     max_defect_variables:usize,max_subset_checks:usize)
@@ -1983,6 +1993,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(crc_independence_modes_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_independence_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_defect_walsh_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_shannon_walsh_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

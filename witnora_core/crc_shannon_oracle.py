@@ -65,6 +65,7 @@ def query_walsh_coefficients(
     modes: tuple[int, ...],
     *,
     max_states: int,
+    backend: str = "python",
 ) -> WalshQueryResult | None:
     """Exact selected coefficients, or None when state budget is hit.
 
@@ -84,6 +85,19 @@ def query_walsh_coefficients(
         boundary_mask |= bit
     if any(mode < 0 or (mode & ~boundary_mask) for mode in modes):
         raise ValueError("Walsh mode mentions nonboundary variables")
+    if backend == "rust":
+        from witnora_ve import crc_shannon_walsh_native
+        result = crc_shannon_walsh_native(
+            None if normalized_violations is None else
+            [(str(zeros), str(ones)) for zeros, ones in normalized_violations],
+            list(boundary_variables), [str(mode) for mode in modes], max_states)
+        if result is None:
+            return None
+        rows, states, hits = result
+        return WalshQueryResult({int(mode): Fraction(int(num), int(den))
+                                 for mode, num, den in rows}, states, hits)
+    if backend != "python":
+        raise ValueError("unknown Walsh query backend")
     if normalized_violations is None:
         return WalshQueryResult({mode: Fraction() for mode in modes}, 0, 0)
 
