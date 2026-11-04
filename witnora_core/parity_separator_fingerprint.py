@@ -68,3 +68,30 @@ def parity_separator_fingerprint(formula: CNFFormula, *, max_k: int = 6) -> dict
         "novelty_verified": False,
         "promoted": False,
     }
+
+
+def parity_separator_fingerprint_rust(formula: CNFFormula, *, max_k: int = 6) -> dict:
+    """Opt-in source-exact Rust observation; not a CNF decomposition proof."""
+    from witnora_ve import parity_separator_fingerprint_native
+
+    source_hash, supports, candidates = parity_separator_fingerprint_native(
+        formula.to_clause_lists(), max_k)
+    entries = [{
+        "variable": variable,
+        "parity_equations_incident": incidence,
+        "components_before": before,
+        "components_after": after,
+        "component_equation_indices": groups,
+    } for variable, incidence, before, after, groups in candidates]
+    return {
+        "source_sha256": source_hash,
+        "exact_parity_equations": len(supports),
+        "parity_equation_supports": supports,
+        "separator_candidates": entries,
+        "candidate_count": len(entries),
+        "non_xor_cross_edges_audited": False,
+        "cnf_transformed": False,
+        "lean_verified": False,
+        "novelty_verified": False,
+        "promoted": False,
+    }
