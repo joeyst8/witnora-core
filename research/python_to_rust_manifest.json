@@ -2692,7 +2692,11 @@
       "path": "witnora_core/crc_defect_oracle.py",
       "sha": "92e42b28618c2e7aef106ad1b3ae178893681311",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/crc_defect_oracle.rs",
+      "test": "tests/test_crc_defect_oracle_rust.py",
+      "verified_milestone": "R-082",
+      "migration_note": "Focused Rust CI #41913915024 passed 120 seeded defect hypergraph Walsh comparisons with rank-two/rank-three and resource boundaries."
     },
     {
       "path": "witnora_core/crc_independence_audit.py",

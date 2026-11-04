@@ -11,4 +11,6 @@ families, optional free-boundary variables, resource-failure paths and high-bit
 boundary validation. This retains an explicit exponential-in-defect cap and
 does not claim a generic efficient SAT/counting procedure or Lean proof.
 
-Status: awaiting focused Rust CI verification.
+Verified: **focused Rust CI #41913915024 passed** library tests, the Python
+native wheel and all focused source-differential comparisons. R-082 is recorded
+as `parallel_reference` in the migration manifest.
