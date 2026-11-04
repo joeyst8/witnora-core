@@ -3023,7 +3023,10 @@
       "path": "witnora_core/multicut_parity_separator.py",
       "sha": "bf0fe32053459a60427ea9db0b5456643f1ad1d9",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/multicut_parity_separator.rs",
+      "test": "tests/test_multicut_parity_rust.py",
+      "verified_milestone": "R-047"
     },
     {
       "path": "witnora_core/nonedge_matching_bound.py",
@@ -3701,6 +3704,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41836911014",
       "python_reference_comparisons": 1300,
       "scope": "Native source-exact binary XOR equation, spoke path and conflicting-syndrome candidate discovery; 1200 seeded random sources, 100 planted contradictions, source clause witnesses validated independently; Lean trust unchanged"
+    },
+    {
+      "id": "R-047",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41837865088",
+      "python_reference_comparisons": 1080,
+      "scope": "Native exact parity-incidence 1..3 variable cut search, 960 randomized full metadata cases and 120 planted minimal cuts, budget-exhaustion and safety flags parity; not full CNF proof"
     }
   ],
   "pending_ci_milestones": [],
@@ -3712,7 +3722,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 526,
-    "parallel_reference": 34
+    "not_migrated": 525,
+    "parallel_reference": 35
   }
 }
