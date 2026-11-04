@@ -12,7 +12,8 @@ This is an intentionally **partial native implementation** until the residual
 XOR detector and final report construction are also migrated.
 
 Validation: Rust unit tests for empty, disconnected, and mixed-polarity cases;
-400 reproducible randomized canonical CNFs checked against the independent
-Python reference, including empty clauses and tautologies in raw input.
+five exact independent fixed-metric fixtures; 400 reproducible randomized
+canonical CNFs checked against the Python reference, including empty clauses
+and tautologies in raw input.
 The focused native workflow must pass before marking this module as native
 verified. This code does not issue proof or algorithmic novelty claims.

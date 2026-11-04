@@ -7,6 +7,25 @@ from witnora_core.satlib_fingerprint import fingerprint
 
 
 class SatlibFingerprintRustTests(unittest.TestCase):
+    def test_fixed_edge_cases(self):
+        try:
+            from witnora_ve import satlib_structural_metrics_native
+        except ImportError:
+            self.skipTest("native Rust wheel not installed")
+        cases = [
+            ([], (0, 0, 0, 0, 0, 0, 0, 0, 0)),
+            ([[]], (0, 1, 0, 0, 0, 0, 0, 0, 0)),
+            ([[1], [-1], [2], [3, 4]], (4, 4, 2, 3, 1, 0, 3, 2, 1)),
+            ([[1, -1], [2, 3]], (2, 1, 2, 0, 1, 0, 1, 1, 0)),
+            ([[1, 2, 3, 4], [-1, 5]], (5, 2, 4, 0, 1, 0, 1, 2, 1)),
+        ]
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                self.assertEqual(tuple(satlib_structural_metrics_native(raw)), expected)
+                canonical = CNFFormula.from_raw_clauses(raw)
+                self.assertEqual(fingerprint(canonical, backend="rust"),
+                                 fingerprint(canonical, backend="python"))
+
     def test_400_canonical_sources_with_empty_and_disconnected_cases(self):
         try:
             import witnora_ve  # noqa: F401
