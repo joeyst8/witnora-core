@@ -3201,7 +3201,9 @@
       "path": "witnora_core/separator_scaling_families.py",
       "sha": "c089d9fdadf32599dd96a72e6d106d6ce9df4eb7",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/scaling_families.rs",
+      "migration_note": "All 256 bounded exact XOR CNF family cases source-hash and metadata parity; Python default unchanged."
     },
     {
       "path": "witnora_core/separator_structural_priority.py",
@@ -3633,6 +3635,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41770881275",
       "python_reference_comparisons": 1000,
       "scope": "Port bounded failed-literal probe core to Rust, exact 1000 Python unit conflict and full metadata/CNF parity cases, adversarial budgets"
+    },
+    {
+      "id": "R-040",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41771639708",
+      "python_reference_comparisons": 256,
+      "scope": "Native fixed separator exact XOR source family generator for all 256 bounded widths/block counts plus 800 independent assignment parity checks"
     }
   ],
   "pending_ci_milestones": [],
@@ -3644,7 +3653,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 533,
-    "parallel_reference": 27
+    "not_migrated": 532,
+    "parallel_reference": 28
   }
 }
