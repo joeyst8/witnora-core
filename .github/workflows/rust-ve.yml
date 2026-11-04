@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-043)
+name: Rust native Witnora migration differential gate (R-001 through R-044)
 
 on:
   push:
@@ -63,6 +63,8 @@ on:
       - "tests/test_odd_xor_cycle_rust.py"
       - "tests/test_two_ply_rust.py"
       - "tests/test_adaptive_lookahead_rust.py"
+      - "tests/test_selective_lookahead_rust.py"
+      - "witnora_core/selective_lookahead_prototype.py"
       - "witnora_core/adaptive_lookahead_prototype.py"
       - "witnora_core/lookahead_pivot_prototype.py"
       - "witnora_core/cycle_discovery.py"
@@ -147,6 +149,8 @@ on:
       - "tests/test_odd_xor_cycle_rust.py"
       - "tests/test_two_ply_rust.py"
       - "tests/test_adaptive_lookahead_rust.py"
+      - "tests/test_selective_lookahead_rust.py"
+      - "witnora_core/selective_lookahead_prototype.py"
       - "witnora_core/adaptive_lookahead_prototype.py"
       - "witnora_core/lookahead_pivot_prototype.py"
       - "witnora_core/cycle_discovery.py"
@@ -407,3 +411,7 @@ jobs:
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: python -m unittest tests.test_adaptive_lookahead_rust -v
+      - name: Verify R-044 selective native adaptive-or-greedy gate and SAT parity
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_selective_lookahead_rust -v
