@@ -3077,7 +3077,10 @@
       "path": "witnora_core/parity_separator_fingerprint.py",
       "sha": "1b947590023359b812ac388e6d5a0ec2e84133ba",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/parity_separator_fingerprint.rs",
+      "test": "tests/test_parity_separator_fingerprint_rust.py",
+      "verified_milestone": "R-045"
     },
     {
       "path": "witnora_core/partial_replay.py",
@@ -3681,6 +3684,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41774007601",
       "python_reference_comparisons": 1120,
       "scope": "Native selective gate adaptive/greedy routing with exact 1120 randomized full CNF/feature/metadata comparisons, independent SAT parity and late nested-budget validation"
+    },
+    {
+      "id": "R-045",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41774804239",
+      "python_reference_comparisons": 1150,
+      "scope": "Source-exact 2..6-arity XOR separator fingerprint: 1050 randomized CNF Python parity, 100 planted hubs, high-arity and incomplete-pattern controls, observational metadata only"
     }
   ],
   "pending_ci_milestones": [],
@@ -3692,7 +3702,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 528,
-    "parallel_reference": 32
+    "not_migrated": 527,
+    "parallel_reference": 33
   }
 }
