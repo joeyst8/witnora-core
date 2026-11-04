@@ -2609,7 +2609,7 @@
       "path": "witnora_core/components.py",
       "sha": "0a2710f1c17774ca179a5895e0ca1eb6a346277d",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/graph.rs"
     },
     {
@@ -3080,7 +3080,7 @@
       "path": "witnora_core/primal.py",
       "sha": "3d3a945ec717fb589d6c4afffd80fc3364ab0fad",
       "group": "witnora_core",
-      "status": "native_candidate_pending_diff",
+      "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/graph.rs"
     },
     {
@@ -3448,16 +3448,19 @@
       "status": "green",
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41746389876",
       "scope": "standalone Rust file-based RUP-only proof checker with nonzero invalid proof exit"
+    },
+    {
+      "id": "R-016",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41746679206",
+      "python_reference_comparisons": 1200,
+      "scope": "primal graph, incidence components and component hashes"
     }
   ],
   "pending_ci_milestones": [
     {
-      "id": "R-016",
-      "scope": "primal graph and incidence component differential"
-    },
-    {
       "id": "R-017",
-      "scope": "exact bounded treewidth ordering with no false budget refusal"
+      "scope": "exact bounded treewidth ordering and width verification"
     }
   ],
   "completion_criteria": [
