@@ -2757,7 +2757,9 @@
       "path": "witnora_core/cycle_discovery.py",
       "sha": "2aa99b384fd7d459c01a7e7f0e6b51f4c0f6d060",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/odd_xor_cycle.rs",
+      "migration_note": "Exact complete source binary-XOR pattern extraction and BFS odd-cycle candidate; strictly UNVERIFIED, Lean source gate unchanged."
     },
     {
       "path": "witnora_core/dimacs.py",
@@ -3642,6 +3644,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41771639708",
       "python_reference_comparisons": 256,
       "scope": "Native fixed separator exact XOR source family generator for all 256 bounded widths/block counts plus 800 independent assignment parity checks"
+    },
+    {
+      "id": "R-041",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41772221307",
+      "python_reference_comparisons": 1150,
+      "scope": "Native exact-source odd XOR cycle candidate discovery, 1050 seeded random CNF parity and 100 planted contradictory triangles, source-bound edge validation"
     }
   ],
   "pending_ci_milestones": [],
@@ -3653,7 +3662,7 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 532,
-    "parallel_reference": 28
+    "not_migrated": 531,
+    "parallel_reference": 29
   }
 }
