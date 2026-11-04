@@ -2948,7 +2948,11 @@
       "native_counterpart": "rust/witnora-ve/src/anchor_cut_audit.rs",
       "additional_native_counterpart": "rust/witnora-ve/src/parity_cut_width.rs",
       "generator_native_counterpart": "rust/witnora-ve/src/hidden_separator_generator.rs",
-      "verified_functions": ["full_cnf_anchors_separated", "independent_parity_cut_width", "make_hidden_separator"],
+      "verified_functions": [
+        "full_cnf_anchors_separated",
+        "independent_parity_cut_width",
+        "make_hidden_separator"
+      ],
       "migration_note": "All three primary functions have native parallels; Python MT19937 seed stream deliberately retained at adapter boundary."
     },
     {
@@ -3218,9 +3222,9 @@
       "path": "witnora_core/satlib_fingerprint.py",
       "sha": "ad299a1b7df27bd65d88f4ec5366d2850df79688",
       "group": "witnora_core",
-      "status": "pending_verification",
+      "status": "partial_native_verified",
       "native_counterpart": "rust/witnora-ve/src/satlib_fingerprint.rs",
-      "migration_note": "R-070: native deterministic structural metrics and connected components; Python retains exact XOR detector, SHA-256 identity and report schema. Pending Rust CI."
+      "migration_note": "R-070 native metrics Rust CI #41882663537 passed library tests, wheel build and 400 seeded + five fixed exact differential controls; Python retains XOR detector, digest and report formatting."
     },
     {
       "path": "witnora_core/selective_lookahead_prototype.py",
@@ -3338,7 +3342,12 @@
       "group": "witnora_core",
       "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs",
-      "verified_functions": ["bound_path", "normalize", "derive_equality", "triage_with_implications"],
+      "verified_functions": [
+        "bound_path",
+        "normalize",
+        "derive_equality",
+        "triage_with_implications"
+      ],
       "migration_note": "Full symbolic classification parallel path passed R-068 CI step; Python grammar/search inputs preserved."
     },
     {

@@ -1,4 +1,4 @@
-# R-070 — SAT library structural fingerprint (pending native CI)
+# R-070 — SAT library structural fingerprint (partial native verified)
 
 The Python structural fingerprint now supports an opt-in `backend="rust"`.
 Rust implements the basic deterministic metrics: numbers of distinct variables
@@ -15,5 +15,6 @@ Validation: Rust unit tests for empty, disconnected, and mixed-polarity cases;
 five exact independent fixed-metric fixtures; 400 reproducible randomized
 canonical CNFs checked against the Python reference, including empty clauses
 and tautologies in raw input.
-The focused native workflow must pass before marking this module as native
-verified. This code does not issue proof or algorithmic novelty claims.
+[Focused CI #41882663537](https://github.com/joeyst8/witnora-core/actions/runs/41882663537) passed Rust unit tests, wheel build, and the R-070 comparisons.
+Only the structural metrics are native; the complete source file is **not**
+fully migrated and does not yet count toward the 50-file batch target. This code does not issue proof or algorithmic novelty claims.
