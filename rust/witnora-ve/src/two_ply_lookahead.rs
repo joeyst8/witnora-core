@@ -5,7 +5,7 @@
 use crate::cnf::CanonicalCnf;
 use std::cmp::Ordering;
 
-fn structural_score(original: &CanonicalCnf, candidate: &CanonicalCnf) -> f64 {
+pub fn structural_score(original: &CanonicalCnf, candidate: &CanonicalCnf) -> f64 {
     let variables = original.variables().len() as i64 - candidate.variables().len() as i64;
     let clauses = original.clauses.len() as i64 - candidate.clauses.len() as i64;
     let original_literals: usize = original.clauses.iter().map(Vec::len).sum();
@@ -53,6 +53,20 @@ pub fn elimination_options(
         }
     }
     options
+}
+
+/// Strict clause-decreasing greedy DP pivot, matching the old Python
+/// experimental_operator_search.bounded_elimination reference.
+pub fn bounded_elimination(formula: &CanonicalCnf, max_pairs: i32) -> CanonicalCnf {
+    elimination_options(formula, max_pairs, 0).into_iter()
+        .map(|(_, candidate)| candidate)
+        .filter(|candidate| candidate.clauses.len() < formula.clauses.len())
+        .min_by_key(|candidate| (
+            candidate.variables().len(),
+            candidate.clauses.len(),
+            candidate.formula_hash(),
+        ))
+        .unwrap_or_else(|| formula.clone())
 }
 
 /// Return the best candidate under the reference's fixed structural score,
