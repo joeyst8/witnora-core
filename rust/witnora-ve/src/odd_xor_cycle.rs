@@ -11,7 +11,7 @@ pub struct OddCycle {
     pub steps:Vec<(i32,u32)>,
 }
 
-fn pattern_clauses(u:i32,v:i32,rhs:u32)->BTreeSet<Vec<i32>> {
+pub(crate) fn pattern_clauses(u:i32,v:i32,rhs:u32)->BTreeSet<Vec<i32>> {
     let mut expected=BTreeSet::new();
     for left in 0..=1u32 {
         for right in 0..=1u32 {
@@ -27,7 +27,7 @@ fn pattern_clauses(u:i32,v:i32,rhs:u32)->BTreeSet<Vec<i32>> {
     expected
 }
 
-fn binary_equations(clauses:&[Vec<i32>])->Vec<(i32,i32,u32)> {
+pub(crate) fn binary_equations(clauses:&[Vec<i32>])->Vec<(i32,i32,u32)> {
     let existing=clauses.iter().cloned().collect::<BTreeSet<_>>();
     let mut pairs=BTreeSet::new();
     for clause in clauses {
