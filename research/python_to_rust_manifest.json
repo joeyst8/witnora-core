@@ -2543,7 +2543,9 @@
       "path": "witnora_core/certificate.py",
       "sha": "e2364a1dc71cb9b2ec854667b5975153c0c47cf6",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/certificate_json.rs",
+      "migration_note": "Partial opt-in native functionality only; original Python remains required and default."
     },
     {
       "path": "witnora_core/ci.py",
@@ -3100,7 +3102,9 @@
       "path": "witnora_core/proof.py",
       "sha": "a01673eaf0947019fc2c9751dde748c11ef458de",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/bundle_manifest.rs",
+      "migration_note": "Partial opt-in native functionality only; original Python remains required and default."
     },
     {
       "path": "witnora_core/public_benchmarks.py",
@@ -3130,7 +3134,9 @@
       "path": "witnora_core/reconstruction.py",
       "sha": "192d25c58b45698ac1e7c5c7f228c8b1a87ce4f9",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/reconstruction.rs",
+      "migration_note": "Partial opt-in native functionality only; original Python remains required and default."
     },
     {
       "path": "witnora_core/report.py",
@@ -3558,5 +3564,9 @@
     "Rust test coverage replaces original Python regression/proof gates without loss of checks",
     "All CI and release workflows use Rust for runtime; Lean proof/certificate trust boundaries remain valid",
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
-  ]
+  ],
+  "current_status_counts": {
+    "not_migrated": 537,
+    "parallel_reference": 23
+  }
 }
