@@ -141,9 +141,9 @@ jobs:
         run: python -m scripts.benchmark_rust_fused
       - name: Verify zero-Python standalone Rust DIMACS executable
         run: |
-          result="$(printf 'p cnf 2 2\\n1 0\\n-2 0\\n' | rust/witnora-ve/target/release/witnora-ve --fused-dimacs)"
+          result="$(printf 'p cnf 2 2\n1 0\n-2 0\n' | rust/witnora-ve/target/release/witnora-ve --fused-dimacs)"
           test "$result" = 's mc 1'
-          result="$(printf 'p cnf 3 1\\n0\\n' | rust/witnora-ve/target/release/witnora-ve --fused-dimacs)"
+          result="$(printf 'p cnf 3 1\n0\n' | rust/witnora-ve/target/release/witnora-ve --fused-dimacs)"
           test "$result" = 's mc 0'
       - name: Verify R-010 exact native two-SAT against Python SCC and witnesses
         env:
