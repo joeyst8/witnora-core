@@ -55,6 +55,7 @@ pub mod parity_cut_width;
 pub mod hidden_separator_generator;
 pub mod hard_separator_generator;
 pub mod satlib_fingerprint;
+pub mod spoke_collapse;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -709,6 +710,19 @@ fn make_hard_separator_case_native(
 fn satlib_structural_metrics_native(source:Vec<Vec<i32>>)
     ->PyResult<(usize,usize,usize,usize,usize,usize,usize,usize,usize)> {
     satlib_fingerprint::structural_metrics(&source).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn spoke_cnf_native(spokes:Vec<(i32,i32,i32)>)->PyResult<Vec<Vec<i32>>> {
+    spoke_collapse::generate(&spokes).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn collapse_spokes_native(source:Vec<Vec<i32>>,spokes:Vec<(i32,i32,i32)>)
+    ->PyResult<spoke_collapse::Verdict> {
+    Ok(spoke_collapse::classify(&source,&spokes))
 }
 
 #[cfg(feature = "python")]
@@ -1736,6 +1750,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(make_hidden_separator_native, module)?)?;
     module.add_function(wrap_pyfunction!(make_hard_separator_case_native, module)?)?;
     module.add_function(wrap_pyfunction!(satlib_structural_metrics_native, module)?)?;
+    module.add_function(wrap_pyfunction!(spoke_cnf_native, module)?)?;
+    module.add_function(wrap_pyfunction!(collapse_spokes_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

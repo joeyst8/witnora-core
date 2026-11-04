@@ -2948,11 +2948,7 @@
       "native_counterpart": "rust/witnora-ve/src/anchor_cut_audit.rs",
       "additional_native_counterpart": "rust/witnora-ve/src/parity_cut_width.rs",
       "generator_native_counterpart": "rust/witnora-ve/src/hidden_separator_generator.rs",
-      "verified_functions": [
-        "full_cnf_anchors_separated",
-        "independent_parity_cut_width",
-        "make_hidden_separator"
-      ],
+      "verified_functions": ["full_cnf_anchors_separated", "independent_parity_cut_width", "make_hidden_separator"],
       "migration_note": "All three primary functions have native parallels; Python MT19937 seed stream deliberately retained at adapter boundary."
     },
     {
@@ -3291,7 +3287,9 @@
       "path": "witnora_core/spoke_collapse.py",
       "sha": "e387aeb3592692fa8d665f9cb298d083d7a918b2",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/spoke_collapse.rs",
+      "migration_note": "R-071 Rust exact 2-XOR spoke CNF assembly, restricted source recognition and SAT witness/UNSAT contradiction. Awaiting focused compiled differential CI."
     },
     {
       "path": "witnora_core/spoke_discovery.py",
@@ -3342,12 +3340,7 @@
       "group": "witnora_core",
       "status": "parallel_reference",
       "native_counterpart": "rust/witnora-ve/src/symbolic_implication.rs",
-      "verified_functions": [
-        "bound_path",
-        "normalize",
-        "derive_equality",
-        "triage_with_implications"
-      ],
+      "verified_functions": ["bound_path", "normalize", "derive_equality", "triage_with_implications"],
       "migration_note": "Full symbolic classification parallel path passed R-068 CI step; Python grammar/search inputs preserved."
     },
     {
