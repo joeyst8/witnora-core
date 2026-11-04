@@ -43,6 +43,7 @@ pub mod gf2_sparse_row_basis;
 pub mod g5_elimination_activity;
 pub mod g5_boundary_path_signal;
 pub mod sparse_parity_checks;
+pub mod eth_clause_violation_parity;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1510,6 +1511,61 @@ fn sparse_min_degree_width_native(
         .map_err(PyValueError::new_err)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn finite_parity_source_digest_native(
+    source:Vec<Vec<i32>>,
+) -> String {
+    eth_clause_violation_parity::source_digest(&source)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn finite_parity_violation_mask_native(
+    source:Vec<Vec<i32>>,assignment:String,
+) -> PyResult<String> {
+    eth_clause_violation_parity::decimal_violation(&source,&assignment)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn finite_parity_accepts_native(
+    violations:String,rows:Vec<Vec<usize>>,
+) -> PyResult<bool> {
+    eth_clause_violation_parity::decimal_parity_accepts(&violations,&rows)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn finite_parity_build_native(
+    source:Vec<Vec<i32>>,nvars:i64,
+    candidates:Vec<Vec<usize>>,max_rows:Option<i64>,
+) -> PyResult<(Vec<Vec<usize>>,Vec<usize>,usize)> {
+    let result=eth_clause_violation_parity::build_finite_sketch(
+        &source,nvars,&candidates,max_rows,
+    ).map_err(PyValueError::new_err)?;
+    Ok((result.rows,result.survivors,result.satisfying_count))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn finite_parity_verify_native(
+    source:Vec<Vec<i32>>,nvars:i64,rows:Vec<Vec<usize>>,
+) -> bool {
+    eth_clause_violation_parity::verify_finite_sketch(&source,nvars,&rows)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn finite_parity_complete_primal_native(
+    source:Vec<Vec<i32>>,nvars:i64,
+) -> bool {
+    eth_clause_violation_parity::is_complete_primal(&source,nvars)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1592,5 +1648,11 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(sparse_row_scope_native, module)?)?;
     module.add_function(wrap_pyfunction!(sparse_audit_small_native, module)?)?;
     module.add_function(wrap_pyfunction!(sparse_min_degree_width_native, module)?)?;
+    module.add_function(wrap_pyfunction!(finite_parity_source_digest_native, module)?)?;
+    module.add_function(wrap_pyfunction!(finite_parity_violation_mask_native, module)?)?;
+    module.add_function(wrap_pyfunction!(finite_parity_accepts_native, module)?)?;
+    module.add_function(wrap_pyfunction!(finite_parity_build_native, module)?)?;
+    module.add_function(wrap_pyfunction!(finite_parity_verify_native, module)?)?;
+    module.add_function(wrap_pyfunction!(finite_parity_complete_primal_native, module)?)?;
     Ok(())
 }
