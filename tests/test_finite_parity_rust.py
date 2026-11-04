@@ -102,11 +102,16 @@ class TestNativeFiniteParity(unittest.TestCase):
             replace(native, rows=((0, 0),)),
             replace(native, rows=()),
             replace(native, clause_count=3),
-            replace(native, nvars=2),
+            replace(native, nvars=15),
         ):
             with self.subTest(bad=bad):
                 self.assertFalse(verify_finite_sketch(source, bad))
                 self.assertFalse(verify_finite_sketch_rust(source, bad))
+        # A larger variable universe with one unused variable preserves UNSAT;
+        # it is not a valid negative control for SAT-equivalence verification.
+        with_free_variable = replace(native, nvars=2)
+        self.assertTrue(verify_finite_sketch(source, with_free_variable))
+        self.assertTrue(verify_finite_sketch_rust(source, with_free_variable))
         for func in (build_finite_sketch, build_finite_sketch_rust):
             with self.assertRaises(ValueError):
                 func(source, 1, max_rows=0)
