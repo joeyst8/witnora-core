@@ -1,4 +1,4 @@
-name: Rust native Witnora migration differential gate (R-001 through R-009)
+name: Rust native Witnora migration differential gate (R-001 through R-010)
 
 on:
   push:
@@ -23,6 +23,9 @@ on:
       - "scripts/benchmark_rust_walsh.py"
       - "witnora_core/crc_rust_affine.py"
       - "witnora_core/crc_rust_fused.py"
+      - "witnora_core/two_sat.py"
+      - "witnora_core/two_sat_rust.py"
+      - "tests/test_two_sat_rust.py"
       - "tests/test_crc_rust_fused.py"
       - "scripts/benchmark_rust_fused.py"
       - "tests/test_crc_rust_affine.py"
@@ -48,6 +51,9 @@ on:
       - "scripts/benchmark_rust_walsh.py"
       - "witnora_core/crc_rust_affine.py"
       - "witnora_core/crc_rust_fused.py"
+      - "witnora_core/two_sat.py"
+      - "witnora_core/two_sat_rust.py"
+      - "tests/test_two_sat_rust.py"
       - "tests/test_crc_rust_fused.py"
       - "scripts/benchmark_rust_fused.py"
       - "tests/test_crc_rust_affine.py"
@@ -139,3 +145,7 @@ jobs:
           test "$result" = 's mc 1'
           result="$(printf 'p cnf 3 1\\n0\\n' | rust/witnora-ve/target/release/witnora-ve --fused-dimacs)"
           test "$result" = 's mc 0'
+      - name: Verify R-010 exact native two-SAT against Python SCC and witnesses
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: python -m unittest tests.test_two_sat_rust -v
