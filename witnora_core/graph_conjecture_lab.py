@@ -11,7 +11,12 @@ import random
 METRICS = ("n", "m", "alpha", "tau", "omega", "chi", "nu", "delta")
 
 
-def graph_metrics(n: int, edges: tuple[tuple[int, int], ...]) -> dict[str, int]:
+def graph_metrics(n: int, edges: tuple[tuple[int, int], ...], *, backend="python") -> dict[str, int]:
+    if backend == "rust":
+        from witnora_ve import graph_conjecture_metrics_native
+        return graph_conjecture_metrics_native(n, list(edges))
+    if backend != "python":
+        raise ValueError("unknown graph metrics backend")
     if not 0 <= n <= 11 or any(not 0 <= u < v < n for u, v in edges):
         raise ValueError("invalid bounded simple graph")
     neighbors = [0] * n
@@ -103,11 +108,30 @@ def name(template):
 
 def discover_conjectures(*, training_max_n: int = 5,
                          holdout_seeds: tuple[int, ...] = (8123, 9341),
-                         holdout_per_size: int = 150) -> dict:
+                         holdout_per_size: int = 150, backend="python") -> dict:
     if training_max_n != 5 or holdout_per_size < 1 or holdout_per_size > 1000:
         raise ValueError("predeclared bounded conjecture study only")
     training = [graph_metrics(n, edges) for n in range(1, 6)
                 for _, edges in graphs(n)]
+    if backend == "rust":
+        from witnora_ve import graph_conjecture_run_native
+        holdout = [(n, edges, graph_metrics(n, edges)) for n in (6, 7)
+                   for seed in holdout_seeds
+                   for _, edges in graphs(n, limit=holdout_per_size, seed=seed)]
+        considered, training_survivors, surviving, rejected = graph_conjecture_run_native(
+            training, [(n, list(edges), metrics) for n, edges, metrics in holdout])
+        return {
+            "training_graphs": len(training), "holdout_graphs": len(holdout),
+            "templates_considered": considered, "training_survivors": training_survivors,
+            "holdout_survivors": surviving,
+            "falsified_on_holdout": [
+                {"conjecture": name, "n": n, "edges": [list(e) for e in edges],
+                 "metrics": metrics} for name, n, edges, metrics in rejected],
+            "theorem_proven": False, "novelty_verified": False,
+            "lean_verified": False, "promoted": False,
+        }
+    if backend != "python":
+        raise ValueError("unknown conjecture backend")
     templates = [x for x in candidate_templates()
                  if all(holds(x, row) for row in training)]
     holdout = [(n, edges) for n in (6, 7)
