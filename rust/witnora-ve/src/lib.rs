@@ -40,6 +40,7 @@ pub mod separator_structural_priority;
 pub mod vertex_coupling_separator;
 pub mod global_coupling_separator;
 pub mod gf2_sparse_row_basis;
+pub mod g5_elimination_activity;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1388,6 +1389,37 @@ fn sparse_accepts_masks_native(
         .map_err(PyValueError::new_err)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn g5_activity_native(
+    operations:Vec<g5_elimination_activity::Operation>,variables:Vec<i64>,
+) -> PyResult<(Vec<i64>,Vec<(i64,usize)>,Vec<(i64,usize)>,usize,Vec<i64>)> {
+    let report=g5_elimination_activity::activity_from_g5_operations(&operations,&variables)
+        .map_err(PyValueError::new_err)?;
+    Ok((report.ranked_variables,report.touches,report.cancellations,
+        report.xor_operations,report.top_pair))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn g5_ranked_pairs_native(
+    ranked:Vec<i64>,limit:Option<i64>,
+) -> PyResult<Vec<(i64,i64)>> {
+    g5_elimination_activity::ranked_pair_candidates(&ranked,limit)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn g5_cross_merge_native(
+    operations:Vec<g5_elimination_activity::Operation>,variables:Vec<i64>,
+) -> PyResult<(Vec<(i64,i64)>,Vec<((i64,i64),usize)>,usize)> {
+    let report=g5_elimination_activity::pairwise_cross_merge_activity(&operations,&variables)
+        .map_err(PyValueError::new_err)?;
+    Ok((report.ranked_pairs,report.scores,report.cross_merge_events))
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1459,5 +1491,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(build_sparse_parity_basis_native, module)?)?;
     module.add_function(wrap_pyfunction!(verify_sparse_parity_basis_native, module)?)?;
     module.add_function(wrap_pyfunction!(sparse_accepts_masks_native, module)?)?;
+    module.add_function(wrap_pyfunction!(g5_activity_native, module)?)?;
+    module.add_function(wrap_pyfunction!(g5_ranked_pairs_native, module)?)?;
+    module.add_function(wrap_pyfunction!(g5_cross_merge_native, module)?)?;
     Ok(())
 }
