@@ -445,10 +445,19 @@ class CollapsePath:
             payload["xor_data"] = self.xor_data
         return payload
 
-    @property
-    def certificate_hash(self) -> str:
+    def certificate_hash_with_backend(self, *, backend: str = "python") -> str:
+        if backend == "rust":
+            from witnora_ve import compact_certificate_hash_native
+            _, digest = compact_certificate_hash_native(self.certificate_payload())
+            return digest
+        if backend != "python":
+            raise ValueError("unknown certificate hash backend")
         payload = json.dumps(self.certificate_payload(), sort_keys=True, separators=(",", ":"))
         return sha256(payload.encode("utf-8")).hexdigest()
+
+    @property
+    def certificate_hash(self) -> str:
+        return self.certificate_hash_with_backend()
 
     def to_dict(self) -> dict[str, Any]:
         data = {
