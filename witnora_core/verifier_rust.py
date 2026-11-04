@@ -4,7 +4,7 @@ from __future__ import annotations
 from witnora_core.certificate import CollapseStep
 from witnora_core.cnf import CNFFormula
 
-SUPPORTED = frozenset({"UP", "PLE", "SUB", "BCE", "VE"})
+SUPPORTED = frozenset({"UP", "PLE", "SUB", "BCE", "VE", "2SAT_SOLVE", "TREEWIDTH_SOLVE"})
 
 
 def replay_local_certificate_in_rust(
@@ -13,7 +13,7 @@ def replay_local_certificate_in_rust(
     width_cap: int,
     final_formula_hash: str,
 ) -> tuple[bool, CNFFormula, str | None]:
-    """Replay only non-component UP/PLE/SUB/BCE/VE source formula steps.
+    """Replay non-component deterministic CNF, treewidth and two-SAT steps.
 
     This checks local proof transitions, not overall SAT/UNSAT certification.
     """
@@ -36,6 +36,14 @@ def replay_local_certificate_in_rust(
                 int(step.details.get("blocked_literal", 0)),
                 str(step.details.get("proof_digest", "")),
                 int(step.reconstruction_data.get("eliminated_variable", 0)),
+            ),
+            (
+                [int(var) for var in step.details.get("elimination_order", [])],
+                [tuple(int(v) for v in edge) for edge in
+                 step.details.get("primal_edges", [])],
+                str(step.details.get("status", "")),
+                [(int(var), bool(value)) for var, value in
+                 step.details.get("assignment", {}).items()],
             ),
         ))
     ok, clauses, error = replay_local_certificate_native(
