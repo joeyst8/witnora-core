@@ -103,6 +103,73 @@ pub fn replay_single_root_cd(
     })
 }
 
+/// Verify a local root-proof prefix, then one CD and component-scoped suffix.
+/// Global step numbering and first-error prefixes follow Python's stream.
+pub fn replay_prefixed_root_cd(
+    source: &[Vec<i32>], prefix: &[LocalReplayStep],
+    cd_step_id: usize, cd_input_hash: &str, cd_output_hash: &str,
+    count: usize, edges: &[(u32, usize)], records: &[ComponentRecord],
+    suffix: &[ContextLocalStep], width_cap: i32, final_hash: &str,
+) -> Result<LocalReplayResult, String> {
+    let original = CanonicalCnf::from_signed(source)?;
+    if cd_step_id != prefix.len() + 1 {
+        return Ok(reject(&original,
+            format!("step id mismatch at {}", cd_step_id)));
+    }
+    for (position, event) in suffix.iter().enumerate() {
+        if event.step.step_id != cd_step_id + position + 1 {
+            return Ok(reject(&original,
+                format!("step id mismatch at {}", event.step.step_id)));
+        }
+    }
+    let expected_prefix_hash = prefix.last()
+        .map(|event| event.output_hash.clone())
+        .unwrap_or_else(|| original.formula_hash());
+    let replayed = local_replay::replay(
+        source, prefix, width_cap, &expected_prefix_hash,
+    )?;
+    if !replayed.verified {
+        return Ok(replayed);
+    }
+    let before_cd = CanonicalCnf::from_signed(&replayed.final_clauses)?;
+    if cd_input_hash != before_cd.formula_hash() {
+        return Ok(reject(&original, format!(
+            "CD input hash mismatch at step {}", cd_step_id)));
+    }
+    let shifted = suffix.iter().enumerate().map(|(position, event)| {
+        let mut next = event.clone();
+        next.step.step_id = position + 2;
+        next
+    }).collect::<Vec<_>>();
+    let mut result = replay_single_root_cd(
+        &before_cd.clauses, cd_input_hash, cd_output_hash,
+        count, edges, records, &shifted, width_cap, final_hash,
+    )?;
+    if let Some(error) = result.error.take() {
+        let adjusted = if let Some(tail) =
+            error.strip_prefix("CD input hash mismatch at step 1") {
+            format!("CD input hash mismatch at step {}{}", cd_step_id, tail)
+        } else if let Some((number, tail)) =
+            error.strip_prefix("step ").and_then(|s| s.split_once(':')) {
+            if let Ok(relative) = number.parse::<usize>() {
+                format!("step {}:{}", relative + prefix.len(), tail)
+            } else {
+                error
+            }
+        } else if let Some((head, number)) = error.rsplit_once(" at step ") {
+            if let Ok(relative) = number.parse::<usize>() {
+                format!("{} at step {}", head, relative + prefix.len())
+            } else {
+                error
+            }
+        } else {
+            error
+        };
+        result.error = Some(adjusted);
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
