@@ -38,6 +38,7 @@ pub mod structural_operator_invention;
 pub mod cost_sensitive_gate;
 pub mod separator_structural_priority;
 pub mod vertex_coupling_separator;
+pub mod global_coupling_separator;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -1310,6 +1311,29 @@ fn prioritized_vertex_pairs_native(
         .map_err(PyValueError::new_err)
 }
 
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn two_edge_cut_boundary_pairs_native(
+    graph: Vec<(i32,Vec<i32>)>,
+) -> PyResult<(usize,usize,usize,Vec<(Vec<i32>,Vec<(i32,i32)>,Vec<usize>,Vec<usize>)>)> {
+    let report=global_coupling_separator::two_edge_cut_boundary_pairs(&graph)
+        .map_err(PyValueError::new_err)?;
+    let candidates=report.candidates.into_iter().map(|row| (
+        row.separator,row.cut_edges,row.edge_split_sizes,row.residual_component_sizes
+    )).collect();
+    Ok((report.vertex_count,report.edge_count,report.edge_pair_checks,candidates))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn prioritized_global_pairs_native(
+    graph: Vec<(i32,Vec<i32>)>,
+) -> PyResult<Vec<(i32,i32)>> {
+    global_coupling_separator::prioritized_global_pairs(&graph)
+        .map_err(PyValueError::new_err)
+}
+
 #[cfg(feature = "python")]
 #[pymodule]
 fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -1375,5 +1399,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(prioritized_singletons_native, module)?)?;
     module.add_function(wrap_pyfunction!(vertex_coupling_pairs_native, module)?)?;
     module.add_function(wrap_pyfunction!(prioritized_vertex_pairs_native, module)?)?;
+    module.add_function(wrap_pyfunction!(two_edge_cut_boundary_pairs_native, module)?)?;
+    module.add_function(wrap_pyfunction!(prioritized_global_pairs_native, module)?)?;
     Ok(())
 }
