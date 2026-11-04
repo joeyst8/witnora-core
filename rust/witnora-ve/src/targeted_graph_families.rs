@@ -3,6 +3,25 @@
 
 use std::collections::BTreeSet;
 type Edge = (usize, usize);
+pub type Case=(String,usize,Vec<Edge>);
+pub type Failure=(String,usize,Vec<Edge>,std::collections::BTreeMap<String,i64>);
+
+pub fn challenge(cases:&[Case])->Result<(Vec<Failure>,Vec<Failure>),String>{
+    let mut first=Vec::new();let mut second=Vec::new();
+    for (label,n,edges) in cases{
+        let m=crate::graph_conjecture_lab::metrics(*n,edges)?;
+        let value=|key:&str|m.get(key).copied().ok_or_else(||format!("missing metric: {key}"));
+        let edges_count=value("m")?;let clique=value("omega")?;
+        let chromatic=value("chi")?;let cover=value("tau")?;
+        if edges_count.max(clique)!=edges_count.max(chromatic){
+            first.push((label.clone(),*n,edges.clone(),m.clone()));
+        }
+        if cover.max(clique)!=cover.max(chromatic){
+            second.push((label.clone(),*n,edges.clone(),m));
+        }
+    }
+    Ok((first,second))
+}
 
 pub fn cycle(n: usize) -> (usize, Vec<Edge>) {
     let edges: BTreeSet<Edge> = (0..n).map(|i| {

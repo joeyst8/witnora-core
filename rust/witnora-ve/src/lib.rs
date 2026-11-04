@@ -1852,6 +1852,13 @@ fn conditional_graph_conjectures_run_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn targeted_graph_challenge_native(cases:Vec<targeted_graph_families::Case>)
+    ->PyResult<(Vec<targeted_graph_families::Failure>,Vec<targeted_graph_families::Failure>)>{
+    targeted_graph_families::challenge(&cases).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn crc_cutset_enumerate_native(normalized:Vec<(String,String)>,boundary:Vec<usize>,
     separator:Vec<usize>,max_component:usize,max_states:usize,max_branches:usize)
     ->PyResult<Option<(String,usize,usize,usize)>>{
@@ -2107,6 +2114,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(graph_conjecture_run_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_triage_run_native, module)?)?;
     module.add_function(wrap_pyfunction!(conditional_graph_conjectures_run_native, module)?)?;
+    module.add_function(wrap_pyfunction!(targeted_graph_challenge_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

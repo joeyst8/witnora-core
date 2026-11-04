@@ -59,14 +59,14 @@ def special_graphs():
     yield "mycielski_C5", n, edges
 
 
-def evaluate(n, edges):
-    m = graph_metrics(n, edges)
+def evaluate(n, edges, *, backend="python"):
+    m = graph_metrics(n, edges, backend=backend)
     first = max(m["m"], m["omega"]) == max(m["m"], m["chi"])
     second = max(m["tau"], m["omega"]) == max(m["tau"], m["chi"])
     return first, second, m
 
 
-def challenge(*, random_each: int = 120):
+def challenge(*, random_each: int = 120, backend="python"):
     if not 1 <= random_each <= 300:
         raise ValueError("bounded research challenge")
     cases = list(special_graphs())
@@ -74,15 +74,26 @@ def challenge(*, random_each: int = 120):
         for seed in (2741, 2857):
             for _, edges in graphs(n, limit=random_each, seed=seed):
                 cases.append((f"random_n{n}_seed{seed}", n, edges))
-    failure = [[], []]
-    for label, n, edges in cases:
-        a, b, metric = evaluate(n, edges)
-        for index, valid in enumerate((a, b)):
-            if not valid:
-                failure[index].append({
-                    "family": label, "n": n,
-                    "edges": [list(edge) for edge in edges], "metrics": metric,
-                })
+    if backend == "rust":
+        from witnora_ve import targeted_graph_challenge_native
+        first, second = targeted_graph_challenge_native(
+            [(label, n, list(edges)) for label, n, edges in cases])
+        failure = [[{"family": label, "n": n,
+                     "edges": [list(edge) for edge in edges], "metrics": metric}
+                    for label, n, edges, metric in group]
+                   for group in (first, second)]
+    elif backend == "python":
+        failure = [[], []]
+        for label, n, edges in cases:
+            a, b, metric = evaluate(n, edges)
+            for index, valid in enumerate((a, b)):
+                if not valid:
+                    failure[index].append({
+                        "family": label, "n": n,
+                        "edges": [list(edge) for edge in edges], "metrics": metric,
+                    })
+    else:
+        raise ValueError("unknown targeted graph backend")
     return {
         "cases": len(cases),
         "first_conjecture": "max(m,omega)=max(m,chi)",
