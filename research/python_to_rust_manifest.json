@@ -2568,7 +2568,11 @@
       "path": "witnora_core/claim_boundary.py",
       "sha": "44f3b6ca80f239b06420a53aa155d2ff956b5c7e",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/claim_boundary.rs",
+      "test": "tests/test_claim_boundary_rust.py",
+      "verified_milestone": "R-080",
+      "migration_note": "Focused Rust CI #41911341176 passed scanner and file-report differentials across 240 seeded Unicode-adjacent contexts."
     },
     {
       "path": "witnora_core/cnf.py",

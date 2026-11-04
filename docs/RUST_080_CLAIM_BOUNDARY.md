@@ -10,4 +10,6 @@ The differential suite compares 240 seeded context windows, Unicode-adjacent
 text, standalone HARD/UNKNOWN boundaries and multi-file aggregation. The
 scanner is a textual guardrail, not a formal proof of claim correctness.
 
-Status: awaiting focused Rust CI.
+Verified: **focused Rust CI #41911341176 passed** library tests, native wheel
+build, and all Python/Rust differential suites. The manifest now records R-080
+as `parallel_reference`.
