@@ -3564,6 +3564,13 @@
       "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41765312867",
       "python_reference_comparisons": 2000,
       "scope": "Rust replay of UP/PLE/SUB/BCE/VE certificate steps with seeded valid and tampered case parity"
+    },
+    {
+      "id": "R-031",
+      "status": "green",
+      "ci": "https://github.com/joeyst8/witnora-core/actions/runs/41765848855",
+      "python_reference_comparisons": 1450,
+      "scope": "2-SAT SCC SAT/UNSAT and bounded treewidth proof replay, invalid status/order rejection"
     }
   ],
   "pending_ci_milestones": [],
