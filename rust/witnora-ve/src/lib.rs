@@ -60,6 +60,7 @@ pub mod ood_sat_families;
 pub mod benchmark_families;
 pub mod parity_compression;
 pub mod crc_structural_independence;
+pub mod crc_conditional_independence;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -804,6 +805,15 @@ fn crc_structural_independence_native(source:Vec<Vec<i32>>,boundary:Vec<i32>,
     ->PyResult<Option<(bool,usize,usize)>> {
     crc_structural_independence::audit(&source,&boundary,&left,&right,
         &assignment_decimal).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn crc_conditional_independence_native(source:Vec<Vec<i32>>,boundary:Vec<i32>,
+    left:Vec<i32>,right:Vec<i32>,separator:Vec<i32>,assignment_decimal:String)
+    ->PyResult<Option<(bool,String,usize,usize,usize)>> {
+    crc_conditional_independence::conditioned(&source,&boundary,&left,&right,
+        &separator,&assignment_decimal).map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -1844,6 +1854,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(parity_reconstruct_native, module)?)?;
     module.add_function(wrap_pyfunction!(parity_rewrite_native, module)?)?;
     module.add_function(wrap_pyfunction!(crc_structural_independence_native, module)?)?;
+    module.add_function(wrap_pyfunction!(crc_conditional_independence_native, module)?)?;
     module.add_function(wrap_pyfunction!(parse_dimacs_evidence_native, module)?)?;
     module.add_function(wrap_pyfunction!(indexed_rup_witness_native, module)?)?;
     module.add_function(wrap_pyfunction!(check_rup_subset_native, module)?)?;

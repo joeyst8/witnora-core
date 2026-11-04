@@ -66,7 +66,7 @@ pub fn audit(source:&[Vec<i32>],boundary:&[i32],left:&[i32],right:&[i32],
         }
         let scope=zeros|ones;
         let vertices=boundary.iter().copied().filter(|&v|
-            (scope & (BigUint::one()<<((v-1) as usize)))!=BigUint::zero())
+            (&scope & (BigUint::one()<<((v-1) as usize)))!=BigUint::zero())
             .collect::<Vec<_>>();
         if let Some(&first)=vertices.first() {
             for &v in vertices.iter().skip(1) {

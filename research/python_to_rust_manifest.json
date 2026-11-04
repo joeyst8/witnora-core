@@ -2662,7 +2662,9 @@
       "path": "witnora_core/crc_conditional_independence.py",
       "sha": "3ccc752d40046a38c17bdefde5e1bca93f5634a9",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "pending_verification",
+      "native_counterpart": "rust/witnora-ve/src/crc_conditional_independence.rs",
+      "migration_note": "R-076 source-bound conditional structural separation under verified witness, arbitrary-precision separator mask and residual CNF checking; awaiting native differential CI."
     },
     {
       "path": "witnora_core/crc_conflict_oracle.py",

@@ -35,6 +35,7 @@ def audit_conditioned_source_independence(
     right_group: tuple[int, ...],
     separator: tuple[int, ...],
     satisfying_assignment: int,
+    *, backend: str = "python",
 ) -> ConditionalStructuralAudit | None:
     """Sufficient exact certificate for A ⟂ B | (S = witness[S]).
 
@@ -62,6 +63,21 @@ def audit_conditioned_source_independence(
     # Validate group membership, even when all original clauses vanish.
     if any(v not in remaining for v in left_group + right_group):
         raise ValueError("group contains a non-boundary variable")
+
+    if backend == "rust":
+        from witnora_ve import crc_conditional_independence_native
+        got = crc_conditional_independence_native(
+            [list(row) for row in source_clauses], list(boundary_variables),
+            list(left_group), list(right_group), list(separator),
+            str(satisfying_assignment))
+        if got is None:
+            return None
+        separated, condition_decimal, components, original_count, residual_count = got
+        return ConditionalStructuralAudit(
+            separated, int(condition_decimal), separator,
+            components, original_count, residual_count)
+    if backend != "python":
+        raise ValueError("unknown conditional independence backend")
 
     normalized = _normalized_clauses(source_clauses, boundary_variables)
     if normalized is None:
