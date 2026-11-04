@@ -3085,7 +3085,11 @@
       "path": "witnora_core/lean_numeric_certificate_export.py",
       "sha": "300f7a10f7e942b9f44647fe527c69e6623cf266",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "rust_counterpart": "rust/witnora-ve/src/lean_numeric_certificate_export.rs",
+      "test": "tests/test_lean_numeric_certificate_export_rust.py",
+      "verified_milestone": "R-093",
+      "migration_note": "Focused Rust CI #41928144018 passed native library, wheel and byte-exact Lean source export comparison for default case prefixes, permutations and validation errors; Lean remains the proof checker."
     },
     {
       "path": "witnora_core/lean_parity_compression_gate.py",
@@ -3916,8 +3920,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 486,
-    "parallel_reference": 69,
+    "not_migrated": 485,
+    "parallel_reference": 70,
     "partial_native_verified": 5
   }
 }

@@ -10,4 +10,5 @@ Differential CI covers defaults, every prefix and cyclic permutation of the
 predeclared cases, and malformed names/colorings. This migration is format
 parity only and makes no new formal-verification or novelty claim.
 
-Status: awaiting compiled native CI.
+Status: native compilation, extension wheel, and byte-exact differential
+comparisons passed in GitHub Actions #41928144018.
