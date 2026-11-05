@@ -65,6 +65,7 @@ pub mod aux_violation_tensors;
 pub mod aux_fourier_violation;
 pub mod aux_cycle_cost;
 pub mod aux_three_cnf_geometry;
+pub mod aux_wave_parity;
 pub mod aux_solution_geometry;
 pub mod aux_ground_barriers;
 pub mod aux_min_energy_geometry;

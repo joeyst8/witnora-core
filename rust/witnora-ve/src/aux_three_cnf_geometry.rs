@@ -371,6 +371,185 @@ pub fn audit_hypercycles() -> Result<Value, String> {
         "strict_four_way_replication_met":strict,"families":[p1,p2]}))
 }
 
+// W-CROSSDOMAIN-014: a single low-support Fourier character is extracted via
+// clause-subset inclusion-exclusion. The previously inspected P1/P2 sources
+// make this an exploratory *engineering* test, not held-out confirmation.
+struct WaveRow {
+    mask: u32,
+    bias: i128,
+    pair_conflicts: usize,
+    forward: Cost,
+    reverse: Cost,
+    clause_visits: usize,
+    literal_visits: usize,
+}
+
+fn pair_violation_conflicts(clauses: &[Vec<i32>]) -> usize {
+    let forced = clauses.iter().map(|clause| {
+        let (mut ones, mut zeros) = (0u32, 0u32);
+        for &lit in clause {
+            let bit = 1u32 << (lit.unsigned_abs() - 1);
+            if lit > 0 { zeros |= bit; } else { ones |= bit; }
+        }
+        (ones, zeros)
+    }).collect::<Vec<_>>();
+    let mut conflicts = 0;
+    for i in 0..forced.len() {
+        for j in (i + 1)..forced.len() {
+            if forced[i].0 & forced[j].1 != 0
+                || forced[i].1 & forced[j].0 != 0 {
+                conflicts += 1;
+            }
+        }
+    }
+    conflicts
+}
+
+fn wave_groups(rows: &[WaveRow]) -> BTreeMap<usize, Vec<usize>> {
+    let mut groups = BTreeMap::<usize, Vec<usize>>::new();
+    for (index, row) in rows.iter().enumerate() {
+        groups.entry(row.pair_conflicts).or_default().push(index);
+    }
+    groups
+}
+
+fn wave_score(rows: &[WaveRow], groups: &BTreeMap<usize, Vec<usize>>,
+              labels: &[i128], forward: bool) -> (f64, f64, usize) {
+    let nodes = |index: usize| -> f64 {
+        if forward { rows[index].forward.nodes as f64 }
+        else { rows[index].reverse.nodes as f64 }
+    };
+    let (mut base_error, mut feature_error, mut used) = (0f64, 0f64, 0usize);
+    for indices in groups.values() {
+        if indices.len() < 2 { continue; }
+        let total = indices.iter().map(|&i| nodes(i)).sum::<f64>();
+        let mut finer = BTreeMap::<i128, (usize, f64)>::new();
+        for &i in indices {
+            let entry = finer.entry(labels[i]).or_default();
+            entry.0 += 1;
+            entry.1 += nodes(i);
+        }
+        for &i in indices {
+            let actual = nodes(i);
+            let baseline = (total - actual) / (indices.len() - 1) as f64;
+            let &(size, sum) = finer.get(&labels[i]).expect("populated wave group");
+            let enhanced = if size > 1 { (sum - actual) / (size - 1) as f64 }
+                           else { baseline };
+            base_error += (actual - baseline).powi(2);
+            feature_error += (actual - enhanced).powi(2);
+            used += 1;
+        }
+    }
+    if used == 0 { return (0.0, 0.0, 0); }
+    (base_error / used as f64, feature_error / used as f64, used)
+}
+
+fn wave_family(scopes: &[[usize; W]; M], name: &str,
+               parity_row: &[usize]) -> Result<Value, String> {
+    let (bits, first) = gauge_masks(scopes)?;
+    let masks = (0..(1u32 << (M * W)))
+        .map(|mask| canonical(mask, &bits, &first))
+        .collect::<BTreeSet<_>>();
+    if masks.len() != 4096 { return Err("unexpected wave gauge orbit count".into()); }
+    let mut rows = Vec::with_capacity(masks.len());
+    for mask in masks {
+        let clauses = source(mask, scopes);
+        let wave = crate::aux_wave_parity::exact_wave_bias(&clauses, N, parity_row)?;
+        let forward = dpll(&clauses, &FORWARD);
+        let reverse = dpll(&clauses, &REVERSE);
+        if forward.models != reverse.models || forward.models < 16 {
+            return Err(format!("wave-vs-DPLL model count mismatch at {mask}"));
+        }
+        rows.push(WaveRow { mask, bias: wave.signed_assignment_sum,
+            pair_conflicts: pair_violation_conflicts(&clauses),
+            forward, reverse, clause_visits: wave.clause_visits,
+            literal_visits: wave.literal_visits });
+    }
+    let groups = wave_groups(&rows);
+    let labels = rows.iter().map(|r| r.bias).collect::<Vec<_>>();
+    let (bf, ef, nf) = wave_score(&rows, &groups, &labels, true);
+    let (br, er, nr) = wave_score(&rows, &groups, &labels, false);
+    let mut seed = 0xB19A_3C47u32;
+    let (mut extreme_forward, mut extreme_reverse) = (0usize, 0usize);
+    const TRIALS: usize = 1000;
+    for _ in 0..TRIALS {
+        let mut shuffled = labels.clone();
+        for indices in groups.values() {
+            for position in (1..indices.len()).rev() {
+                let partner = next_random(&mut seed) as usize % (position + 1);
+                shuffled.swap(indices[position], indices[partner]);
+            }
+        }
+        let (bp, ep, _) = wave_score(&rows, &groups, &shuffled, true);
+        let (bq, eq, _) = wave_score(&rows, &groups, &shuffled, false);
+        if bp - ep >= bf - ef - 1e-12 { extreme_forward += 1; }
+        if bq - eq >= br - er - 1e-12 { extreme_reverse += 1; }
+    }
+    let stats = |base: f64, wave: f64, samples: usize, extreme: usize| {
+        json!({"samples":samples,"baseline_loo_mse":base,"wave_loo_mse":wave,
+            "improvement_fraction":if base > 0.0 { Some((base-wave)/base) } else { None },
+            "permutation_extreme":extreme,"permutations":TRIALS,
+            "exploratory_permutation_p":(extreme+1) as f64/(TRIALS+1) as f64})
+    };
+    let work = |forward: bool| {
+        let dpll_scans = rows.iter().map(|r| if forward {r.forward.clause_scans}
+                                            else {r.reverse.clause_scans})
+            .collect::<Vec<_>>();
+        json!({"mean_dpll_clause_scans":dpll_scans.iter()
+                   .map(|&v| f64::from(v)).sum::<f64>() / rows.len() as f64,
+            "mean_wave_selected_clause_visits":rows.iter()
+                   .map(|r|r.clause_visits as f64).sum::<f64>() / rows.len() as f64,
+            "max_wave_selected_clause_visits":rows.iter()
+                   .map(|r|r.clause_visits).max().unwrap(),
+            "mean_wave_literal_visits":rows.iter()
+                   .map(|r|r.literal_visits as f64).sum::<f64>() / rows.len() as f64,
+            "max_wave_literal_visits":rows.iter()
+                   .map(|r|r.literal_visits).max().unwrap(),
+            "wave_clause_visits_exceed_dpll_clause_scans_fraction":rows.iter()
+                   .zip(dpll_scans.iter())
+                   .filter(|(r, cost)| r.clause_visits as u32 > **cost)
+                   .count() as f64 / rows.len() as f64})
+    };
+    let controls = [0u32, 1, 12345, (1u32 << (M*W)) - 1]
+        .iter().map(|&mask| -> Result<Value,String> {
+            let clauses = source(mask, scopes);
+            let wave = crate::aux_wave_parity::exact_wave_bias(&clauses, N, parity_row)?;
+            let full = row(mask, scopes, parity_row)?;
+            let from_full = (0..=M).map(|k| 2i128 * i128::from(full.alternate_even[k])
+                                            - i128::from(full.energy[k])).sum::<i128>();
+            if wave.signed_assignment_sum != from_full {
+                return Err(format!("wave/full-spectrum mismatch at control {mask}"));
+            }
+            let pair_conflicts = pair_violation_conflicts(&clauses);
+            Ok(json!({"mask":mask,"source":clauses,"pair_conflicts":pair_conflicts,
+                "wave_bias":wave.signed_assignment_sum,"full_spectrum_bias":from_full,
+                "wave_clause_visits":wave.clause_visits,"wave_literal_visits":wave.literal_visits,
+                "forward_nodes":full.forward.nodes,"forward_clause_scans":full.forward.clause_scans,
+                "reverse_nodes":full.reverse.nodes,"reverse_clause_scans":full.reverse.clause_scans}))
+        }).collect::<Result<Vec<_>,_>>()?;
+    Ok(json!({"graph_name":name,"gauge_representatives":rows.len(),
+        "chosen_parity_indices":parity_row,"baseline_pair_conflict_groups":groups.len(),
+        "wave_bias_values":labels.iter().collect::<BTreeSet<_>>().len(),
+        "wave_features_distinguishable_from_pair_baseline":groups.values().any(|indices| {
+            indices.iter().map(|&i|rows[i].bias).collect::<BTreeSet<_>>().len() > 1
+        }),
+        "first_representative_mask":rows.first().map(|r|r.mask),
+        "forward":stats(bf,ef,nf,extreme_forward),
+        "reverse":stats(br,er,nr,extreme_reverse),
+        "forward_work":work(true),"reverse_work":work(false),"controls":controls}))
+}
+
+/// The exact character is valid regardless of predictive outcome.
+pub fn audit_wave_proxy() -> Result<Value, String> {
+    let p1 = wave_family(&P1, "P1_Pasch_offset", &smallest_even_incidence_row(&P1)?)?;
+    let p2 = wave_family(&P2, "P2_Pasch_shared_vertices",
+                         &smallest_even_incidence_row(&P2)?)?;
+    Ok(json!({"research_id":"W-CROSSDOMAIN-014",
+        "scope":"exploratory replay of seen P1/P2; six-variable all-SAT 3-CNF; no speedup claim",
+        "method":"one exact four-clause Walsh character via 16-term inclusion-exclusion",
+        "families":[p1,p2]}))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -462,6 +641,33 @@ mod tests {
             assert_eq!(r["gauge_representatives"], 4096);
             assert!(r["minimum_model_count"].as_u64().unwrap() >= 16);
             // No favorable predictive outcome is required for CI success.
+        }
+    }
+
+    #[test]
+    fn bounded_wave_proxy_truth_table_and_gauge_controls() {
+        for scopes in [&P1, &P2] {
+            let chosen = smallest_even_incidence_row(scopes).unwrap();
+            let (bits, _) = gauge_masks(scopes).unwrap();
+            for mask in [0u32, 1, 12345, (1u32 << (M*W)) - 1] {
+                let original = source(mask, scopes);
+                let wave = crate::aux_wave_parity::exact_wave_bias(&original, N, &chosen).unwrap();
+                let (energy, even, _) = direct_spectra(&original, &chosen);
+                let explicit = (0..=M).map(|i| 2i128 * i128::from(even[i])
+                    - i128::from(energy[i])).sum::<i128>();
+                assert_eq!(wave.signed_assignment_sum, explicit);
+                assert_eq!(wave.subset_terms, 16);
+                assert!(wave.clause_visits <= 32);
+                assert!(wave.literal_visits <= 96);
+                for &bits_to_flip in &bits {
+                    let flipped = source(mask ^ bits_to_flip, scopes);
+                    let flipped_wave = crate::aux_wave_parity::exact_wave_bias(
+                        &flipped, N, &chosen).unwrap();
+                    assert_eq!(wave.signed_assignment_sum, flipped_wave.signed_assignment_sum);
+                    assert_eq!(pair_violation_conflicts(&original),
+                               pair_violation_conflicts(&flipped));
+                }
+            }
         }
     }
 }

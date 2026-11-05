@@ -396,6 +396,11 @@ jobs:
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_hypercycle
           WITNORA_RUST_HYPERCYCLE_BIN="$PWD/rust/witnora-ve/target/release/witnora_hypercycle" python -m unittest tests.test_hypercycle_rust -v
           rust/witnora-ve/target/release/witnora_hypercycle
+      - name: W-CROSSDOMAIN-014 bounded Walsh wave proxy and independent controls
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_wave_proxy
+          WITNORA_RUST_WAVE_PROXY_BIN="$PWD/rust/witnora-ve/target/release/witnora_wave_proxy" python -m unittest tests.test_wave_proxy_rust -v
+          rust/witnora-ve/target/release/witnora_wave_proxy
       - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
         run: |
           python -c 'from witnora_ve import aux_solution_geometry_native'
