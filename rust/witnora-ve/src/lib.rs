@@ -63,6 +63,7 @@ pub mod crc_structural_independence;
 pub mod crc_conditional_independence;
 pub mod aux_violation_tensors;
 pub mod aux_fourier_violation;
+pub mod aux_cycle_cost;
 pub mod aux_solution_geometry;
 pub mod aux_ground_barriers;
 pub mod aux_min_energy_geometry;
