@@ -1,6 +1,6 @@
 # W-CROSSDOMAIN-009 — Matched-topology falsification of sufficient violation spectra
 
-**Status:** complete, deterministic finite Python enumeration; Rust source-level witness regression added; native Rust CI still pending. **Finding: a predeclared cycle-parity spectrum separates some signed CNFs with identical topology, #SAT, and total-violation distributions.** No solver-runtime or mathematical novelty claim follows from this result.
+**Status:** complete, deterministic finite Python enumeration; Rust source-level witness regression added; native Rust CI verified on 2026-11-05. **Finding: a predeclared cycle-parity spectrum separates some signed CNFs with identical topology, #SAT, and total-violation distributions.** No solver-runtime or mathematical novelty claim follows from this result.
 
 ## Research hypothesis and primary prior art
 
