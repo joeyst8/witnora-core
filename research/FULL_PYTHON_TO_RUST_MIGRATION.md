@@ -119,6 +119,17 @@ After wave 3, the tracked Python source-file statuses are 467 not migrated,
 79 parallel Rust references and 14 partial-native verified, for 560 total.
 No fully native-default source module is claimed.
 
+## Migration wave 4: standalone claim-boundary file scanner (candidate)
+
+Source: `witnora_core/claim_boundary.py` (already `parallel_reference` from
+R-080). Its existing Rust text scanner is now exposed through the standalone
+`witnora_claims FILE [FILE ...] [--out RESULTS_JSON]` command, including
+file-level findings, forbidden-claim aggregation and fail-closed invalid-file
+handling. The focused gate compares the complete multi-file JSON result with
+the independent Python API across 128 seeded Unicode-adjacent files and
+normal/adversarial controls. Until native CI passes and a replacement policy
+is adopted, this is a candidate path, not a newly migrated Python file.
+
 ## Next dependency-aware work
 
 1. Finish and independently verify the remaining CI CLI/report orchestration,
