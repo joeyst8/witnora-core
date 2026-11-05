@@ -352,3 +352,4 @@ jobs:
           python -m unittest tests.test_xor_source_identity_gate -v
           python -m unittest tests.test_xor_dual_source_parser -v
           python -m unittest tests.test_xor_proof_audit_rust -v
+          python -m unittest tests.test_xor_heldout_proof_rust -v
