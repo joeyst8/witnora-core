@@ -65,6 +65,7 @@ pub mod aux_violation_tensors;
 pub mod aux_fourier_violation;
 pub mod aux_solution_geometry;
 pub mod aux_ground_barriers;
+pub mod aux_min_energy_geometry;
 pub mod constraint_geometry;
 pub mod geometry_aware_parity;
 pub mod claim_boundary;
@@ -970,6 +971,17 @@ fn aux_ground_barriers_native(
         &source,nvars,max_component_variables).map_err(PyValueError::new_err)?;
     Ok((profile.models,profile.ground_clusters,profile.largest_ground_cluster,
         profile.connectivity_barrier))
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn aux_minimum_energy_geometry_native(
+    source:Vec<Vec<i32>>,nvars:usize,max_component_variables:usize,
+) -> PyResult<(usize,u64,Vec<u64>,Vec<u64>,usize)> {
+    let profile = aux_min_energy_geometry::exact_minimum_energy_geometry(
+        &source,nvars,max_component_variables).map_err(PyValueError::new_err)?;
+    Ok((profile.minimum_violations,profile.minimizers,profile.minimum_clusters,
+        profile.largest_minimum_cluster,profile.connectivity_barrier_extra))
 }
 
 #[cfg(feature = "python")]
@@ -2651,6 +2663,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(aux_fourier_parity_violation_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_solution_geometry_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_ground_barriers_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_minimum_energy_geometry_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_rows_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_validate_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_audit_native, module)?)?;
