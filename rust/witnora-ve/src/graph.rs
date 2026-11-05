@@ -82,7 +82,7 @@ mod tests {
         assert_eq!(edges, vec![(1,2), (1,3), (2,3), (3,4)]);
         let components = incidence_components(&src).unwrap();
         assert_eq!(components.len(), 3);
-        assert_eq!(components[0], vec![vec![]]);
+        assert_eq!(components[0], vec![Vec::<i32>::new()]);
         assert_eq!(components[1].len(), 2);
         assert_eq!(components[2], vec![vec![7]]);
     }

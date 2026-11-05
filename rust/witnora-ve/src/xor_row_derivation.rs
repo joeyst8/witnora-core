@@ -91,6 +91,6 @@ mod tests {
             &[vec![1],vec![-1]], 0, 0, 0, 4, 20, None, 0.0);
         assert_eq!((out.0,out.1,out.2,out.3), (1,2,0,None));
         assert_eq!(out.4, vec!["0".to_string()]);
-        assert_eq!(out.5, vec![vec![]]);
+        assert_eq!(out.5, vec![Vec::<i32>::new()]);
     }
 }

@@ -117,7 +117,7 @@ mod tests {
         assert!(unit_conflict(&source,1).unwrap());
         assert!(unit_conflict(&source,-1).unwrap());
         let result=probe_forced_relations(&source,1).unwrap();
-        assert_eq!(result.clauses,vec![vec![]]);
+        assert_eq!(result.clauses,vec![Vec::<i32>::new()]);
         assert!(result.both_assumptions_conflict);
         assert_eq!(result.checked_variables,1);
     }

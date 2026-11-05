@@ -179,7 +179,7 @@ pub fn count_zeros(equations:&[Polynomial],nvars:usize,max_states:usize)
      &(BigUint::one()<<129usize).to_string()).unwrap(),true);
  assert_eq!(evaluate(&[vec![],vec![1,130]],"0").unwrap(),true);
  assert!(evaluate(&[vec![0]],"0").is_err());
- assert_eq!(clause_violation(&[]).unwrap(),vec![vec![]]);
+ assert_eq!(clause_violation(&[]).unwrap(),vec![Vec::<usize>::new()]);
  assert_eq!(clause_violation(&[1,-1]).unwrap(),Vec::<Vec<usize>>::new());
  assert_eq!(clause_violation(&[-1,-2]).unwrap(),vec![vec![1,2]]);
  assert!(clause_violation(&[0]).is_err());

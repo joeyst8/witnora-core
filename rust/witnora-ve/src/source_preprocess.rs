@@ -282,7 +282,7 @@ mod tests {
         let contradiction = simplify_source(
             &[vec![1], vec![-1], vec![1, -1]], 3, 20, 100,
         ).unwrap().unwrap();
-        assert_eq!(contradiction.clauses, vec![vec![]]);
+        assert_eq!(contradiction.clauses, vec![Vec::<i32>::new()]);
         let tautological = simplify_source(
             &[vec![1, -1], vec![2, 2]], 3, 20, 100,
         ).unwrap().unwrap();

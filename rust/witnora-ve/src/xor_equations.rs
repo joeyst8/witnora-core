@@ -245,7 +245,7 @@ pub fn parse_xor_lines(text:&str)->Result<Vec<(Vec<i64>,u8)>,String>{
  assert!(unsat.0);
  assert!(verify_assignment(&[(vec![1,2],1)],&[(1,true),(2,false)]));
  assert!(!verify_assignment(&[(vec![1,2],1)],&[(1,true)]));
- assert_eq!(canonical_xor_cnf(&[],1,16).unwrap(),vec![vec![]]);
+ assert_eq!(canonical_xor_cnf(&[],1,16).unwrap(),vec![Vec::<i32>::new()]);
  assert_eq!(canonical_xor_cnf(&[1,2],1,16).unwrap(),
   vec![vec![-2,-1],vec![1,2]]);
  assert_eq!(extra_touching_clauses(&[vec![1],vec![2],vec![3]],&[1,2],

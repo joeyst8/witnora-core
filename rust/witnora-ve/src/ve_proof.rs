@@ -130,7 +130,7 @@ mod tests {
         let source = vec![vec![1],vec![-1]];
         let got = eliminate_with_proof(&source, 1, 0).unwrap();
         assert!(got.collapsed);
-        assert_eq!(got.clauses, vec![vec![]]);
+        assert_eq!(got.clauses, vec![Vec::<i32>::new()]);
         assert!(!eliminate_with_proof(&source, 1, -1).unwrap().collapsed);
         assert!(eliminate_with_proof(&source, 3, 0).unwrap().collapsed);
     }

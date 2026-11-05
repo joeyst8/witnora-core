@@ -104,7 +104,7 @@ mod tests {
         let got = component_evidence(&source).unwrap();
         assert_eq!(got.count, 3);
         assert_eq!(got.incidence_edges.len(), 5);
-        assert_eq!(got.components[0].clauses, vec![vec![]]);
+        assert_eq!(got.components[0].clauses, vec![Vec::<i32>::new()]);
         assert_eq!(got.components[0].clause_indices, vec![0]);
         assert!(got.components.iter().all(|c| c.formula_hash.len()==64));
         let hash = CanonicalCnf::from_signed(&source).unwrap().formula_hash();
@@ -116,7 +116,7 @@ mod tests {
         assert_eq!(error, None);
         assert_eq!(children.len(), 3);
         assert_eq!(children[0].0, "0");
-        assert_eq!(children[0].1, vec![vec![]]);
+        assert_eq!(children[0].1, vec![Vec::<i32>::new()]);
         assert_eq!(verify_evidence(&source, &hash, got.count + 1,
             &got.incidence_edges, &got.components).unwrap(),
             Some("CD component count mismatch".into()));

@@ -94,7 +94,7 @@ mod tests {
         assert_eq!(got.clauses, vec![vec![2],vec![3]]);
         let conflict = unit_step(&[vec![1],vec![-1]]).unwrap().unwrap();
         assert!(conflict.conflict);
-        assert_eq!(conflict.clauses, vec![vec![]]);
+        assert_eq!(conflict.clauses, vec![Vec::<i32>::new()]);
         assert!(unit_step(&[vec![1,2]]).unwrap().is_none());
     }
 
