@@ -95,6 +95,7 @@ pub mod xor_equations;
 pub mod xor_drat_resolution;
 pub mod xor_sparse_schedule;
 pub mod xor_proof_order;
+pub mod xor_proof_emit;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2203,6 +2204,27 @@ fn xor_gaussian_order_stats_native(pivots:Vec<usize>,variables:Vec<usize>,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_drat_clause_line_native(clause:Vec<i64>)->String{
+    xor_proof_emit::clause_line(&clause)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_drat_line_size_native(clause:Vec<i64>)->usize{
+    xor_proof_emit::line_size(&clause)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_drat_emit_decision_native(clause:Vec<i64>,already_active:bool,
+    emitted:usize,proof_bytes:usize,max_width:usize,max_proof_clauses:usize,
+    max_proof_bytes:usize)->xor_proof_emit::EmitDecision{
+    xor_proof_emit::emit(&clause,already_active,emitted,proof_bytes,max_width,
+        max_proof_clauses,max_proof_bytes)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2537,6 +2559,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_sparse_schedule_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_proof_order_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_gaussian_order_stats_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_drat_clause_line_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_drat_line_size_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_drat_emit_decision_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

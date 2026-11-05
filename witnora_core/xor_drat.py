@@ -51,7 +51,12 @@ class XorDRATBridgeResult:
     xor_status: dict[str, Any]
 
 
-def _clause_line(clause: tuple[int, ...]) -> str:
+def _clause_line(clause: tuple[int, ...], *, backend="python") -> str:
+    if backend == "rust":
+        from witnora_ve import xor_drat_clause_line_native
+        return xor_drat_clause_line_native(list(clause))
+    if backend != "python":
+        raise ValueError("unknown XOR clause format backend")
     if not clause:
         return "0"
     return " ".join(str(lit) for lit in clause) + " 0"
@@ -501,7 +506,12 @@ def _diagnostics(
     }
 
 
-def _line_size(clause: tuple[int, ...]) -> int:
+def _line_size(clause: tuple[int, ...], *, backend="python") -> int:
+    if backend == "rust":
+        from witnora_ve import xor_drat_line_size_native
+        return xor_drat_line_size_native(list(clause))
+    if backend != "python":
+        raise ValueError("unknown XOR clause size backend")
     return len(_clause_line(clause)) + 1
 
 
@@ -597,12 +607,13 @@ def _variable_elimination_refutation(
     }
 
 
-def _xor_encoding_clauses(variables: Iterable[int], rhs: int) -> set[tuple[int, ...]]:
+def _xor_encoding_clauses(variables: Iterable[int], rhs: int,
+                          *, backend="python") -> set[tuple[int, ...]]:
     vars_tuple = tuple(sorted(int(var) for var in variables))
     bit = int(rhs) & 1
     if not vars_tuple:
         return {()} if bit else set()
-    return canonical_xor_cnf_clauses(vars_tuple, bit)
+    return canonical_xor_cnf_clauses(vars_tuple, bit, backend=backend)
 
 
 def _source_row_encodings(equations: list[XorEquation]) -> dict[str, set[tuple[int, ...]]]:
@@ -629,7 +640,19 @@ def _emit_clause(
     max_width: int,
     max_proof_clauses: int,
     max_proof_bytes: int,
+    backend="python",
 ) -> tuple[int, int, int, str | None]:
+    if backend == "rust":
+        from witnora_ve import xor_drat_emit_decision_native
+        new_emitted, new_bytes, new_width, error, should_emit = xor_drat_emit_decision_native(
+            list(clause), clause in active, emitted, proof_bytes, max_width,
+            max_proof_clauses, max_proof_bytes)
+        if should_emit:
+            lines.append(_clause_line(clause, backend="rust"))
+            active.add(clause)
+        return new_emitted, new_bytes, new_width, error
+    if backend != "python":
+        raise ValueError("unknown XOR emission backend")
     max_width = max(max_width, len(clause))
     if clause in active:
         return emitted, proof_bytes, max_width, None

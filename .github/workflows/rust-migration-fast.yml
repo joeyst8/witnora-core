@@ -262,7 +262,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-137 source comparisons
+      - name: Focused R-067 through R-141 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -337,3 +337,7 @@ jobs:
           python -m unittest tests.test_xor_proof_order_rust -v
           python -m unittest tests.test_xor_gaussian_order_stats_rust -v
           python -m unittest tests.test_xor_choose_order_rust -v
+          python -m unittest tests.test_xor_drat_encoding_rust -v
+          python -m unittest tests.test_xor_drat_clause_line_rust -v
+          python -m unittest tests.test_xor_drat_line_size_rust -v
+          python -m unittest tests.test_xor_drat_emit_rust -v
