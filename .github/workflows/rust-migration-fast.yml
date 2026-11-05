@@ -514,3 +514,8 @@ jobs:
         run: |
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_evidence_check
           WITNORA_RUST_EVIDENCE_CHECK_BIN="$PWD/rust/witnora-ve/target/release/witnora_evidence_check" python -m unittest tests.test_evidence_integrity_standalone_rust_cli -v
+      - name: W-STRUCT-001 Rust source-primal separator diagnostic parity
+        run: |
+          cargo test --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_structure
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_structure
+          WITNORA_RUST_STRUCTURE_BIN="$PWD/rust/witnora-ve/target/release/witnora_structure" python -m unittest tests.test_structural_profile_rust -v
