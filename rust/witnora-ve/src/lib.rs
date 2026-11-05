@@ -927,6 +927,17 @@ fn aux_factorized_violation_profile_native(
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn aux_conditioned_violation_profile_native(
+    source:Vec<Vec<i32>>,nvars:usize,separator:Vec<usize>,
+    max_component_variables:usize,max_separator_variables:usize,
+) -> PyResult<Vec<u64>> {
+    aux_violation_tensors::conditioned_violation_profile(
+        &source,nvars,&separator,max_component_variables,max_separator_variables)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn parse_dimacs_evidence_native(
     text: String,
 ) -> PyResult<(Vec<Vec<i32>>, Vec<Vec<i32>>, Vec<i32>, Vec<String>, String)> {
@@ -2600,6 +2611,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(aux_exact_models_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_weight_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_factorized_violation_profile_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_conditioned_violation_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_rows_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_validate_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_audit_native, module)?)?;
