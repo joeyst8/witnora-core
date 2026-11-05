@@ -63,6 +63,7 @@ on:
       - "tests/test_fourier_parity_violation_rust.py"
       - "tests/test_fourier_signed_controls.py"
       - "scripts/benchmark_fourier_signed_controls.py"
+      - "tests/test_solution_geometry_rust.py"
       - "tests/test_constraint_geometry_rust.py"
       - "tests/test_geometry_aware_parity_rust.py"
       - "tests/test_claim_boundary_rust.py"
@@ -229,6 +230,7 @@ on:
       - "tests/test_fourier_parity_violation_rust.py"
       - "tests/test_fourier_signed_controls.py"
       - "scripts/benchmark_fourier_signed_controls.py"
+      - "tests/test_solution_geometry_rust.py"
       - "tests/test_constraint_geometry_rust.py"
       - "tests/test_geometry_aware_parity_rust.py"
       - "tests/test_claim_boundary_rust.py"
@@ -370,6 +372,10 @@ jobs:
         run: |
           python -m unittest tests.test_fourier_signed_controls -v
           python -m scripts.benchmark_fourier_signed_controls
+      - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
+        run: |
+          python -c 'from witnora_ve import aux_solution_geometry_native'
+          python -m unittest tests.test_solution_geometry_rust -v
       - name: Build pinned external drat-trim
         run: |
           git clone --quiet https://github.com/marijnheule/drat-trim.git "$RUNNER_TEMP/witnora-drat-trim"
