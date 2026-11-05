@@ -10,7 +10,7 @@ from typing import Any, Iterable
 
 from .certificate import CollapsePath, XOR_UNSAT_NATIVE
 from .cnf import CNFFormula, Clause, has_tautology
-from .dimacs import export_dimacs, parse_dimacs
+from .dimacs import export_dimacs, parse_dimacs, parse_dimacs_with_text_evidence
 from .drat import DRATExport, PROOF_SCOPE_END_TO_END, PROOF_SCOPE_FINAL_STATE_ONLY_UNSUPPORTED
 from .drat_check import CHECKED_AGAINST, check_drat_text, is_rup
 from .drat_trim import run_drat_trim
@@ -994,9 +994,12 @@ def export_xor_drat_for_path(
     proof_backend: str = "python",
     require_dual_internal: bool = False,
     require_source_identity: bool = False,
+    require_dual_source_parser: bool = False,
 ) -> XorDRATBridgeResult:
     if proof_backend not in ("python", "rust"):
         raise ValueError("unknown XOR proof backend")
+    if require_dual_source_parser and not require_source_identity:
+        raise ValueError("dual source parser requires source identity validation")
     empty_diagnostics = _diagnostics(
         original_formula,
         [],
@@ -1129,11 +1132,17 @@ def export_xor_drat_for_path(
             xor_status,
         )
 
-    if require_source_identity and original_dimacs_text is not None:
+    if require_source_identity:
+        source_text = original_dimacs_text if original_dimacs_text is not None else export_dimacs(original_formula)
         try:
-            parsed_original = parse_dimacs(original_dimacs_text)
+            parsed_original = parse_dimacs(source_text)
             source_matches = parsed_original.clauses == original_formula.clauses
             identity_error = None if source_matches else "supplied DIMACS is not the original canonical CNF"
+            if identity_error is None and require_dual_source_parser:
+                parsed_native, _raw, _tokens, _spellings = parse_dimacs_with_text_evidence(
+                    source_text, backend="rust")
+                if parsed_native.clauses != parsed_original.clauses:
+                    identity_error = "Python and Rust source-DIMACS parsers disagree"
         except ValueError as exc:
             identity_error = f"supplied DIMACS could not be parsed: {exc}"
         if identity_error is not None:
