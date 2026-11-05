@@ -386,6 +386,11 @@ jobs:
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_holdout
           WITNORA_RUST_CYCLE_HOLDOUT_BIN="$PWD/rust/witnora-ve/target/release/witnora_cycle_holdout" python -m unittest tests.test_cycle_holdout_rust -v
           rust/witnora-ve/target/release/witnora_cycle_holdout
+      - name: W-CROSSDOMAIN-012 predeclared 3-CNF hypergraph geometry audit
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_three_cnf
+          WITNORA_RUST_THREE_CNF_BIN="$PWD/rust/witnora-ve/target/release/witnora_three_cnf" python -m unittest tests.test_three_cnf_geometry_rust -v
+          rust/witnora-ve/target/release/witnora_three_cnf
       - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
         run: |
           python -c 'from witnora_ve import aux_solution_geometry_native'
