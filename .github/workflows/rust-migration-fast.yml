@@ -103,6 +103,8 @@ on:
       - "tests/test_xor_normalize_rust.py"
       - "tests/test_xor_evaluate_rust.py"
       - "tests/test_xor_substitute_rust.py"
+      - "tests/test_xor_system_substitute_rust.py"
+      - "tests/test_xor_gaussian_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -207,6 +209,8 @@ on:
       - "tests/test_xor_normalize_rust.py"
       - "tests/test_xor_evaluate_rust.py"
       - "tests/test_xor_substitute_rust.py"
+      - "tests/test_xor_system_substitute_rust.py"
+      - "tests/test_xor_gaussian_rust.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -238,7 +242,7 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: Focused R-067 through R-123 source comparisons
+      - name: Focused R-067 through R-125 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -299,3 +303,5 @@ jobs:
           python -m unittest tests.test_xor_normalize_rust -v
           python -m unittest tests.test_xor_evaluate_rust -v
           python -m unittest tests.test_xor_substitute_rust -v
+          python -m unittest tests.test_xor_system_substitute_rust -v
+          python -m unittest tests.test_xor_gaussian_rust -v

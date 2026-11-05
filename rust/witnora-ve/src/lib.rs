@@ -2119,6 +2119,20 @@ fn xor_substitute_native(variables:Vec<usize>,rhs:u8,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_system_substitute_native(equations:Vec<(Vec<usize>,u8)>,
+    assignment:Vec<(usize,bool)>)->Vec<(Vec<usize>,u8)>{
+    xor_equations::substitute_system(&equations,&assignment)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_gaussian_native(equations:Vec<(Vec<usize>,u8)>)
+    ->xor_equations::GaussianAnswer{
+    xor_equations::gaussian(&equations)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2442,6 +2456,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_normalize_variables_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_evaluate_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_substitute_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_system_substitute_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_gaussian_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

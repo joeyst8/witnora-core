@@ -205,7 +205,27 @@ class XorSystem:
     def variables(self) -> tuple[int, ...]:
         return tuple(sorted({var for eq in self.equations for var in eq.variables}))
 
-    def substitute(self, assignment: dict[int, bool]) -> "XorSystem":
+    def substitute(self, assignment: dict[int, bool], *, backend="python") -> "XorSystem":
+        if backend == "rust":
+            from witnora_ve import xor_system_substitute_native
+            relevant = sorted({v for eq in self.equations for v in eq.variables})
+            bindings = [(v, bool(assignment[v])) for v in relevant if v in assignment]
+            results = xor_system_substitute_native(
+                [(list(eq.variables), eq.rhs) for eq in self.equations], bindings)
+            updated = []
+            for eq, (variables, rhs) in zip(self.equations, results):
+                updated.append(XorEquation(
+                    variables, rhs, source=eq.source,
+                    source_clauses=eq.source_clauses,
+                    pattern_size=eq.pattern_size,
+                    detection_mode=eq.detection_mode,
+                    source_clauses_removed=eq.source_clauses_removed,
+                    extra_clauses_touching_variables=eq.extra_clauses_touching_variables,
+                    exact_full_encoding=eq.exact_full_encoding,
+                    safe_use=eq.safe_use))
+            return XorSystem(updated, diagnostics=self.diagnostics)
+        if backend != "python":
+            raise ValueError("unknown XOR backend")
         return XorSystem(
             (eq.substitute(assignment) for eq in self.equations),
             diagnostics=self.diagnostics,
@@ -243,7 +263,45 @@ def _xor_rows(a: tuple[set[int], int], b: tuple[set[int], int]) -> tuple[set[int
     return (set(a[0]) ^ set(b[0]), a[1] ^ b[1])
 
 
-def solve_xor_system_gaussian(system: XorSystem) -> dict[str, Any]:
+def solve_xor_system_gaussian(system: XorSystem, *, backend="python") -> dict[str, Any]:
+    if backend == "rust":
+        from witnora_ve import xor_gaussian_native
+        (unsat, assignment, pivots, free, forced,
+         events, rref) = xor_gaussian_native(
+             [(list(eq.variables), eq.rhs) for eq in system.equations])
+        trace = []
+        for kind, first, second, before, after, rhs in events:
+            if kind == 0:
+                trace.append({"type": "input_row", "row_index": first,
+                              "variables": before, "rhs": rhs})
+            elif kind == 1:
+                trace.append({"type": "pivot", "pivot": first,
+                              "variables": before, "rhs": rhs})
+            elif kind == 2:
+                trace.append({"type": "xor_eliminate", "pivot": first,
+                              "before": before, "after": after, "rhs": rhs})
+            elif kind == 3:
+                trace.append({"type": "contradiction", "row_index": first})
+            elif kind == 4:
+                trace.append({"type": "back_eliminate", "pivot": first,
+                              "using": second, "variables": before, "rhs": rhs})
+            else:
+                raise AssertionError("unknown native XOR trace event")
+        if unsat:
+            return {"status": XOR_UNSAT, "assignment": {}, "rank": len(pivots),
+                    "pivot_variables": pivots, "free_variables": [],
+                    "forced_assignments": {}, "elimination_trace": trace,
+                    "contradiction": {"variables": [], "rhs": 1}}
+        return {"status": XOR_SAT,
+                "assignment": {str(v): bool(value) for v, value in assignment},
+                "rank": len(pivots), "pivot_variables": pivots,
+                "free_variables": free,
+                "forced_assignments": {str(v): bool(bit) for v, bit in forced},
+                "elimination_trace": trace,
+                "rref_rows": [{"pivot": p, "variables": vs, "rhs": rhs}
+                              for p, vs, rhs in rref]}
+    if backend != "python":
+        raise ValueError("unknown XOR backend")
     rows: list[tuple[set[int], int]] = [
         (set(eq.variables), eq.rhs) for eq in system.equations
     ]
