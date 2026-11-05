@@ -2635,7 +2635,10 @@
       "path": "witnora_core/compare.py",
       "sha": "4d43d768553903d553942f0c5c9df5171e18c36d",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/benchmark_compare.rs",
+      "native_executable": "rust/witnora-ve/src/bin/witnora_compare.rs",
+      "migration_note": "Standalone no-Python Rust benchmark comparison CLI passed byte-for-byte parity with original Python CLI across 128 seeded paired benchmarks and malformed-input gates in focused CI #41969969453; full Rust CI #41969969583 passed. Original Python API and CLI remain default; no full source-module replacement is claimed."
     },
     {
       "path": "witnora_core/components.py",
@@ -3992,8 +3995,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 468,
-    "parallel_reference": 78,
+    "not_migrated": 467,
+    "parallel_reference": 79,
     "partial_native_verified": 14
   }
 }

@@ -105,10 +105,19 @@ Native candidate: `rust/witnora-ve/src/benchmark_compare.rs` with its
 no-Python `witnora_compare LEFT_JSON RIGHT_JSON --out COMPARISON_MD` CLI.
 The original Python comparator remains the reference for output ordering,
 route/status changes, delta arithmetic, missing fields and determinism tables.
-The focused differential gate includes 128 seeded paired benchmarks, empty
+The focused differential gate passed 128 seeded paired benchmarks, empty
 inputs, nontrivial changes, help, output-argument ordering and malformed JSON.
-This is a **candidate pending CI**, not a complete source-file migration.
-The source ledger must not change until parity and Rust compilation pass.
+The standalone CLI passed focused CI
+[#41969969453](https://github.com/joeyst8/witnora-core/actions/runs/41969969453)
+and full Rust CI
+[#41969969583](https://github.com/joeyst8/witnora-core/actions/runs/41969969583).
+This is a verified Rust executable, **not** a complete source-file migration:
+the Python module/CLI remains the default and a packaging/default/replacement
+policy has not passed. The ledger records it as `parallel_reference`.
+
+After wave 3, the tracked Python source-file statuses are 467 not migrated,
+79 parallel Rust references and 14 partial-native verified, for 560 total.
+No fully native-default source module is claimed.
 
 ## Next dependency-aware work
 
@@ -117,7 +126,7 @@ The source ledger must not change until parity and Rust compilation pass.
 2. Prioritize reproducible, side-effect-free verification/reporting helpers
    with explicit semantics, adding Rust-native tests and Python differential
    controls before switching defaults.
-3. Tackle the remaining 56 unmigrated core modules, and review the 78 parallel
+3. Tackle the remaining 55 unmigrated core modules, and review the 79 parallel
    and 14 partial modules based on runtime dependency and soundness risk rather
    than filename count alone.
 4. Track CLI, benchmark scripts and tests separately; preserve independent
