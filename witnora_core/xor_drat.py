@@ -10,7 +10,7 @@ from typing import Any, Iterable
 
 from .certificate import CollapsePath, XOR_UNSAT_NATIVE
 from .cnf import CNFFormula, Clause, has_tautology
-from .dimacs import export_dimacs
+from .dimacs import export_dimacs, parse_dimacs
 from .drat import DRATExport, PROOF_SCOPE_END_TO_END, PROOF_SCOPE_FINAL_STATE_ONLY_UNSUPPORTED
 from .drat_check import CHECKED_AGAINST, check_drat_text, is_rup
 from .drat_trim import run_drat_trim
@@ -993,6 +993,7 @@ def export_xor_drat_for_path(
     timeout_seconds: float | None = 120.0,
     proof_backend: str = "python",
     require_dual_internal: bool = False,
+    require_source_identity: bool = False,
 ) -> XorDRATBridgeResult:
     if proof_backend not in ("python", "rust"):
         raise ValueError("unknown XOR proof backend")
@@ -1127,6 +1128,25 @@ def export_xor_drat_for_path(
             DRATExport(None, _base_drat_status("FAILED" if status_name == XOR_DRAT_FAILED else "UNSUPPORTED", xor_status=xor_status, unsupported_reason=error)),
             xor_status,
         )
+
+    if require_source_identity and original_dimacs_text is not None:
+        try:
+            parsed_original = parse_dimacs(original_dimacs_text)
+            source_matches = parsed_original.clauses == original_formula.clauses
+            identity_error = None if source_matches else "supplied DIMACS is not the original canonical CNF"
+        except ValueError as exc:
+            identity_error = f"supplied DIMACS could not be parsed: {exc}"
+        if identity_error is not None:
+            xor_status = _base_xor_status(
+                XOR_DRAT_FAILED,
+                source="detected_cnf_pattern",
+                reason=f"ORIGINAL_DIMACS_IDENTITY_MISMATCH: {identity_error}",
+                diagnostics={**proof_diagnostics, "source_identity_status": "FAILED"},
+            )
+            return XorDRATBridgeResult(
+                DRATExport(None, _base_drat_status("FAILED", xor_status=xor_status,
+                                                 unsupported_reason=xor_status["reason"])),
+                xor_status)
 
     internal_started = time.perf_counter()
     internal = check_drat_text(original_formula, proof_text, strict_deletions=False)

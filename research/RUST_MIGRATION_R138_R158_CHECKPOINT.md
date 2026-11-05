@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-138–R-156 checkpoint
+# Witnora Rust migration — R-138–R-158 checkpoint
 
 This is a proof-boundary-preserving migration record. Milestone numbers are
 development checkpoints, **not** 1:1 counts of the 560 original Python files.
@@ -12,18 +12,18 @@ development checkpoints, **not** 1:1 counts of the 560 original Python files.
 | R-149–R-150 | Parent-row resolution closure and expected-encoding admission with exact proof-line/cap comparison | Focused CI #41948198829; full native CI #41948198826 green |
 | R-151–R-152 | Whole row-trace candidate assembly with exact status, output and budget accounting | Focused CI #41948721033; full native CI #41948719469 green |
 | R-153–R-154 | Opt-in exporter backend and unchanged independent RUP/`drat-trim` verification gate | Focused CI #41949183652 green |
-| R-155–R-156 | Optional dual Python/Rust RUP verification and fail-closed disagreement | Implemented; **native CI pending** |
+| R-155–R-156 | Optional dual Python/Rust RUP verification and fail-closed disagreement | Focused CI #41949612200 green |
+| R-157–R-158 | Original DIMACS canonical source identity and fail-closed rejection | Implemented; **native CI pending** |
 
 All native interfaces are optional. The unmodified Python reference remains
 the default. Native derivation produces candidate clauses, never a trusted
 UNSAT verdict. Independent RUP, `drat-trim` and Lean checks remain mandatory
 where the existing workflow requires them.
 
-## Proposed R-157–R-180 sequence (NOT IMPLEMENTED)
+## Proposed R-159–R-180 sequence (NOT IMPLEMENTED)
 
 | Proposed numbers | Required work and acceptance gate |
 | --- | --- |
-| R-157–158 | Canonical source-CNF identity admission and mismatch failure before proof certification |
 | R-159–162 | Proof replay, independent `drat-trim`, source-CNF identity and integrity preservation |
 | R-163–166 | Diagnostic metadata, error precedence, missing external checker and timeout cases |
 | R-167–170 | Source-to-proof end-to-end parity across XOR CNF families, randomized and adversarial out-of-distribution tests |
