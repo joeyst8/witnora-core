@@ -28,6 +28,31 @@ to verified SAT/UNSAT without the applicable independent evidence gate.
 This workflow is a research requirement, not automatic permission to
 download and execute third-party code or merge unreviewed changes.
 
+## Cross-disciplinary discovery track
+
+Actively test connections from other fields—algebraic topology, coding theory,
+information theory, statistical mechanics/partition functions, tensor-network
+contraction, spectral graph theory, and algebra—when they can be translated to
+an **exact statement** about Witnora's source constraints. Do not stop at an
+analogy. Every proposed bridge needs:
+
+1. An explicit mapping from signed source CNF to the external mathematical
+   object, with assumptions and information lost in the mapping.
+2. A literature check in **both** domains; a known identity or technique is
+   not Witnora novelty.
+3. A small exact counterexample/falsification test, including source formulas
+   that share the proposed feature but have different answers.
+4. An opt-in Rust diagnostic or algorithm, independent finite tests, and
+   source/proof authority kept separate.
+5. A held-out benchmark against existing Witnora routes and external solvers.
+   Retire the feature if it does not improve prediction or execution.
+
+The first tracked test is
+[W-CROSSDOMAIN-001 topology × #SAT](W_CROSSDOMAIN_001_TOPOLOGY.md). Its
+flag-complex Betti number is established mathematics; only a future
+reproducible solver benefit or separately proved new theorem could support
+a genuine Witnora contribution.
+
 ## Initial application: W-STRUCT-001/002 small separators and #SAT
 
 The W-STRUCT-001 finding (same n, clause count and primal density, different
