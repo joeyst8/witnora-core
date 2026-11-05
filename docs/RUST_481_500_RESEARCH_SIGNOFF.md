@@ -41,3 +41,8 @@ WITNORA_DRAT_TRIM=/path/to/pinned/drat-trim python -m unittest tests.test_r500_m
 
 Run the focused workflow on draft PR #122. A local static audit alone cannot
 verify GitHub Actions execution or justify merging into `main`.
+
+Verified research checkpoint: focused native GitHub Actions run
+[#41963416866](https://github.com/joeyst8/witnora-core/actions/runs/41963416866)
+completed successfully through R-500 on commit
+`9c918f4f318fe58de1cb3243e8280e888f2416a4`.

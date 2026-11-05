@@ -15,11 +15,11 @@ experiment and native CI have passed.
 | R-341–R-360 | Matched variable/constraint/source-clause/degree profiles with different GF(2) ranks and proof lengths | Focused CI #41960734767 green |
 | R-361–R-380 | Assignment-gauge and variable-permutation invariance; 20/64 verified proof-count variations | Focused CI #41961665174 green |
 | R-381–R-400 | Exact GF(2) state caps, proof budgets and wrong-original external rejection | Focused CI #41961665174 green |
-| R-401–R-420 | SAT/UNSAT controls with planted nonlinear background CNF | Local green; native CI pending |
-| R-421–R-440 | Disconnected one-to-three-component heldout families | Local green; native CI pending |
-| R-441–R-460 | Independent augmented Gaussian rank and syndrome-state count baseline | Local green; native CI pending |
-| R-461–R-480 | Hostile source metadata, original CNF and tight-budget negative controls | Local green; native CI pending |
-| R-481–R-500 | 560-file manifest and contiguous named research-gate audit | Local green; native CI pending |
+| R-401–R-420 | SAT/UNSAT controls with planted nonlinear background CNF | Focused CI #41963416866 green |
+| R-421–R-440 | Disconnected one-to-three-component heldout families | Focused CI #41963416866 green |
+| R-441–R-460 | Independent augmented Gaussian rank and syndrome-state count baseline | Focused CI #41963416866 green |
+| R-461–R-480 | Hostile source metadata, original CNF and tight-budget negative controls | Focused CI #41963416866 green |
+| R-481–R-500 | 560-file manifest and contiguous named research-gate audit | Focused CI #41963416866 green |
 
 The Python reference remains the default; native Rust results and parity
 proof exporters are opt-in, with independent original-CNF DRAT verification.
