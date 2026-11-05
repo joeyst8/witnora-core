@@ -1,4 +1,4 @@
-# Rust migration checkpoint: R-097 through R-119
+# Rust migration checkpoint: R-097 through R-120
 
 This record distinguishes implementation from independent verification. It is
 not a claim of a complete Python-to-Rust replacement and does not amend any
@@ -29,6 +29,7 @@ Lean trust boundary.
 | R-117 | One-call native parity-row construction | Requires native 162-seed sketch/basis comparison |
 | R-118 | Native parity-ANF geometry metrics | Requires native 216-seed geometry comparison |
 | R-119 | Single-call native separator-conditioned counting | Requires native 160-seed exact-result and accounting comparison |
+| R-120 | Native arbitrary-width polynomial scopes | Requires native 350-seed mask comparison |
 
 GitHub Actions push runs were initially invisible to the
 `github_fetch_commit_workflow_runs` wrapper, which filters to pull-request
@@ -47,11 +48,11 @@ milestone numbers are not the same as distinct source-file counts.
 
 1. Inspect push-triggered GitHub Actions workflow runs through the Actions
    REST collection; retrieve failed job logs to diagnose the native gate.
-2. Verify R-111 through R-119 in ascending order, fixing all differential
+2. Verify R-111 through R-120 in ascending order, fixing all differential
    or Rust compilation errors before counting any promotion.
 3. Update `research/python_to_rust_manifest.json` only for independently
    verified paths, with exact CI run identifiers.
-4. Continue R-120 onward. Next promising targets are the remaining native
+4. Continue R-121 onward. Next promising targets are the remaining native
    experimental kernels, then the
    larger proof/replay and runner modules; each needs a separate differential
    or proof-gate definition.

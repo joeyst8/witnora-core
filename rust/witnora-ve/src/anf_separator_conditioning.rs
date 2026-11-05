@@ -16,6 +16,20 @@ fn bits(value:&BigUint)->Vec<usize>{
  result
 }
 
+/// R-120: arbitrary-width variable-scope masks for each ANF equation.
+pub fn polynomial_scopes(equations:&[Vec<Vec<usize>>])->Result<Vec<String>,String>{
+ let mut scopes=Vec::with_capacity(equations.len());
+ for eq in equations{
+  let mut scope=BigUint::zero();
+  for mon in eq{for &v in mon{
+   if v==0{return Err("variable IDs must be positive".into());}
+   scope|=BigUint::one()<<(v-1);
+  }}
+  scopes.push(scope.to_string());
+ }
+ Ok(scopes)
+}
+
 fn root(parent:&mut BTreeMap<usize,usize>,bit:usize)->usize{
  let p=parent[&bit];
  if p==bit{return bit;}
@@ -167,4 +181,6 @@ pub fn count_conditioned(equations:&[Vec<Vec<usize>>],nvars:usize,
   (Some(vec![2]),3));
  assert_eq!(count_conditioned(&[],2,100,2,10).unwrap(),
   ("4".into(),vec![],false,1,0,0,0,0,0));
+ assert_eq!(polynomial_scopes(&[vec![vec![1,130]],vec![]]).unwrap(),
+  vec![(BigUint::one()+(BigUint::one()<<129usize)).to_string(),"0".into()]);
 }}

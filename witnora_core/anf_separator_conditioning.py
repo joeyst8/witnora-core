@@ -31,8 +31,22 @@ class SeparatorCountResult:
     separator_candidates_checked: int
 
 
-def polynomial_scopes(equations: tuple[Polynomial, ...]) -> tuple[int, ...]:
+def polynomial_scopes(equations: tuple[Polynomial, ...],
+                      *, backend="python") -> tuple[int, ...]:
     """Variable bit masks for every GF(2) equation."""
+    if backend == "rust":
+        from witnora_ve import anf_polynomial_scopes_native
+        native = []
+        for poly in equations:
+            monomials = []
+            for monomial in poly:
+                if any(v < 1 for v in monomial):
+                    raise ValueError("variable IDs must be positive")
+                monomials.append(sorted(monomial))
+            native.append(monomials)
+        return tuple(int(x) for x in anf_polynomial_scopes_native(native))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     scopes: list[int] = []
     for poly in equations:
         scope = 0
