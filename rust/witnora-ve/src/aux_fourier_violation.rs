@@ -200,7 +200,7 @@ mod tests {
 
     #[test]
     fn finite_truth_table_matches_for_redundant_and_conflicting_parity_rows() {
-        let source = vec![vec![], vec![1], vec![-1, 2], vec![2], vec![1, -1]];
+        let source: Vec<Vec<i32>> = vec![vec![], vec![1], vec![-1, 2], vec![2], vec![1, -1]];
         for rows in [vec![vec![], vec![0, 0]], vec![vec![0, 1, 3], vec![1, 3]],
                      vec![vec![0], vec![0]], vec![vec![0, 2, 2]]] {
             for target in 0..(1usize << rows.len()) {
