@@ -825,6 +825,28 @@ def _row_trace_refutation(
 ) -> tuple[str | None, str | None, dict[str, Any]]:
     if backend not in ("python", "rust"):
         raise ValueError("unknown XOR row trace backend")
+    if backend == "rust":
+        from witnora_ve import xor_row_trace_refutation_native
+        trace_rows = []
+        for operation in row_operation_trace:
+            left_id = str(operation.get("left_row_id") or operation.get("pivot_row_id"))
+            right_id = str(operation.get("right_row_id") or
+                           operation.get("combined_row_ids", ["", ""])[-1])
+            result_id = operation.get("result_row_id")
+            trace_rows.append((left_id, right_id,
+                str(result_id) if result_id is not None else None,
+                sorted({int(var) for var in operation.get("result_row_variables", [])}),
+                int(operation.get("result_rhs", 0)) & 1))
+        proof, error, count, width, byte_count = xor_row_trace_refutation_native(
+            [list(clause.literals) for clause in original_formula.clauses],
+            [(list(eq.variables), int(eq.rhs) & 1,
+              [list(clause) for clause in eq.source_clauses]) for eq in detected],
+            trace_rows, max_proof_clauses, max_proof_bytes, timeout_seconds)
+        return proof, error, {
+            "proof_clause_count_actual": count,
+            "proof_clause_max_width": width,
+            "proof_file_size_bytes": byte_count,
+        }
     active = {clause.literals for clause in original_formula.clauses}
     support_clauses = _source_clauses(detected, backend=backend)
     if not support_clauses <= active:
