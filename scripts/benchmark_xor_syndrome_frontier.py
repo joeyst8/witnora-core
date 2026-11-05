@@ -80,6 +80,38 @@ def exhaustive_inconsistent_subset(equations: list[XorEquation], *, max_rows: in
     return None
 
 
+def validate_witness_against_original(formula: CNFFormula,
+                                      equations: list[XorEquation], indices) -> dict:
+    """Fail closed unless a dependency and every source encoding are exact.
+
+    This is an additional independent semantic audit, never a replacement
+    for RUP and real external DRAT verification of a clausal proof.
+    """
+    if indices is None or not indices or tuple(indices) != tuple(sorted(set(indices))):
+        raise ValueError("invalid or duplicate witness row indices")
+    support = set()
+    parity = 0
+    original = {clause.literals for clause in formula.clauses}
+    source_union = set()
+    for index in indices:
+        if type(index) is not int or not 0 <= index < len(equations):
+            raise ValueError("witness row index outside source equations")
+        equation = equations[index]
+        expected = canonical_xor_cnf_clauses(equation.variables, equation.rhs)
+        encoded = {tuple(clause) for clause in equation.source_clauses}
+        if encoded != expected:
+            raise ValueError("witness row source encoding incomplete or altered")
+        if not expected <= original:
+            raise ValueError("witness row source missing from original CNF")
+        support.symmetric_difference_update(equation.variables)
+        parity ^= equation.rhs
+        source_union.update(expected)
+    if support or parity != 1:
+        raise ValueError("witness rows do not form an odd GF2 dependency")
+    return {"witness_rows": len(indices), "source_clauses": len(source_union),
+            "odd_dependency_verified": True, "exact_original_source_verified": True}
+
+
 def parity_hypergraph(seed: int, *, n: int = 6, rows: int = 6,
                       contradictory: bool = True):
     """Plant consistent mixed-width rows, then add one inconsistent closure."""
@@ -133,6 +165,7 @@ def evaluate_hypergraph(seed: int, *, n: int = 6, rows: int = 6,
     if contradictory:
         if witness is None:
             raise AssertionError("contradictory hypergraph missing inconsistent subset")
+        validate_witness_against_original(formula, equations, witness)
         selected = [equations[i] for i in witness]
         trace = _sparse_xor_elimination_schedule(selected)["row_operation_trace"]
         opts = dict(max_proof_clauses=10000, max_proof_bytes=200000,

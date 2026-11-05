@@ -32,6 +32,9 @@ WITNORA_DRAT_TRIM=/path/to/drat-trim python -m unittest tests.test_xor_syndrome_
 python -m scripts.benchmark_xor_syndrome_frontier --seeds 32 --compare-rust --drat-trim /path/to/drat-trim
 ```
 
-**Status:** local reference and external checks passed; native CI pending.
+**Status:** focused native CI
+[#41959938645](https://github.com/joeyst8/witnora-core/actions/runs/41959938645)
+passed. The native/Python proof checks and independent external verifier
+agree within the bounded experiment.
 The default Python execution path and original 560-file migration counts
 are unchanged, with no merge or release approval.
