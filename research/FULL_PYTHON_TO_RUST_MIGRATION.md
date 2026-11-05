@@ -185,6 +185,22 @@ See [`PYTHON_ORACLE_RETENTION.md`](PYTHON_ORACLE_RETENTION.md). The original
 DRAT/Lean/source-CNF gates and malicious-input validation remain necessary.
 The repository contains additional migration tests beyond that baseline.
 
+## Migration wave 7: native verification presentation layer (candidate)
+
+Source: `witnora_core/verification_report.py` (currently unmigrated).
+Rust candidate: `rust/witnora-ve/src/verification_view.rs`, exposed via the
+Python-free `witnora_verification_view` executable. Three pure presentation
+operations are reproduced: report-to-trust-card projection, trust-card
+Markdown, and verification-report Markdown. Seeded byte/parity tests compare
+128 realistic verification records with the independent Python renderer,
+including partial replay scope disclaimers, proof-selection risk flags,
+checker lists, artifact hashes, and malformed JSON rejection.
+
+**Boundary:** this is not source-CNF verification, independent `drat-trim`,
+Lean proof checking, certificate validation, archive extraction, or full
+release-verification orchestration. Those Python paths remain required.
+No source-file status changes until native CI passes.
+
 ## Next dependency-aware work
 
 1. Finish and independently verify the remaining CI CLI/report orchestration,
