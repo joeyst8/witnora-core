@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from itertools import combinations
 import os
 from pathlib import Path
 import random
@@ -44,7 +45,6 @@ def graph_profile(n: int, edges: list[tuple[int, int]]) -> dict:
     witness: list[int] = []
     residual = original
     if order is None:
-        from itertools import combinations
         for width in (1, 2):
             found = False
             for candidate in combinations(range(1, n + 1), width):
@@ -56,6 +56,24 @@ def graph_profile(n: int, edges: list[tuple[int, int]]) -> dict:
             if found:
                 break
     distinct_edges = {tuple(sorted((u, v))) for u, v in edges if u != v}
+    edge_list = sorted(distinct_edges)
+    edge_ids = {pair: index for index, pair in enumerate(edge_list)}
+    # Independent GF(2) column reduction over sets, not Rust's u128 masks.
+    basis: dict[int, set[int]] = {}
+    triangles = 0
+    for a, b, c in combinations(range(1, n + 1), 3):
+        sides = ((a, b), (a, c), (b, c))
+        if not all(side in distinct_edges for side in sides):
+            continue
+        triangles += 1
+        column = {edge_ids[side] for side in sides}
+        while column:
+            pivot = max(column)
+            if pivot not in basis:
+                basis[pivot] = column
+                break
+            column = column.symmetric_difference(basis[pivot])
+    flag_beta1 = len(distinct_edges) + len(original) - n - len(basis)
     return {
         "variable_count": n,
         "clause_count": len(edges),
@@ -66,6 +84,8 @@ def graph_profile(n: int, edges: list[tuple[int, int]]) -> dict:
         "separator_variables": witness,
         "residual_components": len(residual),
         "largest_residual_component": max(residual, default=0),
+        "primal_flag_beta1_mod2": flag_beta1 if n <= 16 else None,
+        "primal_flag_triangle_count": triangles if n <= 16 else None,
         "scope": "source-primal-graph-only; no SAT or complexity certificate",
     }
 
@@ -80,6 +100,32 @@ class IndependentOracleTests(unittest.TestCase):
             self.assertEqual(left[field], right[field])
         self.assertEqual(left["separator_order_le2"], 1)
         self.assertEqual(right["separator_order_le2"], 2)
+        self.assertEqual(left["primal_flag_beta1_mod2"], 0)
+        self.assertEqual(right["primal_flag_beta1_mod2"], 1)
+
+    def test_topology_small_controls(self):
+        self.assertEqual(graph_profile(3, [(1, 2), (2, 3), (1, 3)])
+                         ["primal_flag_beta1_mod2"], 0)
+        self.assertEqual(graph_profile(4, [(1, 2), (2, 3), (3, 4), (1, 4)])
+                         ["primal_flag_beta1_mod2"], 1)
+        self.assertEqual(graph_profile(4, list(combinations(range(1, 5), 2)))
+                         ["primal_flag_beta1_mod2"], 0)
+
+    def test_matched_separator_order_different_topology_and_source_counts(self):
+        # Both are connected monotone 2-CNFs with n=6, m=7, and a minimum
+        # two-vertex separator. The flag-complex first Betti numbers differ.
+        first = [(1, 2), (1, 3), (1, 4), (2, 3), (2, 5), (4, 6), (5, 6)]
+        second = [(1, 2), (1, 3), (1, 4), (2, 5), (2, 6), (3, 5), (4, 6)]
+        a, b = graph_profile(6, first), graph_profile(6, second)
+        self.assertEqual(a["separator_order_le2"], b["separator_order_le2"])
+        self.assertEqual(a["separator_order_le2"], 2)
+        self.assertEqual((a["primal_flag_beta1_mod2"], b["primal_flag_beta1_mod2"]),
+                         (1, 2))
+        def exhaustive_count(edges):
+            return sum(all((assignment >> (u - 1) & 1) or
+                           (assignment >> (v - 1) & 1) for u, v in edges)
+                       for assignment in range(1 << 6))
+        self.assertEqual((exhaustive_count(first), exhaustive_count(second)), (16, 17))
 
 
 @unittest.skipUnless(RUST_BIN and Path(RUST_BIN).is_file(),
