@@ -2,6 +2,8 @@
 
 **Status:** finite, exploratory Rust experiment and independent Python CLI oracle. GitHub Actions runs provide the native verification record. This is a **six-variable, signed 2-SAT pilot**, not a statement about worst-case hardness, algorithmic complexity classes, or SAT lower bounds.
 
+**Verified 2026-11-05:** the focused Rust differential gate passed every step, including the W-CROSSDOMAIN-010 standalone CLI plus both independent Python oracle tests: <https://github.com/joeyst8/witnora-core/actions/runs/42080977904>. The native Rust migration gate also passed: <https://github.com/joeyst8/witnora-core/actions/runs/42080953061>. The native JSON output exactly reproduced the numerical results below.
+
 ## Question and null
 
 W-CROSSDOMAIN-009 found that a predeclared triangle-violation parity spectrum can distinguish CNFs with identical graph, `#SAT`, and *full* violation-energy histograms. This experiment tests whether that extra information predicts the number of recursive nodes visited by a simple, fully specified DPLL **model counter**, within groups matched on the entire energy histogram. The null is **no improvement in left-one-out prediction**.
