@@ -101,6 +101,25 @@ class NativeArtifactIntegrityTests(unittest.TestCase):
                     self.assertNotEqual(result.returncode, 0)
                     self.assertFalse(output.exists())
 
+    def test_output_cannot_overwrite_evidence_or_manifest(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            evidence = root / "proof.drat"
+            evidence.write_bytes(b"0\n")
+            manifest = root / "MANIFEST.md"
+            manifest.write_text("| File | SHA256 |\n", encoding="utf-8")
+            for command, protected in (
+                (["check", str(evidence), "drat", "--out", str(evidence)], evidence),
+                (["manifest", str(manifest), "--out", str(manifest)], manifest),
+                (["check", str(evidence), "drat", "--manifest", str(manifest),
+                  "--out", str(manifest)], manifest),
+            ):
+                original = protected.read_bytes()
+                with self.subTest(command=command):
+                    result = subprocess.run([RUST_BIN, *command], capture_output=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(protected.read_bytes(), original)
+
     def test_help(self):
         result = subprocess.run([RUST_BIN, "--help"], capture_output=True)
         self.assertEqual(result.returncode, 0)
