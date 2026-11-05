@@ -630,14 +630,31 @@ def _xor_encoding_clauses(variables: Iterable[int], rhs: int,
     return canonical_xor_cnf_clauses(vars_tuple, bit, backend=backend)
 
 
-def _source_row_encodings(equations: list[XorEquation]) -> dict[str, set[tuple[int, ...]]]:
+def _source_row_encodings(equations: list[XorEquation], *, backend="python") -> dict[str, set[tuple[int, ...]]]:
+    if backend == "rust":
+        return {name: {tuple(clause) for clause in clauses}
+                for name, clauses, _, _ in _native_source_rows(equations)}
+    if backend != "python":
+        raise ValueError("unknown XOR source row backend")
     return {
         f"input_{idx:04d}": {_canonical_clause(clause) for clause in equation.source_clauses}
         for idx, equation in enumerate(equations)
     }
 
 
-def _source_row_values(equations: list[XorEquation]) -> dict[str, tuple[frozenset[int], int]]:
+def _native_source_rows(equations: list[XorEquation]):
+    from witnora_ve import xor_source_rows_native
+    return xor_source_rows_native([
+        (list(eq.variables), int(eq.rhs) & 1,
+         [list(clause) for clause in eq.source_clauses]) for eq in equations])
+
+
+def _source_row_values(equations: list[XorEquation], *, backend="python") -> dict[str, tuple[frozenset[int], int]]:
+    if backend == "rust":
+        return {name: (frozenset(variables), rhs)
+                for name, _, variables, rhs in _native_source_rows(equations)}
+    if backend != "python":
+        raise ValueError("unknown XOR source row backend")
     return {
         f"input_{idx:04d}": (frozenset(equation.variables), int(equation.rhs) & 1)
         for idx, equation in enumerate(equations)
