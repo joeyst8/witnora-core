@@ -992,6 +992,7 @@ def export_xor_drat_for_path(
     max_proof_bytes: int = 5_000_000,
     timeout_seconds: float | None = 120.0,
     proof_backend: str = "python",
+    require_dual_internal: bool = False,
 ) -> XorDRATBridgeResult:
     if proof_backend not in ("python", "rust"):
         raise ValueError("unknown XOR proof backend")
@@ -1130,6 +1131,29 @@ def export_xor_drat_for_path(
     internal_started = time.perf_counter()
     internal = check_drat_text(original_formula, proof_text, strict_deletions=False)
     internal_runtime = round(time.perf_counter() - internal_started, 6)
+    dual_diagnostics: dict[str, Any] = {}
+    if require_dual_internal:
+        rust_started = time.perf_counter()
+        native_internal = check_drat_text(original_formula, proof_text,
+                                          strict_deletions=False, backend="rust")
+        dual_diagnostics = {
+            "native_internal_rup_runtime_seconds": round(time.perf_counter() - rust_started, 6),
+            "native_internal_rup_status": "VERIFIED" if native_internal.get("verified") else "FAILED",
+        }
+        fields = ("verified", "empty_clause_derived", "failed_line", "error", "warnings")
+        if any(internal.get(key) != native_internal.get(key) for key in fields):
+            xor_status = _base_xor_status(
+                XOR_DRAT_INTERNAL_RUP_FAILED,
+                source="detected_cnf_pattern",
+                reason="Python and native Rust RUP-subset checker results disagree",
+                diagnostics={**proof_diagnostics, **dual_diagnostics,
+                             "internal_rup_status": "CHECKER_DISAGREEMENT",
+                             "internal_rup_runtime_seconds": internal_runtime},
+            )
+            return XorDRATBridgeResult(
+                DRATExport(None, _base_drat_status("FAILED", xor_status=xor_status,
+                                                 unsupported_reason=xor_status["reason"])),
+                xor_status)
     if not internal.get("verified"):
         xor_status = _base_xor_status(
             XOR_DRAT_INTERNAL_RUP_FAILED,
@@ -1137,6 +1161,7 @@ def export_xor_drat_for_path(
             reason=f"internal RUP-subset checker rejected proof: {internal.get('error')}",
             diagnostics={
                 **proof_diagnostics,
+                **dual_diagnostics,
                 "internal_rup_status": str(internal.get("error") or "FAILED"),
                 "internal_rup_runtime_seconds": internal_runtime,
             },
@@ -1164,6 +1189,7 @@ def export_xor_drat_for_path(
             reason=f"drat-trim did not verify proof: {trim_result.get('error')}",
             diagnostics={
                 **proof_diagnostics,
+                **dual_diagnostics,
                 "internal_rup_status": "VERIFIED",
                 "internal_rup_runtime_seconds": internal_runtime,
                 "drat_trim_status": "FAILED",
@@ -1194,6 +1220,7 @@ def export_xor_drat_for_path(
         external_verified=True,
         diagnostics={
             **proof_diagnostics,
+            **dual_diagnostics,
             "internal_rup_status": "VERIFIED",
             "internal_rup_runtime_seconds": internal_runtime,
             "drat_trim_status": "VERIFIED",

@@ -348,3 +348,4 @@ jobs:
           python -m unittest tests.test_xor_row_derivation_rust -v
           python -m unittest tests.test_xor_row_trace_rust -v
           python -m unittest tests.test_xor_native_export_gate -v
+          python -m unittest tests.test_xor_dual_rup_gate -v
