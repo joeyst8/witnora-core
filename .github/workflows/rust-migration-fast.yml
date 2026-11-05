@@ -355,3 +355,6 @@ jobs:
           python -m unittest tests.test_xor_heldout_proof_rust -v
           python -m unittest tests.test_xor_mixed_source_stress_rust -v
           python -m unittest tests.test_xor_runner_options -v
+          python -m unittest tests.test_xor_final_adversarial_rust -v
+          python -m unittest tests.test_r180_manifest_audit -v
+          python -m scripts.audit_witnora_r180

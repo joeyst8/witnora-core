@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-138–R-174 checkpoint
+# Witnora Rust migration — R-138–R-179 checkpoint
 
 This is a proof-boundary-preserving migration record. Milestone numbers are
 development checkpoints, **not** 1:1 counts of the 560 original Python files.
@@ -17,23 +17,20 @@ development checkpoints, **not** 1:1 counts of the 560 original Python files.
 | R-159–R-160 | Dual Python/native source-DIMACS canonical parser agreement and failure gate | Focused CI #41950366667 green |
 | R-161–R-162 | Native emitted proof candidate syntax/count/size auditing and fail-closed mismatch | Focused CI #41950774606; full native CI #41950774608 green |
 | R-163–R-166 | Held-out contradictory XOR proofs, independent RUP, tampering and source-order metamorphic tests | Focused CI #41951202624 green |
-| R-167–R-170 | Mixed nonlinear source-CNF and resource-cap differential stress | Implemented; **CI pending** |
-| R-171–R-174 | Opt-in native proof controls surfaced in certificate exporter and CLI | Implemented; **CI pending** |
+| R-167–R-170 | Mixed nonlinear source-CNF and resource-cap differential stress | Focused CI #41951668179 green |
+| R-171–R-174 | Opt-in native proof controls surfaced in certificate exporter and CLI | Focused CI #41951668179 green |
+| R-175–R-178 | Adversarial relabel/caps/malformed-trace/missing-source controls | Implemented; **CI pending** |
+| R-179 | Read-only manifest accounting and default trust-gate audit | Implemented; **CI pending** |
+| R-180 | Final research-branch readiness sign-off | **Not yet reached** |
 
 All native interfaces are optional. The unmodified Python reference remains
 the default. Native derivation produces candidate clauses, never a trusted
 UNSAT verdict. Independent RUP, `drat-trim` and Lean checks remain mandatory
 where the existing workflow requires them.
 
-## Proposed R-175–R-180 sequence (NOT IMPLEMENTED)
+## Final gate
 
-| Proposed numbers | Required work and acceptance gate |
-| --- | --- |
-| R-159–162 | Proof replay, independent `drat-trim`, source-CNF identity and integrity preservation |
-| R-163–166 | Diagnostic metadata, error precedence, missing external checker and timeout cases |
-| R-175–178 | Independent full regression against existing verification gates; memory/time/overflow and large-instance tests |
-| R-179–180 | Final research-branch readiness audit, exact manifest update, explicit remaining Python/Lean gaps and independent CI sign-off |
-
-This proposed sequence is a guide, not evidence of completion. Stop and repair
-any failing intermediate gate before promoting further milestone numbers. No
-merge into `main` is authorized by this checkpoint.
+R-180 may be signed only after the focused R-175–R-179 run is green and this
+checkpoint identifies its exact run. It will mean completion of the scoped
+**research milestone batch**, not the entire 560-file migration or Lean proof.
+No merge into `main` is authorized by this checkpoint.
