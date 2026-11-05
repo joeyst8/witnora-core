@@ -995,6 +995,7 @@ def export_xor_drat_for_path(
     require_dual_internal: bool = False,
     require_source_identity: bool = False,
     require_dual_source_parser: bool = False,
+    require_native_proof_audit: bool = False,
 ) -> XorDRATBridgeResult:
     if proof_backend not in ("python", "rust"):
         raise ValueError("unknown XOR proof backend")
@@ -1151,6 +1152,25 @@ def export_xor_drat_for_path(
                 source="detected_cnf_pattern",
                 reason=f"ORIGINAL_DIMACS_IDENTITY_MISMATCH: {identity_error}",
                 diagnostics={**proof_diagnostics, "source_identity_status": "FAILED"},
+            )
+            return XorDRATBridgeResult(
+                DRATExport(None, _base_drat_status("FAILED", xor_status=xor_status,
+                                                 unsupported_reason=xor_status["reason"])),
+                xor_status)
+
+    if require_native_proof_audit:
+        from witnora_ve import xor_proof_audit_native
+        audit_count, audit_width, audit_bytes, audit_error = xor_proof_audit_native(proof_text)
+        if (audit_error is not None or
+                audit_count != proof_stats["proof_clause_count_actual"] or
+                audit_width > proof_stats["proof_clause_max_width"] or
+                audit_bytes != proof_stats["proof_file_size_bytes"]):
+            xor_status = _base_xor_status(
+                XOR_DRAT_FAILED,
+                source="detected_cnf_pattern",
+                reason=f"PROOF_CANDIDATE_AUDIT_FAILED: {audit_error or 'native proof statistics mismatch'}",
+                diagnostics={**proof_diagnostics,
+                             "native_candidate_audit_status": "FAILED"},
             )
             return XorDRATBridgeResult(
                 DRATExport(None, _base_drat_status("FAILED", xor_status=xor_status,
