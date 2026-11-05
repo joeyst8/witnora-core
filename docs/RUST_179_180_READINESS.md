@@ -15,5 +15,6 @@ The R-number frontier tracks scoped research work and regressions, **not**
 Python-to-Rust migration, a Lean proof, a new SAT complexity result, or proof
 of superiority over an independent solver.
 
-**Status:** R-179 audit implementation prepared; R-180 sign-off still pending
-the R-175–R-178 adversarial CI and final checkpoint update.
+**Status:** R-175–R-179 focused CI #41952269269 is green. The final R-180
+manifest-frontier audit is pending CI; do not treat this file as a release
+approval, main-branch merge or complete Python-to-Rust migration.

@@ -115,6 +115,8 @@ on:
       - "tests/test_xor_drat_resolution_rust.py"
       - "tests/test_xor_sparse_schedule_rust.py"
       - "tests/test_xor_sparse_order_rust.py"
+      - "research/python_to_rust_manifest.json"
+      - "tests/test_r180_manifest_audit.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -231,6 +233,8 @@ on:
       - "tests/test_xor_drat_resolution_rust.py"
       - "tests/test_xor_sparse_schedule_rust.py"
       - "tests/test_xor_sparse_order_rust.py"
+      - "research/python_to_rust_manifest.json"
+      - "tests/test_r180_manifest_audit.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 

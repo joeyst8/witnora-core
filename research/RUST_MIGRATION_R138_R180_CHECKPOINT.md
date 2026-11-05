@@ -1,4 +1,4 @@
-# Witnora Rust migration — R-138–R-179 checkpoint
+# Witnora Rust migration — R-138–R-180 checkpoint
 
 This is a proof-boundary-preserving migration record. Milestone numbers are
 development checkpoints, **not** 1:1 counts of the 560 original Python files.
@@ -19,9 +19,9 @@ development checkpoints, **not** 1:1 counts of the 560 original Python files.
 | R-163–R-166 | Held-out contradictory XOR proofs, independent RUP, tampering and source-order metamorphic tests | Focused CI #41951202624 green |
 | R-167–R-170 | Mixed nonlinear source-CNF and resource-cap differential stress | Focused CI #41951668179 green |
 | R-171–R-174 | Opt-in native proof controls surfaced in certificate exporter and CLI | Focused CI #41951668179 green |
-| R-175–R-178 | Adversarial relabel/caps/malformed-trace/missing-source controls | Implemented; **CI pending** |
-| R-179 | Read-only manifest accounting and default trust-gate audit | Implemented; **CI pending** |
-| R-180 | Final research-branch readiness sign-off | **Not yet reached** |
+| R-175–R-178 | Adversarial relabel/caps/malformed-trace/missing-source controls | Focused CI #41952269269 green |
+| R-179 | Read-only manifest accounting and default trust-gate audit | Focused CI #41952269269 green |
+| R-180 | Final research-branch readiness sign-off | Candidate **pending final frontier CI** |
 
 All native interfaces are optional. The unmodified Python reference remains
 the default. Native derivation produces candidate clauses, never a trusted
@@ -30,7 +30,8 @@ where the existing workflow requires them.
 
 ## Final gate
 
-R-180 may be signed only after the focused R-175–R-179 run is green and this
-checkpoint identifies its exact run. It will mean completion of the scoped
-**research milestone batch**, not the entire 560-file migration or Lean proof.
+The R-175–R-179 focused run is green. The R-180 frontier audit still requires a
+final CI pass against the updated manifest before sign-off. It will mean
+completion of the scoped **research milestone batch**, not the entire 560-file
+migration or Lean proof.
 No merge into `main` is authorized by this checkpoint.
