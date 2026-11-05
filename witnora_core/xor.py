@@ -15,7 +15,8 @@ XOR_DETECTION_SIDECAR = "EXPLICIT_SIDECAR"
 XOR_PATTERN_SKIPPED_MAX_K = "XOR_PATTERN_SKIPPED_MAX_K"
 
 
-def _normalize_xor_variables(variables: Iterable[int]) -> tuple[int, ...]:
+def _normalize_xor_variables(variables: Iterable[int],
+                             *, backend="python") -> tuple[int, ...]:
     """Canonical GF(2) support: validate, toggle occurrence, then sort.
 
     This mirrors the verified Lean toggle-and-sort model. Only positive
@@ -23,6 +24,17 @@ def _normalize_xor_variables(variables: Iterable[int]) -> tuple[int, ...]:
     coercion is retained for compatibility and must be treated explicitly
     in a future Python-language refinement proof.
     """
+    if backend == "rust":
+        from witnora_ve import xor_normalize_variables_native
+        normalized = []
+        for raw_var in variables:
+            var = int(raw_var)
+            if var <= 0:
+                raise ValueError(f"XOR variable IDs must be positive: {raw_var!r}")
+            normalized.append(var)
+        return tuple(xor_normalize_variables_native(normalized))
+    if backend != "python":
+        raise ValueError("unknown XOR backend")
     active: set[int] = set()
     for raw_var in variables:
         var = int(raw_var)
@@ -97,7 +109,14 @@ class XorEquation:
     def is_contradiction(self) -> bool:
         return not self.variables and self.rhs == 1
 
-    def evaluate(self, assignment: dict[int, bool]) -> bool | None:
+    def evaluate(self, assignment: dict[int, bool], *, backend="python") -> bool | None:
+        if backend == "rust":
+            from witnora_ve import xor_evaluate_native
+            return xor_evaluate_native(list(self.variables), self.rhs,
+                                       [(v, bool(assignment[v]))
+                                        for v in self.variables if v in assignment])
+        if backend != "python":
+            raise ValueError("unknown XOR backend")
         value = self.rhs
         for var in self.variables:
             if var not in assignment:
@@ -105,7 +124,24 @@ class XorEquation:
             value ^= int(bool(assignment[var]))
         return value == 0
 
-    def substitute(self, assignment: dict[int, bool]) -> "XorEquation":
+    def substitute(self, assignment: dict[int, bool], *, backend="python") -> "XorEquation":
+        if backend == "rust":
+            from witnora_ve import xor_substitute_native
+            remaining, rhs = xor_substitute_native(
+                list(self.variables), self.rhs,
+                [(v, bool(assignment[v])) for v in self.variables
+                 if v in assignment])
+            return XorEquation(
+                remaining, rhs, source=self.source,
+                source_clauses=self.source_clauses,
+                pattern_size=self.pattern_size,
+                detection_mode=self.detection_mode,
+                source_clauses_removed=self.source_clauses_removed,
+                extra_clauses_touching_variables=self.extra_clauses_touching_variables,
+                exact_full_encoding=self.exact_full_encoding,
+                safe_use=self.safe_use)
+        if backend != "python":
+            raise ValueError("unknown XOR backend")
         rhs = self.rhs
         remaining: list[int] = []
         for var in self.variables:

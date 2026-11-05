@@ -1,4 +1,4 @@
-# Rust migration checkpoint: R-097 through R-120
+# Rust migration checkpoint: R-097 through R-123
 
 This record distinguishes implementation from independent verification. It is
 not a claim of a complete Python-to-Rust replacement and does not amend any
@@ -15,44 +15,38 @@ Lean trust boundary.
 | R-104–105 | Components, graph bounds, constructive nonedge matching | Focused Rust CI #41934932659 passed |
 | R-106 | Selector confusion aggregation | Focused Rust CI #41935280778 passed |
 | R-107–110 | ANF algebra, bounded counter, residual components, separator search | Focused Rust push CI #41936430000 passed |
+| R-111–119 | Structured and conditioned counters, native source/row/geometry and scope-adjacent operations | Focused Rust push CI #41940030217 passed full Rust library, wheel and Python differential gate |
+| R-120 | Exact ANF polynomial scope masks | Focused Rust push CI #41940376154 passed |
 
 ## Implemented, native verification outstanding
 
 | Milestones | Scope | Verification boundary |
 | --- | --- | --- |
-| R-111 | Structured ANF counter with forced units and component splits | Native build was blocked by `BigUint` shift type inference in a test; explicit shift type now patched |
-| R-112 | Composed native separator-conditioned counting | Requires native composition comparison |
-| R-113 | Native algebra in clause/source/row parity pipeline | Requires CNF/row/basis output comparison |
-| R-114 | Arbitrary-width ANF assignment evaluation | Requires native 350-seed and high-bit comparison |
-| R-115 | One-call native clause violation compilation | Requires native 400-seed comparison |
-| R-116 | One-call native source-CNF compilation | Requires native 220-seed comparison |
-| R-117 | One-call native parity-row construction | Requires native 162-seed sketch/basis comparison |
-| R-118 | Native parity-ANF geometry metrics | Requires native 216-seed geometry comparison |
-| R-119 | Single-call native separator-conditioned counting | Requires native 160-seed exact-result and accounting comparison |
-| R-120 | Native arbitrary-width polynomial scopes | Requires native 350-seed mask comparison |
+| R-121 | GF(2) support toggle/sort normalization | Requires native 400-seed comparison |
+| R-122 | XOR partial-assignment evaluation | Requires native 500-seed comparison |
+| R-123 | XOR partial substitution preserving equation metadata | Requires native 500-seed comparison |
 
 GitHub Actions push runs were initially invisible to the
 `github_fetch_commit_workflow_runs` wrapper, which filters to pull-request
 events; the Actions REST run collection exposed them. Focused push CI
-#41936430000 verified R-107–R-110. The R-111 onward failures through
-#41938700797 were caused by an ambiguous shift literal in an R-111 Rust
-unit test. The corrected build #41939496083 compiled Rust and built the
-Python wheel, but exposed bad R-116 test fixtures (zero-variable inputs
-and oversubscribed three-clause generation). Test fixes are staged for
-a new CI run. Manifest counts remain
-76 `parallel_reference`, 11 `partial_native_verified`, 473 `not_migrated`
-out of 560 Python entries after the R-107–R-110 evidence update. Distinct
+#41936430000 verified R-107–R-110. Early R-111 failures exposed an ambiguous
+`BigUint` shift literal; after that fix, CI #41939496083 exposed faulty
+random 3-CNF test fixtures. The subsequent corrected full CI #41940030217
+passed, establishing R-111–R-119. Focused CI #41940376154 passed R-120.
+R-121–R-123 remain implemented and pending native CI.
+Current manifest counts are 76 `parallel_reference`, 12
+`partial_native_verified`, 472 `not_migrated` out of 560 Python entries. Distinct
 milestone numbers are not the same as distinct source-file counts.
 
 ## Resume protocol
 
 1. Inspect push-triggered GitHub Actions workflow runs through the Actions
    REST collection; retrieve failed job logs to diagnose the native gate.
-2. Verify R-111 through R-120 in ascending order, fixing all differential
+2. Verify R-121 through R-123, fixing any differential
    or Rust compilation errors before counting any promotion.
 3. Update `research/python_to_rust_manifest.json` only for independently
    verified paths, with exact CI run identifiers.
-4. Continue R-121 onward. Next promising targets are the remaining native
+4. Continue R-124 onward. Next promising targets are the remaining native
    experimental kernels, then the
    larger proof/replay and runner modules; each needs a separate differential
    or proof-gate definition.

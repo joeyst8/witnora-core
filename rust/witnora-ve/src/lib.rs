@@ -91,6 +91,7 @@ pub mod nonedge_matching_bound;
 pub mod violation_image_anf;
 pub mod anf_separator_conditioning;
 pub mod anf_structured_counter;
+pub mod xor_equations;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2098,6 +2099,26 @@ fn anf_polynomial_scopes_native(equations:Vec<Vec<Vec<usize>>>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_normalize_variables_native(variables:Vec<usize>) ->PyResult<Vec<usize>>{
+    xor_equations::normalize_variables(&variables).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_evaluate_native(variables:Vec<usize>,rhs:u8,
+    assignment:Vec<(usize,bool)>)->Option<bool>{
+    xor_equations::evaluate(&variables,rhs,&assignment)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_substitute_native(variables:Vec<usize>,rhs:u8,
+    assignment:Vec<(usize,bool)>)->(Vec<usize>,u8){
+    xor_equations::substitute(&variables,rhs,&assignment)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2418,6 +2439,9 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(anf_geometry_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_conditioned_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_polynomial_scopes_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_normalize_variables_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_evaluate_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_substitute_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

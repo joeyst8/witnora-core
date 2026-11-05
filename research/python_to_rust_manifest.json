@@ -2506,15 +2506,19 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/anf_separator_conditioning.rs",
       "test": "tests/test_anf_separator_search_rust.py",
-      "verified_milestone": "R-110",
-      "verified_milestones": ["R-109", "R-110"],
-      "migration_note": "Push-triggered focused Rust CI #41936430000 passed native residual component and bounded separator-search differential tests. Separator-conditioned counting and Python orchestration are pending separate verification."
+      "verified_milestone": "R-120",
+      "verified_milestones": ["R-109", "R-110", "R-112", "R-119", "R-120"],
+      "migration_note": "Push CI #41936430000 passed residual components and separator selection; focused native CI #41940030217 passed composed and single-call exact conditioned counts; focused CI #41940376154 passed arbitrary-width polynomial scope comparisons. Python reference remains available."
     },
     {
       "path": "witnora_core/anf_structured_counter.py",
       "sha": "eeedc054df1eb6314f1e4b44bfbe1dfeeec08276",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/anf_structured_counter.rs",
+      "test": "tests/test_anf_structured_counter_rust.py",
+      "verified_milestone": "R-111",
+      "migration_note": "Focused native CI #41940030217 passed Rust unit tests, wheel build and 200 seeded exact structured-count/statistic comparisons with budget semantics. The Python reference and report interfaces remain."
     },
     {
       "path": "witnora_core/ascii_certificate_adversarial.py",
@@ -3567,9 +3571,9 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/violation_image_anf.rs",
       "test": "tests/test_anf_counter_rust.py",
-      "verified_milestone": "R-108",
-      "verified_milestones": ["R-107", "R-108"],
-      "migration_note": "Push-triggered focused Rust CI #41936430000 passed Boolean GF(2) algebra and exact bounded Shannon-counting differential tests. Later source-construction, geometry and evaluation routes are implemented but still await native CI."
+      "verified_milestone": "R-118",
+      "verified_milestones": ["R-107", "R-108", "R-113", "R-114", "R-115", "R-116", "R-117", "R-118"],
+      "migration_note": "Push CI #41936430000 passed Boolean ANF algebra and bounded Shannon counting; focused native CI #41940030217 passed source construction, arbitrary-width evaluation, batched clause/source/row and geometry report differential tests. Python default and validation remain."
     },
     {
       "path": "witnora_core/xor_diagnostic.py",
@@ -3973,8 +3977,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 473,
+    "not_migrated": 472,
     "parallel_reference": 76,
-    "partial_native_verified": 11
+    "partial_native_verified": 12
   }
 }
