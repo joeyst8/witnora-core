@@ -73,43 +73,48 @@ def multiply_polynomials(a: Polynomial, b: Polynomial,
     return frozenset(terms)
 
 
-def false_literal_polynomial(lit: int) -> Polynomial:
+def false_literal_polynomial(lit: int, *, backend="python") -> Polynomial:
     if lit == 0:
         raise ValueError("zero is not a source literal")
     x = variable(abs(lit))
-    return x if lit < 0 else xor_polynomials(ONE, x)
+    return x if lit < 0 else xor_polynomials(ONE, x, backend=backend)
 
 
-def clause_violation_polynomial(clause: tuple[int, ...] | list[int]) -> Polynomial:
+def clause_violation_polynomial(clause: tuple[int, ...] | list[int],
+                                *, backend="python") -> Polynomial:
     result = ONE
     for lit in clause:
-        result = multiply_polynomials(result, false_literal_polynomial(lit))
+        result = multiply_polynomials(result,
+                                      false_literal_polynomial(lit, backend=backend),
+                                      backend=backend)
     return result
 
 
 def source_violation_polynomials(
     source: list[list[int]] | tuple[tuple[int, ...], ...],
     nvars: int,
+    *, backend="python",
 ) -> tuple[Polynomial, ...]:
     cnf = canonical_source(source, nvars)
-    return tuple(clause_violation_polynomial(clause) for clause in cnf)
+    return tuple(clause_violation_polynomial(clause, backend=backend) for clause in cnf)
 
 
 def row_violation_polynomials(
     source: list[list[int]] | tuple[tuple[int, ...], ...],
     sketch: SparseOddSketch,
     *, basis: SparseBasisCertificate | None = None,
+    backend="python",
 ) -> tuple[Polynomial, ...]:
     cnf = validate_sparse_odd_sketch(source, sketch)
     if basis is not None:
         verify_sparse_parity_basis(sketch, basis)
     rows = sketch.rows if basis is None else basis.rows
-    clauses = source_violation_polynomials(cnf, sketch.nvars)
+    clauses = source_violation_polynomials(cnf, sketch.nvars, backend=backend)
     result = []
     for row in rows:
         equation = ZERO
         for j in row:
-            equation = xor_polynomials(equation, clauses[j])
+            equation = xor_polynomials(equation, clauses[j], backend=backend)
         result.append(equation)
     return tuple(result)
 
@@ -246,10 +251,11 @@ class ANFGeometry:
 def analyze_parity_anf(
     source: list[list[int]] | tuple[tuple[int, ...], ...],
     sketch: SparseOddSketch,
+    *, backend="python",
 ) -> ANFGeometry:
     cnf = validate_sparse_odd_sketch(source, sketch)
-    clauses = source_violation_polynomials(cnf, sketch.nvars)
-    equations = row_violation_polynomials(cnf, sketch)
+    clauses = source_violation_polynomials(cnf, sketch.nvars, backend=backend)
+    equations = row_violation_polynomials(cnf, sketch, backend=backend)
     raw = sum(sum(len(clauses[j]) for j in row) for row in sketch.rows)
     kept = sum(len(eq) for eq in equations)
     max_degree = max((len(mon) for eq in equations for mon in eq),
