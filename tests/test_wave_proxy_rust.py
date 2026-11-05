@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import unittest
+from collections import Counter
 
 from tests.test_hypercycle_rust import FROZEN, even_incidence_selector
 from tests.test_three_cnf_geometry_rust import independent_dpll, signed_source
@@ -53,15 +54,32 @@ class RustWaveProxyIndependentOracle(unittest.TestCase):
         self.assertIn("exploratory", self.report["scope"])
         for family in self.report["families"]:
             self.assertEqual(family["gauge_representatives"], 4096)
+            scopes = FROZEN[family["graph_name"]]
             self.assertEqual(family["chosen_parity_indices"],
-                             even_incidence_selector(FROZEN[family["graph_name"]]))
+                             even_incidence_selector(scopes))
             self.assertEqual(family["chosen_parity_indices"], [0, 1, 2, 3])
-            self.assertGreater(family["baseline_pair_conflict_groups"], 0)
+            # Independently reconstruct the 4096 gauge-canonical signings:
+            # the first occurrence of each variable is positive, and the
+            # remaining twelve incidence bits vary freely.
+            first = {variable: min(3 * c + p for c, scope in enumerate(scopes)
+                                   for p, v in enumerate(scope) if v == variable)
+                     for variable in range(1, 7)}
+            free_bits = [bit for bit in range(18) if bit not in set(first.values())]
+            self.assertEqual(len(free_bits), 12)
+            pair_counts = Counter()
+            for setting in range(1 << len(free_bits)):
+                mask = sum((1 << bit) for offset, bit in enumerate(free_bits)
+                           if setting & (1 << offset))
+                pair_counts[independent_pair_conflicts(signed_source(scopes, mask))] += 1
+            expected_samples = sum(count for count in pair_counts.values() if count > 1)
+            self.assertEqual(family["baseline_pair_conflict_groups"], len(pair_counts))
+            self.assertEqual(family["excluded_singleton_baseline_rows"],
+                             4096 - expected_samples)
             self.assertGreater(family["wave_bias_values"], 0)
             self.assertEqual(len(family["controls"]), 4)
             for order in ("forward", "reverse"):
                 result = family[order]
-                self.assertEqual(result["samples"], 4096)
+                self.assertEqual(result["samples"], expected_samples)
                 self.assertEqual(result["permutations"], 1000)
                 self.assertTrue(0 < result["exploratory_permutation_p"] <= 1)
                 self.assertGreaterEqual(result["baseline_loo_mse"], 0)

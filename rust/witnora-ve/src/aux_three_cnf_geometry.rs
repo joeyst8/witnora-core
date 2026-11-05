@@ -529,6 +529,7 @@ fn wave_family(scopes: &[[usize; W]; M], name: &str,
         }).collect::<Result<Vec<_>,_>>()?;
     Ok(json!({"graph_name":name,"gauge_representatives":rows.len(),
         "chosen_parity_indices":parity_row,"baseline_pair_conflict_groups":groups.len(),
+        "excluded_singleton_baseline_rows":rows.len() - nf,
         "wave_bias_values":labels.iter().collect::<BTreeSet<_>>().len(),
         "wave_features_distinguishable_from_pair_baseline":groups.values().any(|indices| {
             indices.iter().map(|&i|rows[i].bias).collect::<BTreeSet<_>>().len() > 1
