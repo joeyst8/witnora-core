@@ -2187,11 +2187,13 @@ fn xor_sparse_schedule_native(equations:Vec<(Vec<usize>,u8)>)
     xor_sparse_schedule::schedule(&equations)
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 fn xor_proof_order_native(pivots:Vec<usize>,variables:Vec<usize>)->Vec<usize>{
     xor_proof_order::proof_order(&pivots,&variables)
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 fn xor_gaussian_order_stats_native(pivots:Vec<usize>,variables:Vec<usize>,
     trace_widths:Vec<usize>,detected_widths:Vec<usize>,unsat:bool)
