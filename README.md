@@ -9,6 +9,8 @@ for experimental research, benchmarking, integration, and independent
 differential oracles; Lean is used for formal proof checking and external
 checkers remain independent.
 
+Research proposals must first pass the [primary-literature and prior-art gate](docs/RESEARCH_PRIOR_ART_GATE.md), which records existing solutions and determines whether Witnora should reproduce, adopt, or extend them.
+
 This policy does **not** mean the existing Python core has already been
 ported or verified as native-default. See
 [the migration and verification ledger](research/FULL_PYTHON_TO_RUST_MIGRATION.md)
