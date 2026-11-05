@@ -51,7 +51,7 @@ fn fisher_yates<T>(v: &mut [T], state: &mut u32) {
 fn encode_xors(triples: &[[usize; 3]; 5], rhs: &[bool; 5]) -> Formula {
     let mut clauses = Vec::with_capacity(20);
     for (vars, expected) in triples.iter().zip(rhs) {
-        for pattern in 0..8 {
+        for pattern in 0u8..8 {
             let parity = pattern.count_ones() % 2 != 0;
             if parity != *expected {
                 let clause = (0..3)
