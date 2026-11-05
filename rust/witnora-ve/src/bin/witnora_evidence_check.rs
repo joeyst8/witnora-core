@@ -34,6 +34,17 @@ fn run(args: &[String]) -> Result<(), String> {
             _ => { positionals.push(&args[i]); i += 1; }
         }
     }
+    // Never overwrite a file that is being used as integrity evidence. This
+    // includes a symlink alias to the same existing file.
+    if let Some(destination) = output {
+        if let Ok(destination_file) = fs::canonicalize(destination) {
+            for input in positionals.iter().skip(1).map(|s| s.as_str()).chain(manifest) {
+                if fs::canonicalize(input).ok().as_ref() == Some(&destination_file) {
+                    return Err("output would overwrite an input evidence file".into());
+                }
+            }
+        }
+    }
     let payload = match positionals.as_slice() {
         [mode, table_path] if mode.as_str() == "manifest" => {
             if expected.is_some() || manifest.is_some() {
