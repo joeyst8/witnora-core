@@ -11,10 +11,10 @@ experiment and native CI have passed.
 | Batch | Focus | State |
 | --- | --- | --- |
 | R-301–R-320 | Exact bounded minimum inconsistent GF(2) subsystem, independent oracle, original-CNF proof | Focused CI #41959938645 green |
-| R-321–R-340 | Hypergraph adversarial source metadata and proof controls | Local green; native CI pending |
-| R-341–R-360 | Matched variable/constraint/source-clause/degree profiles with different GF(2) ranks and proof lengths | Local green; native CI pending |
-| R-361–R-380 | Adversarial relabeling/ordering/provenance metamorphic tests | Planned |
-| R-381–R-400 | Resource budgets and checker-failure controls | Planned |
+| R-321–R-340 | Hypergraph adversarial source metadata and proof controls | Focused CI #41960734767 green |
+| R-341–R-360 | Matched variable/constraint/source-clause/degree profiles with different GF(2) ranks and proof lengths | Focused CI #41960734767 green |
+| R-361–R-380 | Assignment-gauge and variable-permutation invariance; 20/64 verified proof-count variations | Local green; native CI pending |
+| R-381–R-400 | Exact GF(2) state caps, proof budgets and wrong-original external rejection | Local green; native CI pending |
 | R-401–R-420 | Mixed nonlinear-CNF background challenge | Planned |
 | R-421–R-440 | Held-out structural families | Planned |
 | R-441–R-460 | Independent baseline and cost comparison | Planned |
