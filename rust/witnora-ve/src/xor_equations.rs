@@ -138,6 +138,65 @@ pub fn canonical_xor_cnf(variables:&[usize],rhs:u8,max_width:usize)
  clauses.sort();Ok(clauses)
 }
 
+/// R-128: extra CNF clauses that intersect an XOR support, excluding its witness.
+pub fn extra_touching_clauses(clauses:&[Vec<i64>],variables:&[usize],
+ source_clauses:&[Vec<i64>])->Vec<Vec<i64>>{
+ let active=variables.iter().map(|&v|v as u64).collect::<BTreeSet<_>>();
+ let source=source_clauses.iter().cloned().collect::<BTreeSet<_>>();
+ clauses.iter().filter(|clause|{
+  !source.contains(*clause) && clause.iter().any(|lit|
+      active.contains(&lit.unsigned_abs()))
+ }).cloned().collect::<BTreeSet<_>>().into_iter().collect()
+}
+
+/// R-130: discover only complete CNF XOR gadgets in one native pass.
+/// Diagnostic: kind 0=skipped max-k, 1=not an exact full encoding.
+pub type DetectedPattern=(Vec<usize>,u8,Vec<Vec<i64>>,Vec<Vec<i64>>);
+pub type DetectionDiagnostic=(u8,Vec<usize>,usize,usize,usize);
+pub fn detect_cnf_patterns(clauses:&[Vec<i64>],include_3var:bool,max_k:usize)
+ ->Result<(Vec<DetectedPattern>,Vec<DetectionDiagnostic>),String>{
+ if max_k<2{return Ok((vec![],vec![]));}
+ let effective_max_k=if include_3var{max_k}else{max_k.min(2)};
+ let mut groups=BTreeMap::<Vec<usize>,BTreeSet<Vec<i64>>>::new();
+ for clause in clauses{
+  let mut support=BTreeSet::new();
+  for &lit in clause{
+   let v=usize::try_from(lit.unsigned_abs())
+       .map_err(|_|"literal variable outside usize")?;
+   support.insert(v);
+  }
+  if support.len()!=clause.len(){continue;}
+  groups.entry(support.into_iter().collect()).or_default().insert(clause.clone());
+ }
+ let mut detected=Vec::new();let mut diagnostics=Vec::new();
+ for (vars,group) in groups{
+  let k=vars.len();
+  if k<2{continue;}
+  if k>effective_max_k{
+   diagnostics.push((0,vars,k,effective_max_k,group.len()));continue;
+  }
+  if k>=usize::BITS as usize{
+   return Err("native XOR pattern width exceeds platform capacity".into());
+  }
+  let expected=1usize<<(k-1);
+  if group.len()!=expected{
+   diagnostics.push((1,vars,k,expected,group.len()));continue;
+  }
+  let mut found=false;
+  for rhs in 0..=1u8{
+   let required=canonical_xor_cnf(&vars,rhs,16)?;
+   if required.into_iter().collect::<BTreeSet<_>>()==group{
+    let source=group.iter().cloned().collect::<Vec<_>>();
+    let extra=extra_touching_clauses(clauses,&vars,&source);
+    detected.push((vars.clone(),rhs,source,extra));
+    found=true;break;
+   }
+  }
+  if !found{diagnostics.push((1,vars,k,expected,group.len()));}
+ }
+ Ok((detected,diagnostics))
+}
+
 #[cfg(test)]mod tests{use super::*;#[test]fn normalization(){
  assert_eq!(normalize_variables(&[3,1,3,2,1,7]).unwrap(),vec![2,7]);
  assert_eq!(normalize_variables(&[]).unwrap(),Vec::<usize>::new());
@@ -156,4 +215,9 @@ pub fn canonical_xor_cnf(variables:&[usize],rhs:u8,max_width:usize)
  assert_eq!(canonical_xor_cnf(&[],1,16).unwrap(),vec![vec![]]);
  assert_eq!(canonical_xor_cnf(&[1,2],1,16).unwrap(),
   vec![vec![-2,-1],vec![1,2]]);
+ assert_eq!(extra_touching_clauses(&[vec![1],vec![2],vec![3]],&[1,2],
+   &[vec![1]]),vec![vec![2]]);
+ let input=vec![vec![1,2],vec![-2,-1],vec![3]];
+ let found=detect_cnf_patterns(&input,true,6).unwrap();
+ assert_eq!(found.0.len(),1);assert_eq!(found.0[0].1,1);
 }}

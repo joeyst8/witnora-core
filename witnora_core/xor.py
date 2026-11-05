@@ -437,7 +437,15 @@ def _extra_touching_clauses(
     formula_clauses: set[tuple[int, ...]],
     variables: tuple[int, ...],
     source_clauses: Iterable[tuple[int, ...]],
+    *, backend="python",
 ) -> tuple[tuple[int, ...], ...]:
+    if backend == "rust":
+        from witnora_ve import xor_extra_touching_clauses_native
+        return tuple(tuple(clause) for clause in xor_extra_touching_clauses_native(
+            [list(clause) for clause in formula_clauses], list(variables),
+            [list(clause) for clause in source_clauses]))
+    if backend != "python":
+        raise ValueError("unknown XOR backend")
     variable_set = set(variables)
     source_set = set(source_clauses)
     return tuple(
@@ -454,6 +462,7 @@ def _detected_equation(
     rhs: int,
     source_clauses: Iterable[tuple[int, ...]],
     formula_clauses: set[tuple[int, ...]],
+    *, backend="python",
 ) -> XorEquation:
     source_tuple = tuple(sorted(source_clauses))
     return XorEquation(
@@ -468,6 +477,7 @@ def _detected_equation(
             formula_clauses,
             variables,
             source_tuple,
+            backend=backend,
         ),
         exact_full_encoding=True,
         safe_use=True,
@@ -479,7 +489,10 @@ def detect_cnf_xor_patterns(
     *,
     include_3var: bool = True,
     max_k: int = 6,
+    backend="python",
 ) -> XorSystem:
+    if backend not in ("python", "rust", "rust_full"):
+        raise ValueError("unknown XOR backend")
     clauses = {tuple(clause.literals) for clause in formula.clauses}
     equations: list[XorEquation] = []
     diagnostics: list[dict[str, Any]] = []
@@ -487,6 +500,32 @@ def detect_cnf_xor_patterns(
 
     if max_k < 2:
         return XorSystem(diagnostics=[{"reason": XOR_PATTERN_SKIPPED_MAX_K, "max_k": int(max_k)}])
+    if backend == "rust_full":
+        from witnora_ve import xor_detect_cnf_patterns_native
+        found, native_diagnostics = xor_detect_cnf_patterns_native(
+            [list(clause) for clause in clauses], include_3var, max_k)
+        equations = [XorEquation(
+            variables, rhs, source="detected_cnf_pattern",
+            source_clauses=source_clauses, pattern_size=len(variables),
+            detection_mode=XOR_DETECTION_IMPLIED_ONLY,
+            source_clauses_removed=False,
+            extra_clauses_touching_variables=extra,
+            exact_full_encoding=True, safe_use=True)
+            for variables, rhs, source_clauses, extra in found]
+        diagnostics = []
+        for kind, variables, k, fourth, fifth in native_diagnostics:
+            if kind == 0:
+                diagnostics.append({"reason": XOR_PATTERN_SKIPPED_MAX_K,
+                                    "variables": variables, "pattern_size": k,
+                                    "max_k": fourth, "clause_count": fifth})
+            elif kind == 1:
+                diagnostics.append({"reason": "XOR_PATTERN_NOT_EXACT_FULL_ENCODING",
+                                    "variables": variables, "pattern_size": k,
+                                    "expected_clause_count": fourth,
+                                    "actual_clause_count": fifth})
+            else:
+                raise AssertionError("unknown native XOR diagnostic")
+        return XorSystem(equations, diagnostics=diagnostics)
     effective_max_k = int(max_k)
     if not include_3var:
         effective_max_k = min(effective_max_k, 2)
@@ -529,7 +568,7 @@ def detect_cnf_xor_patterns(
             key = (variables, rhs)
             if key in seen:
                 continue
-            required = canonical_xor_cnf_clauses(variables, rhs)
+            required = canonical_xor_cnf_clauses(variables, rhs, backend=backend)
             if group == required:
                 equations.append(
                     _detected_equation(
@@ -537,6 +576,7 @@ def detect_cnf_xor_patterns(
                         rhs,
                         required,
                         clauses,
+                        backend=backend,
                     )
                 )
                 seen.add(key)

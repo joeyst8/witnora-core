@@ -1,4 +1,4 @@
-# Rust migration checkpoint: R-097 through R-127
+# Rust migration checkpoint: R-097 through R-130
 
 This record distinguishes implementation from independent verification. It is
 not a claim of a complete Python-to-Rust replacement and does not amend any
@@ -19,13 +19,15 @@ Lean trust boundary.
 | R-120 | Exact ANF polynomial scope masks | Focused Rust push CI #41940376154 passed |
 | R-121–123 | XOR support normalization, evaluation, substitution | Focused Rust push CI #41940786252 passed |
 | R-124–125 | Batch XOR system substitution, full Gaussian solver with trace | Focused Rust push CI #41941245719 passed |
+| R-126–127 | XOR assignment verification and bounded complete XOR CNF | Focused Rust push CI #41941696815 passed |
 
 ## Implemented, native verification outstanding
 
 | Milestones | Scope | Verification boundary |
 | --- | --- | --- |
-| R-126 | Native XOR assignment verifier | Requires native 350-seed system comparison |
-| R-127 | Bounded native complete XOR-to-CNF encoding | Requires native 240-seed and width-cap comparison |
+| R-128 | Native extra CNF clause overlap with XOR witnesses | Requires native 350-seed overlap comparison |
+| R-129 | Composed native algebra in CNF XOR detector | Requires full 2–6 variable and seeded CNF comparison |
+| R-130 | Full native exact CNF XOR pattern discovery and diagnostics | Requires complete seeded detector/metadata comparison |
 
 GitHub Actions push runs were initially invisible to the
 `github_fetch_commit_workflow_runs` wrapper, which filters to pull-request
@@ -35,7 +37,8 @@ events; the Actions REST run collection exposed them. Focused push CI
 random 3-CNF test fixtures. The subsequent corrected full CI #41940030217
 passed, establishing R-111–R-119. Focused CI #41940376154 passed R-120.
 Focused CI #41940786252 passed R-121–R-123, and focused CI #41941245719
-passed R-124–R-125. R-126–R-127 remain pending native CI.
+passed R-124–R-125. Focused CI #41941696815 passed R-126–R-127.
+R-128–R-130 are implemented and pending native CI.
 Current manifest counts are 76 `parallel_reference`, 13
 `partial_native_verified`, 471 `not_migrated` out of 560 Python entries. Distinct
 milestone numbers are not the same as distinct source-file counts.
@@ -44,11 +47,11 @@ milestone numbers are not the same as distinct source-file counts.
 
 1. Inspect push-triggered GitHub Actions workflow runs through the Actions
    REST collection; retrieve failed job logs to diagnose the native gate.
-2. Verify R-126 through R-127, fixing any differential
+2. Verify R-128 through R-130, fixing any differential
    or Rust compilation errors before counting any promotion.
 3. Update `research/python_to_rust_manifest.json` only for independently
    verified paths, with exact CI run identifiers.
-4. Continue R-128 onward. Next promising targets are the remaining native
+4. Continue R-131 onward. Next promising targets are the remaining native
    experimental kernels, then the
    larger proof/replay and runner modules; each needs a separate differential
    or proof-gate definition.

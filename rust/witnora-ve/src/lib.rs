@@ -2148,6 +2148,23 @@ fn xor_canonical_cnf_native(variables:Vec<usize>,rhs:u8,max_width:usize)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_extra_touching_clauses_native(clauses:Vec<Vec<i64>>,
+    variables:Vec<usize>,source_clauses:Vec<Vec<i64>>)->Vec<Vec<i64>>{
+    xor_equations::extra_touching_clauses(&clauses,&variables,&source_clauses)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_detect_cnf_patterns_native(clauses:Vec<Vec<i64>>,
+    include_3var:bool,max_k:usize)
+    ->PyResult<(Vec<xor_equations::DetectedPattern>,
+        Vec<xor_equations::DetectionDiagnostic>)>{
+    xor_equations::detect_cnf_patterns(&clauses,include_3var,max_k)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2475,6 +2492,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_gaussian_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_verify_assignment_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_canonical_cnf_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_extra_touching_clauses_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_detect_cnf_patterns_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;
