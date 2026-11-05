@@ -47,8 +47,12 @@ in addition to control cases and native Rust unit tests. This is **not** a
 full transfer of `ci.py`; its CLI, report writing, trust-card formatting and
 GitHub workflow integration still execute in Python.
 
-Wave 1 status: **candidate pending native GitHub CI**. Do not increment a
-verified source-file count until the workflow is green.
+Wave 1 status: **parallel Rust reference verified** by focused CI
+[#41965400103](https://github.com/joeyst8/witnora-core/actions/runs/41965400103)
+and full Rust CI
+[#41965400113](https://github.com/joeyst8/witnora-core/actions/runs/41965400113).
+The manifest now records 469 not migrated, 77 parallel Rust references, and
+14 partial native verified. **Zero full-module conversions are claimed**.
 
 ## Next dependency-aware work
 

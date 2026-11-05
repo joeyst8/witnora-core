@@ -2565,7 +2565,9 @@
       "path": "witnora_core/ci.py",
       "sha": "a0fc5cfb006846690faaf385538e3a3a70d1c29a",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/ci_fail_policy.rs",
+      "migration_note": "Native CI failure-policy decision kernel verified in full/focused CI #41965400113/#41965400103. Python remains default; report writing, trust-card rendering, CLI and workflow integration still need Rust equivalents. This is not a completed source-file migration."
     },
     {
       "path": "witnora_core/circuit_projection_lift.py",
@@ -3988,8 +3990,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 470,
-    "parallel_reference": 76,
+    "not_migrated": 469,
+    "parallel_reference": 77,
     "partial_native_verified": 14
   }
 }
