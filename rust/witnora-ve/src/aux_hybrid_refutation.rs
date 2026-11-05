@@ -156,7 +156,8 @@ pub(crate) fn verify_xor(clauses:&[Vec<i32>],proof:&[Equation])->Result<(),Strin
     let (mut left,mut right)=(0u16,0u8);
     if proof.is_empty(){return Err("W019 empty XOR contradiction".into());}
     for eq in proof {
-        if eq.vars.iter().any(|&v|v==0||v>N) {return Err("W019 variable range".into());}
+        // W021 reuses the source-backed GF(2) verifier on 16-variable inputs.
+        if eq.vars.iter().any(|&v|v==0||v>16) {return Err("W019 variable range".into());}
         let mut got=[false;8];
         for &i in &eq.indices {
             let clause=clauses.get(i).ok_or("W019 bad clause index")?;

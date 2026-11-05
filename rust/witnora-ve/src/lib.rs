@@ -71,6 +71,7 @@ pub mod aux_signed_covariance;
 pub mod aux_zero_variance_refutation;
 pub mod aux_hybrid_refutation;
 pub mod aux_separation_baselines;
+pub mod aux_cost_aware_geometry;
 pub mod aux_solution_geometry;
 pub mod aux_ground_barriers;
 pub mod aux_min_energy_geometry;
