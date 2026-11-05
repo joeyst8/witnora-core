@@ -75,29 +75,51 @@ and full Rust CI
 Current manifest counts: 468 not migrated, 78 parallel, 14 partially native
 verified; still **zero fully migrated source files**.
 
-### Native executable completion gate (candidate)
+### Native executable completion gate (verified)
 
 `rust/witnora-ve/src/bin/witnora_report.rs` now provides an entirely
 standalone Rust command-line program: `witnora_report BENCHMARK_JSON --out
 REPORT_MD`. It requires no Python runtime and uses the native Markdown
 renderer. The focused CI builds the executable and compares its output bytes
 against the original Python report CLI over empty, nontrivial and seeded
-instances. Malformed and missing input must fail without creating a report.
+instances. Malformed and missing input fail without creating a report.
+The Rust executable also accepts the output flag on either side of the input
+and supports a standalone help command. The end-to-end, no-Python executable
+gate passed focused CI
+[#41968925434](https://github.com/joeyst8/witnora-core/actions/runs/41968925434)
+and full Rust CI
+[#41968925507](https://github.com/joeyst8/witnora-core/actions/runs/41968925507).
 
 This checks the **entire report-generation CLI operation** in Rust, but the
 original Python import/API remains available for independent comparison and
-compatibility. Its source-file manifest status remains `parallel_reference`
-until the standalone native CLI gate and a replacement policy both pass.
+compatibility. Its source-file manifest status remains `parallel_reference`:
+the executable gate is satisfied, but a native-default deployment and
+replacement policy (including packaging, all public entry points, fallback
+rules, and independent acceptance) is still outstanding. A successful native
+CLI is **not** a claim that 560 Python files have been transferred.
+
+## Migration wave 3: standalone native benchmark comparison
+
+Source: `witnora_core/compare.py` (unmigrated at the R-500 baseline).
+Native candidate: `rust/witnora-ve/src/benchmark_compare.rs` with its
+no-Python `witnora_compare LEFT_JSON RIGHT_JSON --out COMPARISON_MD` CLI.
+The original Python comparator remains the reference for output ordering,
+route/status changes, delta arithmetic, missing fields and determinism tables.
+The focused differential gate includes 128 seeded paired benchmarks, empty
+inputs, nontrivial changes, help, output-argument ordering and malformed JSON.
+This is a **candidate pending CI**, not a complete source-file migration.
+The source ledger must not change until parity and Rust compilation pass.
 
 ## Next dependency-aware work
 
-1. Finish and independently verify the CI policy subset, then assess the
-   rest of its Python-only formatting/orchestration surface.
+1. Finish and independently verify the remaining CI CLI/report orchestration,
+   which still has Python-only code despite the verified policy subset.
 2. Prioritize reproducible, side-effect-free verification/reporting helpers
    with explicit semantics, adding Rust-native tests and Python differential
    controls before switching defaults.
-3. Tackle remaining 58 core modules and 76 parallel/14 partial ones based on
-   runtime dependency and soundness risk rather than filename count alone.
+3. Tackle the remaining 56 unmigrated core modules, and review the 78 parallel
+   and 14 partial modules based on runtime dependency and soundness risk rather
+   than filename count alone.
 4. Track CLI, benchmark scripts and tests separately; preserve independent
    checkers where they are required for certification.
 
