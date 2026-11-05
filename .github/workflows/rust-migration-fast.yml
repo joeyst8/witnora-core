@@ -59,6 +59,7 @@ on:
       - "tests/test_crc_conditional_independence_rust.py"
       - "tests/test_aux_violation_tensors_rust.py"
       - "tests/test_factorized_violation_profile_rust.py"
+      - "tests/test_cutset_violation_profile_rust.py"
       - "tests/test_constraint_geometry_rust.py"
       - "tests/test_geometry_aware_parity_rust.py"
       - "tests/test_claim_boundary_rust.py"
@@ -221,6 +222,7 @@ on:
       - "tests/test_crc_conditional_independence_rust.py"
       - "tests/test_aux_violation_tensors_rust.py"
       - "tests/test_factorized_violation_profile_rust.py"
+      - "tests/test_cutset_violation_profile_rust.py"
       - "tests/test_constraint_geometry_rust.py"
       - "tests/test_geometry_aware_parity_rust.py"
       - "tests/test_claim_boundary_rust.py"
@@ -354,10 +356,10 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
-      - name: W-CROSSDOMAIN-006 factorized partition-polynomial differential gate
+      - name: W-CROSSDOMAIN-006/007 partition-polynomial and cutset differential gate
         run: |
-          python -c 'from witnora_ve import aux_factorized_violation_profile_native'
-          python -m unittest tests.test_factorized_violation_profile_rust -v
+          python -c 'from witnora_ve import aux_factorized_violation_profile_native, aux_conditioned_violation_profile_native'
+          python -m unittest tests.test_factorized_violation_profile_rust tests.test_cutset_violation_profile_rust -v
       - name: Build pinned external drat-trim
         run: |
           git clone --quiet https://github.com/marijnheule/drat-trim.git "$RUNNER_TEMP/witnora-drat-trim"
