@@ -35,6 +35,8 @@ The original exploratory enumeration indicated the following; the Rust CLI recom
 
 If these exact values reproduce, they establish **added finite-family predictive information** about the chosen DPLL search-tree metric beyond the entire energy profile. The `0/1,000` permutation result corresponds to an exploratory add-one tail estimate of `1/1,001`, **not** to a guarantee of generalization. LOO cross-validation reduces direct self-prediction but does not remove graph selection, experimental-search, or family-overfitting bias.
 
+**Important negative control:** the specific W-CROSSDOMAIN-009 matched-energy witness (`2603` versus `2607`) has different triangle spectra but **the same DPLL cost of three recursive calls under both variable orders**. The aggregate 256-orbit predictive signal does not imply that every pair separated by the cycle spectrum has different search cost.
+
 ## Why this is not a complexity breakthrough
 
 - Every source formula is **2-CNF**, which has a polynomial-time decision procedure. A DPLL model counter is a deliberately fixed diagnostic, not a competitive 2-SAT solver or a proxy for the intrinsic complexity of the input.
