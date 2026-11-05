@@ -406,6 +406,11 @@ jobs:
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_wave_branching
           WITNORA_RUST_WAVE_BRANCHING_BIN="$PWD/rust/witnora-ve/target/release/witnora_wave_branching" python -m unittest tests.test_wave_branching_rust -v
           rust/witnora-ve/target/release/witnora_wave_branching
+      - name: W-CROSSDOMAIN-017 exact signed covariance and cycle geometry
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_signed_covariance
+          WITNORA_RUST_SIGNED_COVARIANCE_BIN="$PWD/rust/witnora-ve/target/release/witnora_signed_covariance" python -m unittest tests.test_signed_covariance_rust -v
+          rust/witnora-ve/target/release/witnora_signed_covariance
       - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
         run: |
           python -c 'from witnora_ve import aux_solution_geometry_native'
