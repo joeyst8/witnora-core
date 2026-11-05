@@ -25,6 +25,28 @@ These degree multisets prove the three indexed graphs are pairwise non-isomorphi
 
 This is a **graph-heldout replication**, not a train-on-G1/test-on-G2 learned predictor: category-wise LOO means are recomputed *inside* each held-out graph and use other examples from that graph. Correlated orbit representatives and retrospective feature selection in W-CROSSDOMAIN-009 limit generalization. Even success across these two small **2-SAT** graphs would not address the intrinsic exponential-time difficulty of arbitrary SAT; a production feature must be computable more cheaply than its prospective benefit.
 
+## Verified results — 2026-11-05
+
+Both frozen holdout families passed the exact Rust audit and the independently implemented Python source-literal/DPLL controls. Source reconstruction, all four reference-mask truth tables and both DPLL-order model counts matched. All 256 gauge representatives in each family passed the native Fourier-parity cross-check.
+
+| Frozen family / decision order | LOO samples | Energy-only MSE | Energy + triangle MSE | Error reduction | Conditional permutation tail |
+|---|---:|---:|---:|---:|---:|
+| H1 / ascending | 243 | 3.3391 | 2.7068 | **18.94%** | 0 / 1,000 |
+| H1 / descending | 243 | 3.5802 | 2.6157 | **26.94%** | 0 / 1,000 |
+| H2 / ascending | 246 | 1.3761 | 1.3212 | **3.99%** | 1 / 1,000 |
+| H2 / descending | 246 | 1.1340 | 0.7886 | **30.46%** | 0 / 1,000 |
+
+The original graph had 80 distinct energy profiles and 135 energy-plus-triangle spectra. H1 had **82** and **122**, respectively; H2 had **70** and **104**. These are exact finite-family counts, not entropy rates.
+
+**Strict predeclared four-way criterion: MET.** All four improvements are positive and their add-one conditional permutation p-values are respectively `0.000999`, `0.000999`, `0.001998`, and `0.000999`, below the specified `0.0125` Bonferroni threshold. This criterion was frozen in commit `96a80bd4a21e468b99e31d0b85d2764f6bf48510` before the implementation/results commit `79d40fe8b7791b663f2bf06b8dd4b2705d6d23fa`.
+
+**Independent CI provenance:**
+
+- Rust native differential gate: [all 84 steps passed](https://github.com/joeyst8/witnora-core/actions/runs/42084011305).
+- Focused Rust research gate, including the new W-CROSSDOMAIN-011 CLI and two independent Python oracle tests: [all 28 steps passed](https://github.com/joeyst8/witnora-core/actions/runs/42084011271).
+
+**Scientific qualification:** this is prospective *graph selection* but a within-graph, exact-enumeration predictor. It is not a learned out-of-graph prediction, statistical independence, a scalable feature, a solver speedup, or a P versus NP result. The near-zero H2/ascending improvement is an important warning against treating the original ~42–53% gains as universal. The next experiment must include mixed-width 3-CNF and computational-cost accounting for the predictor itself, with its test protocol frozen before observing outcomes.
+
 ## Implementation targets
 
 - Parameterize the Rust W-CROSSDOMAIN-010 audit by graph edge list without changing the original witness regression.
@@ -35,3 +57,4 @@ This is a **graph-heldout replication**, not a train-on-G1/test-on-G2 learned pr
 
 - G. D. Forney Jr., *Codes on Graphs: Duality and MacWilliams Identities*, IEEE Transactions on Information Theory (2011), <https://arxiv.org/abs/0911.5508>.
 - Jinbo Huang and Adnan Darwiche, *A Structure-Based Variable Ordering Heuristic for SAT*, IJCAI (2003), <https://ijcai.org/proceedings/2003/166>.
+- Bengt Aspvall, Michael F. Plass, and Robert Endre Tarjan, *A linear-time algorithm for testing the truth of certain quantified Boolean formulas*, Information Processing Letters (1979), <https://www.sciencedirect.com/science/article/abs/pii/0020019079900024> (the established polynomial-time 2-SAT boundary).
