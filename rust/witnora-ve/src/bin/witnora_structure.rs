@@ -103,9 +103,54 @@ fn components(graph: &[Vec<bool>], removed: &[usize]) -> Vec<usize> {
     sizes
 }
 
+/// First mod-2 Betti number of the graph's flag (clique) complex.
+/// At n<=16 there are at most 120 edges, so u128 holds every 1-boundary.
+/// beta1 = E - V + beta0 - rank(boundary_2); triangles are 2-simplices.
+fn flag_beta1(graph: &[Vec<bool>], edges: usize, beta0: usize) -> Option<(usize, usize)> {
+    let n = graph.len();
+    if n > 16 { return None; }
+    let mut index = vec![vec![0usize; n]; n];
+    let mut next = 0usize;
+    for a in 0..n {
+        for b in a + 1..n {
+            if graph[a][b] {
+                index[a][b] = next;
+                index[b][a] = next;
+                next += 1;
+            }
+        }
+    }
+    debug_assert_eq!(next, edges);
+    let mut basis = [0u128; 128];
+    let mut rank = 0usize;
+    let mut triangles = 0usize;
+    for a in 0..n {
+        for b in a + 1..n {
+            if !graph[a][b] { continue; }
+            for c in b + 1..n {
+                if !graph[a][c] || !graph[b][c] { continue; }
+                triangles += 1;
+                let mut column = (1u128 << index[a][b])
+                    ^ (1u128 << index[a][c]) ^ (1u128 << index[b][c]);
+                while column != 0 {
+                    let pivot = 127 - column.leading_zeros() as usize;
+                    if basis[pivot] == 0 {
+                        basis[pivot] = column;
+                        rank += 1;
+                        break;
+                    }
+                    column ^= basis[pivot];
+                }
+            }
+        }
+    }
+    Some((edges + beta0 - n - rank, triangles))
+}
+
 fn profile(cnf: &Cnf) -> serde_json::Value {
     let (graph, edges) = primal_graph(cnf);
     let initial = components(&graph, &[]);
+    let topology = flag_beta1(&graph, edges, initial.len());
     let mut witness: Vec<usize> = Vec::new();
     let mut residual = initial.clone();
     let mut order: Option<usize> = if initial.len() >= 2 { Some(0) } else { None };
@@ -144,6 +189,8 @@ fn profile(cnf: &Cnf) -> serde_json::Value {
         "separator_variables": witness,
         "residual_components": residual.len(),
         "largest_residual_component": residual.iter().copied().max().unwrap_or(0),
+        "primal_flag_beta1_mod2": topology.map(|(beta, _)| beta),
+        "primal_flag_triangle_count": topology.map(|(_, triangles)| triangles),
         "scope": "source-primal-graph-only; no SAT or complexity certificate"
     })
 }
@@ -176,6 +223,9 @@ mod tests {
         assert_eq!(profile(&path)["separator_variables"], json!([2]));
         let triangle = parse_dimacs("p cnf 3 3\n1 2 0\n2 3 0\n1 3 0\n").unwrap();
         assert!(profile(&triangle)["separator_order_le2"].is_null());
+        assert_eq!(profile(&triangle)["primal_flag_beta1_mod2"], json!(0));
+        let square = parse_dimacs("p cnf 4 4\n1 2 0\n2 3 0\n3 4 0\n1 4 0\n").unwrap();
+        assert_eq!(profile(&square)["primal_flag_beta1_mod2"], json!(1));
     }
 
     #[test]
