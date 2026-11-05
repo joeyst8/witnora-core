@@ -5,13 +5,13 @@ use std::io::{self, Read};
 use std::time::Instant;
 
 #[derive(Debug)]
-struct Cnf {
-    nvars: usize,
-    clauses: Vec<Vec<i32>>,
-    edges: usize,
+pub(crate) struct Cnf {
+    pub(crate) nvars: usize,
+    pub(crate) clauses: Vec<Vec<i32>>,
+    pub(crate) edges: usize,
 }
 
-fn parse(input: &str) -> Result<Cnf, String> {
+pub(crate) fn parse(input: &str) -> Result<Cnf, String> {
     let mut header = None;
     let mut clauses = Vec::new();
     let mut current = Vec::new();
@@ -57,14 +57,14 @@ fn parse(input: &str) -> Result<Cnf, String> {
     Ok(Cnf{nvars:n,clauses,edges})
 }
 
-fn norm(vec:&mut [f64])->bool {
+pub(crate) fn norm(vec:&mut [f64])->bool {
     let n=vec.iter().map(|x|x*x).sum::<f64>().sqrt();
     if !n.is_finite() || n<=0.0 {return false;}
     for x in vec {*x/=n;}
     true
 }
 
-fn project(cnf:&Cnf,degree:&[usize],x:&[f64])->Vec<f64> {
+pub(crate) fn project(cnf:&Cnf,degree:&[usize],x:&[f64])->Vec<f64> {
     let mut y=vec![0.0;cnf.nvars];
     for clause in &cnf.clauses {
         if clause.is_empty(){continue;}
@@ -84,7 +84,7 @@ fn project(cnf:&Cnf,degree:&[usize],x:&[f64])->Vec<f64> {
     y
 }
 
-fn profile(cnf:&Cnf)->serde_json::Value {
+pub(crate) fn profile(cnf:&Cnf)->serde_json::Value {
     let mut degree=vec![0usize;cnf.nvars];
     let mut positive=vec![0usize;cnf.nvars];
     let mut negative=vec![0usize;cnf.nvars];
