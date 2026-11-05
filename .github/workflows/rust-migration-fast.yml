@@ -155,6 +155,7 @@ on:
       - "tests/test_claims_standalone_rust_cli.py"
       - "witnora_core/benchmark_artifact.py"
       - "tests/test_artifact_summary_standalone_rust_cli.py"
+      - "tests/test_ci_summary_standalone_rust_cli.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -312,6 +313,7 @@ on:
       - "tests/test_claims_standalone_rust_cli.py"
       - "witnora_core/benchmark_artifact.py"
       - "tests/test_artifact_summary_standalone_rust_cli.py"
+      - "tests/test_ci_summary_standalone_rust_cli.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -494,3 +496,7 @@ jobs:
         run: |
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_artifact_summary
           WITNORA_RUST_ARTIFACT_SUMMARY_BIN="$PWD/rust/witnora-ve/target/release/witnora_artifact_summary" python -m unittest tests.test_artifact_summary_standalone_rust_cli -v
+      - name: Standalone Rust CI verification log summary parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_ci_summary
+          WITNORA_RUST_CI_SUMMARY_BIN="$PWD/rust/witnora-ve/target/release/witnora_ci_summary" python -m unittest tests.test_ci_summary_standalone_rust_cli -v
