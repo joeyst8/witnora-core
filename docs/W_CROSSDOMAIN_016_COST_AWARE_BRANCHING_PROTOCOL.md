@@ -22,7 +22,7 @@ Choose among these complete, static variable orders, with **false branch before 
 
 - **ascending**: 0,1,...,11 (negative control);
 - **degree**: descending unsigned source variable occurrence count, ties by ascending index (primary baseline);
-- **wave**: descending exact mutual information, ties by higher degree then ascending index;
+- **wave**: descending mutual information rounded to 12 decimal places to make numeric ties stable across machines, ties by higher degree then ascending index;
 - **gated wave**: same wave order if `max_i I(X_i; S_C) >= 0.020000000000` bits; otherwise degree order. This fixed threshold is a simple prior heuristic motivated by W-015's already-observed 0.013/0.054-bit scales; do not tune on W-016 outcomes.
 
 All methods use identical simple recursive DPLL: unit propagation until a fixed point, early contradiction, stop on the first satisfying assignment, no learned clauses or restarts, and whole-clause scan count for propagation and all-satisfied checks. Verify each reported SAT verdict against a direct `2^12` truth-table oracle, at least on fixed control instances in both Rust and independent Python; no false result may pass CI.
