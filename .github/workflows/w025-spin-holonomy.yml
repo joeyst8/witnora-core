@@ -1,0 +1,46 @@
+name: W025 gauge holonomy exact spin bridge
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - "rust/witnora-ve/src/bin/witnora_spin_holonomy.rs"
+      - "tests/test_spin_holonomy_rust.py"
+      - ".github/workflows/w025-spin-holonomy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-holonomy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Run Rust gauge-invariance tests
+        run: cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_spin_holonomy
+      - name: Independent exhaustive spin and partition differential audit
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_spin_holonomy
+          WITNORA_RUST_SPIN_BIN="$PWD/rust/witnora-ve/target/release/witnora_spin_holonomy" python -m unittest tests.test_spin_holonomy_rust -v
+      - name: Save complete W025 raw measurements
+        env:
+          W025_REPORT_PATH: ${{ runner.temp }}/w025_spin_holonomy.json
+        run: |
+          rust/witnora-ve/target/release/witnora_spin_holonomy --json > "$W025_REPORT_PATH"
+          python -m json.tool "$W025_REPORT_PATH" > /dev/null
+      - name: Upload raw independent evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w025-exact-gauge-holonomy
+          path: ${{ runner.temp }}/w025_spin_holonomy.json
+          if-no-files-found: ignore
