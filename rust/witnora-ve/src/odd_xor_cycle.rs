@@ -11,6 +11,68 @@ pub struct OddCycle {
     pub steps:Vec<(i32,u32)>,
 }
 
+/// W-CROSSDOMAIN-002: signed-graph balance/cycle-space diagnostic.
+/// Only applies when the entire canonical source is made of complete
+/// binary-XOR CNF gadgets. This is not a general #SAT verifier.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BinaryXorTopology {
+    pub variables: usize,
+    pub equation_edges: usize,
+    pub components: usize,
+    pub cycle_space_dimension: usize,
+    pub inconsistent_cycle_candidate: bool,
+    pub exact_model_count_if_pure: String,
+}
+
+pub fn pure_binary_xor_topology(
+    source: &[Vec<i32>], nvars: usize,
+) -> Result<Option<BinaryXorTopology>, String> {
+    if nvars > 32 { return Err("binary topology diagnostic supports <=32 variables".into()); }
+    let formula = CanonicalCnf::from_signed(source)?;
+    if formula.max_var() as usize > nvars {
+        return Err("source variable exceeds declared universe".into());
+    }
+    let equations = binary_equations(&formula.clauses);
+    let mut accounted = BTreeSet::<Vec<i32>>::new();
+    for &(u, v, rhs) in &equations {
+        accounted.extend(pattern_clauses(u, v, rhs));
+    }
+    let original = formula.clauses.iter().cloned().collect::<BTreeSet<_>>();
+    if accounted != original { return Ok(None); }
+
+    fn root(parents: &mut [usize], mut index: usize) -> usize {
+        while parents[index] != index {
+            let parent = parents[index];
+            parents[index] = parents[parent];
+            index = parents[index];
+        }
+        index
+    }
+    let mut parents = (0..nvars).collect::<Vec<_>>();
+    let mut components = nvars;
+    for &(u, v, _) in &equations {
+        let a = root(&mut parents, u as usize - 1);
+        let b = root(&mut parents, v as usize - 1);
+        if a != b {
+            parents[b] = a;
+            components -= 1;
+        }
+    }
+    // Multi-edges are intentional: opposite RHS on the same support give
+    // an inconsistent length-two cycle and one independent cycle relation.
+    let cycle_space_dimension = equations.len() - (nvars - components);
+    let inconsistent = discover_odd_xor_cycle(&formula.clauses)?.is_some();
+    let model_count = if inconsistent { 0u64 } else { 1u64 << components };
+    Ok(Some(BinaryXorTopology {
+        variables: nvars,
+        equation_edges: equations.len(),
+        components,
+        cycle_space_dimension,
+        inconsistent_cycle_candidate: inconsistent,
+        exact_model_count_if_pure: model_count.to_string(),
+    }))
+}
+
 pub(crate) fn pattern_clauses(u:i32,v:i32,rhs:u32)->BTreeSet<Vec<i32>> {
     let mut expected=BTreeSet::new();
     for left in 0..=1u32 {
@@ -111,5 +173,36 @@ mod tests {
         assert_eq!(cycle.steps.last().unwrap().0,2);
         assert_eq!(cycle.steps.iter().map(|(_,bit)|bit).sum::<u32>()%2,1);
         assert!(discover_odd_xor_cycle(&[vec![1,2]]).unwrap().is_none());
+    }
+
+    #[test]
+    fn signed_graph_cycle_space_matches_independent_source_truth_tables() {
+        let families: &[(&[(i32, i32)], usize)] = &[
+            (&[(1, 2), (2, 3), (1, 3)], 3),
+            (&[(1, 2), (2, 3), (3, 4), (1, 4)], 4),
+            (&[(1, 2), (2, 3), (1, 3), (1, 4), (4, 5), (1, 5)], 5),
+            (&[(1, 2), (1, 2)], 3),
+        ];
+        for &(edges, n) in families {
+            for bits in 0..(1usize << edges.len()) {
+                let mut clauses = Vec::new();
+                for (index, &(u, v)) in edges.iter().enumerate() {
+                    clauses.extend(pattern_clauses(u, v, ((bits >> index) & 1) as u32));
+                }
+                let answer = pure_binary_xor_topology(&clauses, n).unwrap().unwrap();
+                let oracle = (0..(1usize << n)).filter(|&assignment| {
+                    clauses.iter().all(|clause| clause.iter().any(|&lit| {
+                        let value = assignment & (1usize << (lit.unsigned_abs() as usize - 1)) != 0;
+                        value == (lit > 0)
+                    }))
+                }).count();
+                assert_eq!(answer.exact_model_count_if_pure, oracle.to_string());
+                assert_eq!(answer.inconsistent_cycle_candidate, oracle == 0);
+                assert_eq!(answer.cycle_space_dimension,
+                           answer.equation_edges - (n - answer.components));
+            }
+        }
+        assert!(pure_binary_xor_topology(&[vec![1, 2]], 2).unwrap().is_none());
+        assert!(pure_binary_xor_topology(&[vec![1]], 2).unwrap().is_none());
     }
 }
