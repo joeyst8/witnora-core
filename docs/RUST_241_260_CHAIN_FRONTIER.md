@@ -42,4 +42,6 @@ not imply Witnora can solve general SAT efficiently or reduce complexity
 classes. Python remains the default, and this branch is not approved for a
 merge or release.
 
-**Status:** local reference and external proof checks green; pending Rust CI.
+**Status:** focused native CI
+[#41956982135](https://github.com/joeyst8/witnora-core/actions/runs/41956982135)
+passed, including native/Python comparisons and independent proof checks.
