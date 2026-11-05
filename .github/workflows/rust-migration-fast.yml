@@ -117,6 +117,8 @@ on:
       - "tests/test_xor_sparse_order_rust.py"
       - "research/python_to_rust_manifest.json"
       - "tests/test_r180_manifest_audit.py"
+      - "tests/test_xor_frontier_181_200.py"
+      - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
     branches:
@@ -235,6 +237,8 @@ on:
       - "tests/test_xor_sparse_order_rust.py"
       - "research/python_to_rust_manifest.json"
       - "tests/test_r180_manifest_audit.py"
+      - "tests/test_xor_frontier_181_200.py"
+      - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
 
@@ -360,5 +364,7 @@ jobs:
           python -m unittest tests.test_xor_mixed_source_stress_rust -v
           python -m unittest tests.test_xor_runner_options -v
           python -m unittest tests.test_xor_final_adversarial_rust -v
+          python -m unittest tests.test_xor_frontier_181_200 -v
+          python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust
           python -m unittest tests.test_r180_manifest_audit -v
           python -m scripts.audit_witnora_r180
