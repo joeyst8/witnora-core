@@ -3594,8 +3594,10 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/xor_drat_resolution.rs",
       "test": "tests/test_xor_drat_resolution_rust.py",
-      "verified_milestone": "R-132",
-      "migration_note": "Focused Rust CI #41942614415 passed 400 seeded native signed-clause resolution comparisons. Proof export, sparse row-operation scheduling and external DRAT verification remain Python/externally managed; no proof trust is transferred."
+      "verified_milestone": "R-137",
+      "verified_milestones": ["R-132", "R-133", "R-134", "R-135", "R-136", "R-137"],
+      "native_additional_counterparts": ["rust/witnora-ve/src/xor_sparse_schedule.rs", "rust/witnora-ve/src/xor_proof_order.rs"],
+      "migration_note": "Native push CI #41942614415 verified signed-clause resolution (R-132), and corrected full native push CI #41943866142 verified sparse GF(2) row schedules, order summaries, Gaussian proof ordering, widths and strategy selection (R-133 through R-137). Proof generation and external DRAT/RUP checks remain separate; no proof trust is transferred."
     },
     {
       "path": "witnora_core/xor.py",

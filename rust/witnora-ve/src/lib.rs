@@ -96,6 +96,7 @@ pub mod xor_drat_resolution;
 pub mod xor_sparse_schedule;
 pub mod xor_proof_order;
 pub mod xor_proof_emit;
+pub mod xor_ve_refutation;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2225,6 +2226,14 @@ fn xor_drat_emit_decision_native(clause:Vec<i64>,already_active:bool,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_ve_refutation_native(original:Vec<Vec<i64>>,support:Vec<Vec<i64>>,
+    order:Vec<usize>,max_clauses:usize,max_bytes:usize,timeout_seconds:Option<f64>)
+    ->xor_ve_refutation::Answer{
+    xor_ve_refutation::refute(&original,&support,&order,max_clauses,max_bytes,timeout_seconds)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2562,6 +2571,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_drat_clause_line_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_drat_line_size_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_drat_emit_decision_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_ve_refutation_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

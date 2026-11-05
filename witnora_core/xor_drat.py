@@ -523,7 +523,21 @@ def _variable_elimination_refutation(
     max_proof_clauses: int,
     max_proof_bytes: int,
     timeout_seconds: float | None,
+    backend="python",
 ) -> tuple[str | None, str | None, dict[str, Any]]:
+    if backend == "rust":
+        from witnora_ve import xor_ve_refutation_native
+        proof, error, emitted, width, byte_count = xor_ve_refutation_native(
+            [list(clause.literals) for clause in original_formula.clauses],
+            [list(clause) for clause in support_clauses], order,
+            max_proof_clauses, max_proof_bytes, timeout_seconds)
+        return proof, error, {
+            "proof_clause_count_actual": emitted,
+            "proof_clause_max_width": width,
+            "proof_file_size_bytes": byte_count,
+        }
+    if backend != "python":
+        raise ValueError("unknown XOR variable elimination backend")
     active = {clause.literals for clause in original_formula.clauses}
     if not support_clauses <= active:
         return None, "DETECTED_XOR_SOURCE_CLAUSE_MISSING_FROM_ORIGINAL", {
