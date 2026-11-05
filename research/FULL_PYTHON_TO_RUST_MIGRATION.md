@@ -4,35 +4,37 @@ The user requested completion of the remaining Python→Rust migration after the
 R-500 research gate. A **milestone number is not a migrated Python file**.
 Never declare the whole transfer complete based on a test counter.
 
-## Research direction decision — selective Rust acceleration (2026-11-05)
+## Architecture decision — Rust-first Witnora (2026-11-05)
 
-The owner has superseded the earlier objective of converting every Python file.
-**The 560-file count is a historical inventory, not a release target or a
-measure of Witnora's scientific progress.** Keep the ledger for provenance
-and compatibility audits, but do not pursue 100% Rust conversion by default.
+**Witnora is Rust-first for new core and production-facing computational code.**
+New SAT/#SAT algorithms, constraint processing, graph/affine/XOR kernels,
+certificate-producing logic, and performance-sensitive data structures should
+be implemented in Rust by default, with Rust-native unit tests and explicit
+resource/failure behavior. A Python prototype may accelerate exploration, but
+the intended production implementation of a new core algorithm is Rust.
 
-Witnora will use a hybrid architecture:
+Python remains an intentional supporting language for quick experiments,
+benchmark orchestration, notebooks, packaging/integration adapters, and
+independent differential reference implementations. An exception for new
+production computation must state why Python is justified. Lean remains the
+formal proof language; independent checkers such as `drat-trim` remain
+separate proof/evidence authorities.
 
-- **Rust:** performance-critical, deterministic solver kernels and data
-  structures when profiling or benchmarks justify a port.
-- **Python:** experimentation, automation, high-level orchestration,
-  benchmarking and independent cross-language reference behavior.
-- **Lean:** formal proofs and source-bound theorem checking.
-- **Independent checkers:** DRAT and other external evidence verification;
-  the producer must not become its sole proof authority.
+**This is a forward-looking architecture policy, not a completed migration.**
+The 560-file inventory remains historical: do not force-convert every Python
+script or test, and do not count parallel Rust subsets as full-module
+replacements. Existing Python-only core code should be prioritized for porting
+according to scientific importance, runtime measurements and trust boundaries.
+Existing independent Python tests/Lean/external checkers must not be retired
+just to increase a Rust percentage.
 
-Prioritize TC-063 and W-CRC research, with measured solver performance and
-correctness as the outcomes. For each proposed Rust port, record (1) a
-profiled bottleneck or clear integration need, (2) an exact behavioral and
-resource-limit contract, (3) adversarial Python/Rust differential tests,
-(4) independent proof/source-checker gates when applicable, and (5) a
-reproducible benchmark including comparison with established external
-solvers. Retain the Python path if Rust brings no material benefit.
-Native-default adoption remains a separate review and release decision.
-
-Do not remove the existing Python tests, research scripts, or Lean/external
-verification gates merely to increase a migration percentage. No prior
-native-verification claim is strengthened by this policy change.
+For each core algorithm added or ported, require: (1) source and behavior
+contracts including budgets, (2) Rust tests and malformed-input/fail-closed
+cases, (3) differential or independent reference checks, (4) original-CNF
+witness/certificate verification when applicable, and (5) reproducible
+comparisons against internal and established external solvers. Native-default
+deployment remains a separate release gate. Prioritize TC-063, W-CRC and
+measurable mathematical progress over source-file conversion totals.
 
 Source-file inventory at the R-500 baseline:
 
