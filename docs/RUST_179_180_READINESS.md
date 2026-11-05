@@ -15,6 +15,8 @@ The R-number frontier tracks scoped research work and regressions, **not**
 Python-to-Rust migration, a Lean proof, a new SAT complexity result, or proof
 of superiority over an independent solver.
 
-**Status:** R-175–R-179 focused CI #41952269269 is green. The final R-180
-manifest-frontier audit is pending CI; do not treat this file as a release
-approval, main-branch merge or complete Python-to-Rust migration.
+**Status:** R-180 final focused CI
+[#41952745259](https://github.com/joeyst8/witnora-core/actions/runs/41952745259)
+is green. The research milestone batch is signed off for further review only;
+this is not a release approval, main-branch merge, independently established
+formal proof, or complete Python-to-Rust migration.
