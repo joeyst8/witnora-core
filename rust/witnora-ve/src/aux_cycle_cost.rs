@@ -11,6 +11,14 @@ const M: usize = 7;
 const EDGES: [(usize, usize); M] = [
     (0, 1), (0, 2), (0, 3), (1, 2), (1, 4), (3, 5), (4, 5),
 ];
+// W-CROSSDOMAIN-011 holdouts were recorded in the protocol before evaluating
+// their spectra or costs. Both preserve the same indexed triangle [0,1,3].
+const HOLDOUT_H1: [(usize, usize); M] = [
+    (0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 4), (4, 5),
+];
+const HOLDOUT_H2: [(usize, usize); M] = [
+    (0, 1), (0, 2), (0, 3), (1, 2), (1, 4), (1, 5), (2, 3),
+];
 const TRIANGLE: [usize; 3] = [0, 1, 3];
 const FORWARD: [usize; N] = [0, 1, 2, 3, 4, 5];
 const REVERSE: [usize; N] = [5, 4, 3, 2, 1, 0];
@@ -24,8 +32,8 @@ struct Row {
     reverse_nodes: u32,
 }
 
-fn source(mask: u16) -> Vec<Vec<i32>> {
-    EDGES.iter().enumerate().map(|(index, &(a, b))| {
+fn source(mask: u16, edges: &[(usize, usize); M]) -> Vec<Vec<i32>> {
+    edges.iter().enumerate().map(|(index, &(a, b))| {
         [a, b].iter().enumerate().map(|(position, &variable)| {
             let value = (variable + 1) as i32;
             if mask & (1 << (2 * index + position)) != 0 { -value } else { value }
@@ -33,24 +41,25 @@ fn source(mask: u16) -> Vec<Vec<i32>> {
     }).collect()
 }
 
-fn flip_variable(mut mask: u16, variable: usize) -> u16 {
-    for (index, &(a, b)) in EDGES.iter().enumerate() {
+fn flip_variable(mut mask: u16, variable: usize,
+                 edges: &[(usize, usize); M]) -> u16 {
+    for (index, &(a, b)) in edges.iter().enumerate() {
         if a == variable { mask ^= 1 << (2 * index); }
         if b == variable { mask ^= 1 << (2 * index + 1); }
     }
     mask
 }
 
-fn gauge_representative(mut mask: u16) -> u16 {
+fn gauge_representative(mut mask: u16, edges: &[(usize, usize); M]) -> u16 {
     // Variable flips act on disjoint literal-incidence bits. Canonicalize the
     // first incidence of each variable to positive polarity (bit zero).
     for variable in 0..N {
-        let first = EDGES.iter().enumerate().find_map(|(index, &(a, b))| {
+        let first = edges.iter().enumerate().find_map(|(index, &(a, b))| {
             if a == variable { Some(2 * index) }
             else if b == variable { Some(2 * index + 1) }
             else { None }
         }).expect("every graph vertex has an incident edge");
-        if mask & (1 << first) != 0 { mask = flip_variable(mask, variable); }
+        if mask & (1 << first) != 0 { mask = flip_variable(mask, variable, edges); }
     }
     mask
 }
@@ -124,8 +133,8 @@ fn dpll_count(clauses: &[Vec<i32>], order: &[usize; N]) -> (u32, u32) {
     (calls, models)
 }
 
-fn row(mask: u16) -> Result<Row, String> {
-    let clauses = source(mask);
+fn row(mask: u16, edges: &[(usize, usize); M]) -> Result<Row, String> {
+    let clauses = source(mask, edges);
     let (energy, even) = direct_spectra(&clauses);
     let (forward_nodes, models_a) = dpll_count(&clauses, &FORWARD);
     let (reverse_nodes, models_b) = dpll_count(&clauses, &REVERSE);
@@ -195,25 +204,26 @@ fn next_random(state: &mut u32) -> u32 {
     *state
 }
 
-fn example(row: &Row) -> Value {
-    json!({"mask": row.mask, "source": source(row.mask), "energy": row.energy,
+fn example(row: &Row, edges: &[(usize, usize); M]) -> Value {
+    json!({"mask": row.mask, "source": source(row.mask, edges), "energy": row.energy,
         "triangle_even": row.even, "forward_nodes": row.forward_nodes,
         "reverse_nodes": row.reverse_nodes})
 }
 
 /// Exact finite-family audit; no random input formulas and no timing claims.
-pub fn audit() -> Result<Value, String> {
+fn audit_family(edges: &[(usize, usize); M], research_id: &str,
+                graph_name: &str, original: bool) -> Result<Value, String> {
     let representatives = (0..(1u16 << (2 * M)))
-        .map(gauge_representative).collect::<BTreeSet<_>>();
+        .map(|mask| gauge_representative(mask, edges)).collect::<BTreeSet<_>>();
     if representatives.len() != 256 { return Err("gauge orbit count changed".into()); }
     let mut rows = Vec::with_capacity(representatives.len());
-    for mask in representatives { rows.push(row(mask)?); }
+    for mask in representatives { rows.push(row(mask, edges)?); }
     let groups = energy_groups(&rows);
     let labels: Vec<_> = rows.iter().map(|r| r.even).collect();
     let energy_profiles = groups.len();
     let syndrome_profiles = rows.iter().map(|r| (r.energy, r.even))
         .collect::<BTreeSet<_>>().len();
-    if energy_profiles != 80 || syndrome_profiles != 135 {
+    if original && (energy_profiles != 80 || syndrome_profiles != 135) {
         return Err("W-CROSSDOMAIN-009 profile count regression".into());
     }
     let mut split_groups = 0usize;
@@ -258,10 +268,11 @@ pub fn audit() -> Result<Value, String> {
             "exploratory_permutation_p":(extremes+1) as f64/(PERMUTATIONS+1) as f64})
     };
     let controls = [0u16, 2603, 2607, (1u16 << (2 * M)) - 1]
-        .iter().map(|&mask| row(mask).map(|r| example(&r)))
+        .iter().map(|&mask| row(mask, edges).map(|r| example(&r, edges)))
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(json!({"research_id":"W-CROSSDOMAIN-010", "interpretation":"exploratory finite 2-SAT only",
-        "graph_edges_one_based":EDGES.map(|(a,b)|[a+1,b+1]),
+    Ok(json!({"research_id":research_id, "graph_name":graph_name,
+        "interpretation":"exploratory finite 2-SAT only",
+        "graph_edges_one_based":edges.iter().map(|&(a,b)|[a+1,b+1]).collect::<Vec<_>>(),
         "triangle_clause_indices":TRIANGLE,"signings":1u32<<(2*M),
         "gauge_representatives":rows.len(),"energy_profiles":energy_profiles,
         "energy_plus_triangle_profiles":syndrome_profiles,
@@ -271,6 +282,31 @@ pub fn audit() -> Result<Value, String> {
         "forward":stats(forward_base,forward_spec,forward_samples,forward_extreme),
         "reverse":stats(reverse_base,reverse_spec,reverse_samples,reverse_extreme),
         "controls":controls}))
+}
+
+pub fn audit() -> Result<Value, String> {
+    audit_family(&EDGES, "W-CROSSDOMAIN-010", "original", true)
+}
+
+/// A frozen, prospective two-graph topology transfer check. Graphs have
+/// different sorted degree sequences, hence are non-isomorphic to one another
+/// and to the original graph. The null may win; do not enforce positive gain.
+pub fn audit_holdouts() -> Result<Value, String> {
+    let original = audit()?;
+    let h1 = audit_family(&HOLDOUT_H1, "W-CROSSDOMAIN-011", "H1_double_triangle_tail", false)?;
+    let h2 = audit_family(&HOLDOUT_H2, "W-CROSSDOMAIN-011", "H2_two_leaves", false)?;
+    let criterion = [&h1, &h2].iter().all(|report| {
+        ["forward", "reverse"].iter().all(|&policy| {
+            report[policy]["mse_improvement_fraction"].as_f64()
+                .is_some_and(|x| x > 0.0)
+                && report[policy]["exploratory_permutation_p"].as_f64()
+                    .is_some_and(|p| p <= 0.0125)
+        })
+    });
+    Ok(json!({"research_id":"W-CROSSDOMAIN-011",
+        "protocol":"two non-isomorphic six-variable seven-edge graph holdouts; fixed indexed triangle and DPLL orders",
+        "strict_four_way_replication_met":criterion,
+        "original":original,"holdouts":[h1,h2]}))
 }
 
 #[cfg(test)]
@@ -294,25 +330,65 @@ mod tests {
     #[test]
     fn all_six_gauge_flips_preserve_both_search_costs() {
         for mask in [0, 2603, 2607, (1u16 << (2 * M)) - 1] {
-            let baseline = row(mask).unwrap();
+            let baseline = row(mask, &EDGES).unwrap();
             for variable in 0..N {
-                let flipped = row(flip_variable(mask, variable)).unwrap();
+                let flipped = row(flip_variable(mask, variable, &EDGES), &EDGES).unwrap();
                 assert_eq!(flipped.energy, baseline.energy);
                 assert_eq!(flipped.even, baseline.even);
                 assert_eq!(flipped.forward_nodes, baseline.forward_nodes);
                 assert_eq!(flipped.reverse_nodes, baseline.reverse_nodes);
-                assert_eq!(gauge_representative(mask),
-                           gauge_representative(flip_variable(mask, variable)));
+                assert_eq!(gauge_representative(mask, &EDGES),
+                           gauge_representative(flip_variable(mask, variable, &EDGES), &EDGES));
             }
         }
     }
 
     #[test]
     fn known_identical_energy_witnesses_have_distinct_triangle_spectra() {
-        let a = row(2603).unwrap();
-        let b = row(2607).unwrap();
+        let a = row(2603, &EDGES).unwrap();
+        let b = row(2607, &EDGES).unwrap();
         assert_eq!(a.energy, b.energy);
         assert_ne!(a.even, b.even);
         assert_eq!(a.energy, [2, 22, 30, 10, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn both_frozen_non_isomorphic_graph_holdouts_are_exact() {
+        let report = audit_holdouts().unwrap();
+        assert_eq!(report["research_id"], "W-CROSSDOMAIN-011");
+        let holdouts = report["holdouts"].as_array().unwrap();
+        assert_eq!(holdouts.len(), 2);
+        for family in holdouts {
+            assert_eq!(family["gauge_representatives"], 256);
+            assert_eq!(family["signings"], 16_384);
+            assert!(family["forward"]["samples"].as_u64().unwrap() > 0);
+            assert!(family["reverse"]["samples"].as_u64().unwrap() > 0);
+            assert_eq!(family["controls"].as_array().unwrap().len(), 4);
+            // No assertions about improvements or permutation significance:
+            // failure of the predeclared hypothesis must remain reportable.
+        }
+        let sorted_degrees = |edges: &[(usize, usize); M]| {
+            let mut degree = [0usize; N];
+            for &(u, v) in edges { degree[u] += 1; degree[v] += 1; }
+            degree.sort_unstable();
+            degree
+        };
+        let degrees = [sorted_degrees(&EDGES), sorted_degrees(&HOLDOUT_H1),
+                       sorted_degrees(&HOLDOUT_H2)];
+        assert_ne!(degrees[0], degrees[1]);
+        assert_ne!(degrees[0], degrees[2]);
+        assert_ne!(degrees[1], degrees[2]);
+        for edges in [&HOLDOUT_H1, &HOLDOUT_H2] {
+            for mask in [0u16, 2603, 2607, 16383] {
+                let baseline = row(mask, edges).unwrap();
+                for variable in 0..N {
+                    let flipped = row(flip_variable(mask, variable, edges), edges).unwrap();
+                    assert_eq!(flipped.energy, baseline.energy);
+                    assert_eq!(flipped.even, baseline.even);
+                    assert_eq!(flipped.forward_nodes, baseline.forward_nodes);
+                    assert_eq!(flipped.reverse_nodes, baseline.reverse_nodes);
+                }
+            }
+        }
     }
 }
