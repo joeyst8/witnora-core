@@ -3,7 +3,7 @@
 use crate::eth_clause_violation_parity::{violation_mask,parity_accepts};
 use num_bigint::BigUint;
 use num_traits::Zero;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 pub fn local_scopes(source:&[Vec<i32>],nvars:usize,rows:&[Vec<usize>])
     ->Result<Vec<Vec<usize>>,String> {
@@ -61,6 +61,91 @@ pub fn weight_profile(source:&[Vec<i32>],nvars:usize,rows:&[Vec<usize>],
     Ok(coefficients)
 }
 
+/// W-CROSSDOMAIN-006: exact source-CNF violation-energy polynomial using
+/// disconnected primal-graph components. P(q) = sum_x q^(violated clauses).
+/// This is established factor-graph/sum-product mathematics, not a novel
+/// general counting algorithm. No parity rows are imposed in this variant.
+pub fn factorized_violation_profile(
+    source: &[Vec<i32>], nvars: usize, max_component_variables: usize,
+) -> Result<Vec<u64>, String> {
+    if nvars > 32 || source.len() > 64 || max_component_variables == 0
+        || max_component_variables > 14 {
+        return Err("unsupported component/variable/column cap".into());
+    }
+    let mut parent = (0..nvars).collect::<Vec<_>>();
+    fn root(parent: &mut [usize], mut v: usize) -> usize {
+        while parent[v] != v {
+            let next = parent[v];
+            parent[v] = parent[next];
+            v = parent[v];
+        }
+        v
+    }
+    let mut supports = Vec::new();
+    let mut empty_clauses = 0usize;
+    for clause in source {
+        if clause.is_empty() { empty_clauses += 1; continue; }
+        let mut support = BTreeSet::new();
+        for &lit in clause {
+            if lit == 0 || lit == i32::MIN || lit.unsigned_abs() as usize > nvars {
+                return Err("literal outside source variable universe".into());
+            }
+            support.insert(lit.unsigned_abs() as usize - 1);
+        }
+        let first = *support.iter().next().ok_or("unexpected empty support")?;
+        for &v in support.iter().skip(1) {
+            let a = root(&mut parent, first);
+            let b = root(&mut parent, v);
+            if a != b { parent[b] = a; }
+        }
+        supports.push((clause, first));
+    }
+    let mut variables: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    for v in 0..nvars {
+        variables.entry(root(&mut parent, v)).or_default().push(v);
+    }
+    let mut clauses: BTreeMap<usize, Vec<&Vec<i32>>> = BTreeMap::new();
+    for &(clause, first) in &supports {
+        clauses.entry(root(&mut parent, first)).or_default().push(clause);
+    }
+    let mut global = vec![1u64];
+    for (component, vars) in variables {
+        if vars.len() > max_component_variables {
+            return Err("component exceeds exact enumeration cap".into());
+        }
+        let local_clauses = clauses.remove(&component).unwrap_or_default();
+        let mut local = vec![0u64; local_clauses.len() + 1];
+        for assignment in 0..(1usize << vars.len()) {
+            let mut violations = 0;
+            for clause in &local_clauses {
+                let satisfied = clause.iter().any(|&lit| {
+                    let var = lit.unsigned_abs() as usize - 1;
+                    let position = vars.binary_search(&var).expect("component scopes validated");
+                    let value = assignment & (1usize << position) != 0;
+                    value == (lit > 0)
+                });
+                if !satisfied { violations += 1; }
+            }
+            local[violations] = local[violations].checked_add(1)
+                .ok_or("local coefficient overflow")?;
+        }
+        let mut product = vec![0u64; global.len() + local.len() - 1];
+        for (i, &left) in global.iter().enumerate() {
+            for (j, &right) in local.iter().enumerate() {
+                product[i + j] = product[i + j]
+                    .checked_add(left.checked_mul(right).ok_or("coefficient multiplication overflow")?)
+                    .ok_or("coefficient addition overflow")?;
+            }
+        }
+        global = product;
+    }
+    let mut result = vec![0u64; source.len() + 1];
+    for (degree, coefficient) in global.into_iter().enumerate() {
+        result[degree + empty_clauses] = coefficient;
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -73,5 +158,56 @@ mod tests {
         assert_eq!(local_scopes(&source,2,&rows).unwrap(),
             vec![vec![1,3],vec![2,4],vec![3,4]]);
         assert_eq!(direct_scopes(&source,&rows).unwrap(),vec![vec![1,2]]);
+    }
+
+    #[test]
+    fn factorized_profile_matches_independent_small_exhaustive_oracle() {
+        let mut state = 91u64;
+        let mut next = || {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+            state >> 32
+        };
+        for n in 1..=8usize {
+            for _ in 0..64 {
+                let mut source = Vec::new();
+                for _ in 0..(n + 3) {
+                    let width = next() as usize % 4;
+                    let mut clause = Vec::new();
+                    for _ in 0..width {
+                        let variable = (next() as usize % n + 1) as i32;
+                        clause.push(if next() & 1 == 0 { variable } else { -variable });
+                    }
+                    source.push(clause);
+                }
+                let expected = weight_profile(&source, n, &[], 14).unwrap();
+                let actual = factorized_violation_profile(&source, n, 14).unwrap();
+                assert_eq!(actual, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn twelve_independent_binary_clauses_match_analytic_partition_polynomial() {
+        let source = (0..12).map(|j| vec![(2*j+1) as i32, (2*j+2) as i32])
+            .collect::<Vec<_>>();
+        let coefficients = factorized_violation_profile(&source, 24, 2).unwrap();
+        let mut choose = 1u64;
+        for k in 0..=12usize {
+            let expected = choose * 3u64.pow((12-k) as u32);
+            assert_eq!(coefficients[k], expected, "degree {k}");
+            if k < 12 { choose = choose * (12-k) as u64 / (k+1) as u64; }
+        }
+        assert_eq!(coefficients[0], 3u64.pow(12));
+        assert!(factorized_violation_profile(&source, 24, 1).is_err());
+    }
+
+    #[test]
+    fn empty_clauses_and_unused_variables_are_counted_exactly() {
+        assert_eq!(factorized_violation_profile(&[vec![], vec![]], 0, 2).unwrap(),
+                   vec![0, 0, 1]);
+        assert_eq!(factorized_violation_profile(&[vec![], vec![1,-1], vec![2]], 2, 2)
+                       .unwrap(), vec![0, 2, 2, 0]);
+        assert_eq!(factorized_violation_profile(&[], 32, 1).unwrap(),
+                   vec![1u64 << 32]);
     }
 }
