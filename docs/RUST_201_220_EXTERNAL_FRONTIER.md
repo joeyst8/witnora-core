@@ -49,5 +49,7 @@ WITNORA_DRAT_TRIM=/path/to/drat-trim python -m unittest tests.test_xor_external_
 python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust --drat-trim /path/to/drat-trim
 ```
 
-**Status:** pending focused native CI. Python remains the default and the
-existing research branch stays unmerged.
+**Status:** focused native CI
+[#41955834503](https://github.com/joeyst8/witnora-core/actions/runs/41955834503)
+passed, including the pinned external `drat-trim` gate. Python remains the
+default and the research branch stays unmerged.
