@@ -523,3 +523,7 @@ jobs:
         run: |
           cargo test --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_pilot
           cargo run --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_pilot
+      - name: W-CROSSDOMAIN-005 exhaustive topology finite controls
+        run: |
+          python -m unittest tests.test_topology_finite_controls -v
+          python -m scripts.benchmark_topology_finite_controls
