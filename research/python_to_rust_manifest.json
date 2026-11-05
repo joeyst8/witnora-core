@@ -2545,7 +2545,10 @@
       "path": "witnora_core/benchmark_artifact.py",
       "sha": "a84cb4a0091fcb5128ae4307641a81a7a0ace854",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/benchmark_artifact_summary.rs",
+      "native_executable": "rust/witnora-ve/src/bin/witnora_artifact_summary.rs",
+      "migration_note": "Strict public benchmark UNSAT categorization summary reproduced by Python-free Rust CLI; 128 seeded differential cases and malformed JSON gate passed focused CI #41971995324 and full Rust CI #41971995371. This is one pure-data function only; Python packaging and all remaining artifact functions remain default and are not claimed migrated."
     },
     {
       "path": "witnora_core/benchmark.py",
@@ -2583,7 +2586,8 @@
       "rust_counterpart": "rust/witnora-ve/src/claim_boundary.rs",
       "test": "tests/test_claim_boundary_rust.py",
       "verified_milestone": "R-080",
-      "migration_note": "Focused Rust CI #41911341176 passed scanner and file-report differentials across 240 seeded Unicode-adjacent contexts."
+      "native_executable": "rust/witnora-ve/src/bin/witnora_claims.rs",
+      "migration_note": "Focused Rust CI #41911341176 passed scanner and file-report differentials across 240 seeded Unicode-adjacent contexts. Standalone Python-free file-scanning CLI independently passed 128 seeded files, malformed inputs and full/focused CI #41971663031/#41971663155. Python API remains default."
     },
     {
       "path": "witnora_core/cnf.py",
@@ -3995,8 +3999,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 467,
-    "parallel_reference": 79,
+    "not_migrated": 466,
+    "parallel_reference": 80,
     "partial_native_verified": 14
   }
 }

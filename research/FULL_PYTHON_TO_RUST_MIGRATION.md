@@ -119,7 +119,7 @@ After wave 3, the tracked Python source-file statuses are 467 not migrated,
 79 parallel Rust references and 14 partial-native verified, for 560 total.
 No fully native-default source module is claimed.
 
-## Migration wave 4: standalone claim-boundary file scanner (candidate)
+## Migration wave 4: standalone claim-boundary file scanner (verified)
 
 Source: `witnora_core/claim_boundary.py` (already `parallel_reference` from
 R-080). Its existing Rust text scanner is now exposed through the standalone
@@ -127,12 +127,16 @@ R-080). Its existing Rust text scanner is now exposed through the standalone
 file-level findings, forbidden-claim aggregation and fail-closed invalid-file
 handling. The focused gate compares the complete multi-file JSON result with
 the independent Python API across 128 seeded Unicode-adjacent files and
-normal/adversarial controls. Until native CI passes and a replacement policy
-is adopted, this is a candidate path, not a newly migrated Python file.
+normal/adversarial controls. Focused CI
+[#41971663155](https://github.com/joeyst8/witnora-core/actions/runs/41971663155)
+and full Rust CI
+[#41971663031](https://github.com/joeyst8/witnora-core/actions/runs/41971663031)
+passed. This executable path is verified, but the original Python API is
+still the default; the manifest category remains `parallel_reference`.
 
-## Migration wave 5: strict benchmark artifact UNSAT summary (candidate)
+## Migration wave 5: strict benchmark artifact UNSAT summary (verified subset)
 
-Source: `witnora_core/benchmark_artifact.py` (`not_migrated` in the ledger).
+Source: `witnora_core/benchmark_artifact.py` (`not_migrated` before wave 5).
 Candidate Rust implementation: `rust/witnora-ve/src/benchmark_artifact_summary.rs`,
 with Python-free `witnora_artifact_summary BENCHMARK_JSON [--out SUMMARY_JSON]`.
 Only the `strict_verification_summary` pure-data function is reproduced;
@@ -141,7 +145,19 @@ creation remain Python. The opt-in CLI is compared with Python on 128 seeded
 benchmark records, including every UNSAT evidence category, and rejects
 malformed JSON without creating an output. The critical rule is unchanged:
 native XOR UNSAT labels never count as independently `drat-trim`-certified.
-**This is pending native CI and cannot be counted as a full migration.**
+Focused CI
+[#41971995324](https://github.com/joeyst8/witnora-core/actions/runs/41971995324)
+and full Rust CI
+[#41971995371](https://github.com/joeyst8/witnora-core/actions/runs/41971995371)
+passed. The ledger now records this **verified subset** as `parallel_reference`,
+not as a full source-file replacement.
+
+After wave 5, the tracked source-file statuses are 466 not migrated, 80
+parallel Rust references and 14 partial-native verified, for 560 total.
+The current research branch has four Python-free reporting/scanning binaries:
+`witnora_report`, `witnora_compare`, `witnora_claims`, and
+`witnora_artifact_summary`. None should be mistaken for a native-default
+replacement of the original Python module.
 
 ## Next dependency-aware work
 
@@ -150,7 +166,7 @@ native XOR UNSAT labels never count as independently `drat-trim`-certified.
 2. Prioritize reproducible, side-effect-free verification/reporting helpers
    with explicit semantics, adding Rust-native tests and Python differential
    controls before switching defaults.
-3. Tackle the remaining 55 unmigrated core modules, and review the 79 parallel
+3. Tackle the remaining 54 unmigrated core modules, and review the 80 parallel
    and 14 partial modules based on runtime dependency and soundness risk rather
    than filename count alone.
 4. Track CLI, benchmark scripts and tests separately; preserve independent
