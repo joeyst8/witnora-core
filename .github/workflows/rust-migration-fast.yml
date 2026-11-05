@@ -118,6 +118,7 @@ on:
       - "research/python_to_rust_manifest.json"
       - "tests/test_r180_manifest_audit.py"
       - "tests/test_xor_frontier_181_200.py"
+      - "tests/test_xor_external_201_220.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -238,6 +239,7 @@ on:
       - "research/python_to_rust_manifest.json"
       - "tests/test_r180_manifest_audit.py"
       - "tests/test_xor_frontier_181_200.py"
+      - "tests/test_xor_external_201_220.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -270,6 +272,12 @@ jobs:
           python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
           maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
           python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
+      - name: Build pinned external drat-trim
+        run: |
+          git clone --quiet https://github.com/marijnheule/drat-trim.git "$RUNNER_TEMP/witnora-drat-trim"
+          git -C "$RUNNER_TEMP/witnora-drat-trim" checkout --quiet --detach 2e3b2dc0ecf938addbd779d42877b6ed69d9a985
+          make -C "$RUNNER_TEMP/witnora-drat-trim" drat-trim
+          echo "WITNORA_DRAT_TRIM=$RUNNER_TEMP/witnora-drat-trim/drat-trim" >> "$GITHUB_ENV"
       - name: Focused R-067 through R-142 source comparisons
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
@@ -365,6 +373,7 @@ jobs:
           python -m unittest tests.test_xor_runner_options -v
           python -m unittest tests.test_xor_final_adversarial_rust -v
           python -m unittest tests.test_xor_frontier_181_200 -v
-          python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust
+          python -m unittest tests.test_xor_external_201_220 -v
+          python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m unittest tests.test_r180_manifest_audit -v
           python -m scripts.audit_witnora_r180

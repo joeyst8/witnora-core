@@ -54,6 +54,9 @@ Initial local reference result: 480/480 bounded cases passed (240 SAT and
 240 UNSAT), with 20 Python unit gates green. Native differential and external
 checker certification are separate, not silently inferred from this result.
 
-**Status:** candidate pending native Rust CI. Python remains the default,
-existing Lean and independent DRAT trust boundaries are unchanged, and the
-research branch must not be merged solely on this checkpoint.
+**Status:** focused native Rust CI
+[#41955093214](https://github.com/joeyst8/witnora-core/actions/runs/41955093214)
+passed, including Rust/Python agreement across the native-run experiment.
+Python remains the default, existing Lean and independent DRAT trust
+boundaries are unchanged, and the research branch must not be merged solely
+on this checkpoint.
