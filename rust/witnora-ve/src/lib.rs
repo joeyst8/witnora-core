@@ -2040,6 +2040,14 @@ fn anf_canonical_equations_native(equations:Vec<Vec<Vec<usize>>>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn anf_evaluate_native(poly:Vec<Vec<usize>>,assignment_bits:String)
+    ->PyResult<bool>{
+    violation_image_anf::evaluate(&poly,&assignment_bits)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2353,6 +2361,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(anf_multiply_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_substitute_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_canonical_equations_native, module)?)?;
+    module.add_function(wrap_pyfunction!(anf_evaluate_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

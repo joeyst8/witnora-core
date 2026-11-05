@@ -49,6 +49,23 @@ pub fn canonical_equations(equations:&[Polynomial])->Vec<Polynomial>{
  distinct.into_iter().collect()
 }
 
+/// R-114: exact polynomial evaluation against an arbitrary-width assignment.
+/// Assignment bit zero corresponds to variable 1.
+pub fn evaluate(poly:&[Vec<usize>],assignment_bits:&str)->Result<bool,String>{
+ let bits=BigUint::parse_bytes(assignment_bits.as_bytes(),10)
+     .ok_or("invalid assignment mask")?;
+ let mut parity=false;
+ for mon in canonical(poly){
+  if mon.iter().any(|&v|v==0){
+   return Err("variable IDs must be positive".into());
+  }
+  if mon.iter().all(|&v|((&bits >> (v-1)) & BigUint::one())==BigUint::one()){
+   parity=!parity;
+  }
+ }
+ Ok(parity)
+}
+
 /// R-108: finite bounded Shannon counter with exact arbitrary-width counts.
 pub type CountAnswer=(String,usize,usize,usize);
 
@@ -108,4 +125,8 @@ pub fn count_zeros(equations:&[Polynomial],nvars:usize,max_states:usize)
  assert_eq!(substitute(&[vec![1,2],vec![2]],1,true),Vec::<Vec<usize>>::new());
  assert_eq!(substitute(&[vec![1,2],vec![2]],1,false),vec![vec![2]]);
  assert_eq!(count_zeros(&[vec![vec![1]]],1,10).unwrap(),("1".into(),1,0,1));
+ assert_eq!(evaluate(&[vec![130],vec![2]],
+     &(BigUint::one()<<129usize).to_string()).unwrap(),true);
+ assert_eq!(evaluate(&[vec![],vec![1,130]],"0").unwrap(),true);
+ assert!(evaluate(&[vec![0]],"0").is_err());
 }}

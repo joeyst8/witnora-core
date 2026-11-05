@@ -119,7 +119,15 @@ def row_violation_polynomials(
     return tuple(result)
 
 
-def evaluate_polynomial(poly: Polynomial, assignment_bits: int) -> bool:
+def evaluate_polynomial(poly: Polynomial, assignment_bits: int,
+                        *, backend="python") -> bool:
+    if assignment_bits < 0:
+        raise ValueError("assignment mask must be nonnegative")
+    if backend == "rust":
+        from witnora_ve import anf_evaluate_native
+        return anf_evaluate_native(_native_polynomial(poly), str(assignment_bits))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     parity = False
     for monomial in poly:
         term = all(bool(assignment_bits & (1 << (v - 1)))
