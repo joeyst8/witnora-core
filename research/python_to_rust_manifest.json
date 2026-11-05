@@ -3594,10 +3594,10 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/xor_drat_resolution.rs",
       "test": "tests/test_xor_drat_resolution_rust.py",
-      "verified_milestone": "R-137",
-      "verified_milestones": ["R-132", "R-133", "R-134", "R-135", "R-136", "R-137"],
-      "native_additional_counterparts": ["rust/witnora-ve/src/xor_sparse_schedule.rs", "rust/witnora-ve/src/xor_proof_order.rs"],
-      "migration_note": "Native push CI #41942614415 verified signed-clause resolution (R-132), and corrected full native push CI #41943866142 verified sparse GF(2) row schedules, order summaries, Gaussian proof ordering, widths and strategy selection (R-133 through R-137). Proof generation and external DRAT/RUP checks remain separate; no proof trust is transferred."
+      "verified_milestone": "R-148",
+      "verified_milestones": ["R-132", "R-133", "R-134", "R-135", "R-136", "R-137", "R-138", "R-139", "R-140", "R-141", "R-142", "R-143", "R-144", "R-145", "R-146", "R-147", "R-148"],
+      "native_additional_counterparts": ["rust/witnora-ve/src/xor_sparse_schedule.rs", "rust/witnora-ve/src/xor_proof_order.rs", "rust/witnora-ve/src/xor_proof_emit.rs", "rust/witnora-ve/src/xor_ve_refutation.rs", "rust/witnora-ve/src/xor_row_sources.rs", "rust/witnora-ve/src/xor_row_validation.rs"],
+      "migration_note": "Native push CI #41942614415 verified signed-clause resolution R-132, and #41943866142 verified R-133–R-137. Focused CI #41946908938 and full native CI #41946908913 verified R-138–R-144. Focused CI #41947535584 verified R-145–R-148; the full native companion run is tracked separately. All Python references and independent RUP, DRAT and Lean trust checks remain unchanged. R-149–R-150 are implementation only pending CI."
     },
     {
       "path": "witnora_core/xor.py",
@@ -3611,7 +3611,7 @@
       "migration_note": "CI #41940786252 passed normalization/evaluation/substitution; #41941245719 passed batch substitution and Gaussian trace; #41941696815 passed verification/XOR-CNF encoding; #41942185395 passed complete source-CNF XOR detection; #41942614415 passed exact explicit sidecar parser tests. Python default and provenance checks remain."
     }
   ],
-  "last_updated": "2026-11-04",
+  "last_updated": "2026-11-05",
   "baseline_original_python_files": 560,
   "additional_python_interop_adapters": [
     "witnora_core/crc_rust_fused.py",

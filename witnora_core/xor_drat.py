@@ -745,7 +745,23 @@ def _derive_row_encoding_from_parent_rows(
     max_proof_bytes: int,
     timeout_seconds: float | None,
     started: float,
+    backend="python",
 ) -> tuple[int, int, int, str | None]:
+    if backend == "rust":
+        from witnora_ve import xor_derive_row_encoding_native
+        count, byte_count, width, error, added_lines, added_clauses = xor_derive_row_encoding_native(
+            [list(clause) for clause in left_encoding],
+            [list(clause) for clause in right_encoding],
+            sorted(left_value[0]), sorted(right_value[0]),
+            [list(clause) for clause in expected_encoding],
+            [list(clause) for clause in active], emitted, proof_bytes, max_width,
+            max_proof_clauses, max_proof_bytes, timeout_seconds,
+            time.perf_counter() - started)
+        lines.extend(added_lines)
+        active.update(tuple(clause) for clause in added_clauses)
+        return count, byte_count, width, error
+    if backend != "python":
+        raise ValueError("unknown XOR row derivation backend")
     focus = set(left_encoding) | set(right_encoding)
     shared = sorted(left_value[0] & right_value[0])
     for variable in shared:
@@ -863,6 +879,7 @@ def _row_trace_refutation(
             max_proof_bytes=max_proof_bytes,
             timeout_seconds=timeout_seconds,
             started=started,
+            backend=backend,
         )
         if error is not None:
             return None, error, {

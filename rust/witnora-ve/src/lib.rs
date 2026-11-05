@@ -99,6 +99,7 @@ pub mod xor_proof_emit;
 pub mod xor_ve_refutation;
 pub mod xor_row_sources;
 pub mod xor_row_validation;
+pub mod xor_row_derivation;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2257,6 +2258,23 @@ fn xor_source_clause_union_native(rows:Vec<Vec<Vec<i64>>>)->Vec<Vec<i64>>{
 
 #[cfg(feature = "python")]
 #[pyfunction]
+#[allow(clippy::too_many_arguments)]
+fn xor_derive_row_encoding_native(
+    left_encoding:Vec<Vec<i64>>,right_encoding:Vec<Vec<i64>>,
+    left_variables:Vec<usize>,right_variables:Vec<usize>,
+    expected_encoding:Vec<Vec<i64>>,active_clauses:Vec<Vec<i64>>,
+    emitted:usize,proof_bytes:usize,max_width:usize,
+    max_proof_clauses:usize,max_proof_bytes:usize,
+    timeout_seconds:Option<f64>,elapsed_before_seconds:f64,
+)->xor_row_derivation::Answer{
+    xor_row_derivation::derive(&left_encoding,&right_encoding,&left_variables,
+        &right_variables,&expected_encoding,&active_clauses,emitted,proof_bytes,
+        max_width,max_proof_clauses,max_proof_bytes,timeout_seconds,
+        elapsed_before_seconds)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2598,6 +2616,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_source_rows_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_validate_row_operation_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_source_clause_union_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_derive_row_encoding_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;
