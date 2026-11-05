@@ -26,7 +26,14 @@ def _results(data: dict[str, Any]) -> list[dict[str, Any]]:
     return list(data.get("per_case_results", []))
 
 
-def generate_markdown_report(data: dict[str, Any]) -> str:
+def generate_markdown_report(data: dict[str, Any], *, backend: str = "python") -> str:
+    if backend == "rust":
+        from witnora_ve import benchmark_report_markdown_native
+
+        # Independent Python renderer remains the default and test oracle.
+        return benchmark_report_markdown_native(json.dumps(data, sort_keys=True))
+    if backend != "python":
+        raise ValueError("unknown benchmark report backend")
     summary = _summary(data)
     results = _results(data)
     route_counts: dict[str, int] = {}

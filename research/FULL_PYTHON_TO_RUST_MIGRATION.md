@@ -54,6 +54,22 @@ and full Rust CI
 The manifest now records 469 not migrated, 77 parallel Rust references, and
 14 partial native verified. **Zero full-module conversions are claimed**.
 
+## Migration wave 2: deterministic benchmark Markdown renderer
+
+Source: `witnora_core/report.py` (`not_migrated` at R-500 baseline).
+Candidate: `rust/witnora-ve/src/benchmark_report.rs`, with JSON decoding and
+full Rust construction of the benchmark overview, counts, route tables,
+reduction statistics, determinism, no-collapse and width-skip sections, and
+explicit claim boundaries.
+
+`generate_markdown_report(..., backend="rust")` is opt-in; the unmodified
+Python renderer remains the default and byte-for-byte oracle. Normal,
+adversarial missing-field and 128 seeded report fixtures run through native
+differential tests in focused CI. The file still contains a Python CLI and
+is **not** a complete source-file migration.
+
+Wave 2 status: **candidate pending native GitHub CI**.
+
 ## Next dependency-aware work
 
 1. Finish and independently verify the CI policy subset, then assess the

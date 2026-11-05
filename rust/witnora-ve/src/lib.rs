@@ -109,6 +109,7 @@ pub mod local_replay;
 pub mod component_proof;
 pub mod component_context_replay;
 pub mod ci_fail_policy;
+pub mod benchmark_report;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -720,6 +721,12 @@ fn ci_marketplace_failure_reasons_native(
 ) -> Vec<String> {
     ci_fail_policy::marketplace_failure_reasons(&risk_flags, &verdict,
         &selected_flags, &selected_verdicts)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn benchmark_report_markdown_native(source_json: &str) -> PyResult<String> {
+    benchmark_report::generate_report(source_json).map_err(PyValueError::new_err)
 }
 
 #[cfg(feature = "python")]
@@ -2557,6 +2564,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(native_unsat_trace_metadata_supported_native, module)?)?;
     module.add_function(wrap_pyfunction!(ci_failure_reasons_native, module)?)?;
     module.add_function(wrap_pyfunction!(ci_marketplace_failure_reasons_native, module)?)?;
+    module.add_function(wrap_pyfunction!(benchmark_report_markdown_native, module)?)?;
     module.add_function(wrap_pyfunction!(bipartition_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(possible_two_xor_patterns_native, module)?)?;
     module.add_function(wrap_pyfunction!(full_cnf_anchors_separated_native, module)?)?;
