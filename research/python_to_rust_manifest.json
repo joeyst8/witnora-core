@@ -2503,7 +2503,12 @@
       "path": "witnora_core/anf_separator_conditioning.py",
       "sha": "9bafa9c44088c16288a17ba0b506b53162c65902",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/anf_separator_conditioning.rs",
+      "test": "tests/test_anf_separator_search_rust.py",
+      "verified_milestone": "R-110",
+      "verified_milestones": ["R-109", "R-110"],
+      "migration_note": "Push-triggered focused Rust CI #41936430000 passed native residual component and bounded separator-search differential tests. Separator-conditioned counting and Python orchestration are pending separate verification."
     },
     {
       "path": "witnora_core/anf_structured_counter.py",
@@ -3559,7 +3564,12 @@
       "path": "witnora_core/violation_image_anf.py",
       "sha": "3738014028a24bcf3872fe4860ba8a73f3358a56",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/violation_image_anf.rs",
+      "test": "tests/test_anf_counter_rust.py",
+      "verified_milestone": "R-108",
+      "verified_milestones": ["R-107", "R-108"],
+      "migration_note": "Push-triggered focused Rust CI #41936430000 passed Boolean GF(2) algebra and exact bounded Shannon-counting differential tests. Later source-construction, geometry and evaluation routes are implemented but still await native CI."
     },
     {
       "path": "witnora_core/xor_diagnostic.py",
@@ -3963,8 +3973,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 475,
+    "not_migrated": 473,
     "parallel_reference": 76,
-    "partial_native_verified": 9
+    "partial_native_verified": 11
   }
 }

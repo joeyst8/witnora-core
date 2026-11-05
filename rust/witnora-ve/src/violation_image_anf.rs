@@ -66,6 +66,56 @@ pub fn evaluate(poly:&[Vec<usize>],assignment_bits:&str)->Result<bool,String>{
  Ok(parity)
 }
 
+/// R-115: compile the exact violation indicator of one signed CNF clause.
+pub fn clause_violation(clause:&[i64])->Result<Polynomial,String>{
+ let mut result=vec![vec![]];
+ for &lit in clause{
+  if lit==0{return Err("zero is not a source literal".into());}
+  let var=usize::try_from(lit.unsigned_abs())
+      .map_err(|_|"literal variable exceeds usize")?;
+  let factor=if lit<0 {vec![vec![var]]} else {vec![vec![],vec![var]]};
+  result=multiply(&result,&factor);
+ }
+ Ok(result)
+}
+
+/// R-116: compile every clause of an already canonicalized source CNF.
+pub fn source_violations(source:&[Vec<i64>])->Result<Vec<Polynomial>,String>{
+ source.iter().map(|clause|clause_violation(clause)).collect()
+}
+
+/// R-117: XOR source-clause violation polynomials into selected parity rows.
+pub fn row_violations(clauses:&[Polynomial],rows:&[Vec<usize>])
+ ->Result<Vec<Polynomial>,String>{
+ let mut result=Vec::with_capacity(rows.len());
+ for row in rows{
+  let mut equation=Vec::new();
+  for &j in row{
+   let clause=clauses.get(j).ok_or("row contains invalid clause index")?;
+   equation=xor(&equation,clause);
+  }
+  result.push(equation);
+ }
+ Ok(result)
+}
+
+/// R-118: source-parity ANF geometry report, using exact native equations.
+pub type GeometryAnswer=(usize,usize,usize,usize,usize,usize,usize,usize);
+pub fn geometry(nvars:usize,clauses:&[Polynomial],rows:&[Vec<usize>])
+ ->Result<GeometryAnswer,String>{
+ let equations=row_violations(clauses,rows)?;
+ let mut raw=0usize;
+ for row in rows{for &j in row{
+  raw+=clauses[j].len();
+ }}
+ let kept=equations.iter().map(|eq|eq.len()).sum();
+ let zeros=equations.iter().filter(|eq|eq.is_empty()).count();
+ let maximum=equations.iter().flat_map(|eq|eq.iter())
+     .map(|mon|mon.len()).max().unwrap_or(0);
+ let distinct=canonical_equations(&equations).len();
+ Ok((nvars,clauses.len(),rows.len(),raw,kept,zeros,maximum,distinct))
+}
+
 /// R-108: finite bounded Shannon counter with exact arbitrary-width counts.
 pub type CountAnswer=(String,usize,usize,usize);
 
@@ -129,4 +179,15 @@ pub fn count_zeros(equations:&[Polynomial],nvars:usize,max_states:usize)
      &(BigUint::one()<<129usize).to_string()).unwrap(),true);
  assert_eq!(evaluate(&[vec![],vec![1,130]],"0").unwrap(),true);
  assert!(evaluate(&[vec![0]],"0").is_err());
+ assert_eq!(clause_violation(&[]).unwrap(),vec![vec![]]);
+ assert_eq!(clause_violation(&[1,-1]).unwrap(),Vec::<Vec<usize>>::new());
+ assert_eq!(clause_violation(&[-1,-2]).unwrap(),vec![vec![1,2]]);
+ assert!(clause_violation(&[0]).is_err());
+ assert_eq!(source_violations(&[vec![1],vec![-2]]).unwrap(),
+     vec![vec![vec![],vec![1]],vec![vec![2]]]);
+ assert_eq!(row_violations(&[vec![vec![1]],vec![vec![1]]],
+     &[vec![0,1],vec![0]]).unwrap(),vec![vec![],vec![vec![1]]]);
+ assert!(row_violations(&[],&[vec![0]]).is_err());
+ assert_eq!(geometry(2,&[vec![vec![1]],vec![vec![1]]],
+     &[vec![0,1],vec![0]]).unwrap(),(2,2,2,3,1,1,1,1));
 }}

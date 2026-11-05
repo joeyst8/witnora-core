@@ -82,6 +82,11 @@ def false_literal_polynomial(lit: int, *, backend="python") -> Polynomial:
 
 def clause_violation_polynomial(clause: tuple[int, ...] | list[int],
                                 *, backend="python") -> Polynomial:
+    if backend == "rust":
+        from witnora_ve import anf_clause_violation_native
+        return _as_polynomial(anf_clause_violation_native(list(clause)))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     result = ONE
     for lit in clause:
         result = multiply_polynomials(result,
@@ -96,6 +101,12 @@ def source_violation_polynomials(
     *, backend="python",
 ) -> tuple[Polynomial, ...]:
     cnf = canonical_source(source, nvars)
+    if backend == "rust":
+        from witnora_ve import anf_source_violations_native
+        return tuple(_as_polynomial(poly) for poly in
+                     anf_source_violations_native([list(clause) for clause in cnf]))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     return tuple(clause_violation_polynomial(clause, backend=backend) for clause in cnf)
 
 
@@ -110,6 +121,13 @@ def row_violation_polynomials(
         verify_sparse_parity_basis(sketch, basis)
     rows = sketch.rows if basis is None else basis.rows
     clauses = source_violation_polynomials(cnf, sketch.nvars, backend=backend)
+    if backend == "rust":
+        from witnora_ve import anf_row_violations_native
+        return tuple(_as_polynomial(poly) for poly in anf_row_violations_native(
+            [_native_polynomial(clause) for clause in clauses],
+            [list(row) for row in rows]))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     result = []
     for row in rows:
         equation = ZERO
@@ -263,6 +281,13 @@ def analyze_parity_anf(
 ) -> ANFGeometry:
     cnf = validate_sparse_odd_sketch(source, sketch)
     clauses = source_violation_polynomials(cnf, sketch.nvars, backend=backend)
+    if backend == "rust":
+        from witnora_ve import anf_geometry_native
+        return ANFGeometry(*anf_geometry_native(
+            sketch.nvars, [_native_polynomial(poly) for poly in clauses],
+            [list(row) for row in sketch.rows]))
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     equations = row_violation_polynomials(cnf, sketch, backend=backend)
     raw = sum(sum(len(clauses[j]) for j in row) for row in sketch.rows)
     kept = sum(len(eq) for eq in equations)

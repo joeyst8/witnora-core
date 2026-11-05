@@ -185,5 +185,5 @@ pub fn count(equations:&[Vec<Vec<usize>>],nvars:usize,max_states:usize)
 #[cfg(test)]mod tests{use super::*;#[test]fn simple(){
  assert_eq!(count(&[vec![vec![1]]],1,10).unwrap(),
   ("1".into(),1,0,0,1,0,1,1));
- assert_eq!(count(&[],100,10).unwrap().0,(BigUint::one()<<100).to_string());
+ assert_eq!(count(&[],100,10).unwrap().0,(BigUint::one()<<100usize).to_string());
 }}
