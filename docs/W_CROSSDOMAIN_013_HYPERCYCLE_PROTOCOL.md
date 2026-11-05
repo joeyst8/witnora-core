@@ -2,6 +2,8 @@
 
 **Protocol frozen before examining the new family results.** W-CROSSDOMAIN-012 showed that fixed clause-position parity worsened prediction in its regular cyclic 3-CNF hypergraph, despite helping in an irregular one. This experiment asks whether an *algebraically selected* parity row is more robust on **fresh signed 3-CNF incidence hypergraphs**. Neither a positive nor a negative outcome is a complexity-class result.
 
+**Verified 2026-11-05: STRICT FOUR-WAY REPLICATION MET, but direct feature-extraction work is often more expensive than DPLL search.** The frozen protocol was committed in `aca1b83e6d1df3d3cb194474ce363a271ac81666` before the implementation/results commit `18800a5983974fdbd473a1dc529c0df1bea31506`.
+
 ## Frozen hypergraphs
 
 Use six variables, six indexed clauses of width three, and independent signs at each of the 18 literal occurrences. Every graph contains all six variables, so `2^18 = 262,144` signings split into exactly `4,096` variable-flip gauge orbits. No results from these graph families were examined before freezing this protocol.
@@ -31,7 +33,43 @@ All six-clause width-three formulas are SAT by the 64-minus-48 union bound (at l
 
 Implement a Rust `witnora_hypercycle` JSON CLI and independent Python controls checking incidence-nullspace selection, raw signed source, exact histograms, DPLL counts/scans and the four-way criterion. Verify full GitHub Rust CI before recording any outcome; preserve negative results and raw metrics.
 
+## Exact verified results
+
+Both new Pasch-core families had **4,096** canonical polarity representatives. The Rust selector chose `[0,1,2,3]` from the GF(2) left kernel *before* evaluating signed assignment spectra. The independent Python oracle confirmed the selection, signed source clauses, exact spectrum counts, full-model DPLL nodes, and clause scans for all designated reference signings.
+
+| Frozen family / DPLL order | Eligible LOO cases | Energy-only MSE | Energy + hypercycle MSE | Error reduction | Exploratory add-one p |
+|---|---:|---:|---:|---:|---:|
+| P1 Pasch offset / ascending | 4,085 | 11.8339 | 11.5479 | **+2.42%** | 0.000999 |
+| P1 Pasch offset / descending | 4,085 | 14.9318 | 14.6182 | **+2.10%** | 0.000999 |
+| P2 Pasch shared / ascending | 4,070 | 8.3669 | 6.8986 | **+17.55%** | 0.000999 |
+| P2 Pasch shared / descending | 4,070 | 12.2690 | 11.4620 | **+6.58%** | 0.000999 |
+
+**The preregistered strict criterion was MET:** all four improvements were positive and all four conditional permutation tails met the frozen `0.0125` threshold. This is *within-family* cross-validation on tiny, all-SAT formulas, not independent real-world solver generalization or proof of algorithmic novelty. P1's gain is very small despite the nominal permutation outcome.
+
+### Work-cost falsification
+
+Direct computation of the full parity-conditioned histogram inspects 64 assignments × 6 clauses = **384 clause scans per formula**, excluding the extra GF(2) hypercycle selection and Fourier cross-check. Instrumented DPLL scan counts show:
+
+| Frozen family / DPLL order | Mean DPLL clause scans | Fraction where 384 feature scans exceed DPLL scans |
+|---|---:|---:|
+| P1 / ascending | 353.23 | **74.39%** |
+| P1 / descending | 372.90 | **60.69%** |
+| P2 / ascending | 317.21 | **97.71%** |
+| P2 / descending | 434.59 | **14.70%** |
+
+Thus the feature appears to encode finite-family search-tree information but is **not currently an efficient predictor or solver heuristic**. In P2/ascending, exact feature extraction alone inspected more source clauses than the entire measured DPLL model-count tree in almost 98% of cases. These are clause-scan units, not wall-clock CPU timings, and omit Fourier/check overhead.
+
+### Independent CI evidence
+
+- [Focused Rust research gate: 30/30 steps passed](https://github.com/joeyst8/witnora-core/actions/runs/42088866348), including the W-013 Rust CLI, both independent Python oracles, and unchanged W-010/011/012 regressions.
+- [Native Rust differential gate: 84/84 steps passed](https://github.com/joeyst8/witnora-core/actions/runs/42088866246).
+
+### Next mathematically meaningful falsification
+
+Avoid tuning another expensive parity observable against the already-seen P1/P2 data. Instead, predeclare a **budgeted feature computation** with runtime/operation accounting and compare it to cheap graph/topology baselines on fresh, larger instances. Binary Gaussian elimination can find a nullspace basis in polynomial time, but **finding a minimum-support nonzero codeword in general is computationally difficult**; the current bounded 63-subset scan must not be sold as a general efficient algebraic algorithm. Exact global violation histograms also require exponentially many assignments or equivalent structure-exploiting work. Test prospective genuinely challenging 3-CNF formulas (including UNSAT) with independently certified outcomes before claiming any relevance to P versus NP.
+
 ## Prior mathematics
 
 - G. D. Forney Jr., *Codes on Graphs: Duality and MacWilliams Identities*, IEEE Transactions on Information Theory (2011), <https://arxiv.org/abs/0911.5508>.
 - A. Al-Bashabsheh and Y. Mao, *On Factor Graphs and the Fourier Transform*, IEEE Transactions on Information Theory (2005), <https://ieeexplore.ieee.org/document/1424306/>.
+- A. Vardy, *The Intractability of Computing the Minimum Distance of a Code*, IEEE Transactions on Information Theory (1997), <https://doi.org/10.1109/18.641542> (complexity caution for general minimum-support codeword selection).
