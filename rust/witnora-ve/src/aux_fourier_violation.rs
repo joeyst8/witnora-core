@@ -235,4 +235,24 @@ mod tests {
         assert!(fourier_parity_violation_profile(&[vec![0]], 1, &[], &[], 1).is_err());
         assert!(fourier_parity_violation_profile(&[vec![1]], 1, &[vec![0]], &[], 1).is_err());
     }
+
+    #[test]
+    fn identical_energy_profiles_can_have_distinct_triangle_syndrome_spectra() {
+        // W-CROSSDOMAIN-009 exhaustive six-variable seven-clause witness;
+        // both source formulas have the identical indexed primal graph.
+        let source_a = vec![vec![1,2], vec![-1,3], vec![-1,4], vec![-2,-3],
+                            vec![-2,5], vec![-4,6], vec![-5,-6]];
+        let source_b = vec![vec![1,2], vec![1,3], vec![-1,4], vec![-2,-3],
+                            vec![-2,5], vec![-4,6], vec![-5,-6]];
+        let energy = vec![2,22,30,10,0,0,0,0];
+        assert_eq!(fourier_parity_violation_profile(&source_a, 6, &[], &[], 6).unwrap(),
+                   energy);
+        assert_eq!(fourier_parity_violation_profile(&source_b, 6, &[], &[], 6).unwrap(),
+                   energy);
+        let cycle = vec![vec![0,1,3]];
+        assert_eq!(fourier_parity_violation_profile(&source_a, 6, &cycle, &[false], 6)
+                   .unwrap(), vec![2,12,2,0,0,0,0,0]);
+        assert_eq!(fourier_parity_violation_profile(&source_b, 6, &cycle, &[false], 6)
+                   .unwrap(), vec![2,16,10,4,0,0,0,0]);
+    }
 }
