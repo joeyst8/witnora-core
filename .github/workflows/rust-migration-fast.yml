@@ -130,6 +130,8 @@ on:
       - "tests/test_r300_manifest_audit.py"
       - "scripts/audit_witnora_r300.py"
       - "scripts/audit_witnora_r180.py"
+      - "tests/test_xor_syndrome_301_320.py"
+      - "scripts/benchmark_xor_syndrome_frontier.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -262,6 +264,8 @@ on:
       - "tests/test_r300_manifest_audit.py"
       - "scripts/audit_witnora_r300.py"
       - "scripts/audit_witnora_r180.py"
+      - "tests/test_xor_syndrome_301_320.py"
+      - "scripts/benchmark_xor_syndrome_frontier.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -400,12 +404,14 @@ jobs:
           python -m unittest tests.test_xor_chain_241_260 -v
           python -m unittest tests.test_xor_cycles_261_280 -v
           python -m unittest tests.test_xor_heldout_281_299 -v
+          python -m unittest tests.test_xor_syndrome_301_320 -v
           python -m unittest tests.test_r300_manifest_audit -v
           python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_proof_scaling --max-width 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_chain_frontier --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_cycle_frontier --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_heldout_281_299 --samples 72 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_syndrome_frontier --seeds 32 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m unittest tests.test_r180_manifest_audit -v
           python -m scripts.audit_witnora_r180
           python -m scripts.audit_witnora_r300
