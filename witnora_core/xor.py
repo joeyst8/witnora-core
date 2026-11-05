@@ -239,7 +239,13 @@ class XorSystem:
         }
 
 
-def parse_xor_lines(text: str) -> XorSystem:
+def parse_xor_lines(text: str, *, backend="python") -> XorSystem:
+    if backend == "rust":
+        from witnora_ve import xor_parse_lines_native
+        return XorSystem(XorEquation(variables, rhs, source="sidecar")
+                         for variables, rhs in xor_parse_lines_native(text))
+    if backend != "python":
+        raise ValueError("unknown XOR backend")
     equations: list[XorEquation] = []
     for line_number, raw in enumerate(text.splitlines(), start=1):
         line = raw.strip()

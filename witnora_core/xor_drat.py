@@ -68,8 +68,16 @@ def _resolve(a: tuple[int, ...], b: tuple[int, ...], pivot: int) -> tuple[int, .
     return Clause(raw).literals
 
 
-def _resolve_fast(a: tuple[int, ...], b: tuple[int, ...], pivot: int) -> tuple[int, ...] | None:
+def _resolve_fast(a: tuple[int, ...], b: tuple[int, ...], pivot: int,
+                  *, backend="python") -> tuple[int, ...] | None:
     """Resolve two canonical clauses with less allocation in proof generation."""
+
+    if backend == "rust":
+        from witnora_ve import xor_drat_resolve_fast_native
+        result = xor_drat_resolve_fast_native(list(a), list(b), pivot)
+        return tuple(result) if result is not None else None
+    if backend != "python":
+        raise ValueError("unknown XOR DRAT resolution backend")
 
     literals = set(a)
     literals.discard(pivot)

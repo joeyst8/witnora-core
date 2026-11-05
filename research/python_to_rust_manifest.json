@@ -3600,9 +3600,9 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/xor_equations.rs",
       "test": "tests/test_xor_substitute_rust.py",
-      "verified_milestone": "R-127",
-      "verified_milestones": ["R-121", "R-122", "R-123", "R-124", "R-125", "R-126", "R-127"],
-      "migration_note": "CI #41940786252 passed XOR normalization/evaluation/substitution; #41941245719 passed batch substitution and full Gaussian solution/trace; #41941696815 passed assignment verification and bounded canonical XOR-CNF encoding. Native pattern recognition is still pending verification."
+      "verified_milestone": "R-130",
+      "verified_milestones": ["R-121", "R-122", "R-123", "R-124", "R-125", "R-126", "R-127", "R-128", "R-129", "R-130"],
+      "migration_note": "CI #41940786252 passed normalization/evaluation/substitution; #41941245719 passed batch substitution and full Gaussian solution/trace; #41941696815 passed verification and XOR-CNF encoding; #41942185395 passed exact clause overlap, composed and full native source-CNF XOR detector diagnostics. Sidecar parsing and DRAT export paths remain pending."
     }
   ],
   "last_updated": "2026-11-04",

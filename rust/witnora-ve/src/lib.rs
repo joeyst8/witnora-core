@@ -92,6 +92,7 @@ pub mod violation_image_anf;
 pub mod anf_separator_conditioning;
 pub mod anf_structured_counter;
 pub mod xor_equations;
+pub mod xor_drat_resolution;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2165,6 +2166,20 @@ fn xor_detect_cnf_patterns_native(clauses:Vec<Vec<i64>>,
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_parse_lines_native(content:String)
+    ->PyResult<Vec<(Vec<i64>,u8)>>{
+    xor_equations::parse_xor_lines(&content).map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_drat_resolve_fast_native(a:Vec<i64>,b:Vec<i64>,pivot:i64)
+    ->Option<Vec<i64>>{
+    xor_drat_resolution::resolve_fast(&a,&b,pivot)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2494,6 +2509,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_canonical_cnf_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_extra_touching_clauses_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_detect_cnf_patterns_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_parse_lines_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_drat_resolve_fast_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

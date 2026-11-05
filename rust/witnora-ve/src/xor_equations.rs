@@ -197,6 +197,39 @@ pub fn detect_cnf_patterns(clauses:&[Vec<i64>],include_3var:bool,max_k:usize)
  Ok((detected,diagnostics))
 }
 
+/// R-131: parse explicit XOR sidecar lines with finite signed literals.
+pub fn parse_xor_lines(text:&str)->Result<Vec<(Vec<i64>,u8)>,String>{
+ let mut equations=Vec::new();
+ for (line_id,raw) in text.lines().enumerate(){
+  let line=raw.trim();
+  if line.is_empty() || line.starts_with('#') || line.starts_with("c "){
+   continue;
+  }
+  let spaced=line.replace('='," = ");
+  let parts=spaced.split_whitespace().collect::<Vec<_>>();
+  let bad=||format!("invalid XOR line {}: {:?}",line_id+1,raw);
+  if parts.len()<4 || parts[0]!="xor" || !parts.contains(&"="){
+   return Err(bad());
+  }
+  let eq_index=parts.iter().position(|&v|v=="=").ok_or_else(||bad())?;
+  if eq_index==1 || eq_index!=parts.len()-2{return Err(bad());}
+  let mut vars=Vec::new();
+  for token in &parts[1..eq_index]{
+   let v=token.parse::<i64>()
+       .map_err(|_|format!("invalid XOR variable on line {}",line_id+1))?;
+   if v<=0{return Err("XOR variable IDs must be positive".into());}
+   vars.push(v);
+  }
+  let rhs=parts[parts.len()-1].parse::<i64>()
+      .map_err(|_|format!("invalid XOR rhs on line {}",line_id+1))?;
+  if rhs!=0 && rhs!=1{
+   return Err(format!("invalid XOR rhs on line {}: {}",line_id+1,rhs));
+  }
+  equations.push((vars,rhs as u8));
+ }
+ Ok(equations)
+}
+
 #[cfg(test)]mod tests{use super::*;#[test]fn normalization(){
  assert_eq!(normalize_variables(&[3,1,3,2,1,7]).unwrap(),vec![2,7]);
  assert_eq!(normalize_variables(&[]).unwrap(),Vec::<usize>::new());
@@ -220,4 +253,6 @@ pub fn detect_cnf_patterns(clauses:&[Vec<i64>],include_3var:bool,max_k:usize)
  let input=vec![vec![1,2],vec![-2,-1],vec![3]];
  let found=detect_cnf_patterns(&input,true,6).unwrap();
  assert_eq!(found.0.len(),1);assert_eq!(found.0[0].1,1);
+ assert_eq!(parse_xor_lines("# comment\nxor 1 2 = 1\nc note\nxor 3=0").unwrap(),
+  vec![(vec![1,2],1),(vec![3],0)]);
 }}
