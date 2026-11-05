@@ -178,7 +178,14 @@ def _detected_equations(path: CollapsePath) -> list[XorEquation]:
     return equations
 
 
-def _source_clauses(equations: Iterable[XorEquation]) -> set[tuple[int, ...]]:
+def _source_clauses(equations: Iterable[XorEquation], *, backend="python") -> set[tuple[int, ...]]:
+    if backend == "rust":
+        from witnora_ve import xor_source_clause_union_native
+        return {tuple(clause) for clause in xor_source_clause_union_native([
+            [list(_canonical_clause(clause)) for clause in eq.source_clauses]
+            for eq in equations])}
+    if backend != "python":
+        raise ValueError("unknown XOR source clause backend")
     clauses: set[tuple[int, ...]] = set()
     for equation in equations:
         for clause in equation.source_clauses:
@@ -661,6 +668,31 @@ def _source_row_values(equations: list[XorEquation], *, backend="python") -> dic
     }
 
 
+def _validate_row_operation_values(
+    row_values: dict[str, tuple[frozenset[int], int]],
+    left_id: str,
+    right_id: str,
+    result_vars: frozenset[int],
+    result_rhs: int,
+    *, backend="python",
+) -> str | None:
+    """Validate source-relative GF(2) row metadata without trusting a proof."""
+    if backend == "rust":
+        from witnora_ve import xor_validate_row_operation_native
+        return xor_validate_row_operation_native(
+            [(name, sorted(variables), rhs) for name, (variables, rhs) in row_values.items()],
+            left_id, right_id, sorted(result_vars), result_rhs & 1)
+    if backend != "python":
+        raise ValueError("unknown XOR row validation backend")
+    if left_id not in row_values or right_id not in row_values:
+        return "ROW_OPERATION_PARENT_MISSING"
+    expected = (row_values[left_id][0] ^ row_values[right_id][0],
+                row_values[left_id][1] ^ row_values[right_id][1])
+    if expected != (result_vars, result_rhs & 1):
+        return "ROW_OPERATION_VALUE_MISMATCH"
+    return None
+
+
 def _emit_clause(
     clause: tuple[int, ...],
     *,
@@ -773,17 +805,20 @@ def _row_trace_refutation(
     max_proof_clauses: int,
     max_proof_bytes: int,
     timeout_seconds: float | None,
+    backend="python",
 ) -> tuple[str | None, str | None, dict[str, Any]]:
+    if backend not in ("python", "rust"):
+        raise ValueError("unknown XOR row trace backend")
     active = {clause.literals for clause in original_formula.clauses}
-    support_clauses = _source_clauses(detected)
+    support_clauses = _source_clauses(detected, backend=backend)
     if not support_clauses <= active:
         return None, "DETECTED_XOR_SOURCE_CLAUSE_MISSING_FROM_ORIGINAL", {
             "proof_clause_count_actual": 0,
             "proof_clause_max_width": 0,
             "proof_file_size_bytes": 0,
         }
-    row_values = _source_row_values(detected)
-    row_encodings = _source_row_encodings(detected)
+    row_values = _source_row_values(detected, backend=backend)
+    row_encodings = _source_row_encodings(detected, backend=backend)
     lines: list[str] = []
     emitted = 0
     proof_bytes = 0
@@ -799,17 +834,12 @@ def _row_trace_refutation(
             }
         left_id = str(operation.get("left_row_id") or operation.get("pivot_row_id"))
         right_id = str(operation.get("right_row_id") or operation.get("combined_row_ids", ["", ""])[-1])
-        if left_id not in row_values or right_id not in row_values:
-            return None, "ROW_OPERATION_PARENT_MISSING", {
-                "proof_clause_count_actual": emitted,
-                "proof_clause_max_width": max_width,
-                "proof_file_size_bytes": proof_bytes,
-            }
         result_vars = frozenset(int(var) for var in operation.get("result_row_variables", []))
         result_rhs = int(operation.get("result_rhs", 0)) & 1
-        expected_value = (row_values[left_id][0] ^ row_values[right_id][0], row_values[left_id][1] ^ row_values[right_id][1])
-        if expected_value != (result_vars, result_rhs):
-            return None, "ROW_OPERATION_VALUE_MISMATCH", {
+        validation_error = _validate_row_operation_values(
+            row_values, left_id, right_id, result_vars, result_rhs, backend=backend)
+        if validation_error is not None:
+            return None, validation_error, {
                 "proof_clause_count_actual": emitted,
                 "proof_clause_max_width": max_width,
                 "proof_file_size_bytes": proof_bytes,
@@ -817,7 +847,7 @@ def _row_trace_refutation(
         result_id = operation.get("result_row_id")
         if result_id is None and not result_vars and result_rhs == 0:
             continue
-        expected_encoding = _xor_encoding_clauses(result_vars, result_rhs)
+        expected_encoding = _xor_encoding_clauses(result_vars, result_rhs, backend=backend)
         emitted, proof_bytes, max_width, error = _derive_row_encoding_from_parent_rows(
             left_encoding=row_encodings[left_id],
             right_encoding=row_encodings[right_id],

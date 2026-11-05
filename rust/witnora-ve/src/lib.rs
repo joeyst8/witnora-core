@@ -98,6 +98,7 @@ pub mod xor_proof_order;
 pub mod xor_proof_emit;
 pub mod xor_ve_refutation;
 pub mod xor_row_sources;
+pub mod xor_row_validation;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2242,6 +2243,20 @@ fn xor_source_rows_native(rows: Vec<(Vec<usize>,u8,Vec<Vec<i64>>)>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_validate_row_operation_native(rows:Vec<(String,Vec<usize>,u8)>,
+    left_id:String,right_id:String,result_variables:Vec<usize>,result_rhs:u8)
+    ->Option<String>{
+    xor_row_validation::validate(&rows,&left_id,&right_id,&result_variables,result_rhs)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_source_clause_union_native(rows:Vec<Vec<Vec<i64>>>)->Vec<Vec<i64>>{
+    xor_row_sources::source_union(&rows)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2581,6 +2596,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_drat_emit_decision_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_ve_refutation_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_source_rows_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_validate_row_operation_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_source_clause_union_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

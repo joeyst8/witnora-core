@@ -14,6 +14,12 @@ pub fn source_rows(rows: &[(Vec<usize>, u8, Vec<Vec<i64>>)]) -> Vec<SourceRow> {
     }).collect()
 }
 
+/// R-148: exact union of source-CNF witness supports.
+pub fn source_union(rows: &[Vec<Vec<i64>>]) -> Vec<Vec<i64>> {
+    rows.iter().flat_map(|clauses| clauses.iter().cloned())
+        .collect::<BTreeSet<_>>().into_iter().collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -23,5 +29,10 @@ mod tests {
             vec![vec![-2, 1], vec![-2, 1], vec![2, -1]])]);
         assert_eq!(rows, vec![("input_0000".to_string(),
             vec![vec![-2, 1], vec![2, -1]], vec![1, 2], 1)]);
+    }
+    #[test]
+    fn source_union_deduplicates_empty_clause() {
+        assert_eq!(source_union(&[vec![vec![1],vec![]],
+            vec![vec![1],vec![-2]]]), vec![vec![],vec![-2],vec![1]]);
     }
 }

@@ -343,3 +343,5 @@ jobs:
           python -m unittest tests.test_xor_drat_emit_rust -v
           python -m unittest tests.test_xor_ve_refutation_rust -v
           python -m unittest tests.test_xor_row_sources_rust -v
+          python -m unittest tests.test_xor_row_validation_rust -v
+          python -m unittest tests.test_xor_row_source_union_rust -v
