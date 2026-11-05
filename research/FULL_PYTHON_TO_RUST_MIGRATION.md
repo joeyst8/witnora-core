@@ -4,6 +4,36 @@ The user requested completion of the remaining Python→Rust migration after the
 R-500 research gate. A **milestone number is not a migrated Python file**.
 Never declare the whole transfer complete based on a test counter.
 
+## Research direction decision — selective Rust acceleration (2026-11-05)
+
+The owner has superseded the earlier objective of converting every Python file.
+**The 560-file count is a historical inventory, not a release target or a
+measure of Witnora's scientific progress.** Keep the ledger for provenance
+and compatibility audits, but do not pursue 100% Rust conversion by default.
+
+Witnora will use a hybrid architecture:
+
+- **Rust:** performance-critical, deterministic solver kernels and data
+  structures when profiling or benchmarks justify a port.
+- **Python:** experimentation, automation, high-level orchestration,
+  benchmarking and independent cross-language reference behavior.
+- **Lean:** formal proofs and source-bound theorem checking.
+- **Independent checkers:** DRAT and other external evidence verification;
+  the producer must not become its sole proof authority.
+
+Prioritize TC-063 and W-CRC research, with measured solver performance and
+correctness as the outcomes. For each proposed Rust port, record (1) a
+profiled bottleneck or clear integration need, (2) an exact behavioral and
+resource-limit contract, (3) adversarial Python/Rust differential tests,
+(4) independent proof/source-checker gates when applicable, and (5) a
+reproducible benchmark including comparison with established external
+solvers. Retain the Python path if Rust brings no material benefit.
+Native-default adoption remains a separate review and release decision.
+
+Do not remove the existing Python tests, research scripts, or Lean/external
+verification gates merely to increase a migration percentage. No prior
+native-verification claim is strengthened by this policy change.
+
 Source-file inventory at the R-500 baseline:
 
 | Group | Not migrated | Parallel Rust reference | Partial native verified | Total |
