@@ -149,6 +149,7 @@ on:
       - "tests/test_ci_native_policy_migration.py"
       - "witnora_core/report.py"
       - "tests/test_report_native_migration.py"
+      - "tests/test_report_standalone_rust_cli.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -300,6 +301,7 @@ on:
       - "tests/test_ci_native_policy_migration.py"
       - "witnora_core/report.py"
       - "tests/test_report_native_migration.py"
+      - "tests/test_report_standalone_rust_cli.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -466,3 +468,7 @@ jobs:
           python -m scripts.audit_witnora_r180
           python -m scripts.audit_witnora_r300
           python -m scripts.audit_witnora_r500
+      - name: Standalone Rust benchmark report CLI parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_report
+          WITNORA_RUST_REPORT_BIN="$PWD/rust/witnora-ve/target/release/witnora_report" python -m unittest tests.test_report_standalone_rust_cli -v

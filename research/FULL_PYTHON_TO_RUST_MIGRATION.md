@@ -75,6 +75,20 @@ and full Rust CI
 Current manifest counts: 468 not migrated, 78 parallel, 14 partially native
 verified; still **zero fully migrated source files**.
 
+### Native executable completion gate (candidate)
+
+`rust/witnora-ve/src/bin/witnora_report.rs` now provides an entirely
+standalone Rust command-line program: `witnora_report BENCHMARK_JSON --out
+REPORT_MD`. It requires no Python runtime and uses the native Markdown
+renderer. The focused CI builds the executable and compares its output bytes
+against the original Python report CLI over empty, nontrivial and seeded
+instances. Malformed and missing input must fail without creating a report.
+
+This checks the **entire report-generation CLI operation** in Rust, but the
+original Python import/API remains available for independent comparison and
+compatibility. Its source-file manifest status remains `parallel_reference`
+until the standalone native CLI gate and a replacement policy both pass.
+
 ## Next dependency-aware work
 
 1. Finish and independently verify the CI policy subset, then assess the
