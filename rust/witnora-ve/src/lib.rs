@@ -94,6 +94,7 @@ pub mod anf_structured_counter;
 pub mod xor_equations;
 pub mod xor_drat_resolution;
 pub mod xor_sparse_schedule;
+pub mod xor_proof_order;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2186,6 +2187,18 @@ fn xor_sparse_schedule_native(equations:Vec<(Vec<usize>,u8)>)
     xor_sparse_schedule::schedule(&equations)
 }
 
+#[pyfunction]
+fn xor_proof_order_native(pivots:Vec<usize>,variables:Vec<usize>)->Vec<usize>{
+    xor_proof_order::proof_order(&pivots,&variables)
+}
+
+#[pyfunction]
+fn xor_gaussian_order_stats_native(pivots:Vec<usize>,variables:Vec<usize>,
+    trace_widths:Vec<usize>,detected_widths:Vec<usize>,unsat:bool)
+    ->(Vec<usize>,usize,usize,Option<usize>){
+    xor_proof_order::gaussian_stats(&pivots,&variables,&trace_widths,&detected_widths,unsat)
+}
+
 #[cfg(feature = "python")]
 #[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
@@ -2520,6 +2533,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_parse_lines_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_drat_resolve_fast_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_sparse_schedule_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_proof_order_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_gaussian_order_stats_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

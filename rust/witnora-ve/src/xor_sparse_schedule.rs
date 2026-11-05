@@ -104,10 +104,16 @@ pub fn schedule(equations:&[(Vec<usize>,u8)])->ScheduleAnswer{
   }
   let Some(selected)=best else{break;};
   order.push(selected.variable);
+  // Python's reference scans *all* recorded result IDs, including reused
+  // input_#### IDs, when advancing the next generated row index.  Preserve
+  // that historical certificate-label behavior for exact trace parity.
+  let reused_index=selected.ops.iter().filter_map(|op|op.4.as_deref())
+      .filter_map(|name|name.split_once('_').and_then(|(_,digits)|digits.parse::<usize>().ok()))
+      .map(|index|index+1).max().unwrap_or(0);
   operations.extend(selected.ops);
   active=selected.rows;
   peak_width=peak_width.max(selected.peak);
-  next_row_index=selected.next_index;
+  next_row_index=selected.next_index.max(reused_index);
   if active.values().any(|r|r.0.is_empty() && r.1==1){
    contradiction_seen=true;final_width=Some(0);
   }

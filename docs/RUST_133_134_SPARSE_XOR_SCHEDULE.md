@@ -12,3 +12,8 @@ systems plus an initial contradiction, and 100 additional seeded order
 reports. This is an algebraic row-operation witness only. It does not
 supplant RUP/drat-trim or Lean proof checking, and it is not an
 independent DRAT refutation.
+
+The native trace maintains the Python reference's historical result-ID
+counter: a reused `input_####` row ID can increase the next `row_####`
+index. The first native differential pass caught this label difference;
+the compatibility behavior is now explicit in the Rust implementation.

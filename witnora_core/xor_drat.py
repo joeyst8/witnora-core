@@ -382,26 +382,47 @@ def _sparse_xor_elimination_order(equations: Iterable[XorEquation],
     return list(schedule["xor_elimination_order"]), schedule
 
 
-def _proof_order(solution: dict[str, Any], system: XorSystem) -> list[int]:
+def _proof_order(solution: dict[str, Any], system: XorSystem, *, backend="python") -> list[int]:
     pivots = [
         int(item["pivot"])
         for item in solution.get("elimination_trace", [])
         if item.get("type") == "pivot" and "pivot" in item
     ]
+    if backend == "rust":
+        from witnora_ve import xor_proof_order_native
+        return xor_proof_order_native(pivots, list(system.variables))
+    if backend != "python":
+        raise ValueError("unknown XOR proof order backend")
     return pivots + [var for var in system.variables if var not in set(pivots)]
 
 
-def _gaussian_order_stats(solution: dict[str, Any], system: XorSystem, detected: list[XorEquation]) -> dict[str, Any]:
-    order = _proof_order(solution, system)
+def _gaussian_order_stats(solution: dict[str, Any], system: XorSystem, detected: list[XorEquation],
+                          *, backend="python") -> dict[str, Any]:
+    if backend == "rust":
+        from witnora_ve import xor_gaussian_order_stats_native
+        pivots = [int(item["pivot"]) for item in solution.get("elimination_trace", [])
+                  if item.get("type") == "pivot" and "pivot" in item]
+        widths = [len(item[key]) for item in solution.get("elimination_trace", [])
+                  for key in ("variables", "before", "after") if key in item]
+        order, initial, peak, final = xor_gaussian_order_stats_native(
+            pivots, list(system.variables), widths,
+            [len(eq.variables) for eq in detected], solution.get("status") == "UNSAT")
+    elif backend == "python":
+        order = _proof_order(solution, system)
+        initial = max((len(eq.variables) for eq in detected), default=0)
+        peak = _max_trace_width(solution.get("elimination_trace", []), detected)
+        final = 0 if solution.get("status") == "UNSAT" else None
+    else:
+        raise ValueError("unknown Gaussian XOR order backend")
     return {
         "strategy": "gaussian_pivot_order",
         "elimination_order_source": ELIM_SOURCE_GAUSSIAN,
         "elimination_order_variables": order,
         "elimination_tie_break_rules": [],
         "row_operation_trace": [],
-        "row_width_initial": max((len(eq.variables) for eq in detected), default=0),
-        "row_width_peak": _max_trace_width(solution.get("elimination_trace", []), detected),
-        "row_width_final_contradiction": 0 if solution.get("status") == "UNSAT" else None,
+        "row_width_initial": initial,
+        "row_width_peak": peak,
+        "row_width_final_contradiction": final,
         "xor_elimination_order": order,
     }
 
@@ -412,10 +433,11 @@ def _choose_order(
     detected: list[XorEquation],
     *,
     xor_elim_order: str,
+    backend="python",
 ) -> dict[str, Any]:
     if xor_elim_order == XOR_ELIM_SPARSE_MIN_FILL:
-        return _sparse_xor_elimination_schedule(detected)
-    return _gaussian_order_stats(solution, system, detected)
+        return _sparse_xor_elimination_schedule(detected, backend=backend)
+    return _gaussian_order_stats(solution, system, detected, backend=backend)
 
 
 def _diagnostics(
