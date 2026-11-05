@@ -23,17 +23,22 @@ fn run(args: &[String]) -> Result<(), String> {
             "--expected" | "--manifest" | "--out" => {
                 if i + 1 >= args.len() { return Err(format!("missing value after {}", args[i])); }
                 match args[i].as_str() {
-                    "--expected" => expected = Some(args[i + 1].as_str()),
-                    "--manifest" => manifest = Some(args[i + 1].as_str()),
-                    _ => output = Some(args[i + 1].as_str()),
+                    "--expected" if expected.is_none() => expected = Some(args[i + 1].as_str()),
+                    "--manifest" if manifest.is_none() => manifest = Some(args[i + 1].as_str()),
+                    "--out" if output.is_none() => output = Some(args[i + 1].as_str()),
+                    _ => return Err(format!("duplicate option {}", args[i])),
                 }
                 i += 2;
             }
+            option if option.starts_with('-') => return Err(format!("unknown option {option}")),
             _ => { positionals.push(&args[i]); i += 1; }
         }
     }
     let payload = match positionals.as_slice() {
         [mode, table_path] if mode.as_str() == "manifest" => {
+            if expected.is_some() || manifest.is_some() {
+                return Err("manifest mode does not accept check options".into());
+            }
             let source = fs::read_to_string(table_path)
                 .map_err(|e| format!("cannot read hash table: {e}"))?;
             serde_json::to_value(verification_integrity::parse_manifest_hash_table(&source))
@@ -79,5 +84,8 @@ mod tests {
     fn incomplete_arguments_fail_closed() {
         assert!(run(&[]).is_err());
         assert!(run(&["check".into(), "x".into()]).is_err());
+        assert!(run(&["check".into(), "x".into(), "drat".into(), "--bogus".into()]).is_err());
+        assert!(run(&["check".into(), "x".into(), "drat".into(), "--expected".into(), "a".into(), "--expected".into(), "b".into()]).is_err());
+        assert!(run(&["manifest".into(), "x".into(), "--expected".into(), "a".into()]).is_err());
     }
 }
