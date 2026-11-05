@@ -1,0 +1,19 @@
+CNF input
+  |
+  v
+Deterministic collapse grammar
+  |
+  +--> exact CNF XOR detection
+        |
+        v
+    deterministic sparse/min-fill GF(2) trace
+        |
+        +--> native XOR trace replay
+        |
+        +--> proof.drat export
+              |
+              v
+          real drat-trim against original.dimacs
+              |
+              v
+          UNSAT_DRAT_EXPORTED_VERIFIED

@@ -1,0 +1,1828 @@
+"""Independent raw-clause checker for Witnora .wcert bundles.
+
+This module intentionally avoids importing Witnora solver/collapse modules. It
+uses only raw tuples, set operations, JSON parsing, and hashing.
+"""
+
+from __future__ import annotations
+
+import argparse
+from collections import defaultdict, deque
+from hashlib import sha256
+import json
+from pathlib import Path
+from typing import Any, Iterable
+
+CHECKER = "independent_raw_checker_v0.9.7"
+TRUSTED_IMPORTS = ["argparse", "collections", "hashlib", "json", "pathlib", "typing"]
+DRAT_CHECKER = "witnora_internal_rup_subset_checker_v0.9.3"
+DRAT_CHECKED_AGAINST = "original.dimacs"
+DRAT_PROOF_SCOPE_END_TO_END = "END_TO_END_FROM_ORIGINAL_CNF"
+FORBIDDEN_STATUSES = {"HARD", "UNKNOWN", "PROBABLY_UNSAT", "PROBABLY_HARD"}
+
+SAT_LEVEL_NOT_SAT = "NOT_SAT"
+SAT_LEVEL_RECONSTRUCTED = "RECONSTRUCTED_ASSIGNMENT_VERIFIED_ORIGINAL"
+SAT_LEVEL_INDEPENDENT_RAW = "INDEPENDENT_RAW_CHECKER_VERIFIED"
+
+UNSAT_LEVEL_NOT_UNSAT = "NOT_UNSAT"
+UNSAT_LEVEL_EXPLICIT_EMPTY = "EXPLICIT_EMPTY_CLAUSE"
+UNSAT_LEVEL_2SAT_SCC = "INDEPENDENT_2SAT_SCC"
+UNSAT_LEVEL_INTERNAL_REPLAY = "INTERNAL_REPLAY_ONLY"
+UNSAT_LEVEL_EXTERNAL_STANDARD = "EXTERNAL_DRAT_LRAT_FRAT_VERIFIED"
+UNSAT_LEVEL_LRAT_FRAT_NOT_IMPLEMENTED = "LRAT_FRAT_NOT_IMPLEMENTED"
+UNSAT_LEVEL_XOR_NATIVE = "XOR_NATIVE_NOT_DRAT"
+
+PROOF_TRACE_SAT = "SAT_ASSIGNMENT_RECONSTRUCTION"
+PROOF_TRACE_UNSAT_EMPTY = "UNSAT_EXPLICIT_EMPTY_CLAUSE"
+PROOF_TRACE_UNSAT_2SAT = "UNSAT_2SAT_SCC_CONTRADICTION"
+PROOF_TRACE_UNSAT_INTERNAL = "UNSAT_INTERNAL_REPLAY_ONLY"
+PROOF_TRACE_XOR_UNSAT = "XOR_UNSAT_NATIVE"
+PROOF_TRACE_NO_COLLAPSE = "NO_COLLAPSE_REPORT"
+
+NATIVE_UNSAT_TRACE_FORMAT = "WITNORA_NATIVE_UNSAT_TRACE_V1"
+
+PUBLIC_CATEGORY_SAT = "SAT_ASSIGNMENT_VERIFIED"
+PUBLIC_CATEGORY_UNSAT_DRAT = "UNSAT_DRAT_EXPORTED_VERIFIED"
+PUBLIC_CATEGORY_UNSAT_XOR_NATIVE = "UNSAT_XOR_NATIVE_ONLY"
+PUBLIC_CATEGORY_UNSAT_NOT_EXTERNAL = "UNSAT_NOT_EXTERNALLY_VERIFIED"
+PUBLIC_CATEGORY_NO_COLLAPSE = "NO_COLLAPSE_FOUND"
+PUBLIC_CATEGORY_TIMEOUT = "TIMEOUT"
+PUBLIC_CATEGORY_ERROR = "ERROR"
+
+CERT_LEVEL_SAT_ASSIGNMENT = "SAT_ASSIGNMENT_VERIFIED"
+CERT_LEVEL_EXTERNAL_DRAT = "EXTERNAL_DRAT_VERIFIED"
+CERT_LEVEL_NATIVE_XOR = "NATIVE_XOR_ONLY"
+CERT_LEVEL_NOT_EXTERNAL = "NOT_EXTERNALLY_VERIFIED"
+
+DISCOVERY_UNIT_CONFLICT = "UNIT_CONFLICT"
+DISCOVERY_TWO_SAT_SCC = "TWO_SAT_SCC"
+DISCOVERY_VE_BCE_ROUTE = "VE_BCE_ROUTE"
+DISCOVERY_XOR_NATIVE = "XOR_NATIVE_CONTRADICTION"
+DISCOVERY_XOR_SIDECAR = "XOR_SIDECAR_CONTRADICTION"
+DISCOVERY_NO_COLLAPSE = "NO_COLLAPSE"
+DISCOVERY_TIMEOUT = "TIMEOUT"
+DISCOVERY_ERROR = "ERROR"
+DISCOVERY_SAT_ASSIGNMENT = "SAT_ASSIGNMENT"
+
+ClauseRaw = tuple[int, ...]
+FormulaRaw = tuple[ClauseRaw, ...]
+
+
+def _fail(error: str, failed_check: str) -> dict[str, Any]:
+    return {
+        "verified": False,
+        "error": error,
+        "failed_check": failed_check,
+        "checker": CHECKER,
+        "trusted_imports": TRUSTED_IMPORTS,
+    }
+
+
+def stable_json_raw(data: Any) -> str:
+    return json.dumps(data, indent=2, sort_keys=True) + "\n"
+
+
+def sha256_text_raw(text: str) -> str:
+    return sha256(text.encode("utf-8")).hexdigest()
+
+
+def canonicalize_clause_raw(literals: Iterable[int]) -> ClauseRaw | None:
+    seen: set[int] = set()
+    for lit in literals:
+        if not isinstance(lit, int):
+            raise ValueError(f"literal is not an integer: {lit!r}")
+        if lit == 0:
+            raise ValueError("literal 0 is reserved as a DIMACS terminator")
+        if -lit in seen:
+            return None
+        seen.add(lit)
+    return tuple(sorted(seen))
+
+
+def canonicalize_formula_raw(formula: Iterable[Iterable[int]]) -> FormulaRaw:
+    clauses: dict[ClauseRaw, ClauseRaw] = {}
+    for raw_clause in formula:
+        clause = canonicalize_clause_raw(raw_clause)
+        if clause is None:
+            continue
+        clauses[clause] = clause
+    return tuple(sorted(clauses))
+
+
+def parse_dimacs_raw(text: str) -> FormulaRaw:
+    if not text.strip():
+        raise ValueError("empty DIMACS")
+    header_seen = False
+    declared_vars: int | None = None
+    declared_clauses: int | None = None
+    current: list[int] = []
+    clauses: list[list[int]] = []
+    for line_no, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("c"):
+            continue
+        tokens = line.split()
+        if tokens[0] == "p":
+            if header_seen:
+                raise ValueError(f"duplicate header at line {line_no}")
+            if len(tokens) != 4 or tokens[1] != "cnf":
+                raise ValueError(f"invalid header at line {line_no}")
+            declared_vars = int(tokens[2])
+            declared_clauses = int(tokens[3])
+            header_seen = True
+            continue
+        if not header_seen:
+            raise ValueError(f"missing header before line {line_no}")
+        for token in tokens:
+            lit = int(token)
+            if lit == 0:
+                clauses.append(current)
+                current = []
+                continue
+            if declared_vars is not None and abs(lit) > declared_vars:
+                raise ValueError(f"variable {abs(lit)} exceeds header")
+            current.append(lit)
+    if not header_seen:
+        raise ValueError("missing header")
+    if current:
+        raise ValueError("missing terminating 0")
+    if declared_clauses is not None and len(clauses) != declared_clauses:
+        raise ValueError("clause count mismatch")
+    return canonicalize_formula_raw(clauses)
+
+
+def variables_raw(formula: FormulaRaw) -> tuple[int, ...]:
+    return tuple(sorted({abs(lit) for clause in formula for lit in clause}))
+
+
+def canonical_dimacs_raw(formula: FormulaRaw) -> str:
+    max_var = max(variables_raw(formula), default=0)
+    lines = [f"p cnf {max_var} {len(formula)}"]
+    for clause in formula:
+        lines.append((" ".join(str(lit) for lit in clause) + " 0") if clause else "0")
+    return "\n".join(lines) + "\n"
+
+
+def hash_formula_raw(formula: FormulaRaw) -> str:
+    return sha256_text_raw(canonical_dimacs_raw(formula))
+
+
+def clause_satisfied_raw(clause: ClauseRaw, assignment: dict[int, bool]) -> bool:
+    for lit in clause:
+        value = assignment.get(abs(lit))
+        if value is not None and (value if lit > 0 else not value):
+            return True
+    return False
+
+
+def formula_satisfied_raw(formula: FormulaRaw, assignment: dict[int, bool]) -> bool:
+    return all(clause_satisfied_raw(clause, assignment) for clause in formula)
+
+
+def _literal_true_default_false(lit: int, assignment: dict[int, bool]) -> bool:
+    value = assignment.get(abs(lit), False)
+    return value if lit > 0 else not value
+
+
+def _clause_satisfied_default_false(clause: ClauseRaw, assignment: dict[int, bool]) -> bool:
+    return any(_literal_true_default_false(lit, assignment) for lit in clause)
+
+
+def is_tautology_raw(clause: Iterable[int]) -> bool:
+    seen: set[int] = set()
+    for lit in clause:
+        if -lit in seen:
+            return True
+        seen.add(lit)
+    return False
+
+
+def resolve_raw(clause_a: ClauseRaw, clause_b: ClauseRaw, pivot_lit: int) -> ClauseRaw | None:
+    return canonicalize_clause_raw(
+        [lit for lit in clause_a if lit != pivot_lit]
+        + [lit for lit in clause_b if lit != -pivot_lit]
+    )
+
+
+def _raw_resolvent_for_log(clause_a: ClauseRaw, clause_b: ClauseRaw, pivot_lit: int) -> list[int]:
+    return sorted(
+        [lit for lit in clause_a if lit != pivot_lit]
+        + [lit for lit in clause_b if lit != -pivot_lit]
+    )
+
+
+def _literal_sort_key(lit: int) -> tuple[int, int]:
+    return abs(lit), 0 if lit > 0 else 1
+
+
+def _clauses_equal_raw(left: Iterable[Iterable[int]], right: Iterable[Iterable[int]]) -> bool:
+    return sorted([list(canonicalize_clause_raw(item) or ()) for item in left]) == sorted(
+        [list(canonicalize_clause_raw(item) or ()) for item in right]
+    )
+
+
+def _formula_without_clause(current_formula: FormulaRaw, removed: ClauseRaw) -> FormulaRaw:
+    return tuple(clause for clause in current_formula if clause != removed)
+
+
+def check_up_step_raw(current_formula: FormulaRaw, log_entry: dict[str, Any]) -> FormulaRaw:
+    units = [clause for clause in current_formula if len(clause) == 1]
+    if not units:
+        raise ValueError("UP step has no unit clause")
+    unit = sorted(units)[0]
+    lit = unit[0]
+    kept: list[ClauseRaw] = []
+    removed: list[ClauseRaw] = []
+    added: list[ClauseRaw] = []
+    shortened: list[dict[str, list[int]]] = []
+    for clause in current_formula:
+        if lit in clause:
+            removed.append(clause)
+            continue
+        if -lit in clause:
+            removed.append(clause)
+            new_clause = canonicalize_clause_raw(x for x in clause if x != -lit)
+            if new_clause is None:
+                raise ValueError("UP generated tautology unexpectedly")
+            added.append(new_clause)
+            shortened.append({"from": list(clause), "to": list(new_clause)})
+            continue
+        kept.append(clause)
+    output = canonicalize_formula_raw([*kept, *added])
+    expected_removed = [clause for clause in removed if lit in clause] + [
+        tuple(item["from"]) for item in shortened
+    ]
+    expected_added = [tuple(item["to"]) for item in shortened]
+    if log_entry.get("assigned_literals") != [lit]:
+        raise ValueError("UP assigned literal mismatch")
+    if not _clauses_equal_raw(log_entry.get("removed_clauses", []), expected_removed):
+        raise ValueError("UP removed clauses mismatch")
+    if not _clauses_equal_raw(log_entry.get("added_clauses", []), expected_added):
+        raise ValueError("UP added clauses mismatch")
+    if log_entry.get("output_formula_hash") != hash_formula_raw(output):
+        raise ValueError("UP output hash mismatch")
+    return output
+
+
+def check_ple_step_raw(current_formula: FormulaRaw, log_entry: dict[str, Any]) -> FormulaRaw:
+    signs: dict[int, set[int]] = {}
+    for clause in current_formula:
+        for lit in clause:
+            signs.setdefault(abs(lit), set()).add(1 if lit > 0 else -1)
+    pure_literals: list[int] = []
+    for var, var_signs in signs.items():
+        if var_signs == {1}:
+            pure_literals.append(var)
+        elif var_signs == {-1}:
+            pure_literals.append(-var)
+    if not pure_literals:
+        raise ValueError("PLE step has no pure literal")
+    lit = sorted(pure_literals, key=_literal_sort_key)[0]
+    removed = [clause for clause in current_formula if lit in clause]
+    output = canonicalize_formula_raw(clause for clause in current_formula if lit not in clause)
+    if log_entry.get("assigned_literals") != [lit]:
+        raise ValueError("PLE assigned literal mismatch")
+    if not _clauses_equal_raw(log_entry.get("removed_clauses", []), removed):
+        raise ValueError("PLE removed clauses mismatch")
+    if log_entry.get("output_formula_hash") != hash_formula_raw(output):
+        raise ValueError("PLE output hash mismatch")
+    return output
+
+
+def check_subsumption_step_raw(current_formula: FormulaRaw, log_entry: dict[str, Any]) -> FormulaRaw:
+    found: tuple[ClauseRaw, ClauseRaw] | None = None
+    for subsumer in current_formula:
+        subsumer_set = set(subsumer)
+        for removed in current_formula:
+            if subsumer == removed or len(subsumer) >= len(removed):
+                continue
+            if subsumer_set.issubset(removed):
+                found = subsumer, removed
+                break
+        if found is not None:
+            break
+    if found is None:
+        raise ValueError("SUB step has no valid subsumption")
+    subsumer, removed = found
+    output = _formula_without_clause(current_formula, removed)
+    if log_entry.get("details", {}).get("subsuming_clause") != list(subsumer):
+        raise ValueError("SUB subsuming clause mismatch")
+    if log_entry.get("removed_clauses") != [list(removed)]:
+        raise ValueError("SUB removed clause mismatch")
+    if log_entry.get("output_formula_hash") != hash_formula_raw(output):
+        raise ValueError("SUB output hash mismatch")
+    return output
+
+
+def check_bce_step_raw(current_formula: FormulaRaw, log_entry: dict[str, Any]) -> FormulaRaw:
+    removed_items = log_entry.get("removed_clauses", [])
+    if len(removed_items) != 1:
+        raise ValueError("BCE must remove exactly one clause")
+    removed = canonicalize_clause_raw(removed_items[0])
+    if removed is None or removed not in current_formula:
+        raise ValueError("BCE removed clause not present")
+    blocked_literal = int(log_entry.get("details", {}).get("blocked_literal", 0))
+    if blocked_literal not in removed:
+        raise ValueError("BCE blocked literal not in removed clause")
+    opposite = [
+        clause
+        for clause in current_formula
+        if clause != removed and -blocked_literal in clause
+    ]
+    expected_checked: list[dict[str, Any]] = []
+    for other in opposite:
+        raw_resolvent = _raw_resolvent_for_log(removed, other, blocked_literal)
+        tautological = is_tautology_raw(raw_resolvent)
+        expected_checked.append(
+            {
+                "against_clause": list(other),
+                "resolvent": raw_resolvent,
+                "tautological": tautological,
+            }
+        )
+        if not tautological:
+            raise ValueError("BCE non-tautological resolvent exists")
+    details = log_entry.get("details", {})
+    if details.get("opposite_clauses", []) != [list(clause) for clause in opposite]:
+        raise ValueError("BCE opposite clause log mismatch")
+    if details.get("checked_resolvents", []) != expected_checked:
+        raise ValueError("BCE checked resolvent log mismatch")
+    output = _formula_without_clause(current_formula, removed)
+    if log_entry.get("output_formula_hash") != hash_formula_raw(output):
+        raise ValueError("BCE output hash mismatch")
+    return output
+
+
+def check_ve_step_raw(current_formula: FormulaRaw, log_entry: dict[str, Any], c_parameter: int) -> FormulaRaw:
+    data = log_entry.get("reconstruction_data", {})
+    var = int(data.get("eliminated_variable", log_entry.get("details", {}).get("eliminated_variable", 0)))
+    if var <= 0:
+        raise ValueError("VE eliminated variable missing")
+    pos = [clause for clause in current_formula if var in clause]
+    neg = [clause for clause in current_formula if -var in clause]
+    removed = sorted(pos + neg)
+    kept = [clause for clause in current_formula if var not in clause and -var not in clause]
+    resolvents: dict[ClauseRaw, ClauseRaw] = {}
+    for pos_clause in sorted(pos):
+        for neg_clause in sorted(neg):
+            raw = _raw_resolvent_for_log(pos_clause, neg_clause, var)
+            if is_tautology_raw(raw):
+                continue
+            resolvent = resolve_raw(pos_clause, neg_clause, var)
+            if resolvent is None:
+                continue
+            if len(resolvent) > c_parameter:
+                raise ValueError("VE width cap violation")
+            resolvents[resolvent] = resolvent
+    expected_added = sorted(resolvents)
+    output = canonicalize_formula_raw([*kept, *expected_added])
+    if not _clauses_equal_raw(log_entry.get("removed_clauses", []), removed):
+        raise ValueError("VE removed clauses mismatch")
+    if not _clauses_equal_raw(log_entry.get("added_clauses", []), expected_added):
+        raise ValueError("VE added resolvents mismatch")
+    if log_entry.get("output_formula_hash") != hash_formula_raw(output):
+        raise ValueError("VE output hash mismatch")
+    if any(len(clause) > c_parameter for clause in expected_added):
+        raise ValueError("VE width cap violation")
+    return output
+
+
+def _component_details_raw(formula: FormulaRaw, parent_component_id: str | None = None) -> dict[str, Any]:
+    if not formula:
+        components: list[FormulaRaw] = []
+    else:
+        var_to_clauses: dict[int, list[int]] = defaultdict(list)
+        for idx, clause in enumerate(formula):
+            for var in sorted({abs(lit) for lit in clause}):
+                var_to_clauses[var].append(idx)
+        seen_clauses: set[int] = set()
+        component_clause_ids: list[list[int]] = []
+        for start in range(len(formula)):
+            if start in seen_clauses:
+                continue
+            queue: deque[tuple[str, int]] = deque([("c", start)])
+            ids: set[int] = set()
+            seen_vars: set[int] = set()
+            while queue:
+                kind, node = queue.popleft()
+                if kind == "c":
+                    if node in seen_clauses:
+                        continue
+                    seen_clauses.add(node)
+                    ids.add(node)
+                    for var in sorted({abs(lit) for lit in formula[node]}):
+                        if var not in seen_vars:
+                            queue.append(("v", var))
+                else:
+                    if node in seen_vars:
+                        continue
+                    seen_vars.add(node)
+                    for clause_idx in var_to_clauses[node]:
+                        if clause_idx not in seen_clauses:
+                            queue.append(("c", clause_idx))
+            component_clause_ids.append(sorted(ids))
+        components = [
+            canonicalize_formula_raw(formula[idx] for idx in ids)
+            for ids in component_clause_ids
+        ]
+    clause_to_index = {clause: idx for idx, clause in enumerate(formula)}
+    details_components: list[dict[str, Any]] = []
+    for idx, component in enumerate(components):
+        component_id = str(idx) if parent_component_id is None else f"{parent_component_id}.{idx}"
+        details_components.append(
+            {
+                "component_id": component_id,
+                "formula_hash": hash_formula_raw(component),
+                "variables": list(variables_raw(component)),
+                "clauses": [list(clause) for clause in component],
+                "clause_indices": [clause_to_index[clause] for clause in component],
+            }
+        )
+    return {
+        "component_count": len(components),
+        "incidence_edges": [
+            [var, idx]
+            for idx, clause in enumerate(formula)
+            for var in sorted({abs(lit) for lit in clause})
+        ],
+        "components": details_components,
+    }
+
+
+def check_component_decomposition_raw(current_formula: FormulaRaw, log_entry: dict[str, Any]) -> dict[str, FormulaRaw]:
+    parent_component_id = log_entry.get("details", {}).get("parent_component_id")
+    parent_component_id = None if parent_component_id is None else str(parent_component_id)
+    expected = _component_details_raw(current_formula, parent_component_id)
+    details = log_entry.get("details", {})
+    if log_entry.get("output_formula_hash") != hash_formula_raw(current_formula):
+        raise ValueError("CD output hash mismatch")
+    if details.get("component_count") != expected["component_count"]:
+        raise ValueError("CD component count mismatch")
+    if details.get("incidence_edges") != expected["incidence_edges"]:
+        raise ValueError("CD incidence edges mismatch")
+    logged_components = details.get("components", [])
+    if len(logged_components) != len(expected["components"]):
+        raise ValueError("CD logged component length mismatch")
+    child_states: dict[str, FormulaRaw] = {}
+    all_clause_indices: list[int] = []
+    owner_by_var: dict[int, str] = {}
+    for logged, exp in zip(logged_components, expected["components"]):
+        if str(logged.get("component_id")) != exp["component_id"]:
+            raise ValueError("CD component id mismatch")
+        for key in ["formula_hash", "variables", "clauses", "clause_indices"]:
+            if logged.get(key) != exp[key]:
+                raise ValueError(f"CD component {key} mismatch")
+        component_id = str(logged.get("component_id"))
+        variables = {int(v) for v in logged.get("variables", [])}
+        all_clause_indices.extend(int(i) for i in logged.get("clause_indices", []))
+        for var in variables:
+            previous = owner_by_var.get(var)
+            if previous is not None and previous != component_id:
+                raise ValueError("CD variable partition conflict")
+            owner_by_var[var] = component_id
+        for raw_clause in logged.get("clauses", []):
+            clause = canonicalize_clause_raw(raw_clause)
+            if clause is None or not {abs(lit) for lit in clause}.issubset(variables):
+                raise ValueError("CD clause crosses component")
+        child_states[component_id] = canonicalize_formula_raw(logged.get("clauses", []))
+    if sorted(all_clause_indices) != list(range(len(current_formula))):
+        raise ValueError("CD clauses are not an exact partition")
+    return child_states
+
+
+def _implication_graph_raw(formula: FormulaRaw) -> dict[int, set[int]]:
+    graph: dict[int, set[int]] = {lit: set() for var in variables_raw(formula) for lit in (var, -var)}
+    for clause in formula:
+        if len(clause) == 0:
+            continue
+        if len(clause) == 1:
+            a = clause[0]
+            graph.setdefault(-a, set()).add(a)
+            graph.setdefault(a, set())
+        elif len(clause) == 2:
+            a, b = clause
+            graph.setdefault(-a, set()).add(b)
+            graph.setdefault(b, set())
+            graph.setdefault(-b, set()).add(a)
+            graph.setdefault(a, set())
+        else:
+            raise ValueError("2SAT formula contains wide clause")
+    return {node: set(sorted(neighs)) for node, neighs in sorted(graph.items())}
+
+
+def _scc_raw(graph: dict[int, set[int]]) -> dict[int, int]:
+    reverse: dict[int, set[int]] = {node: set() for node in graph}
+    for src, dsts in graph.items():
+        for dst in dsts:
+            reverse.setdefault(dst, set()).add(src)
+    seen: set[int] = set()
+    order: list[int] = []
+
+    def dfs1(node: int) -> None:
+        seen.add(node)
+        for nxt in sorted(graph.get(node, ())):
+            if nxt not in seen:
+                dfs1(nxt)
+        order.append(node)
+
+    def dfs2(node: int, comp_id: int) -> None:
+        comp[node] = comp_id
+        for nxt in sorted(reverse.get(node, ())):
+            if nxt not in comp:
+                dfs2(nxt, comp_id)
+
+    for node in sorted(graph):
+        if node not in seen:
+            dfs1(node)
+    comp: dict[int, int] = {}
+    comp_id = 0
+    for node in reversed(order):
+        if node not in comp:
+            dfs2(node, comp_id)
+            comp_id += 1
+    return comp
+
+
+def _2sat_conflict_variable_raw(formula: FormulaRaw) -> int | None:
+    graph = _implication_graph_raw(formula)
+    comp = _scc_raw(graph)
+    for var in variables_raw(formula):
+        if comp.get(var) == comp.get(-var):
+            return var
+    return None
+
+
+def _scc_members_for_literal_raw(formula: FormulaRaw, literal: int) -> list[int]:
+    graph = _implication_graph_raw(formula)
+    comp = _scc_raw(graph)
+    target = comp.get(literal)
+    if target is None:
+        return []
+    return sorted(node for node, comp_id in comp.items() if comp_id == target)
+
+
+def _implication_edges_raw(formula: FormulaRaw) -> list[list[int]]:
+    graph = _implication_graph_raw(formula)
+    return [[src, dst] for src in sorted(graph) for dst in sorted(graph[src])]
+
+
+def check_2sat_result_raw(component_formula: FormulaRaw, log_entry: dict[str, Any]) -> tuple[FormulaRaw, bool]:
+    if any(len(clause) > 2 for clause in component_formula):
+        raise ValueError("2SAT_SOLVE formula is not 2-CNF")
+    if log_entry.get("output_formula_hash") != hash_formula_raw(component_formula):
+        raise ValueError("2SAT_SOLVE output hash mismatch")
+    status = log_entry.get("details", {}).get("status")
+    if status == "SAT":
+        assignment = {
+            int(var): bool(value)
+            for var, value in log_entry.get("details", {}).get("assignment", {}).items()
+        }
+        if not formula_satisfied_raw(component_formula, assignment):
+            raise ValueError("2SAT_SOLVE SAT assignment does not satisfy formula")
+        return component_formula, False
+    if status == "UNSAT":
+        if () in component_formula:
+            return component_formula, True
+        conflict_var = _2sat_conflict_variable_raw(component_formula)
+        if conflict_var is None:
+            raise ValueError("2SAT_SOLVE UNSAT has no independent SCC contradiction")
+        logged_conflict = log_entry.get("details", {}).get("conflict_variable")
+        if logged_conflict is not None and int(logged_conflict) != conflict_var:
+            raise ValueError("2SAT_SOLVE conflict variable mismatch")
+        return component_formula, True
+    raise ValueError("2SAT_SOLVE status missing")
+
+
+def check_treewidth_solve_step_raw(current_formula: FormulaRaw, log_entry: dict[str, Any], c_parameter: int) -> FormulaRaw:
+    if log_entry.get("output_formula_hash") != hash_formula_raw(current_formula):
+        raise ValueError("TREEWIDTH_SOLVE output hash mismatch")
+    details = log_entry.get("details", {})
+    if int(details.get("width_cap", c_parameter)) != c_parameter:
+        raise ValueError("TREEWIDTH_SOLVE width cap mismatch")
+    if int(details.get("width_observed", 0)) > c_parameter:
+        raise ValueError("TREEWIDTH_SOLVE logged width exceeds cap")
+    return current_formula
+
+
+def _union_component_states(states: dict[str, FormulaRaw]) -> FormulaRaw:
+    return canonicalize_formula_raw(
+        clause
+        for component_id in sorted(states)
+        for clause in states[component_id]
+    )
+
+
+def replay_collapse_path_raw(
+    original_formula: FormulaRaw,
+    collapse_path: list[dict[str, Any]],
+    c_parameter: int,
+) -> tuple[FormulaRaw, dict[str, bool]]:
+    current = original_formula
+    component_states: dict[str, FormulaRaw] = {}
+    checks = {
+        "bce_steps": True,
+        "ve_steps": True,
+        "component_steps": True,
+        "two_sat_steps": True,
+        "treewidth_steps": True,
+        "unsat_2sat_conflict_variables": [],
+        "unsat_2sat_traces": [],
+    }
+    saw_unsat_2sat = False
+    expected_step_id = 1
+    for step in collapse_path:
+        if int(step.get("step_id", 0)) != expected_step_id:
+            raise ValueError("step id mismatch")
+        expected_step_id += 1
+        context_id = step.get("details", {}).get("component_id")
+        parent_context_id = step.get("details", {}).get("parent_component_id") if step.get("type") == "CD" else None
+        context_id = None if context_id is None else str(context_id)
+        parent_context_id = None if parent_context_id is None else str(parent_context_id)
+        if step.get("type") == "CD":
+            context_formula = current if parent_context_id is None else component_states.get(parent_context_id)
+            if context_formula is None:
+                raise ValueError("CD parent component missing")
+        elif context_id is not None:
+            context_formula = component_states.get(context_id)
+            if context_formula is None:
+                raise ValueError("component context missing")
+        else:
+            if component_states:
+                raise ValueError("component-local step missing component_id")
+            context_formula = current
+        if step.get("input_formula_hash") != hash_formula_raw(context_formula):
+            raise ValueError(f"{step.get('type')} input hash mismatch")
+        step_type = step.get("type")
+        if step_type == "UP":
+            next_formula = check_up_step_raw(context_formula, step)
+        elif step_type == "PLE":
+            next_formula = check_ple_step_raw(context_formula, step)
+        elif step_type == "SUB":
+            next_formula = check_subsumption_step_raw(context_formula, step)
+        elif step_type == "BCE":
+            next_formula = check_bce_step_raw(context_formula, step)
+        elif step_type == "VE":
+            next_formula = check_ve_step_raw(context_formula, step, c_parameter)
+        elif step_type == "TREEWIDTH_SOLVE":
+            next_formula = check_treewidth_solve_step_raw(context_formula, step, c_parameter)
+        elif step_type == "2SAT_SOLVE":
+            next_formula, unsat = check_2sat_result_raw(context_formula, step)
+            saw_unsat_2sat = saw_unsat_2sat or unsat
+            if unsat and () not in context_formula:
+                conflict_var = _2sat_conflict_variable_raw(context_formula)
+                if conflict_var is not None:
+                    checks["unsat_2sat_conflict_variables"].append(conflict_var)
+                    checks["unsat_2sat_traces"].append(
+                        {
+                            "variable": conflict_var,
+                            "positive_literal_scc": _scc_members_for_literal_raw(
+                                context_formula,
+                                conflict_var,
+                            ),
+                            "negative_literal_scc": _scc_members_for_literal_raw(
+                                context_formula,
+                                -conflict_var,
+                            ),
+                            "implication_edges": _implication_edges_raw(context_formula),
+                        }
+                    )
+        elif step_type == "CD":
+            child_states = check_component_decomposition_raw(context_formula, step)
+            next_formula = context_formula
+            if parent_context_id is not None:
+                component_states.pop(parent_context_id, None)
+            component_states.update(child_states)
+        else:
+            raise ValueError(f"unsupported step type {step_type}")
+        if step_type != "CD":
+            if context_id is None:
+                current = next_formula
+            else:
+                component_states[context_id] = next_formula
+    final_formula = _union_component_states(component_states) if component_states else current
+    checks["unsat_2sat_contradiction"] = saw_unsat_2sat
+    checks["explicit_empty_clause"] = () in final_formula
+    return final_formula, checks
+
+
+def check_reconstruction_trace_raw(
+    original_formula: FormulaRaw,
+    collapse_path: list[dict[str, Any]],
+    final_assignment: dict[int, bool],
+    reconstruction_trace: dict[str, Any],
+) -> dict[int, bool]:
+    assignment = dict(final_assignment)
+    for step in reversed(collapse_path):
+        step_type = step.get("type")
+        if step_type in {"2SAT_SOLVE", "TREEWIDTH_SOLVE", "SUB", "CD"}:
+            continue
+        if step_type in {"UP", "PLE"}:
+            assigned = step.get("assigned_literals", [])
+            if not assigned:
+                raise ValueError(f"{step_type} missing assigned literal")
+            lit = int(assigned[0])
+            var = abs(lit)
+            value = lit > 0
+            if var in assignment and assignment[var] != value:
+                raise ValueError(f"{step_type} assignment conflict")
+            assignment[var] = value
+            continue
+        if step_type == "BCE":
+            data = step.get("reconstruction_data", {})
+            removed = canonicalize_clause_raw(data.get("removed_clause", []))
+            if removed is None:
+                raise ValueError("BCE reconstruction removed clause invalid")
+            blocked_literal = int(data.get("blocked_literal", 0))
+            if not _clause_satisfied_default_false(removed, assignment):
+                assignment[abs(blocked_literal)] = blocked_literal > 0
+            if not _clause_satisfied_default_false(removed, assignment):
+                raise ValueError("BCE reconstruction failed")
+            continue
+        if step_type == "VE":
+            data = step.get("reconstruction_data", {})
+            var = int(data.get("eliminated_variable", 0))
+            desired: bool | None = None
+            for raw_clause in data.get("removed_clauses", []):
+                clause = canonicalize_clause_raw(raw_clause)
+                if clause is None or (var not in clause and -var not in clause):
+                    raise ValueError("VE reconstruction clause invalid")
+                rest = [lit for lit in clause if abs(lit) != var]
+                if any(_literal_true_default_false(lit, assignment) for lit in rest):
+                    continue
+                needed = var in clause
+                if desired is not None and desired != needed:
+                    raise ValueError("VE reconstruction sign conflict")
+                desired = needed
+            assignment.setdefault(var, False if desired is None else desired)
+            if desired is not None and assignment[var] != desired:
+                raise ValueError("VE reconstruction assignment conflict")
+            continue
+    for var in variables_raw(original_formula):
+        assignment.setdefault(var, False)
+    logged = {
+        int(var): bool(value)
+        for var, value in reconstruction_trace.get("reconstructed_original_assignment", {}).items()
+    }
+    if assignment != logged:
+        raise ValueError("reconstruction trace assignment mismatch")
+    return assignment
+
+
+def check_sat_assignment_against_original_raw(original_formula: FormulaRaw, assignment: dict[int, bool]) -> bool:
+    return formula_satisfied_raw(original_formula, assignment)
+
+
+def check_unsat_contradiction_raw(final_state: FormulaRaw, replay_checks: dict[str, bool]) -> tuple[bool, str]:
+    if () in final_state or replay_checks.get("explicit_empty_clause"):
+        return True, "EXPLICIT_EMPTY_CLAUSE"
+    if replay_checks.get("unsat_2sat_contradiction"):
+        return True, "INDEPENDENT_2SAT_SCC"
+    return False, "UNSAT requires independently checkable contradiction or future LRAT/FRAT proof"
+
+
+def _parse_drat_line_raw(line: str) -> tuple[bool, ClauseRaw]:
+    tokens = line.strip().split()
+    if not tokens:
+        raise ValueError("empty DRAT line")
+    deletion = tokens[0] == "d"
+    if deletion:
+        tokens = tokens[1:]
+    if not tokens or tokens[-1] != "0":
+        raise ValueError("DRAT line missing terminating 0")
+    literals = [int(token) for token in tokens[:-1]]
+    clause = canonicalize_clause_raw(literals)
+    if clause is None:
+        raise ValueError("tautological DRAT clause is not supported by RUP-subset checker")
+    return deletion, clause
+
+
+def _rup_conflict_raw(active: set[ClauseRaw], assumptions: list[int]) -> bool:
+    assignment: dict[int, bool] = {}
+
+    def assign(lit: int) -> bool:
+        var = abs(lit)
+        value = lit > 0
+        previous = assignment.get(var)
+        if previous is not None:
+            return previous == value
+        assignment[var] = value
+        return True
+
+    for lit in assumptions:
+        if not assign(lit):
+            return True
+    changed = True
+    while changed:
+        changed = False
+        for clause in sorted(active):
+            satisfied = False
+            unassigned: list[int] = []
+            for lit in clause:
+                value = assignment.get(abs(lit))
+                if value is None:
+                    unassigned.append(lit)
+                elif value == (lit > 0):
+                    satisfied = True
+                    break
+            if satisfied:
+                continue
+            if not unassigned:
+                return True
+            if len(unassigned) == 1:
+                if not assign(unassigned[0]):
+                    return True
+                changed = True
+    return False
+
+
+def _is_rup_raw(active: set[ClauseRaw], clause: ClauseRaw) -> bool:
+    return _rup_conflict_raw(active, [-lit for lit in clause])
+
+
+def check_drat_proof_raw(original_formula: FormulaRaw, proof_text: str) -> dict[str, Any]:
+    active = set(original_formula)
+    empty_derived = False
+    for line_no, raw_line in enumerate(proof_text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("c"):
+            continue
+        try:
+            deletion, clause = _parse_drat_line_raw(line)
+        except Exception as exc:
+            return {
+                "verified": False,
+                "checker": DRAT_CHECKER,
+                "checked_against": DRAT_CHECKED_AGAINST,
+                "empty_clause_derived": empty_derived,
+                "failed_line": line_no,
+                "error": str(exc),
+            }
+        if deletion:
+            active.discard(clause)
+            continue
+        if not _is_rup_raw(active, clause):
+            return {
+                "verified": False,
+                "checker": DRAT_CHECKER,
+                "checked_against": DRAT_CHECKED_AGAINST,
+                "empty_clause_derived": empty_derived,
+                "failed_line": line_no,
+                "error": "addition is not RUP-checkable",
+            }
+        active.add(clause)
+        if clause == ():
+            return {
+                "verified": True,
+                "checker": DRAT_CHECKER,
+                "checked_against": DRAT_CHECKED_AGAINST,
+                "empty_clause_derived": True,
+                "failed_line": None,
+                "error": None,
+            }
+    return {
+        "verified": False,
+        "checker": DRAT_CHECKER,
+        "checked_against": DRAT_CHECKED_AGAINST,
+        "empty_clause_derived": empty_derived,
+        "failed_line": None,
+        "error": "empty clause was not derived",
+    }
+
+
+def _sat_certification_level_raw(result_data: dict[str, Any]) -> str:
+    if result_data.get("status") != "SAT":
+        return SAT_LEVEL_NOT_SAT
+    if bool(result_data.get("original_verification", False)):
+        return SAT_LEVEL_RECONSTRUCTED
+    return SAT_LEVEL_NOT_SAT
+
+
+def _unsat_certification_level_raw(
+    status: str,
+    replay_checks: dict[str, Any] | None = None,
+    collapse_path: list[dict[str, Any]] | None = None,
+    result_data: dict[str, Any] | None = None,
+) -> str:
+    if status == "UNSAT_XOR_NATIVE":
+        if (
+            result_data is not None
+            and result_data.get("xor_data", {}).get("xor_status", {}).get("external_drat") is True
+        ):
+            return UNSAT_LEVEL_EXTERNAL_STANDARD
+        return UNSAT_LEVEL_XOR_NATIVE
+    if status != "UNSAT":
+        return UNSAT_LEVEL_NOT_UNSAT
+    if replay_checks is not None:
+        if replay_checks.get("explicit_empty_clause"):
+            return UNSAT_LEVEL_EXPLICIT_EMPTY
+        if replay_checks.get("unsat_2sat_contradiction"):
+            return UNSAT_LEVEL_2SAT_SCC
+    collapse_path = collapse_path or []
+    if any(clause == [] for step in collapse_path for clause in step.get("added_clauses", [])):
+        return UNSAT_LEVEL_EXPLICIT_EMPTY
+    if any(
+        step.get("type") == "2SAT_SOLVE"
+        and step.get("details", {}).get("status") == "UNSAT"
+        for step in collapse_path
+    ):
+        return UNSAT_LEVEL_2SAT_SCC
+    return UNSAT_LEVEL_INTERNAL_REPLAY
+
+
+def _proof_trace_class_raw(status: str, unsat_level: str) -> str:
+    if status == "SAT":
+        return PROOF_TRACE_SAT
+    if status == "UNSAT_XOR_NATIVE":
+        return PROOF_TRACE_XOR_UNSAT
+    if status == "UNSAT":
+        if unsat_level == UNSAT_LEVEL_EXPLICIT_EMPTY:
+            return PROOF_TRACE_UNSAT_EMPTY
+        if unsat_level == UNSAT_LEVEL_2SAT_SCC:
+            return PROOF_TRACE_UNSAT_2SAT
+        return PROOF_TRACE_UNSAT_INTERNAL
+    return PROOF_TRACE_NO_COLLAPSE
+
+
+def _xor_has_original_cnf_drat_raw(result_data: dict[str, Any]) -> bool:
+    xor_status = result_data.get("xor_data", {}).get("xor_status", {})
+    return (
+        xor_status.get("external_drat") is True
+        and xor_status.get("drat_claim") == "EXPORTED_VERIFIED"
+        and xor_status.get("proof_base") == "original_cnf"
+    )
+
+
+def _xor_discovery_route_raw(result_data: dict[str, Any]) -> str:
+    equations = result_data.get("xor_data", {}).get("xor_system", {}).get("equations", [])
+    if any(equation.get("source") != "detected_cnf_pattern" for equation in equations):
+        return DISCOVERY_XOR_SIDECAR
+    return DISCOVERY_XOR_NATIVE
+
+
+def _public_metadata_raw(result_data: dict[str, Any]) -> dict[str, Any]:
+    status = str(result_data.get("status", ""))
+    if status == "SAT":
+        return {
+            "status": "SAT",
+            "discovery_route": DISCOVERY_SAT_ASSIGNMENT,
+            "certification_level": CERT_LEVEL_SAT_ASSIGNMENT
+            if result_data.get("original_verification") is True
+            else CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_SAT
+            if result_data.get("original_verification") is True
+            else PUBLIC_CATEGORY_ERROR,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    if status == "UNSAT_XOR_NATIVE":
+        external_drat = _xor_has_original_cnf_drat_raw(result_data)
+        xor_status = result_data.get("xor_data", {}).get("xor_status", {})
+        return {
+            "status": "UNSAT",
+            "discovery_route": _xor_discovery_route_raw(result_data),
+            "certification_level": CERT_LEVEL_EXTERNAL_DRAT if external_drat else CERT_LEVEL_NATIVE_XOR,
+            "public_category": PUBLIC_CATEGORY_UNSAT_DRAT if external_drat else PUBLIC_CATEGORY_UNSAT_XOR_NATIVE,
+            "external_drat": external_drat,
+            "drat_claim": str(xor_status.get("drat_claim", "NOT_EXPORTED")),
+            "proof_base": xor_status.get("proof_base"),
+        }
+    if status == "UNSAT":
+        return {
+            "status": "UNSAT",
+            "discovery_route": DISCOVERY_TWO_SAT_SCC
+            if any(
+                step.get("type") == "2SAT_SOLVE" and step.get("details", {}).get("status") == "UNSAT"
+                for step in result_data.get("collapse_path", [])
+            )
+            else DISCOVERY_VE_BCE_ROUTE
+            if any(step.get("type") in {"VE", "BCE"} for step in result_data.get("collapse_path", []))
+            else DISCOVERY_UNIT_CONFLICT,
+            "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_UNSAT_NOT_EXTERNAL,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    if status == "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C":
+        return {
+            "status": PUBLIC_CATEGORY_NO_COLLAPSE,
+            "discovery_route": DISCOVERY_NO_COLLAPSE,
+            "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_NO_COLLAPSE,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    if status == "TIMEOUT":
+        return {
+            "status": PUBLIC_CATEGORY_TIMEOUT,
+            "discovery_route": DISCOVERY_TIMEOUT,
+            "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+            "public_category": PUBLIC_CATEGORY_TIMEOUT,
+            "external_drat": False,
+            "drat_claim": "NOT_EXPORTED",
+            "proof_base": None,
+        }
+    return {
+        "status": PUBLIC_CATEGORY_ERROR,
+        "discovery_route": DISCOVERY_ERROR,
+        "certification_level": CERT_LEVEL_NOT_EXTERNAL,
+        "public_category": PUBLIC_CATEGORY_ERROR,
+        "external_drat": False,
+        "drat_claim": "NOT_EXPORTED",
+        "proof_base": None,
+    }
+
+
+def _metadata_consistent_raw(
+    manifest: dict[str, Any],
+    result_data: dict[str, Any],
+    replay_checks: dict[str, Any] | None = None,
+) -> tuple[bool, str | None]:
+    status = result_data.get("status")
+    collapse_path = result_data.get("collapse_path", [])
+    expected_unsat = _unsat_certification_level_raw(status, replay_checks, collapse_path, result_data)
+    expected_sat = _sat_certification_level_raw(result_data)
+    expected_class = _proof_trace_class_raw(status, expected_unsat)
+    for key, expected in [
+        ("sat_certification_level", expected_sat),
+        ("unsat_certification_level", expected_unsat),
+        ("proof_trace_class", expected_class),
+    ]:
+        if result_data.get(key) != expected:
+            return False, f"result {key} mismatch"
+        if manifest.get(key) != expected:
+            return False, f"manifest {key} mismatch"
+    expected_public = _public_metadata_raw(result_data)
+    result_key_map = {"status": "logical_status"}
+    for key, expected in expected_public.items():
+        result_key = result_key_map.get(key, key)
+        if result_data.get(result_key) != expected:
+            return False, f"result {result_key} mismatch"
+        if result_key != "external_drat" and manifest.get(result_key) != expected:
+            return False, f"manifest {result_key} mismatch"
+    if manifest.get("external_lrat_frat") is not False:
+        return False, "external_lrat_frat must be false"
+    if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
+        return False, "external LRAT/FRAT verification falsely claimed"
+    return True, None
+
+
+def check_native_proof_trace_raw(
+    proof_trace: dict[str, Any] | None,
+    final_state: FormulaRaw,
+    replay_checks: dict[str, Any],
+    result_data: dict[str, Any],
+) -> bool:
+    expected_trace = result_data.get("native_proof_trace")
+    if expected_trace is None:
+        if proof_trace is not None:
+            raise ValueError("unexpected proof_trace.json")
+        return True
+    if proof_trace is None:
+        raise ValueError("missing proof_trace.json")
+    if proof_trace != expected_trace:
+        raise ValueError("proof_trace.json differs from result native trace")
+    if proof_trace.get("proof_trace_format") != NATIVE_UNSAT_TRACE_FORMAT:
+        raise ValueError("native proof trace format mismatch")
+    if proof_trace.get("depends_on_replayed_collapse_path") is not True:
+        raise ValueError("native proof trace must depend on collapse-path replay")
+    if proof_trace.get("external_standard") != "NONE":
+        raise ValueError("native proof trace falsely names an external standard")
+    if proof_trace.get("lrat_frat_status") != "NOT_EXPORTED":
+        raise ValueError("native proof trace falsely claims LRAT/FRAT export")
+    reason = proof_trace.get("unsat_reason")
+    if reason != result_data.get("unsat_certification_level"):
+        raise ValueError("native proof trace reason mismatch")
+    if reason == UNSAT_LEVEL_EXPLICIT_EMPTY:
+        if () not in final_state and not replay_checks.get("explicit_empty_clause"):
+            raise ValueError("native empty-clause trace has no replayed empty clause")
+        steps = proof_trace.get("steps", [])
+        if not steps:
+            raise ValueError("native empty-clause trace missing conflict step")
+        trace_step = steps[0]
+        if trace_step.get("type") not in {"UNIT_PROPAGATION_CONFLICT", "VE_EMPTY_RESOLVENT"}:
+            raise ValueError("native empty-clause trace has unsupported conflict step")
+        if trace_step.get("derived_empty_clause") != []:
+            raise ValueError("native empty-clause trace derived clause mismatch")
+        source_step_id = int(trace_step.get("source_step_id", 0))
+        source_step = next(
+            (
+                step
+                for step in result_data.get("collapse_path", [])
+                if int(step.get("step_id", 0)) == source_step_id
+            ),
+            None,
+        )
+        if source_step is None:
+            raise ValueError("native empty-clause trace source step missing")
+        if trace_step.get("type") == "UNIT_PROPAGATION_CONFLICT":
+            if source_step.get("type") != "UP" or [] not in source_step.get("added_clauses", []):
+                raise ValueError("native unit-conflict trace source step mismatch")
+        if trace_step.get("type") == "VE_EMPTY_RESOLVENT":
+            if source_step.get("type") != "VE" or [] not in source_step.get("added_clauses", []):
+                raise ValueError("native VE-empty trace source step mismatch")
+            generated = source_step.get("details", {}).get("generated_resolvents", [])
+            expected = {
+                "positive_clause": trace_step.get("positive_clause", []),
+                "negative_clause": trace_step.get("negative_clause", []),
+                "resolvent": [],
+            }
+            if expected not in generated:
+                raise ValueError("native VE-empty trace resolvent evidence mismatch")
+        return True
+    if reason == UNSAT_LEVEL_2SAT_SCC:
+        if not replay_checks.get("unsat_2sat_contradiction"):
+            raise ValueError("native 2-SAT trace has no replayed SCC contradiction")
+        variable = int(proof_trace.get("variable", 0))
+        if variable not in replay_checks.get("unsat_2sat_conflict_variables", []):
+            raise ValueError("native 2-SAT trace conflict variable mismatch")
+        if variable == 0:
+            raise ValueError("native 2-SAT trace missing variable")
+        expected = None
+        for item in replay_checks.get("unsat_2sat_traces", []):
+            if item.get("variable") == variable:
+                expected = item
+                break
+        if expected is None:
+            raise ValueError("native 2-SAT trace details missing")
+        for key in ["positive_literal_scc", "negative_literal_scc", "implication_edges"]:
+            if proof_trace.get(key) != expected.get(key):
+                raise ValueError(f"native 2-SAT trace {key} mismatch")
+        return True
+    raise ValueError("unsupported native proof trace reason")
+
+
+def _normalise_assignment_for_hash(assignment: dict[str, Any]) -> dict[str, bool]:
+    return {
+        str(int(var)): bool(value)
+        for var, value in sorted(assignment.items(), key=lambda item: int(item[0]))
+    }
+
+
+def _normalise_component_results_for_hash(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalised = []
+    for result in sorted(results, key=lambda item: str(item.get("component_id", ""))):
+        normalised.append(
+            {
+                "component_id": str(result.get("component_id", "")),
+                "status": str(result.get("status", "")),
+                "final_class": str(result.get("final_class", "")),
+                "formula_hash": str(result.get("formula_hash", "")),
+                "assignment": _normalise_assignment_for_hash(result.get("assignment", {})),
+            }
+        )
+    return normalised
+
+
+def _canonical_xor_equation_raw(equation: dict[str, Any]) -> tuple[tuple[int, ...], int]:
+    parity: dict[int, int] = {}
+    for raw_var in equation.get("variables", []):
+        var = int(raw_var)
+        if var <= 0:
+            raise ValueError(f"invalid XOR variable {raw_var!r}")
+        parity[var] = parity.get(var, 0) ^ 1
+    variables = tuple(sorted(var for var, bit in parity.items() if bit))
+    rhs = int(equation.get("rhs", 0)) & 1
+    return variables, rhs
+
+
+def _xor_equations_from_data_raw(xor_data: dict[str, Any]) -> list[tuple[tuple[int, ...], int]]:
+    return [
+        _canonical_xor_equation_raw(equation)
+        for equation in xor_data.get("xor_system", {}).get("equations", [])
+    ]
+
+
+def _detected_xor_equations_from_data_raw(xor_data: dict[str, Any]) -> list[tuple[tuple[int, ...], int]]:
+    return [
+        _canonical_xor_equation_raw(equation)
+        for equation in xor_data.get("xor_system", {}).get("equations", [])
+        if equation.get("source") == "detected_cnf_pattern"
+    ]
+
+
+def _solve_xor_equations_raw(equations: list[tuple[tuple[int, ...], int]]) -> str:
+    pivots: dict[int, tuple[set[int], int]] = {}
+    for variables, rhs in equations:
+        row = (set(variables), rhs)
+        while row[0]:
+            pivot = min(row[0])
+            if pivot not in pivots:
+                pivots[pivot] = (set(row[0]), row[1])
+                break
+            row = (set(row[0]) ^ set(pivots[pivot][0]), row[1] ^ pivots[pivot][1])
+        if not row[0] and row[1] == 1:
+            return "UNSAT"
+    return "SAT"
+
+
+def _unit_assignment_raw(formula: FormulaRaw) -> dict[int, bool] | None:
+    assignment: dict[int, bool] = {}
+    for clause in formula:
+        if len(clause) != 1:
+            continue
+        lit = next(iter(clause))
+        var = abs(lit)
+        value = lit > 0
+        if var in assignment and assignment[var] != value:
+            return None
+        assignment[var] = value
+    return assignment
+
+
+def _substitute_xor_equations_raw(
+    equations: list[tuple[tuple[int, ...], int]],
+    assignment: dict[int, bool],
+) -> list[tuple[tuple[int, ...], int]]:
+    substituted: list[tuple[tuple[int, ...], int]] = []
+    for variables, rhs in equations:
+        remaining: list[int] = []
+        new_rhs = rhs
+        for var in variables:
+            if var in assignment:
+                new_rhs ^= int(bool(assignment[var]))
+            else:
+                remaining.append(var)
+        substituted.append((tuple(remaining), new_rhs))
+    return substituted
+
+
+def _xor_assignment_satisfies_raw(
+    xor_data: dict[str, Any],
+    assignment: dict[int, bool],
+) -> bool:
+    for variables, rhs in _xor_equations_from_data_raw(xor_data):
+        value = rhs
+        for var in variables:
+            if var not in assignment:
+                return False
+            value ^= int(bool(assignment[var]))
+        if value != 0:
+            return False
+    return True
+
+
+def _xor_native_unsat_verified_raw(
+    xor_data: dict[str, Any],
+    original_formula: FormulaRaw,
+) -> bool:
+    equations = _xor_equations_from_data_raw(xor_data)
+    if _solve_xor_equations_raw(equations) == "UNSAT":
+        return True
+    units = _unit_assignment_raw(original_formula)
+    if units is None:
+        return True
+    return _solve_xor_equations_raw(_substitute_xor_equations_raw(equations, units)) == "UNSAT"
+
+
+def _extra_touching_clauses_raw(
+    formula: FormulaRaw,
+    variables: tuple[int, ...],
+    source_clauses: set[ClauseRaw],
+) -> list[list[int]]:
+    variable_set = set(variables)
+    return [
+        list(clause)
+        for clause in sorted(formula)
+        if clause not in source_clauses and any(abs(lit) in variable_set for lit in clause)
+    ]
+
+
+def _clause_for_forbidden_assignment_raw(
+    variables: tuple[int, ...],
+    bits: tuple[int, ...],
+) -> ClauseRaw:
+    return tuple(sorted((-var if bit else var) for var, bit in zip(variables, bits)))
+
+
+def _canonical_xor_cnf_clauses_raw(variables: tuple[int, ...], rhs: int) -> set[ClauseRaw]:
+    return {
+        _clause_for_forbidden_assignment_raw(variables, tuple((mask >> index) & 1 for index in range(len(variables))))
+        for mask in range(1 << len(variables))
+        if sum((mask >> index) & 1 for index in range(len(variables))) % 2 != (rhs & 1)
+    }
+
+
+def _clause_eval_for_local_assignment_raw(clause: ClauseRaw, assignment: dict[int, bool]) -> bool:
+    return any(
+        assignment[abs(lit)] if lit > 0 else not assignment[abs(lit)]
+        for lit in clause
+    )
+
+
+def _source_clauses_equivalent_to_xor_raw(
+    variables: tuple[int, ...],
+    rhs: int,
+    source_clauses: set[ClauseRaw],
+) -> bool:
+    return source_clauses == _canonical_xor_cnf_clauses_raw(variables, rhs)
+
+
+def _verify_xor_detected_equations_raw(
+    xor_data: dict[str, Any],
+    original_formula: FormulaRaw,
+) -> tuple[bool, str | None]:
+    original_clauses = set(original_formula)
+    for equation in xor_data.get("xor_system", {}).get("equations", []):
+        if equation.get("source") != "detected_cnf_pattern":
+            continue
+        variables, rhs = _canonical_xor_equation_raw(equation)
+        if int(equation.get("pattern_size", 0)) != len(variables):
+            return False, "detected XOR pattern_size mismatch"
+        if equation.get("detection_mode") != "IMPLIED_CONSTRAINT_ONLY":
+            return False, "detected XOR must use IMPLIED_CONSTRAINT_ONLY mode"
+        if equation.get("source_clauses_removed") is not False:
+            return False, "detected XOR source clauses must not be removed"
+        if equation.get("safe_use") is not True:
+            return False, "detected XOR safe_use must be true"
+        if equation.get("exact_full_encoding") is not True:
+            return False, "detected XOR must record exact_full_encoding=true"
+        try:
+            source_clauses = {
+                canonicalize_clause_raw(clause)
+                for clause in equation.get("source_clauses", [])
+            }
+        except Exception as exc:
+            return False, f"invalid detected XOR source clause: {exc}"
+        if None in source_clauses:
+            return False, "detected XOR source clause is tautological"
+        typed_source = {clause for clause in source_clauses if clause is not None}
+        expected_count = 1 << (len(variables) - 1)
+        if len(typed_source) != expected_count:
+            return False, "detected XOR source clause count mismatch"
+        if not typed_source <= original_clauses:
+            return False, "detected XOR source clause missing from original CNF"
+        if not _source_clauses_equivalent_to_xor_raw(variables, rhs, typed_source):
+            return False, "detected XOR source clauses do not exactly encode equation"
+        expected_extra = _extra_touching_clauses_raw(original_formula, variables, typed_source)
+        recorded_extra = [
+            list(canonicalize_clause_raw(clause) or ())
+            for clause in equation.get("extra_clauses_touching_variables", [])
+        ]
+        if sorted(recorded_extra) != sorted(expected_extra):
+            return False, "detected XOR extra touching clauses mismatch"
+    return True, None
+
+
+def _replay_xor_elimination_trace_raw(xor_data: dict[str, Any]) -> tuple[bool, str | None, bool]:
+    status = xor_data.get("xor_drat_status", {})
+    trace = status.get("row_operation_trace", [])
+    source = status.get("elimination_order_source")
+    if not trace:
+        if source == "SPARSE_MIN_FILL":
+            return False, "sparse/min-fill elimination source missing row_operation_trace", False
+        return True, None, False
+    rows: dict[str, tuple[frozenset[int], int]] = {}
+    detected = [
+        equation
+        for equation in xor_data.get("xor_system", {}).get("equations", [])
+        if equation.get("source") == "detected_cnf_pattern"
+    ]
+    for idx, equation in enumerate(detected):
+        variables, rhs = _canonical_xor_equation_raw(equation)
+        rows[f"input_{idx:04d}"] = (frozenset(variables), rhs)
+    peak = max((len(value[0]) for value in rows.values()), default=0)
+    contradiction = False
+    for expected_step, operation in enumerate(trace):
+        if int(operation.get("step", expected_step)) != expected_step:
+            return False, "XOR row operation step mismatch", True
+        left_id = str(operation.get("left_row_id") or operation.get("pivot_row_id"))
+        right_id = str(operation.get("right_row_id") or operation.get("combined_row_ids", ["", ""])[-1])
+        if left_id not in rows or right_id not in rows:
+            return False, "XOR row operation parent missing", True
+        result_vars = rows[left_id][0] ^ rows[right_id][0]
+        result_rhs = rows[left_id][1] ^ rows[right_id][1]
+        recorded_vars = frozenset(int(var) for var in operation.get("result_row_variables", []))
+        recorded_rhs = int(operation.get("result_rhs", 0)) & 1
+        if (result_vars, result_rhs) != (recorded_vars, recorded_rhs):
+            return False, "XOR row operation result mismatch", True
+        if int(operation.get("result_row_width", len(recorded_vars))) != len(recorded_vars):
+            return False, "XOR row operation width mismatch", True
+        peak = max(peak, len(recorded_vars))
+        result_id = operation.get("result_row_id")
+        if result_id is None:
+            if recorded_vars or recorded_rhs:
+                return False, "non-tautological XOR row operation missing result id", True
+            continue
+        rows[str(result_id)] = (recorded_vars, recorded_rhs)
+        if not recorded_vars and recorded_rhs == 1:
+            contradiction = True
+    if not contradiction:
+        return False, "XOR row operation trace did not reach contradiction", True
+    recorded_peak = status.get("peak_row_width", status.get("row_width_peak"))
+    if recorded_peak is not None and peak > int(recorded_peak):
+        return False, "XOR row operation peak width exceeds recorded value", True
+    final_width = status.get("final_contradiction_row_width", status.get("row_width_final_contradiction"))
+    if final_width is not None and int(final_width) != 0:
+        return False, "XOR final contradiction row width mismatch", True
+    return True, None, True
+
+
+def compute_certificate_hash_raw(result_data: dict[str, Any]) -> str:
+    payload = {
+        "original_formula_hash": result_data["original_formula_hash"],
+        "c_parameter": int(result_data["c_parameter"]),
+        "collapse_path": result_data.get("collapse_path", []),
+        "final_class": result_data["final_class"],
+        "final_assignment": _normalise_assignment_for_hash(result_data.get("final_assignment", {})),
+        "reconstructed_original_assignment": _normalise_assignment_for_hash(
+            result_data.get("reconstructed_original_assignment", {})
+        ),
+        "original_verification": bool(result_data.get("original_verification", False)),
+        "component_results": _normalise_component_results_for_hash(result_data.get("component_results", [])),
+        "sat_certification_level": result_data.get("sat_certification_level"),
+        "unsat_certification_level": result_data.get("unsat_certification_level"),
+        "proof_trace_class": result_data.get("proof_trace_class"),
+        "native_proof_trace": result_data.get("native_proof_trace"),
+        "logical_status": result_data.get("logical_status"),
+        "discovery_route": result_data.get("discovery_route"),
+        "certification_level": result_data.get("certification_level"),
+        "public_category": result_data.get("public_category"),
+        "external_drat": bool(result_data.get("external_drat", False)),
+        "drat_claim": result_data.get("drat_claim"),
+        "proof_base": result_data.get("proof_base"),
+    }
+    if result_data.get("xor_data") is not None:
+        payload["xor_data"] = result_data.get("xor_data")
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return sha256_text_raw(encoded)
+
+
+def _load_package_raw(path: str | Path) -> tuple[dict[str, Any], dict[str, str]]:
+    source = Path(path)
+    if source.is_dir():
+        manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+        files = {
+            name: (source / name).read_text(encoding="utf-8")
+            for name in manifest.get("files", {})
+        }
+        return manifest, files
+    data = json.loads(source.read_text(encoding="utf-8"))
+    return data["manifest"], {str(name): str(content) for name, content in data["files"].items()}
+
+
+def verify_wcert_raw(path: str | Path) -> dict[str, Any]:
+    try:
+        manifest, files = _load_package_raw(path)
+    except Exception as exc:
+        return _fail(str(exc), "package_load")
+    checks: dict[str, bool] = {
+        "file_hashes": False,
+        "certificate_hash": False,
+        "collapse_path_replayed_from_original": False,
+        "bce_steps_recomputed": False,
+        "ve_steps_recomputed": False,
+        "component_decomposition_recomputed": False,
+        "proof_trace_checked_against_replayed_final_state": False,
+        "unsat_contradiction": False,
+        "bce_steps": False,
+        "ve_steps": False,
+        "component_steps": False,
+        "two_sat_steps": False,
+        "proof_trace": False,
+        "sat_assignment": False,
+        "xor_elimination_trace_replayed": False,
+        "xor_minfill_trace_replayed": False,
+    }
+    if str(manifest.get("status", "")) in FORBIDDEN_STATUSES:
+        return _fail("forbidden status present", "forbidden_status")
+    for name, meta in manifest.get("files", {}).items():
+        if name not in files:
+            return _fail(f"missing file {name}", "file_hashes")
+        if sha256_text_raw(files[name]) != meta.get("sha256"):
+            return _fail(f"file hash mismatch for {name}", "file_hashes")
+    checks["file_hashes"] = True
+    try:
+        result_data = json.loads(files["result.json"])
+        collapse_data = json.loads(files["collapse_path.json"])
+        component_results = json.loads(files["component_results.json"])
+        reconstruction_trace = json.loads(files["reconstruction_trace.json"])
+        proof_trace = (
+            json.loads(files["proof_trace.json"])
+            if "proof_trace.json" in files
+            else None
+        )
+        drat_status = (
+            json.loads(files["drat_status.json"])
+            if "drat_status.json" in files
+            else None
+        )
+        original = parse_dimacs_raw(files["original.dimacs"])
+        normalized = parse_dimacs_raw(files["normalized.dimacs"])
+    except Exception as exc:
+        return _fail(str(exc), "parse")
+    if str(result_data.get("status", "")) in FORBIDDEN_STATUSES:
+        return _fail("forbidden status present", "forbidden_status")
+    if manifest.get("status") != result_data.get("status"):
+        return _fail("manifest status mismatch", "manifest")
+    if manifest.get("final_class") != result_data.get("final_class"):
+        return _fail("manifest final_class mismatch", "manifest")
+    if int(manifest.get("c_parameter", -1)) != int(result_data.get("c_parameter", -2)):
+        return _fail("manifest c_parameter mismatch", "manifest")
+    for key in ["sat_certification_level", "unsat_certification_level", "proof_trace_class"]:
+        if manifest.get(key) != result_data.get(key):
+            return _fail(f"manifest {key} mismatch", "certification_metadata")
+    for key in [
+        "logical_status",
+        "discovery_route",
+        "certification_level",
+        "public_category",
+        "drat_claim",
+        "proof_base",
+    ]:
+        if manifest.get(key) != result_data.get(key):
+            return _fail(f"manifest {key} mismatch", "certification_metadata")
+    if manifest.get("external_lrat_frat") is not False:
+        return _fail("external_lrat_frat must remain false in v0.9.3", "proof_trace")
+    if manifest.get("verification_levels", {}).get("external_lrat_frat") is not False:
+        return _fail("external LRAT/FRAT verification falsely claimed", "proof_trace")
+    if manifest.get("native_unsat_trace_scope") != "END_TO_END_WITH_COLLAPSE_REPLAY":
+        return _fail("native UNSAT trace scope mismatch", "certification_metadata")
+    if manifest.get("external_lrat_frat") is not False:
+        return _fail("external_lrat_frat must remain false", "proof_trace")
+    if "proof.drat" in files and drat_status is None:
+        return _fail("proof.drat present without drat_status.json", "drat")
+    if drat_status is not None:
+        if manifest.get("drat_export_status") != drat_status.get("drat_export_status"):
+            return _fail("DRAT status manifest mismatch", "drat")
+        if drat_status.get("drat_export_status") == "EXPORTED" and "proof.drat" not in files:
+            return _fail("DRAT status claims export without proof.drat", "drat")
+        if bool(manifest.get("external_drat", False)) != (
+            drat_status.get("drat_export_status") == "EXPORTED"
+        ):
+            return _fail("external_drat manifest mismatch", "drat")
+        if drat_status.get("drat_export_status") == "EXPORTED":
+            if drat_status.get("proof_scope") != DRAT_PROOF_SCOPE_END_TO_END:
+                return _fail("DRAT proof is not scoped end-to-end from original CNF", "drat")
+            if drat_status.get("checked_against") != DRAT_CHECKED_AGAINST:
+                return _fail("DRAT proof is not checked against original.dimacs", "drat")
+            if drat_status.get("requires_external_checker") is not False:
+                return _fail("DRAT status incorrectly requires external checker", "drat")
+            if drat_status.get("internal_rup_subset_checker_verified") is not True:
+                return _fail("DRAT status does not record RUP-subset checker success", "drat")
+            external_verified = bool(drat_status.get("external_checker_verified", False))
+            external_checker = drat_status.get("external_checker")
+            external_ran = bool(drat_status.get("external_checker_ran", False))
+            external_exit_code = drat_status.get("external_checker_exit_code")
+            if external_verified:
+                if external_checker != "DRAT_TRIM":
+                    return _fail("external DRAT verification must name DRAT_TRIM", "drat")
+                if not external_ran:
+                    return _fail("external DRAT verification claimed without checker run", "drat")
+                if external_exit_code is None or int(external_exit_code) != 0:
+                    return _fail("external DRAT verification claimed with nonzero exit code", "drat")
+            elif external_checker == "NOT_RUN":
+                if external_ran:
+                    return _fail("DRAT status says NOT_RUN but external checker ran", "drat")
+            elif external_checker == "DRAT_TRIM":
+                if external_verified:
+                    return _fail("unreachable external verification mismatch", "drat")
+        elif drat_status.get("proof_scope") == "FINAL_STATE_ONLY_UNSUPPORTED" and "proof.drat" in files:
+            return _fail("final-state-only proof.drat is not supported", "drat")
+    if hash_formula_raw(original) != manifest.get("original_formula_hash"):
+        return _fail("original formula hash mismatch", "formula_hash")
+    if hash_formula_raw(normalized) != manifest.get("normalized_formula_hash"):
+        return _fail("normalized formula hash mismatch", "formula_hash")
+    if original != normalized:
+        return _fail("normalized formula differs from original normalization", "formula_hash")
+    stripped_steps = [
+        {key: value for key, value in step.items() if key != "external_proof_status"}
+        for step in collapse_data.get("steps", [])
+    ]
+    if stripped_steps != result_data.get("collapse_path", []):
+        return _fail("collapse_path.json differs from result.json", "collapse_path")
+    if component_results != result_data.get("component_results", []):
+        return _fail("component_results mismatch", "component_results")
+    if result_data.get("xor_data") is not None:
+        required_xor_files = {
+            "xor_system.json": "xor_system",
+            "xor_trace.json": "xor_trace",
+            "xor_status.json": "xor_status",
+        }
+        for file_name, key in required_xor_files.items():
+            if file_name not in files:
+                return _fail(f"missing {file_name}", "xor_certificate")
+            try:
+                loaded = json.loads(files[file_name])
+            except Exception as exc:
+                return _fail(f"invalid {file_name}: {exc}", "xor_certificate")
+            if loaded != result_data["xor_data"].get(key, {}):
+                return _fail(f"{file_name} differs from result.json", "xor_certificate")
+        if "xor_drat_status" in result_data["xor_data"]:
+            if "xor_drat_status.json" not in files:
+                return _fail("missing xor_drat_status.json", "xor_certificate")
+            try:
+                loaded_xor_drat = json.loads(files["xor_drat_status.json"])
+            except Exception as exc:
+                return _fail(f"invalid xor_drat_status.json: {exc}", "xor_certificate")
+            if loaded_xor_drat != result_data["xor_data"].get("xor_drat_status", {}):
+                return _fail("xor_drat_status.json differs from result.json", "xor_certificate")
+        xor_ok, xor_error = _verify_xor_detected_equations_raw(result_data["xor_data"], original)
+        if not xor_ok:
+            return _fail(xor_error or "detected XOR certificate metadata mismatch", "xor_certificate")
+        trace_ok, trace_error, trace_present = _replay_xor_elimination_trace_raw(result_data["xor_data"])
+        if not trace_ok:
+            return _fail(trace_error or "XOR elimination trace replay failed", "xor_certificate")
+        checks["xor_elimination_trace_replayed"] = trace_present
+        checks["xor_minfill_trace_replayed"] = (
+            trace_present
+            and result_data["xor_data"].get("xor_drat_status", {}).get("elimination_order_source") == "SPARSE_MIN_FILL"
+        )
+    elif result_data.get("status") == "UNSAT_XOR_NATIVE":
+        return _fail("XOR-native UNSAT missing xor_data", "xor_certificate")
+    recomputed_hash = compute_certificate_hash_raw(result_data)
+    if recomputed_hash != manifest.get("certificate_hash"):
+        return _fail("certificate hash mismatch", "certificate_hash")
+    if files.get("certificate_hash.txt", "").strip() != recomputed_hash:
+        return _fail("certificate_hash.txt mismatch", "certificate_hash")
+    checks["certificate_hash"] = True
+    try:
+        final_formula, replay_checks = replay_collapse_path_raw(
+            original,
+            result_data.get("collapse_path", []),
+            int(result_data.get("c_parameter", 0)),
+        )
+    except Exception as exc:
+        return _fail(str(exc), "collapse_path_replayed_from_original")
+    if hash_formula_raw(final_formula) != result_data.get("final_formula_hash"):
+        return _fail("final formula hash mismatch", "collapse_path_replayed_from_original")
+    checks.update({
+        "collapse_path_replayed_from_original": True,
+        "bce_steps_recomputed": replay_checks["bce_steps"],
+        "ve_steps_recomputed": replay_checks["ve_steps"],
+        "component_decomposition_recomputed": replay_checks["component_steps"],
+        "bce_steps": replay_checks["bce_steps"],
+        "ve_steps": replay_checks["ve_steps"],
+        "component_steps": replay_checks["component_steps"],
+        "two_sat_steps": replay_checks["two_sat_steps"],
+    })
+    checks["drat_proof_present"] = "proof.drat" in files
+    checks["internal_drat_checker_verified"] = False
+    checks["drat_checked_against_original"] = False
+    checks["internal_rup_subset_checker_verified"] = False
+    checks["external_drat_verified"] = bool(
+        drat_status.get("external_checker_verified", False)
+    ) if drat_status is not None else False
+    if "proof.drat" in files:
+        drat_check = check_drat_proof_raw(original, files["proof.drat"])
+        if not drat_check.get("verified"):
+            return _fail(str(drat_check.get("error")), "drat")
+        if drat_check.get("checked_against") != DRAT_CHECKED_AGAINST:
+            return _fail("DRAT proof was not checked against original.dimacs", "drat")
+        if drat_status is not None and drat_status.get("internal_drat_checker_verified") is not True:
+            return _fail("drat_status does not record internal checker success", "drat")
+        if drat_status is not None and drat_status.get("internal_rup_subset_checker_verified") is not True:
+            return _fail("drat_status does not record RUP-subset checker success", "drat")
+        checks["internal_drat_checker_verified"] = True
+        checks["internal_rup_subset_checker_verified"] = True
+        checks["drat_checked_against_original"] = True
+    status = result_data.get("status")
+    if status == "SAT":
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        if proof_trace is not None or result_data.get("native_proof_trace") is not None:
+            return _fail("SAT certificate must not include UNSAT proof trace", "proof_trace")
+        final_assignment = {
+            int(var): bool(value)
+            for var, value in result_data.get("final_assignment", {}).items()
+        }
+        try:
+            reconstructed = check_reconstruction_trace_raw(
+                original,
+                result_data.get("collapse_path", []),
+                final_assignment,
+                reconstruction_trace,
+            )
+        except Exception as exc:
+            return _fail(str(exc), "reconstruction_trace")
+        if not check_sat_assignment_against_original_raw(original, reconstructed):
+            return _fail("SAT assignment does not satisfy original formula", "sat_assignment")
+        if result_data.get("xor_data") is not None and not _xor_assignment_satisfies_raw(
+            result_data["xor_data"],
+            reconstructed,
+        ):
+            return _fail("SAT assignment does not satisfy XOR equations", "xor_certificate")
+        checks["sat_assignment"] = True
+    elif status == "UNSAT":
+        ok, reason = check_unsat_contradiction_raw(final_formula, replay_checks)
+        if not ok:
+            return _fail(reason, "unsat_external_certification")
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        try:
+            check_native_proof_trace_raw(proof_trace, final_formula, replay_checks, result_data)
+        except Exception as exc:
+            return _fail(str(exc), "proof_trace")
+        checks["proof_trace_checked_against_replayed_final_state"] = True
+        checks["proof_trace"] = True
+        checks["unsat_contradiction"] = True
+    elif status == "NO_COLLAPSE_FOUND_UNDER_CURRENT_GRAMMAR_AND_C":
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        if proof_trace is not None or result_data.get("native_proof_trace") is not None:
+            return _fail("NO_COLLAPSE certificate must not include proof_trace", "proof_trace")
+        checks["no_collapse_report"] = True
+    elif status == "UNSAT_XOR_NATIVE":
+        metadata_ok, metadata_error = _metadata_consistent_raw(manifest, result_data, replay_checks)
+        if not metadata_ok:
+            return _fail(metadata_error or "certification metadata mismatch", "certification_metadata")
+        if proof_trace is not None or result_data.get("native_proof_trace") is not None:
+            return _fail("XOR-native UNSAT certificate must not include clausal proof_trace", "proof_trace")
+        xor_data = result_data.get("xor_data")
+        if xor_data is None:
+            return _fail("XOR-native UNSAT missing xor_data", "xor_certificate")
+        xor_status = xor_data.get("xor_status", {})
+        if xor_status.get("xor_status") != "UNSAT":
+            return _fail("XOR-native UNSAT missing XOR contradiction status", "xor_certificate")
+        if not _xor_native_unsat_verified_raw(xor_data, original):
+            return _fail("XOR-native contradiction not verified by raw GF(2) checker", "xor_certificate")
+        if xor_status.get("external_drat") is True:
+            xor_drat_status = xor_data.get("xor_drat_status", {})
+            if xor_drat_status.get("xor_drat_status") != "VERIFIED":
+                return _fail("XOR DRAT status is not VERIFIED", "xor_certificate")
+            if xor_status.get("drat_claim") != "EXPORTED_VERIFIED":
+                return _fail("XOR DRAT claim is not EXPORTED_VERIFIED", "xor_certificate")
+            if xor_status.get("proof_base") != "original_cnf":
+                return _fail("XOR original-CNF DRAT claim has wrong proof base", "xor_certificate")
+            if xor_status.get("source") != "detected_cnf_pattern":
+                return _fail("XOR original-CNF DRAT claim must come from detected CNF patterns", "xor_certificate")
+            if _solve_xor_equations_raw(_detected_xor_equations_from_data_raw(xor_data)) != "UNSAT":
+                return _fail("detected CNF XOR equations alone do not prove contradiction", "xor_certificate")
+            if drat_status is None or "proof.drat" not in files:
+                return _fail("XOR DRAT claim missing proof.drat or drat_status.json", "drat")
+            if drat_status.get("drat_export_status") != "EXPORTED":
+                return _fail("XOR DRAT claim without exported DRAT status", "drat")
+            if drat_status.get("external_checker") != "DRAT_TRIM":
+                return _fail("XOR DRAT claim must record DRAT_TRIM", "drat")
+            if drat_status.get("external_checker_ran") is not True or drat_status.get("external_checker_verified") is not True:
+                return _fail("XOR DRAT claim without recorded external verification", "drat")
+            checks["xor_drat_exported_verified"] = True
+        else:
+            if xor_status.get("drat_claim") not in {"NOT_EXPORTED", "FAILED"}:
+                return _fail("XOR-native UNSAT falsely claims DRAT support", "xor_certificate")
+            checks["xor_native_unsat_not_drat"] = True
+    else:
+        return _fail(f"unsupported status {status}", "status")
+    public_metadata = _public_metadata_raw(result_data)
+    return {
+        "verified": True,
+        "status": public_metadata["status"],
+        "internal_status": status,
+        "discovery_route": public_metadata["discovery_route"],
+        "certification_level": public_metadata["certification_level"],
+        "public_category": public_metadata["public_category"],
+        "external_drat": public_metadata["external_drat"],
+        "drat_claim": public_metadata["drat_claim"],
+        "proof_base": public_metadata["proof_base"],
+        "certificate_hash": recomputed_hash,
+        "checker": CHECKER,
+        "trusted_imports": TRUSTED_IMPORTS,
+        "checks": checks,
+    }
+
+
+def verify_unsat_certificate_end_to_end_raw(bundle: str | Path) -> dict[str, Any]:
+    """Verify an UNSAT certificate by raw replay before checking native trace.
+
+    This function intentionally delegates to ``verify_wcert_raw`` because that
+    checker performs file/hash checks, parses the original formula, replays the
+    full collapse path from raw clauses, and only then checks proof_trace.json
+    against the replayed final state.
+    """
+
+    result = verify_wcert_raw(bundle)
+    if not result.get("verified"):
+        return result
+    if result.get("status") != "UNSAT":
+        return _fail("certificate status is not UNSAT", "status")
+    required = [
+        "collapse_path_replayed_from_original",
+        "bce_steps_recomputed",
+        "ve_steps_recomputed",
+        "component_decomposition_recomputed",
+        "proof_trace_checked_against_replayed_final_state",
+        "unsat_contradiction",
+    ]
+    checks = result.get("checks", {})
+    missing = [key for key in required if checks.get(key) is not True]
+    if missing:
+        return _fail(f"missing UNSAT end-to-end checks: {missing}", "unsat_end_to_end")
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Independent raw Witnora .wcert checker")
+    parser.add_argument("certificate", help=".wcert directory or .wcert.json file")
+    args = parser.parse_args(argv)
+    result = verify_wcert_raw(args.certificate)
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return 0 if result.get("verified") else 1
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

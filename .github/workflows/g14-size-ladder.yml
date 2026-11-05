@@ -1,0 +1,52 @@
+name: Native G14 component size ladder
+
+on:
+  push:
+    branches:
+      - research/g14-size-ladder-v47
+  pull_request:
+    paths:
+      - "scripts/generate_g14_size_ladder_lean.py"
+      - "tests/test_g14_size_ladder.py"
+      - ".github/workflows/g14-size-ladder.yml"
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate Python residual counts and native G5 traces
+        run: PYTHONPATH=. python -m unittest tests.test_g14_size_ladder -v
+      - name: Emit source-bound G14 Lean proofs for three component counts
+        run: PYTHONPATH=. python scripts/generate_g14_size_ladder_lean.py
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build G14 source checker
+        working-directory: formal
+        run: lake build Witnora.G14ConcreteBridge
+      - name: Kernel-check and benchmark two components
+        working-directory: formal
+        run: /usr/bin/time -f 'G14_SIZE_2_SECONDS=%e PEAK_KB=%M' lake env lean Witnora/GeneratedG14Size2.lean
+      - name: Kernel-check and benchmark three components
+        working-directory: formal
+        run: /usr/bin/time -f 'G14_SIZE_3_SECONDS=%e PEAK_KB=%M' lake env lean Witnora/GeneratedG14Size3.lean
+      - name: Kernel-check and benchmark four components
+        working-directory: formal
+        run: /usr/bin/time -f 'G14_SIZE_4_SECONDS=%e PEAK_KB=%M' lake env lean Witnora/GeneratedG14Size4.lean
+      - name: Reject holes and native proof evaluation
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/GeneratedG14Size{2,3,4}.lean; then
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-g14-size-ladder-lean
+          path: formal/Witnora/GeneratedG14Size*.lean

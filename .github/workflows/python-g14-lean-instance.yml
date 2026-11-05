@@ -1,0 +1,47 @@
+name: Native Python G5 traces through G14 Lean
+
+on:
+  push:
+    branches:
+      - research/native-g5-g14-v45
+  pull_request:
+    paths:
+      - "witnora_core/python_g14_lean_artifact.py"
+      - "scripts/generate_python_g14_lean.py"
+      - "tests/test_python_g14_lean_artifact.py"
+      - ".github/workflows/python-g14-lean-instance.yml"
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check Python G14 conditioning and authentic native G5 traces
+        run: PYTHONPATH=. python -m unittest tests.test_python_g14_lean_artifact -v
+      - name: Emit original source, branch residuals, and candidate G5 rows
+        run: PYTHONPATH=. python scripts/generate_python_g14_lean.py
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build G14 concrete kernel checker
+        working-directory: formal
+        run: lake build Witnora.G14ConcreteBridge
+      - name: Verify Python-generated two-branch G14 to G5 UNSAT source
+        working-directory: formal
+        run: /usr/bin/time -f 'LEAN_G14_SECONDS=%e PEAK_MEMORY_KB=%M' lake env lean Witnora/GeneratedPythonG14.lean
+      - name: Reject proof holes and native evaluation
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/GeneratedPythonG14.lean; then
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-g14-residual-lean-proof
+          path: formal/Witnora/GeneratedPythonG14.lean

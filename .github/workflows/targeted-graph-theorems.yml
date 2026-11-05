@@ -1,0 +1,31 @@
+name: Targeted graph theorem challenge
+
+on:
+  push:
+    branches:
+      - 'research/targeted-graph-theorems-v18'
+  pull_request:
+    paths:
+      - 'witnora_core/targeted_graph_theorems.py'
+      - 'tests/test_targeted_graph_theorems.py'
+      - 'scripts/experiment_targeted_graph_theorems.py'
+      - 'witnora_core/graph_conjecture_lab.py'
+      - '.github/workflows/targeted-graph-theorems.yml'
+
+jobs:
+  targeted:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check known graph families and exact metrics
+        run: PYTHONPATH=. python -m unittest tests.test_targeted_graph_theorems -v
+      - name: Search adversarial graph families for counterexamples
+        run: PYTHONPATH=. python scripts/experiment_targeted_graph_theorems.py
+      - name: Archive counterexamples and proof obligations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: targeted-graph-theorems-${{ github.sha }}
+          path: targeted-graph-theorems.json
+          if-no-files-found: ignore

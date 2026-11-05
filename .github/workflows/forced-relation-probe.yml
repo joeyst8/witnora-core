@@ -1,0 +1,35 @@
+name: Forced relation probing research gate
+
+on:
+  push:
+    branches:
+      - 'research/forced-relation-probe-v4'
+  pull_request:
+    paths:
+      - 'witnora_core/forced_relation_probe.py'
+      - 'tests/test_forced_relation_probe.py'
+      - 'scripts/benchmark_forced_relation_probe.py'
+      - '.github/workflows/forced-relation-probe.yml'
+
+jobs:
+  probing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install SAT oracle
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Exhaustively check finite SAT preservation
+        run: PYTHONPATH=. python -m unittest tests.test_forced_relation_probe -v
+      - name: Challenge forced-relation probing on new OOD seeds
+        run: PYTHONPATH=. python scripts/benchmark_forced_relation_probe.py
+      - name: Archive successes and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forced-relation-${{ github.sha }}
+          path: forced-relation-probe.csv
+          if-no-files-found: ignore

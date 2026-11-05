@@ -1,0 +1,22 @@
+name: Witnora Partial Replay With drat-trim
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: your-org/witnora-verify@v1
+        with:
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: largest
+          rerun-drat-trim: "true"
+          drat-trim: /usr/local/bin/drat-trim
+          max-replay-proofs: "1"
+          replay-timeout-seconds: "120"
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,DRAT_TRIM_TIMEOUT

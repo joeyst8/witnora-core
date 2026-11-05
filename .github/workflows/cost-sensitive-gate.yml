@@ -1,0 +1,37 @@
+name: Cost-sensitive gate holdout challenge
+
+on:
+  push:
+    branches:
+      - 'research/cost-sensitive-gate-v3'
+  pull_request:
+    paths:
+      - 'witnora_core/cost_sensitive_gate.py'
+      - 'tests/test_cost_sensitive_gate.py'
+      - 'scripts/benchmark_cost_sensitive_gate.py'
+      - '.github/workflows/cost-sensitive-gate.yml'
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Finite correctness and fit validation
+        run: PYTHONPATH=. python -m unittest tests.test_cost_sensitive_gate -v
+      - name: Fit on training seeds and challenge frozen gate on holdout
+        run: PYTHONPATH=. python scripts/benchmark_cost_sensitive_gate.py
+      - name: Archive fit and complete holdout data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cost-sensitive-gate-${{ github.sha }}
+          path: |
+            cost-sensitive-holdout.csv
+            cost-sensitive-model.json
+          if-no-files-found: ignore

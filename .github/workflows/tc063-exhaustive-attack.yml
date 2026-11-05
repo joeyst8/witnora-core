@@ -1,0 +1,25 @@
+name: TC-063 exhaustive small separator attack
+
+on:
+  push:
+    branches:
+      - research/tc063-exhaustive-attack-v59
+  pull_request:
+    paths:
+      - "scripts/attack_tc063_small_separator.py"
+      - ".github/workflows/tc063-exhaustive-attack.yml"
+  workflow_dispatch:
+
+jobs:
+  exhaustive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Enumerate supported XOR/guard combinations and compare oracle
+        run: PYTHONPATH=. python scripts/attack_tc063_small_separator.py
+      - name: Run G14 SAT/UNSAT and zero-component regressions
+        run: PYTHONPATH=. python -m unittest tests.test_g14_separator_only tests.test_g14_zero_separator tests.test_tc063_direct_attack -v

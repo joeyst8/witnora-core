@@ -1,0 +1,3 @@
+c XOR sidecar SAT example
+p cnf 2 1
+1 0

@@ -1,0 +1,35 @@
+name: Adaptive lookahead research gate
+
+on:
+  push:
+    branches:
+      - 'research/adaptive-lookahead-prototype'
+  pull_request:
+    paths:
+      - 'witnora_core/adaptive_lookahead_prototype.py'
+      - 'tests/test_adaptive_lookahead_prototype.py'
+      - 'scripts/benchmark_adaptive_lookahead.py'
+      - '.github/workflows/adaptive-lookahead.yml'
+
+jobs:
+  adaptive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent SAT solvers
+        run: python -m pip install 'python-sat==1.8.dev24'
+      - name: Exhaustive finite SAT and structural guard tests
+        run: PYTHONPATH=. python -m unittest tests.test_adaptive_lookahead_prototype -v
+      - name: Benchmark fresh unfamiliar cases against greedy and two-ply
+        run: PYTHONPATH=. python scripts/benchmark_adaptive_lookahead.py --output adaptive-lookahead.csv
+      - name: Preserve raw comparison data even on failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adaptive-lookahead-${{ github.sha }}
+          path: adaptive-lookahead.csv
+          if-no-files-found: ignore

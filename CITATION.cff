@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use Witnora-Core, please cite this software release."
+title: "Witnora-Core: A Certified Collapse Hierarchy for Verifier-to-Witness SAT Reasoning"
+type: software
+authors:
+  - family-names: "Nur"
+    given-names: "Mahamud"
+repository-code: "https://github.com/joeyst8/witnora-core"
+url: "https://github.com/joeyst8/witnora-core/releases/tag/v2.26-submit-release-checklist-finalization"
+version: "v2.26-submit-release-checklist-finalization"
+date-released: "2026-07-06"
+abstract: "Witnora-Core v2.26 is a public release package for a certified collapse hierarchy for verifier-to-witness SAT reasoning, including native certificates, obstruction-to-operator planning, planner-guided finite execution, G9-G13 soundness sketches, and TC-063 as a restricted theorem with proof obligations over SAF(c,r)."
+keywords:
+  - SAT
+  - certified reasoning
+  - proof checking
+  - collapse hierarchy
+  - native certificates
+  - verifier-to-witness reasoning

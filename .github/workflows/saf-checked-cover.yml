@@ -1,0 +1,31 @@
+name: SAF bounded checked-cover soundness
+
+on:
+  push:
+    branches:
+      - research/saf-checked-cover-v49
+  pull_request:
+    paths:
+      - "formal/Witnora/SAFCheckedCover.lean"
+      - ".github/workflows/saf-checked-cover.yml"
+  workflow_dispatch:
+
+jobs:
+  theorem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check executable cover soundness and negative controls
+        working-directory: formal
+        run: lake build Witnora.SAFCheckedCover
+      - name: Reject proof holes and unsafe declarations
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/SAFCheckedCover.lean; then
+            exit 1
+          fi

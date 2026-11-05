@@ -1,0 +1,27 @@
+name: Witnora Release Trust Card
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-and-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: your-org/witnora-verify@v1
+        with:
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: largest
+          out-dir: witnora-verify-out
+          upload-artifacts: "true"
+      - name: Prepare release trust-card upload plan
+        run: |
+          python scripts/attach_release_trust_card.py \
+            --tag v1.0-public-preprint-final \
+            --trust-card witnora-verify-out/trust_card.md \
+            --report witnora-verify-out/release_verification_report.json \
+            --manifest RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md \
+            --out-dir release-trust-plan

@@ -1,0 +1,19 @@
+name: Witnora Partial Replay
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: your-org/witnora-verify@v1
+        with:
+          source-zip: witnora-core-v1.0-public-preprint.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: instance
+          select-instance: tseitin_20:c=2
+          fail-on-verdict: NOT_VERIFIED,PARTIALLY_VERIFIED,OVERCLAIM

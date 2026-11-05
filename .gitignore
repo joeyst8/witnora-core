@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.zip
+zip_base64_chunks/
+.agents/
+benchmark_outputs/
+outputs/
+tmp/
+_clean_*/
+_overleaf_*/
+tools/tectonic/
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out

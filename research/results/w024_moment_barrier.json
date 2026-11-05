@@ -1,0 +1,3402 @@
+{
+  "all_source_reconstructed_xor_certificates_valid": true,
+  "case_count": 64,
+  "cases": [
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "independent_control": {
+        "sat_clauses": [
+          [
+            2,
+            -1,
+            3
+          ],
+          [
+            5,
+            6,
+            4
+          ],
+          [
+            -2,
+            8,
+            7
+          ],
+          [
+            2,
+            -8,
+            7
+          ],
+          [
+            1,
+            8,
+            -9
+          ],
+          [
+            3,
+            -7,
+            9
+          ],
+          [
+            3,
+            7,
+            -9
+          ],
+          [
+            -3,
+            7,
+            9
+          ],
+          [
+            -5,
+            -6,
+            4
+          ],
+          [
+            -1,
+            -8,
+            -9
+          ],
+          [
+            -1,
+            8,
+            9
+          ],
+          [
+            -2,
+            -8,
+            -7
+          ],
+          [
+            1,
+            -8,
+            9
+          ],
+          [
+            5,
+            -6,
+            -4
+          ],
+          [
+            2,
+            8,
+            -7
+          ],
+          [
+            -2,
+            -1,
+            -3
+          ],
+          [
+            -5,
+            6,
+            -4
+          ],
+          [
+            -3,
+            -7,
+            -9
+          ],
+          [
+            2,
+            1,
+            -3
+          ],
+          [
+            -2,
+            1,
+            3
+          ]
+        ],
+        "unsat_clauses": [
+          [
+            2,
+            -1,
+            3
+          ],
+          [
+            -5,
+            6,
+            4
+          ],
+          [
+            -2,
+            8,
+            7
+          ],
+          [
+            2,
+            -8,
+            7
+          ],
+          [
+            1,
+            8,
+            -9
+          ],
+          [
+            -3,
+            -7,
+            9
+          ],
+          [
+            -3,
+            7,
+            -9
+          ],
+          [
+            3,
+            7,
+            9
+          ],
+          [
+            5,
+            -6,
+            4
+          ],
+          [
+            -1,
+            -8,
+            -9
+          ],
+          [
+            -1,
+            8,
+            9
+          ],
+          [
+            -2,
+            -8,
+            -7
+          ],
+          [
+            1,
+            -8,
+            9
+          ],
+          [
+            -5,
+            -6,
+            -4
+          ],
+          [
+            2,
+            8,
+            -7
+          ],
+          [
+            -2,
+            -1,
+            -3
+          ],
+          [
+            5,
+            6,
+            -4
+          ],
+          [
+            3,
+            -7,
+            -9
+          ],
+          [
+            2,
+            1,
+            -3
+          ],
+          [
+            -2,
+            1,
+            3
+          ]
+        ]
+      },
+      "index": 0,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1282964473,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          8,
+          9
+        ],
+        [
+          2,
+          7,
+          8
+        ],
+        [
+          3,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "independent_control": {
+        "sat_clauses": [
+          [
+            -1,
+            -7,
+            4
+          ],
+          [
+            -1,
+            7,
+            -4
+          ],
+          [
+            -8,
+            6,
+            5
+          ],
+          [
+            1,
+            -7,
+            -4
+          ],
+          [
+            8,
+            -6,
+            5
+          ],
+          [
+            3,
+            2,
+            -6
+          ],
+          [
+            -9,
+            -2,
+            -5
+          ],
+          [
+            -3,
+            -2,
+            -6
+          ],
+          [
+            -8,
+            -6,
+            -5
+          ],
+          [
+            3,
+            -2,
+            6
+          ],
+          [
+            8,
+            6,
+            -5
+          ],
+          [
+            -3,
+            -9,
+            -8
+          ],
+          [
+            9,
+            -2,
+            5
+          ],
+          [
+            9,
+            2,
+            -5
+          ],
+          [
+            -9,
+            2,
+            5
+          ],
+          [
+            3,
+            -9,
+            8
+          ],
+          [
+            -3,
+            9,
+            8
+          ],
+          [
+            -3,
+            2,
+            6
+          ],
+          [
+            3,
+            9,
+            -8
+          ],
+          [
+            1,
+            7,
+            4
+          ]
+        ],
+        "unsat_clauses": [
+          [
+            1,
+            -7,
+            4
+          ],
+          [
+            1,
+            7,
+            -4
+          ],
+          [
+            8,
+            6,
+            5
+          ],
+          [
+            -1,
+            -7,
+            -4
+          ],
+          [
+            -8,
+            -6,
+            5
+          ],
+          [
+            3,
+            2,
+            -6
+          ],
+          [
+            -9,
+            -2,
+            -5
+          ],
+          [
+            -3,
+            -2,
+            -6
+          ],
+          [
+            8,
+            -6,
+            -5
+          ],
+          [
+            3,
+            -2,
+            6
+          ],
+          [
+            -8,
+            6,
+            -5
+          ],
+          [
+            -3,
+            -9,
+            -8
+          ],
+          [
+            9,
+            -2,
+            5
+          ],
+          [
+            9,
+            2,
+            -5
+          ],
+          [
+            -9,
+            2,
+            5
+          ],
+          [
+            3,
+            -9,
+            8
+          ],
+          [
+            -3,
+            9,
+            8
+          ],
+          [
+            -3,
+            2,
+            6
+          ],
+          [
+            3,
+            9,
+            -8
+          ],
+          [
+            -1,
+            7,
+            4
+          ]
+        ]
+      },
+      "index": 1,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3995201842,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          6
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          3,
+          8,
+          9
+        ],
+        [
+          5,
+          6,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 2,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 149516139,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          5
+        ],
+        [
+          1,
+          6,
+          9
+        ],
+        [
+          2,
+          4,
+          9
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 3,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2861753508,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          4,
+          5
+        ],
+        [
+          1,
+          7,
+          9
+        ],
+        [
+          4,
+          7,
+          8
+        ],
+        [
+          5,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 4,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3311035101,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          8
+        ],
+        [
+          2,
+          6,
+          7
+        ],
+        [
+          4,
+          5,
+          7
+        ],
+        [
+          5,
+          6,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 5,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1728305174,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          4,
+          9
+        ],
+        [
+          1,
+          5,
+          7
+        ],
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          2,
+          5,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 6,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2177586767,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          3,
+          9
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 7,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 603246472,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          8
+        ],
+        [
+          1,
+          4,
+          9
+        ],
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 8,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1572619713,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          5,
+          8
+        ],
+        [
+          2,
+          6,
+          9
+        ],
+        [
+          5,
+          6,
+          7
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 9,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 4234527610,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          5,
+          9
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          4,
+          5,
+          7
+        ],
+        [
+          4,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 10,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 506280115,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          7
+        ],
+        [
+          1,
+          5,
+          8
+        ],
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          4,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 11,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3101079276,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          3,
+          4,
+          9
+        ],
+        [
+          3,
+          6,
+          8
+        ],
+        [
+          4,
+          5,
+          6
+        ],
+        [
+          5,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 12,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3667799077,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          5,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 13,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1967630942,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          4
+        ],
+        [
+          1,
+          7,
+          9
+        ],
+        [
+          3,
+          6,
+          7
+        ],
+        [
+          4,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 14,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2534351767,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          5
+        ],
+        [
+          2,
+          6,
+          7
+        ],
+        [
+          3,
+          4,
+          6
+        ],
+        [
+          3,
+          5,
+          7
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 15,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 825792976,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          1,
+          6,
+          9
+        ],
+        [
+          3,
+          4,
+          9
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 16,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1407194889,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          5
+        ],
+        [
+          1,
+          8,
+          9
+        ],
+        [
+          2,
+          4,
+          8
+        ],
+        [
+          4,
+          5,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 17,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3450441026,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          4
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          3,
+          6,
+          8
+        ],
+        [
+          4,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 18,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1817250555,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          8
+        ],
+        [
+          2,
+          4,
+          9
+        ],
+        [
+          3,
+          4,
+          6
+        ],
+        [
+          6,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 19,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2384101428,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          8
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          3,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 20,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 683933293,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          3,
+          6,
+          9
+        ],
+        [
+          3,
+          7,
+          8
+        ],
+        [
+          5,
+          6,
+          7
+        ],
+        [
+          5,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 21,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1250654118,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          1,
+          3,
+          9
+        ],
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          4,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 22,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3837062623,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          1,
+          6,
+          8
+        ],
+        [
+          3,
+          6,
+          7
+        ],
+        [
+          5,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 23,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 125594392,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          7
+        ],
+        [
+          1,
+          4,
+          9
+        ],
+        [
+          3,
+          4,
+          8
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 24,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2703614289,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          1,
+          6,
+          9
+        ],
+        [
+          2,
+          7,
+          9
+        ],
+        [
+          4,
+          6,
+          7
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 25,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3287113354,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          4
+        ],
+        [
+          1,
+          6,
+          9
+        ],
+        [
+          3,
+          5,
+          9
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 26,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2107036867,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          8
+        ],
+        [
+          1,
+          7,
+          9
+        ],
+        [
+          3,
+          5,
+          9
+        ],
+        [
+          5,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 27,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2623427196,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          8
+        ],
+        [
+          2,
+          6,
+          7
+        ],
+        [
+          3,
+          4,
+          6
+        ],
+        [
+          3,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 28,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1040698293,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          5
+        ],
+        [
+          2,
+          7,
+          9
+        ],
+        [
+          4,
+          6,
+          7
+        ],
+        [
+          5,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 29,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1489977838,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          8
+        ],
+        [
+          1,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          4,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 30,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 4210605863,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          1,
+          8,
+          9
+        ],
+        [
+          3,
+          7,
+          9
+        ],
+        [
+          5,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "independent_control": {
+        "sat_clauses": [
+          [
+            6,
+            -9,
+            5
+          ],
+          [
+            3,
+            -2,
+            -1
+          ],
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            4,
+            -5,
+            7
+          ],
+          [
+            -8,
+            9,
+            7
+          ],
+          [
+            4,
+            5,
+            -7
+          ],
+          [
+            6,
+            8,
+            -4
+          ],
+          [
+            -4,
+            5,
+            7
+          ],
+          [
+            -6,
+            -8,
+            -4
+          ],
+          [
+            -8,
+            -9,
+            -7
+          ],
+          [
+            -6,
+            9,
+            5
+          ],
+          [
+            8,
+            9,
+            -7
+          ],
+          [
+            8,
+            -9,
+            7
+          ],
+          [
+            -3,
+            2,
+            -1
+          ],
+          [
+            -4,
+            -5,
+            -7
+          ],
+          [
+            -6,
+            -9,
+            -5
+          ],
+          [
+            6,
+            9,
+            -5
+          ],
+          [
+            6,
+            -8,
+            4
+          ],
+          [
+            -3,
+            -2,
+            1
+          ],
+          [
+            -6,
+            8,
+            4
+          ]
+        ],
+        "unsat_clauses": [
+          [
+            6,
+            -9,
+            5
+          ],
+          [
+            -3,
+            -2,
+            -1
+          ],
+          [
+            -3,
+            2,
+            1
+          ],
+          [
+            -4,
+            -5,
+            7
+          ],
+          [
+            -8,
+            9,
+            7
+          ],
+          [
+            -4,
+            5,
+            -7
+          ],
+          [
+            6,
+            8,
+            -4
+          ],
+          [
+            4,
+            5,
+            7
+          ],
+          [
+            -6,
+            -8,
+            -4
+          ],
+          [
+            -8,
+            -9,
+            -7
+          ],
+          [
+            -6,
+            9,
+            5
+          ],
+          [
+            8,
+            9,
+            -7
+          ],
+          [
+            8,
+            -9,
+            7
+          ],
+          [
+            3,
+            2,
+            -1
+          ],
+          [
+            4,
+            -5,
+            -7
+          ],
+          [
+            -6,
+            -9,
+            -5
+          ],
+          [
+            6,
+            9,
+            -5
+          ],
+          [
+            6,
+            -8,
+            4
+          ],
+          [
+            3,
+            -2,
+            1
+          ],
+          [
+            -6,
+            8,
+            4
+          ]
+        ]
+      },
+      "index": 31,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 346043744,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          4,
+          5,
+          7
+        ],
+        [
+          4,
+          6,
+          8
+        ],
+        [
+          5,
+          6,
+          9
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 32,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3077157529,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          8
+        ],
+        [
+          1,
+          3,
+          4
+        ],
+        [
+          2,
+          4,
+          9
+        ],
+        [
+          3,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 33,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3507562706,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          6
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          3,
+          4,
+          9
+        ],
+        [
+          4,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 34,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1943709195,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          1,
+          6,
+          8
+        ],
+        [
+          2,
+          7,
+          8
+        ],
+        [
+          4,
+          6,
+          7
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 35,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3984727108,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          3,
+          8,
+          9
+        ],
+        [
+          4,
+          6,
+          9
+        ],
+        [
+          5,
+          6,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 36,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 206280189,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          8,
+          9
+        ],
+        [
+          2,
+          7,
+          9
+        ],
+        [
+          6,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 37,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2926777142,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          5,
+          8
+        ],
+        [
+          2,
+          8,
+          9
+        ],
+        [
+          5,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 38,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3359410543,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          9
+        ],
+        [
+          1,
+          3,
+          8
+        ],
+        [
+          2,
+          6,
+          8
+        ],
+        [
+          3,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 39,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1793328808,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          6
+        ],
+        [
+          2,
+          8,
+          9
+        ],
+        [
+          3,
+          4,
+          9
+        ],
+        [
+          4,
+          6,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 40,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2225962209,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          6
+        ],
+        [
+          2,
+          4,
+          9
+        ],
+        [
+          3,
+          4,
+          8
+        ],
+        [
+          6,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 41,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 660011546,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 42,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1092513875,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          4,
+          5,
+          6
+        ],
+        [
+          5,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 43,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3821529484,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          3,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 44,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 495937477,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2,
+          4,
+          5
+        ],
+        [
+          3,
+          5,
+          9
+        ],
+        [
+          4,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 45,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3216563582,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          6
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          4,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 46,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3730856631,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          3,
+          4,
+          6
+        ],
+        [
+          3,
+          8,
+          9
+        ],
+        [
+          4,
+          5,
+          9
+        ],
+        [
+          5,
+          6,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 47,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2016006384,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          2,
+          5,
+          6
+        ],
+        [
+          3,
+          4,
+          6
+        ],
+        [
+          3,
+          5,
+          7
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 48,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2597408297,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          3,
+          4,
+          9
+        ],
+        [
+          3,
+          5,
+          6
+        ],
+        [
+          4,
+          6,
+          8
+        ],
+        [
+          5,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 49,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 882558050,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          5
+        ],
+        [
+          1,
+          4,
+          9
+        ],
+        [
+          2,
+          7,
+          9
+        ],
+        [
+          4,
+          5,
+          7
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 50,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1463958939,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          6
+        ],
+        [
+          2,
+          5,
+          9
+        ],
+        [
+          4,
+          5,
+          8
+        ],
+        [
+          6,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 51,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 4044078036,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          4,
+          5
+        ],
+        [
+          2,
+          7,
+          8
+        ],
+        [
+          4,
+          8,
+          9
+        ],
+        [
+          5,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 52,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 322121997,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          6
+        ],
+        [
+          1,
+          4,
+          5
+        ],
+        [
+          2,
+          3,
+          4
+        ],
+        [
+          3,
+          5,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 53,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2382147398,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          4,
+          9
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          2,
+          6,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 54,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 799286527,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          4,
+          9
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          2,
+          4,
+          6
+        ],
+        [
+          2,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 55,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1315807800,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          7
+        ],
+        [
+          1,
+          3,
+          8
+        ],
+        [
+          2,
+          4,
+          8
+        ],
+        [
+          3,
+          4,
+          7
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 56,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3893696625,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          4
+        ],
+        [
+          1,
+          3,
+          9
+        ],
+        [
+          2,
+          3,
+          5
+        ],
+        [
+          4,
+          5,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 57,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 182358442,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          5,
+          8
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          4,
+          5,
+          6
+        ],
+        [
+          4,
+          7,
+          8
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 58,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2760249315,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          6
+        ],
+        [
+          1,
+          4,
+          7
+        ],
+        [
+          2,
+          3,
+          7
+        ],
+        [
+          2,
+          4,
+          6
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 59,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 3343877404,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          2,
+          6,
+          9
+        ],
+        [
+          3,
+          7,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 60,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1635189589,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          2,
+          3,
+          9
+        ],
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          3,
+          7,
+          8
+        ],
+        [
+          4,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 61,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 2199943310,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          3,
+          8
+        ],
+        [
+          1,
+          6,
+          7
+        ],
+        [
+          3,
+          6,
+          9
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "index": 62,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1038743239,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          8
+        ],
+        [
+          1,
+          5,
+          9
+        ],
+        [
+          2,
+          5,
+          7
+        ],
+        [
+          7,
+          8,
+          9
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    },
+    {
+      "aggregate_third_order_histograms_match": true,
+      "all_first_second_order_stats_match": true,
+      "independent_control": {
+        "sat_clauses": [
+          [
+            -3,
+            5,
+            4
+          ],
+          [
+            8,
+            -1,
+            4
+          ],
+          [
+            7,
+            -9,
+            -6
+          ],
+          [
+            3,
+            5,
+            -4
+          ],
+          [
+            -2,
+            1,
+            5
+          ],
+          [
+            -8,
+            1,
+            4
+          ],
+          [
+            -8,
+            -1,
+            -4
+          ],
+          [
+            -2,
+            -1,
+            -5
+          ],
+          [
+            -2,
+            -8,
+            -3
+          ],
+          [
+            7,
+            9,
+            6
+          ],
+          [
+            -7,
+            9,
+            -6
+          ],
+          [
+            -7,
+            -9,
+            6
+          ],
+          [
+            3,
+            -5,
+            4
+          ],
+          [
+            2,
+            -1,
+            5
+          ],
+          [
+            -2,
+            8,
+            3
+          ],
+          [
+            2,
+            -8,
+            3
+          ],
+          [
+            8,
+            1,
+            -4
+          ],
+          [
+            -3,
+            -5,
+            -4
+          ],
+          [
+            2,
+            8,
+            -3
+          ],
+          [
+            2,
+            1,
+            -5
+          ]
+        ],
+        "unsat_clauses": [
+          [
+            3,
+            5,
+            4
+          ],
+          [
+            8,
+            -1,
+            4
+          ],
+          [
+            -7,
+            -9,
+            -6
+          ],
+          [
+            -3,
+            5,
+            -4
+          ],
+          [
+            -2,
+            1,
+            5
+          ],
+          [
+            -8,
+            1,
+            4
+          ],
+          [
+            -8,
+            -1,
+            -4
+          ],
+          [
+            -2,
+            -1,
+            -5
+          ],
+          [
+            -2,
+            -8,
+            -3
+          ],
+          [
+            -7,
+            9,
+            6
+          ],
+          [
+            7,
+            9,
+            -6
+          ],
+          [
+            7,
+            -9,
+            6
+          ],
+          [
+            -3,
+            -5,
+            4
+          ],
+          [
+            2,
+            -1,
+            5
+          ],
+          [
+            -2,
+            8,
+            3
+          ],
+          [
+            2,
+            -8,
+            3
+          ],
+          [
+            8,
+            1,
+            -4
+          ],
+          [
+            3,
+            -5,
+            -4
+          ],
+          [
+            2,
+            8,
+            -3
+          ],
+          [
+            2,
+            1,
+            -5
+          ]
+        ]
+      },
+      "index": 63,
+      "matched_negative_clause_histogram": [
+        1,
+        12,
+        3,
+        4
+      ],
+      "models_sat": 32,
+      "models_unsat": 0,
+      "pairwise_normalized_gram_is_identity_over_three": true,
+      "seed": 1603365888,
+      "triple_indexed_third_moments_differ": true,
+      "unsat_xor_witness_triplets": [
+        [
+          1,
+          2,
+          5
+        ],
+        [
+          1,
+          4,
+          8
+        ],
+        [
+          2,
+          3,
+          8
+        ],
+        [
+          3,
+          4,
+          5
+        ]
+      ],
+      "xor_recovers_sat": true,
+      "xor_recovers_unsat": true
+    }
+  ],
+  "controls_with_full_clauses": [
+    0,
+    1,
+    31,
+    63
+  ],
+  "exact_source_truth": true,
+  "protocol": "docs/W_CROSSDOMAIN_024_MOMENT_INFORMATION_BARRIER_PROTOCOL.md",
+  "satisfiability_complexity_claim": "none; standard XOR/GF(2) phenomenon",
+  "scope": "64 paired isomorphic relabelings of one constructed SAT/UNSAT pair",
+  "second_order_barrier_confirmed": true,
+  "study": "W-CROSSDOMAIN-024"
+}

@@ -1,0 +1,6 @@
+name = "witnora_formal"
+version = "0.1.0"
+defaultTargets = ["Witnora"]
+
+[[lean_lib]]
+name = "Witnora"

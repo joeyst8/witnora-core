@@ -1,0 +1,28 @@
+name: G5 retired slot stability
+on:
+  push:
+    branches: [formal/g5-retired-slot-stability-v100]
+  pull_request:
+    paths:
+      - "formal/Witnora/G5RetiredSlotStability.lean"
+      - ".github/workflows/g5-retired-slot-stability.yml"
+  workflow_dispatch:
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check retired slot stability
+        working-directory: formal
+        run: lake build Witnora.G5RetiredSlotStability
+      - name: Reject proof holes
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G5RetiredSlotStability.lean; then
+            exit 1
+          fi

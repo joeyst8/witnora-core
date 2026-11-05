@@ -1,0 +1,23 @@
+name: Witnora Verify Example
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/witnora-verify
+        with:
+          source-zip: witnora-core-v1.0-public-preprint-final.zip
+          diagnostic-zip: witnora-core-v0.9.8-full-tseitin-minfill-diagnostic.zip
+          manifest: RELEASE_ASSETS_MANIFEST_v1.0-public-preprint.md
+          depth: partial
+          select: instance
+          select-instance: tseitin_20:c=2
+          rerun-drat-trim: "false"
+          fail-on-risk-flags: HASH_MISMATCH,MISSING_FILE,UNVERIFIED_CLAIM,ACTION_INPUT_MISMATCH
+          fail-on-verdict: NOT_VERIFIED,PARTIALLY_VERIFIED,OVERCLAIM
+          upload-artifacts: "true"
+          out-dir: witnora-verify-out

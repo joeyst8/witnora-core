@@ -1,0 +1,49 @@
+name: Numeric Python Lean certificate bridge
+
+on:
+  push:
+    branches:
+      - research/numeric-bridge-v32
+  pull_request:
+    paths:
+      - "formal/Witnora/NumericEdgeListBridge.lean"
+      - "witnora_core/lean_numeric_certificate_export.py"
+      - "scripts/generate_numeric_lean_certificates.py"
+      - "tests/test_lean_numeric_certificate_export.py"
+      - ".github/workflows/numeric-python-lean-bridge.yml"
+  workflow_dispatch:
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check numeric source emitter
+        run: PYTHONPATH=. python -m unittest tests.test_lean_numeric_certificate_export -v
+      - name: Generate raw Nat certificate data from Python DSATUR
+        run: PYTHONPATH=. python scripts/generate_numeric_lean_certificates.py
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Prove accepted edge lists preserve every numeric endpoint and order
+        working-directory: formal
+        run: lake build Witnora.NumericEdgeListBridge
+      - name: Kernel-check actual Python generated numeric certificates
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedNumericCertificates.lean
+      - name: Reject unproved list-level declarations
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]])' formal/Witnora/NumericEdgeListBridge.lean; then
+            echo "Unproved declaration in numeric list-level bridge"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-numeric-lean-certificates
+          path: formal/Witnora/GeneratedNumericCertificates.lean

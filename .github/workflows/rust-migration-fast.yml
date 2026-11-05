@@ -1,0 +1,620 @@
+name: Rust migration focused differential gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - "rust/witnora-ve/**"
+      - "witnora_core/hard_separator_families.py"
+      - "witnora_core/hidden_separator_challenge.py"
+      - "witnora_core/symbolic_implication.py"
+      - "witnora_core/satlib_fingerprint.py"
+      - "witnora_core/spoke_collapse.py"
+      - "witnora_core/ood_sat_families.py"
+      - "witnora_core/families.py"
+      - "witnora_core/parity_compression.py"
+      - "witnora_core/crc_structural_independence.py"
+      - "witnora_core/crc_conditional_independence.py"
+      - "witnora_core/aux_violation_tensors.py"
+      - "witnora_core/constraint_geometry.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "witnora_core/claim_boundary.py"
+      - "witnora_core/crc_independence_audit.py"
+      - "witnora_core/crc_defect_oracle.py"
+      - "witnora_core/crc_shannon_oracle.py"
+      - "witnora_core/crc_conflict_oracle.py"
+      - "witnora_core/crc_orbit_oracle.py"
+      - "witnora_core/crc_separator_discovery.py"
+      - "witnora_core/crc_cutset_count.py"
+      - "witnora_core/expression_conjecture_search.py"
+      - "witnora_core/graph_conjecture_lab.py"
+      - "witnora_core/conjecture_triage.py"
+      - "witnora_core/conditional_graph_conjectures.py"
+      - "witnora_core/targeted_graph_theorems.py"
+      - "witnora_core/lean_numeric_certificate_export.py"
+      - "witnora_core/lean_ascii_certificate_export.py"
+      - "witnora_core/lean_color_certificate_export.py"
+      - "witnora_core/crc_variable_elimination.py"
+      - "witnora_core/dsatur_adversarial_lab.py"
+      - "witnora_core/color_repair_lab.py"
+      - "witnora_core/kempe_repair_lab.py"
+      - "witnora_core/double_kempe_lab.py"
+      - "witnora_core/structured_coloring_study.py"
+      - "witnora_core/color_selector_lab.py"
+      - "witnora_core/nonedge_matching_bound.py"
+      - "witnora_core/violation_image_anf.py"
+      - "witnora_core/anf_separator_conditioning.py"
+      - "witnora_core/anf_structured_counter.py"
+      - "witnora_core/xor.py"
+      - "witnora_core/xor_drat.py"
+      - "tests/test_hard_separator_generator_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_satlib_fingerprint_rust.py"
+      - "tests/test_spoke_collapse_rust.py"
+      - "tests/test_ood_sat_families_rust.py"
+      - "tests/test_benchmark_families_rust.py"
+      - "tests/test_parity_compression_rust.py"
+      - "tests/test_crc_structural_independence_rust.py"
+      - "tests/test_crc_conditional_independence_rust.py"
+      - "tests/test_aux_violation_tensors_rust.py"
+      - "tests/test_factorized_violation_profile_rust.py"
+      - "tests/test_cutset_violation_profile_rust.py"
+      - "tests/test_fourier_parity_violation_rust.py"
+      - "tests/test_fourier_signed_controls.py"
+      - "scripts/benchmark_fourier_signed_controls.py"
+      - "tests/test_solution_geometry_rust.py"
+      - "tests/test_ground_barriers_rust.py"
+      - "tests/test_minimum_energy_geometry_rust.py"
+      - "tests/test_constraint_geometry_rust.py"
+      - "tests/test_geometry_aware_parity_rust.py"
+      - "tests/test_claim_boundary_rust.py"
+      - "tests/test_crc_independence_audit_rust.py"
+      - "tests/test_crc_defect_oracle_rust.py"
+      - "tests/test_crc_shannon_oracle_rust.py"
+      - "tests/test_crc_conflict_oracle_rust.py"
+      - "tests/test_crc_orbit_oracle_rust.py"
+      - "tests/test_crc_separator_discovery_rust.py"
+      - "tests/test_crc_cutset_count_rust.py"
+      - "tests/test_expression_conjecture_search_rust.py"
+      - "tests/test_graph_conjecture_lab_rust.py"
+      - "tests/test_conjecture_triage_end_to_end_rust.py"
+      - "tests/test_conditional_graph_conjectures_rust.py"
+      - "tests/test_targeted_graph_challenge_rust.py"
+      - "tests/test_lean_numeric_certificate_export_rust.py"
+      - "tests/test_lean_ascii_certificate_export_rust.py"
+      - "tests/test_lean_color_certificate_export_rust.py"
+      - "tests/test_crc_variable_elimination_rust.py"
+      - "tests/test_dsatur_exact_coloring_rust.py"
+      - "tests/test_color_repair_rust.py"
+      - "tests/test_kempe_repair_rust.py"
+      - "tests/test_double_kempe_rust.py"
+      - "tests/test_structured_coloring_rust.py"
+      - "tests/test_color_selector_rust.py"
+      - "tests/test_dsatur_greedy_rust.py"
+      - "tests/test_nonedge_graph_bounds_rust.py"
+      - "tests/test_nonedge_matching_bound_rust.py"
+      - "tests/test_color_confusion_rust.py"
+      - "tests/test_violation_anf_rust.py"
+      - "tests/test_anf_counter_rust.py"
+      - "tests/test_anf_separator_rust.py"
+      - "tests/test_anf_separator_search_rust.py"
+      - "tests/test_anf_structured_counter_rust.py"
+      - "tests/test_anf_conditioned_rust.py"
+      - "tests/test_anf_source_pipeline_rust.py"
+      - "tests/test_anf_evaluate_rust.py"
+      - "tests/test_anf_clause_rust.py"
+      - "tests/test_anf_source_batch_rust.py"
+      - "tests/test_anf_rows_batch_rust.py"
+      - "tests/test_anf_geometry_native_rust.py"
+      - "tests/test_anf_conditioned_full_native_rust.py"
+      - "tests/test_anf_scopes_rust.py"
+      - "tests/test_xor_normalize_rust.py"
+      - "tests/test_xor_evaluate_rust.py"
+      - "tests/test_xor_substitute_rust.py"
+      - "tests/test_xor_system_substitute_rust.py"
+      - "tests/test_xor_gaussian_rust.py"
+      - "tests/test_xor_verify_assignment_rust.py"
+      - "tests/test_xor_canonical_cnf_rust.py"
+      - "tests/test_xor_extra_touching_rust.py"
+      - "tests/test_xor_detect_composed_rust.py"
+      - "tests/test_xor_detect_full_native_rust.py"
+      - "tests/test_xor_sidecar_parser_rust.py"
+      - "tests/test_xor_drat_resolution_rust.py"
+      - "tests/test_xor_sparse_schedule_rust.py"
+      - "tests/test_xor_sparse_order_rust.py"
+      - "research/python_to_rust_manifest.json"
+      - "tests/test_r180_manifest_audit.py"
+      - "tests/test_xor_frontier_181_200.py"
+      - "tests/test_xor_external_201_220.py"
+      - "tests/test_xor_scaling_221_240.py"
+      - "scripts/benchmark_xor_proof_scaling.py"
+      - "tests/test_xor_chain_241_260.py"
+      - "scripts/benchmark_xor_chain_frontier.py"
+      - "tests/test_xor_cycles_261_280.py"
+      - "scripts/benchmark_xor_cycle_frontier.py"
+      - "tests/test_xor_heldout_281_299.py"
+      - "scripts/benchmark_xor_heldout_281_299.py"
+      - "tests/test_r300_manifest_audit.py"
+      - "scripts/audit_witnora_r300.py"
+      - "scripts/audit_witnora_r180.py"
+      - "tests/test_xor_syndrome_301_320.py"
+      - "scripts/benchmark_xor_syndrome_frontier.py"
+      - "tests/test_xor_hypergraph_adversarial_321_340.py"
+      - "tests/test_xor_geometry_341_360.py"
+      - "scripts/benchmark_xor_constraint_geometry.py"
+      - "tests/test_xor_gauge_361_380.py"
+      - "scripts/benchmark_xor_gauge_frontier.py"
+      - "tests/test_xor_resource_381_400.py"
+      - "scripts/benchmark_xor_resource_frontier.py"
+      - "tests/test_xor_heldout_401_460.py"
+      - "scripts/benchmark_xor_heldout_401_460.py"
+      - "tests/test_xor_hostile_461_480.py"
+      - "scripts/benchmark_xor_hostile_461_480.py"
+      - "tests/test_r500_manifest_audit.py"
+      - "scripts/audit_witnora_r500.py"
+      - "witnora_core/ci.py"
+      - "tests/test_ci_native_policy_migration.py"
+      - "witnora_core/report.py"
+      - "tests/test_report_native_migration.py"
+      - "tests/test_report_standalone_rust_cli.py"
+      - "witnora_core/compare.py"
+      - "tests/test_compare_standalone_rust_cli.py"
+      - "tests/test_claims_standalone_rust_cli.py"
+      - "witnora_core/benchmark_artifact.py"
+      - "tests/test_artifact_summary_standalone_rust_cli.py"
+      - "tests/test_ci_summary_standalone_rust_cli.py"
+      - "witnora_core/verification_report.py"
+      - "tests/test_verification_view_standalone_rust_cli.py"
+      - "tests/test_evidence_integrity_standalone_rust_cli.py"
+      - "scripts/benchmark_xor_frontier.py"
+      - ".github/workflows/rust-migration-fast.yml"
+  push:
+    branches:
+      - research/w-crc-001-asymmetric-v1
+    paths:
+      - "rust/witnora-ve/**"
+      - "witnora_core/hard_separator_families.py"
+      - "witnora_core/hidden_separator_challenge.py"
+      - "witnora_core/symbolic_implication.py"
+      - "witnora_core/satlib_fingerprint.py"
+      - "witnora_core/spoke_collapse.py"
+      - "witnora_core/ood_sat_families.py"
+      - "witnora_core/families.py"
+      - "witnora_core/parity_compression.py"
+      - "witnora_core/crc_structural_independence.py"
+      - "witnora_core/crc_conditional_independence.py"
+      - "witnora_core/aux_violation_tensors.py"
+      - "witnora_core/constraint_geometry.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "witnora_core/claim_boundary.py"
+      - "witnora_core/crc_independence_audit.py"
+      - "witnora_core/crc_defect_oracle.py"
+      - "witnora_core/crc_shannon_oracle.py"
+      - "witnora_core/crc_conflict_oracle.py"
+      - "witnora_core/crc_orbit_oracle.py"
+      - "witnora_core/crc_separator_discovery.py"
+      - "witnora_core/crc_cutset_count.py"
+      - "witnora_core/expression_conjecture_search.py"
+      - "witnora_core/graph_conjecture_lab.py"
+      - "witnora_core/conjecture_triage.py"
+      - "witnora_core/conditional_graph_conjectures.py"
+      - "witnora_core/targeted_graph_theorems.py"
+      - "witnora_core/lean_numeric_certificate_export.py"
+      - "witnora_core/lean_ascii_certificate_export.py"
+      - "witnora_core/lean_color_certificate_export.py"
+      - "witnora_core/crc_variable_elimination.py"
+      - "witnora_core/dsatur_adversarial_lab.py"
+      - "witnora_core/color_repair_lab.py"
+      - "witnora_core/kempe_repair_lab.py"
+      - "witnora_core/double_kempe_lab.py"
+      - "witnora_core/structured_coloring_study.py"
+      - "witnora_core/color_selector_lab.py"
+      - "witnora_core/nonedge_matching_bound.py"
+      - "witnora_core/violation_image_anf.py"
+      - "witnora_core/anf_separator_conditioning.py"
+      - "witnora_core/anf_structured_counter.py"
+      - "witnora_core/xor.py"
+      - "witnora_core/xor_drat.py"
+      - "tests/test_hard_separator_generator_rust.py"
+      - "tests/test_hidden_separator_generator_rust.py"
+      - "tests/test_symbolic_implication_rust.py"
+      - "tests/test_satlib_fingerprint_rust.py"
+      - "tests/test_spoke_collapse_rust.py"
+      - "tests/test_ood_sat_families_rust.py"
+      - "tests/test_benchmark_families_rust.py"
+      - "tests/test_parity_compression_rust.py"
+      - "tests/test_crc_structural_independence_rust.py"
+      - "tests/test_crc_conditional_independence_rust.py"
+      - "tests/test_aux_violation_tensors_rust.py"
+      - "tests/test_factorized_violation_profile_rust.py"
+      - "tests/test_cutset_violation_profile_rust.py"
+      - "tests/test_fourier_parity_violation_rust.py"
+      - "tests/test_fourier_signed_controls.py"
+      - "scripts/benchmark_fourier_signed_controls.py"
+      - "tests/test_solution_geometry_rust.py"
+      - "tests/test_ground_barriers_rust.py"
+      - "tests/test_minimum_energy_geometry_rust.py"
+      - "tests/test_constraint_geometry_rust.py"
+      - "tests/test_geometry_aware_parity_rust.py"
+      - "tests/test_claim_boundary_rust.py"
+      - "tests/test_crc_independence_audit_rust.py"
+      - "tests/test_crc_defect_oracle_rust.py"
+      - "tests/test_crc_shannon_oracle_rust.py"
+      - "tests/test_crc_conflict_oracle_rust.py"
+      - "tests/test_crc_orbit_oracle_rust.py"
+      - "tests/test_crc_separator_discovery_rust.py"
+      - "tests/test_crc_cutset_count_rust.py"
+      - "tests/test_expression_conjecture_search_rust.py"
+      - "tests/test_graph_conjecture_lab_rust.py"
+      - "tests/test_conjecture_triage_end_to_end_rust.py"
+      - "tests/test_conditional_graph_conjectures_rust.py"
+      - "tests/test_targeted_graph_challenge_rust.py"
+      - "tests/test_lean_numeric_certificate_export_rust.py"
+      - "tests/test_lean_ascii_certificate_export_rust.py"
+      - "tests/test_lean_color_certificate_export_rust.py"
+      - "tests/test_crc_variable_elimination_rust.py"
+      - "tests/test_dsatur_exact_coloring_rust.py"
+      - "tests/test_color_repair_rust.py"
+      - "tests/test_kempe_repair_rust.py"
+      - "tests/test_double_kempe_rust.py"
+      - "tests/test_structured_coloring_rust.py"
+      - "tests/test_color_selector_rust.py"
+      - "tests/test_dsatur_greedy_rust.py"
+      - "tests/test_nonedge_graph_bounds_rust.py"
+      - "tests/test_nonedge_matching_bound_rust.py"
+      - "tests/test_color_confusion_rust.py"
+      - "tests/test_violation_anf_rust.py"
+      - "tests/test_anf_counter_rust.py"
+      - "tests/test_anf_separator_rust.py"
+      - "tests/test_anf_separator_search_rust.py"
+      - "tests/test_anf_structured_counter_rust.py"
+      - "tests/test_anf_conditioned_rust.py"
+      - "tests/test_anf_source_pipeline_rust.py"
+      - "tests/test_anf_evaluate_rust.py"
+      - "tests/test_anf_clause_rust.py"
+      - "tests/test_anf_source_batch_rust.py"
+      - "tests/test_anf_rows_batch_rust.py"
+      - "tests/test_anf_geometry_native_rust.py"
+      - "tests/test_anf_conditioned_full_native_rust.py"
+      - "tests/test_anf_scopes_rust.py"
+      - "tests/test_xor_normalize_rust.py"
+      - "tests/test_xor_evaluate_rust.py"
+      - "tests/test_xor_substitute_rust.py"
+      - "tests/test_xor_system_substitute_rust.py"
+      - "tests/test_xor_gaussian_rust.py"
+      - "tests/test_xor_verify_assignment_rust.py"
+      - "tests/test_xor_canonical_cnf_rust.py"
+      - "tests/test_xor_extra_touching_rust.py"
+      - "tests/test_xor_detect_composed_rust.py"
+      - "tests/test_xor_detect_full_native_rust.py"
+      - "tests/test_xor_sidecar_parser_rust.py"
+      - "tests/test_xor_drat_resolution_rust.py"
+      - "tests/test_xor_sparse_schedule_rust.py"
+      - "tests/test_xor_sparse_order_rust.py"
+      - "research/python_to_rust_manifest.json"
+      - "tests/test_r180_manifest_audit.py"
+      - "tests/test_xor_frontier_181_200.py"
+      - "tests/test_xor_external_201_220.py"
+      - "tests/test_xor_scaling_221_240.py"
+      - "scripts/benchmark_xor_proof_scaling.py"
+      - "tests/test_xor_chain_241_260.py"
+      - "scripts/benchmark_xor_chain_frontier.py"
+      - "tests/test_xor_cycles_261_280.py"
+      - "scripts/benchmark_xor_cycle_frontier.py"
+      - "tests/test_xor_heldout_281_299.py"
+      - "scripts/benchmark_xor_heldout_281_299.py"
+      - "tests/test_r300_manifest_audit.py"
+      - "scripts/audit_witnora_r300.py"
+      - "scripts/audit_witnora_r180.py"
+      - "tests/test_xor_syndrome_301_320.py"
+      - "scripts/benchmark_xor_syndrome_frontier.py"
+      - "tests/test_xor_hypergraph_adversarial_321_340.py"
+      - "tests/test_xor_geometry_341_360.py"
+      - "scripts/benchmark_xor_constraint_geometry.py"
+      - "tests/test_xor_gauge_361_380.py"
+      - "scripts/benchmark_xor_gauge_frontier.py"
+      - "tests/test_xor_resource_381_400.py"
+      - "scripts/benchmark_xor_resource_frontier.py"
+      - "tests/test_xor_heldout_401_460.py"
+      - "scripts/benchmark_xor_heldout_401_460.py"
+      - "tests/test_xor_hostile_461_480.py"
+      - "scripts/benchmark_xor_hostile_461_480.py"
+      - "tests/test_r500_manifest_audit.py"
+      - "scripts/audit_witnora_r500.py"
+      - "witnora_core/ci.py"
+      - "tests/test_ci_native_policy_migration.py"
+      - "witnora_core/report.py"
+      - "tests/test_report_native_migration.py"
+      - "tests/test_report_standalone_rust_cli.py"
+      - "witnora_core/compare.py"
+      - "tests/test_compare_standalone_rust_cli.py"
+      - "tests/test_claims_standalone_rust_cli.py"
+      - "witnora_core/benchmark_artifact.py"
+      - "tests/test_artifact_summary_standalone_rust_cli.py"
+      - "tests/test_ci_summary_standalone_rust_cli.py"
+      - "witnora_core/verification_report.py"
+      - "tests/test_verification_view_standalone_rust_cli.py"
+      - "tests/test_evidence_integrity_standalone_rust_cli.py"
+      - "scripts/benchmark_xor_frontier.py"
+      - ".github/workflows/rust-migration-fast.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: witnora-rust-focused-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  focused-native:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number == 122
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Rust library tests
+        run: cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --lib
+      - name: Build Python native wheel
+        run: |
+          python -m pip install --disable-pip-version-check "maturin>=1.9,<2"
+          maturin build --manifest-path rust/witnora-ve/Cargo.toml --release --features python --out rust/witnora-ve/wheels
+          python -m pip install --disable-pip-version-check rust/witnora-ve/wheels/*.whl
+      - name: W-CROSSDOMAIN-006/007/008 partition polynomial, cutset, and Fourier gate
+        run: |
+          python -c 'from witnora_ve import aux_factorized_violation_profile_native, aux_conditioned_violation_profile_native, aux_fourier_parity_violation_profile_native'
+          python -m unittest tests.test_factorized_violation_profile_rust tests.test_cutset_violation_profile_rust tests.test_fourier_parity_violation_rust -v
+      - name: W-CROSSDOMAIN-009 matched signed-graph syndrome-spectrum audit
+        run: |
+          python -m unittest tests.test_fourier_signed_controls -v
+          python -m scripts.benchmark_fourier_signed_controls
+      - name: W-CROSSDOMAIN-010 Rust cycle-spectrum versus search-tree cost pilot
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_cost
+          WITNORA_RUST_CYCLE_COST_BIN="$PWD/rust/witnora-ve/target/release/witnora_cycle_cost" python -m unittest tests.test_cycle_cost_audit_rust -v
+          rust/witnora-ve/target/release/witnora_cycle_cost
+      - name: W-CROSSDOMAIN-011 frozen non-isomorphic graph replication audit
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_holdout
+          WITNORA_RUST_CYCLE_HOLDOUT_BIN="$PWD/rust/witnora-ve/target/release/witnora_cycle_holdout" python -m unittest tests.test_cycle_holdout_rust -v
+          rust/witnora-ve/target/release/witnora_cycle_holdout
+      - name: W-CROSSDOMAIN-012 predeclared 3-CNF hypergraph geometry audit
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_three_cnf
+          WITNORA_RUST_THREE_CNF_BIN="$PWD/rust/witnora-ve/target/release/witnora_three_cnf" python -m unittest tests.test_three_cnf_geometry_rust -v
+          rust/witnora-ve/target/release/witnora_three_cnf
+      - name: W-CROSSDOMAIN-013 GF2 even-incidence hypercycle replication
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_hypercycle
+          WITNORA_RUST_HYPERCYCLE_BIN="$PWD/rust/witnora-ve/target/release/witnora_hypercycle" python -m unittest tests.test_hypercycle_rust -v
+          rust/witnora-ve/target/release/witnora_hypercycle
+      - name: W-CROSSDOMAIN-014 bounded Walsh wave proxy and independent controls
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_wave_proxy
+          WITNORA_RUST_WAVE_PROXY_BIN="$PWD/rust/witnora-ve/target/release/witnora_wave_proxy" python -m unittest tests.test_wave_proxy_rust -v
+          rust/witnora-ve/target/release/witnora_wave_proxy
+      - name: W-CROSSDOMAIN-016 prospective cost-aware wave branching and independent controls
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_wave_branching
+          WITNORA_RUST_WAVE_BRANCHING_BIN="$PWD/rust/witnora-ve/target/release/witnora_wave_branching" python -m unittest tests.test_wave_branching_rust -v
+          rust/witnora-ve/target/release/witnora_wave_branching
+      - name: W-CROSSDOMAIN-017 exact signed covariance and cycle geometry
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_signed_covariance
+          WITNORA_RUST_SIGNED_COVARIANCE_BIN="$PWD/rust/witnora-ve/target/release/witnora_signed_covariance" python -m unittest tests.test_signed_covariance_rust -v
+          rust/witnora-ve/target/release/witnora_signed_covariance
+      - name: W-CROSSDOMAIN-018 exact integer zero-variance UNSAT certificates
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_zero_variance_refutation
+          WITNORA_RUST_ZERO_VARIANCE_BIN="$PWD/rust/witnora-ve/target/release/witnora_zero_variance_refutation" python -m unittest tests.test_zero_variance_refutation_rust -v
+          rust/witnora-ve/target/release/witnora_zero_variance_refutation
+      - name: W-CROSSDOMAIN-019 hybrid covariance and XOR exact UNSAT certificates
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_hybrid_refutation
+          WITNORA_RUST_HYBRID_REFUTATION_BIN="$PWD/rust/witnora-ve/target/release/witnora_hybrid_refutation" python -m unittest tests.test_hybrid_refutation_rust -v
+          rust/witnora-ve/target/release/witnora_hybrid_refutation
+      - name: W-CROSSDOMAIN-020 covariance XOR and resolution separation baselines
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_separation_baselines
+          WITNORA_RUST_SEPARATION_BIN="$PWD/rust/witnora-ve/target/release/witnora_separation_baselines" python -m unittest tests.test_separation_baselines_rust -v
+          rust/witnora-ve/target/release/witnora_separation_baselines
+      - name: W-CROSSDOMAIN-021 end-to-end cost-aware modular covariance screen
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cost_aware_geometry
+          WITNORA_RUST_COST_AWARE_BIN="$PWD/rust/witnora-ve/target/release/witnora_cost_aware_geometry" python -m unittest tests.test_cost_aware_geometry_rust -v
+          rust/witnora-ve/target/release/witnora_cost_aware_geometry
+      - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
+        run: |
+          python -c 'from witnora_ve import aux_solution_geometry_native'
+          python -m unittest tests.test_solution_geometry_rust -v
+      - name: W-GEOMETRY-002 exact ground-state barrier curve differential gate
+        run: |
+          python -c 'from witnora_ve import aux_ground_barriers_native'
+          python -m unittest tests.test_ground_barriers_rust -v
+      - name: W-GEOMETRY-003 minimum-energy SAT-and-UNSAT landscape gate
+        run: |
+          python -c 'from witnora_ve import aux_minimum_energy_geometry_native'
+          python -m unittest tests.test_minimum_energy_geometry_rust -v
+      - name: Build pinned external drat-trim
+        run: |
+          git clone --quiet https://github.com/marijnheule/drat-trim.git "$RUNNER_TEMP/witnora-drat-trim"
+          git -C "$RUNNER_TEMP/witnora-drat-trim" checkout --quiet --detach 2e3b2dc0ecf938addbd779d42877b6ed69d9a985
+          make -C "$RUNNER_TEMP/witnora-drat-trim" drat-trim
+          echo "WITNORA_DRAT_TRIM=$RUNNER_TEMP/witnora-drat-trim/drat-trim" >> "$GITHUB_ENV"
+      - name: Focused native and research R-067 through R-500 checks
+        env:
+          WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
+        run: |
+          python -m unittest tests.test_hidden_separator_generator_rust -v
+          python -m unittest tests.test_symbolic_implication_rust -v
+          python -m unittest tests.test_hard_separator_generator_rust -v
+          python -m unittest tests.test_satlib_fingerprint_rust -v
+          python -m unittest tests.test_spoke_collapse_rust -v
+          python -m unittest tests.test_ood_sat_families_rust -v
+          python -m unittest tests.test_benchmark_families_rust -v
+          python -m unittest tests.test_parity_compression_rust -v
+          python -m unittest tests.test_crc_structural_independence_rust -v
+          python -m unittest tests.test_crc_conditional_independence_rust -v
+          python -m unittest tests.test_aux_violation_tensors_rust -v
+          python -m unittest tests.test_constraint_geometry_rust -v
+          python -m unittest tests.test_geometry_aware_parity_rust -v
+          python -m unittest tests.test_claim_boundary_rust -v
+          python -m unittest tests.test_crc_independence_audit_rust -v
+          python -m unittest tests.test_crc_defect_oracle_rust -v
+          python -m unittest tests.test_crc_shannon_oracle_rust -v
+          python -m unittest tests.test_crc_conflict_oracle_rust -v
+          python -m unittest tests.test_crc_orbit_oracle_rust -v
+          python -m unittest tests.test_crc_separator_discovery_rust -v
+          python -m unittest tests.test_crc_cutset_count_rust -v
+          python -m unittest tests.test_expression_conjecture_search_rust -v
+          python -m unittest tests.test_graph_conjecture_lab_rust -v
+          python -m unittest tests.test_conjecture_triage_end_to_end_rust -v
+          python -m unittest tests.test_conditional_graph_conjectures_rust -v
+          python -m unittest tests.test_targeted_graph_challenge_rust -v
+          python -m unittest tests.test_lean_numeric_certificate_export_rust -v
+          python -m unittest tests.test_lean_ascii_certificate_export_rust -v
+          python -m unittest tests.test_lean_color_certificate_export_rust -v
+          python -m unittest tests.test_crc_variable_elimination_rust -v
+          python -m unittest tests.test_dsatur_exact_coloring_rust -v
+          python -m unittest tests.test_color_repair_rust -v
+          python -m unittest tests.test_kempe_repair_rust -v
+          python -m unittest tests.test_double_kempe_rust -v
+          python -m unittest tests.test_structured_coloring_rust -v
+          python -m unittest tests.test_color_selector_rust -v
+          python -m unittest tests.test_dsatur_greedy_rust -v
+          python -m unittest tests.test_nonedge_graph_bounds_rust -v
+          python -m unittest tests.test_nonedge_matching_bound_rust -v
+          python -m unittest tests.test_color_confusion_rust -v
+          python -m unittest tests.test_violation_anf_rust -v
+          python -m unittest tests.test_anf_counter_rust -v
+          python -m unittest tests.test_anf_separator_rust -v
+          python -m unittest tests.test_anf_separator_search_rust -v
+          python -m unittest tests.test_anf_structured_counter_rust -v
+          python -m unittest tests.test_anf_conditioned_rust -v
+          python -m unittest tests.test_anf_source_pipeline_rust -v
+          python -m unittest tests.test_anf_evaluate_rust -v
+          python -m unittest tests.test_anf_clause_rust -v
+          python -m unittest tests.test_anf_source_batch_rust -v
+          python -m unittest tests.test_anf_rows_batch_rust -v
+          python -m unittest tests.test_anf_geometry_native_rust -v
+          python -m unittest tests.test_anf_conditioned_full_native_rust -v
+          python -m unittest tests.test_anf_scopes_rust -v
+          python -m unittest tests.test_xor_normalize_rust -v
+          python -m unittest tests.test_xor_evaluate_rust -v
+          python -m unittest tests.test_xor_substitute_rust -v
+          python -m unittest tests.test_xor_system_substitute_rust -v
+          python -m unittest tests.test_xor_gaussian_rust -v
+          python -m unittest tests.test_xor_verify_assignment_rust -v
+          python -m unittest tests.test_xor_canonical_cnf_rust -v
+          python -m unittest tests.test_xor_extra_touching_rust -v
+          python -m unittest tests.test_xor_detect_composed_rust -v
+          python -m unittest tests.test_xor_detect_full_native_rust -v
+          python -m unittest tests.test_xor_sidecar_parser_rust -v
+          python -m unittest tests.test_xor_drat_resolution_rust -v
+          python -m unittest tests.test_xor_sparse_schedule_rust -v
+          python -m unittest tests.test_xor_sparse_order_rust -v
+          python -m unittest tests.test_xor_proof_order_rust -v
+          python -m unittest tests.test_xor_gaussian_order_stats_rust -v
+          python -m unittest tests.test_xor_choose_order_rust -v
+          python -m unittest tests.test_xor_drat_encoding_rust -v
+          python -m unittest tests.test_xor_drat_clause_line_rust -v
+          python -m unittest tests.test_xor_drat_line_size_rust -v
+          python -m unittest tests.test_xor_drat_emit_rust -v
+          python -m unittest tests.test_xor_ve_refutation_rust -v
+          python -m unittest tests.test_xor_row_sources_rust -v
+          python -m unittest tests.test_xor_row_validation_rust -v
+          python -m unittest tests.test_xor_row_source_union_rust -v
+          python -m unittest tests.test_xor_row_derivation_rust -v
+          python -m unittest tests.test_xor_row_trace_rust -v
+          python -m unittest tests.test_xor_native_export_gate -v
+          python -m unittest tests.test_xor_dual_rup_gate -v
+          python -m unittest tests.test_xor_source_identity_gate -v
+          python -m unittest tests.test_xor_dual_source_parser -v
+          python -m unittest tests.test_xor_proof_audit_rust -v
+          python -m unittest tests.test_xor_heldout_proof_rust -v
+          python -m unittest tests.test_xor_mixed_source_stress_rust -v
+          python -m unittest tests.test_xor_runner_options -v
+          python -m unittest tests.test_xor_final_adversarial_rust -v
+          python -m unittest tests.test_xor_frontier_181_200 -v
+          python -m unittest tests.test_xor_external_201_220 -v
+          python -m unittest tests.test_xor_scaling_221_240 -v
+          python -m unittest tests.test_xor_chain_241_260 -v
+          python -m unittest tests.test_xor_cycles_261_280 -v
+          python -m unittest tests.test_xor_heldout_281_299 -v
+          python -m unittest tests.test_xor_syndrome_301_320 -v
+          python -m unittest tests.test_xor_hypergraph_adversarial_321_340 -v
+          python -m unittest tests.test_xor_geometry_341_360 -v
+          python -m unittest tests.test_xor_gauge_361_380 -v
+          python -m unittest tests.test_xor_resource_381_400 -v
+          python -m unittest tests.test_xor_heldout_401_460 -v
+          python -m unittest tests.test_xor_hostile_461_480 -v
+          python -m unittest tests.test_r500_manifest_audit -v
+          python -m unittest tests.test_ci_native_policy_migration -v
+          python -m unittest tests.test_ci_fail_policies -v
+          python -m unittest tests.test_report_native_migration -v
+          python -m unittest tests.test_benchmark -v
+          python -m unittest tests.test_r300_manifest_audit -v
+          python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_proof_scaling --max-width 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_chain_frontier --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_cycle_frontier --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_heldout_281_299 --samples 72 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_syndrome_frontier --seeds 32 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_constraint_geometry --max-n 14 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_gauge_frontier --samples 64 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_resource_frontier --max-n 16 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_heldout_401_460 --samples 16 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_hostile_461_480 --samples 32 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m unittest tests.test_r180_manifest_audit -v
+          python -m scripts.audit_witnora_r180
+          python -m scripts.audit_witnora_r300
+          python -m scripts.audit_witnora_r500
+      - name: Standalone Rust benchmark report CLI parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_report
+          WITNORA_RUST_REPORT_BIN="$PWD/rust/witnora-ve/target/release/witnora_report" python -m unittest tests.test_report_standalone_rust_cli -v
+      - name: Standalone Rust benchmark comparison CLI parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_compare
+          WITNORA_RUST_COMPARE_BIN="$PWD/rust/witnora-ve/target/release/witnora_compare" python -m unittest tests.test_compare_standalone_rust_cli -v
+      - name: Standalone Rust claim-boundary file scanning parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_claims
+          WITNORA_RUST_CLAIMS_BIN="$PWD/rust/witnora-ve/target/release/witnora_claims" python -m unittest tests.test_claims_standalone_rust_cli -v
+      - name: Standalone Rust strict UNSAT artifact summary parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_artifact_summary
+          WITNORA_RUST_ARTIFACT_SUMMARY_BIN="$PWD/rust/witnora-ve/target/release/witnora_artifact_summary" python -m unittest tests.test_artifact_summary_standalone_rust_cli -v
+      - name: Standalone Rust CI verification log summary parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_ci_summary
+          WITNORA_RUST_CI_SUMMARY_BIN="$PWD/rust/witnora-ve/target/release/witnora_ci_summary" python -m unittest tests.test_ci_summary_standalone_rust_cli -v
+      - name: Standalone Rust verification report and trust-card presentation parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_verification_view
+          WITNORA_RUST_VERIFICATION_VIEW_BIN="$PWD/rust/witnora-ve/target/release/witnora_verification_view" python -m unittest tests.test_verification_view_standalone_rust_cli -v
+      - name: Standalone Rust verification artifact integrity SHA-256 parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_evidence_check
+          WITNORA_RUST_EVIDENCE_CHECK_BIN="$PWD/rust/witnora-ve/target/release/witnora_evidence_check" python -m unittest tests.test_evidence_integrity_standalone_rust_cli -v
+      - name: W-STRUCT-001 Rust source-primal separator diagnostic parity
+        run: |
+          cargo test --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_structure
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_structure
+          WITNORA_RUST_STRUCTURE_BIN="$PWD/rust/witnora-ve/target/release/witnora_structure" python -m unittest tests.test_structural_profile_rust -v
+      - name: W-CROSSDOMAIN-004 Rust source-to-result XOR pilot
+        run: |
+          cargo test --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_pilot
+          cargo run --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_pilot
+      - name: W-CROSSDOMAIN-005 exhaustive topology finite controls
+        run: |
+          python -m unittest tests.test_topology_finite_controls -v
+          python -m scripts.benchmark_topology_finite_controls

@@ -1,0 +1,82 @@
+# G9-G13 Soundness Backbone
+
+## v2.23 TC-063 Hardening
+
+v2.23 hardens the first restricted family theorem attempt by turning TC-063
+into a lemma-and-obligation package. It does not create a new operator and does
+not upgrade TC-063 to an unqualified proven theorem.
+
+## v2.22 Next Gate
+
+v2.22 follows this backbone with a first restricted infinite-family theorem
+attempt: bounded separator-affine collapse for `SAF(c,r)`. It remains outside
+P-vs-NP, all-SAT, hierarchy-completeness, and DRAT claims.
+
+The finite G9-G13 evidence does not itself imply the v2.22 family theorem. The
+v2.22 claim is restricted to fixed separator bound `c`, supported affine
+extraction bound `r`, complete separator assignment enumeration, original-CNF
+SAT witness verification, and complete UNSAT cover checking.
+
+v2.21 theoremizes the G9-G13 backbone as proof sketches and proof obligations. It adds no new solver or SAT operator.
+
+The next mathematical gate is an infinite-family theorem. This release does not prove that theorem.
+
+## G9 Composition Soundness Candidate
+
+If every step in a composed orchestration certificate is verified by its corresponding operator checker, every formula handoff hash matches, diagnostic-only steps are excluded from result certification, and the final SAT witness or UNSAT preservation chain verifies against the original formula, then the composed result is sound for that finite instance.
+
+Status: `FORMAL_PROOF_SKETCH`
+
+## G10 Circuit Projection Soundness Candidate
+
+If each projected auxiliary variable has an exact verified definitional gate encoding, projection steps are equisatisfiability-preserving, unsafe auxiliary uses are rejected, and the lifted assignment satisfies the original CNF directly, then SAT witness lift is sound; for UNSAT, if the projected core is UNSAT and every projection step is equisatisfiability-preserving, then original UNSAT is soundly preserved for supported exact definitional families.
+
+Status: `FORMAL_PROOF_SKETCH`
+
+## G11 Proof Motif Generalization Soundness Candidate
+
+If every generalized proof motif reuse is checked through concrete proof expansion or a verified parametric instantiation, all substitutions are valid, and the final contradiction verifies from original clauses, then the generalized macro-proof certificate is sound for that finite instance.
+
+Status: `FORMAL_PROOF_SKETCH`
+
+## G12 Plan-Only Soundness Candidate
+
+If a collapse plan certificate verifies, then the plan is structurally valid, operator-compatible, claim-boundary safe, and execution-required; it does not certify SAT, UNSAT, DRAT, theorem, or completeness.
+
+Status: `FORMAL_PROOF_SKETCH`
+
+## G13 Planner-Guided Execution Soundness Candidate
+
+If a verified G12 plan is paired with a separately verified G13 execution certificate, every actual operator certificate verifies, every formula handoff verifies, planned-vs-actual comparison is recomputed, and the final SAT witness or UNSAT preservation trace verifies, then the finite execution result is sound for that instance.
+
+Status: `FORMAL_PROOF_SKETCH`
+
+## Closed-Loop Finite Soundness Candidate
+
+For finite controlled instances where obstruction fingerprinting, planning, execution, certificate verification, and result verification all pass, Witnora demonstrates a sound finite closed-loop collapse experiment.
+
+Status: `EMPIRICAL_EVIDENCE`
+
+## v2.24 Review Packaging
+
+v2.24 includes this G9-G13 soundness backbone as an appendix in the external
+review package. The appendix keeps the same boundary: formal proof sketches and
+proof obligations, not unqualified proven theorems.
+
+The package also points reviewers to TC-063, which is restricted to `SAF(c,r)`
+and depends on fixed `c`, supported affine extraction, and G5 affine checker
+soundness. It does not claim P vs NP progress, hierarchy completeness, all-SAT
+coverage, or external DRAT/LRAT/FRAT proof status.
+
+## v2.25 Preprint Boundary
+
+v2.25 carries this backbone into the public preprint as soundness sketches and
+proof obligations. It does not convert G9-G13 into unqualified proven theorems
+and does not claim planner/execution completeness.
+
+## v2.26 Final Submission Boundary
+
+v2.26 finalizes the bibliography and release packet around this backbone. It
+does not add a G9-G13 theorem, does not claim completeness, and does not claim
+external proof status for native certificates. The backbone remains proof
+sketches plus proof obligations for reviewers to attack.

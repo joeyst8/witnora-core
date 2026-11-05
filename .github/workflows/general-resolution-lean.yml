@@ -1,0 +1,285 @@
+name: General-resolution universal UNSAT bridge
+
+on:
+  push:
+    branches:
+      - formal/g14-python-seen-enqueue-v121
+    paths:
+      - "formal/Witnora/GeneralResolution.lean"
+      - "formal/Witnora/GeneralResolutionIndexed.lean"
+      - "formal/Witnora/GeneralResolutionStream.lean"
+      - "formal/Witnora/GeneralResolutionAscii.lean"
+      - "formal/Witnora/GeneralRUP.lean"
+      - "formal/Witnora/GeneralRUPAscii.lean"
+      - "formal/Witnora/GeneralRUPIndexed.lean"
+      - "formal/Witnora/GeneralRUPIndexedAscii.lean"
+      - "scripts/generate_general_resolution_lean.py"
+      - "scripts/generate_general_rup_lean.py"
+      - "tests/test_glucose_drup_import.py"
+      - "scripts/generate_glucose_drup_rup_lean.py"
+      - "scripts/benchmark_cdcl_rup_scaling.py"
+      - "scripts/generate_glucose_dense_3sat_lean.py"
+      - "tests/test_glucose_dense_3sat.py"
+      - "witnora_core/rup_witness_import.py"
+      - "witnora_core/rup_indexed_propagation.py"
+      - "tests/test_rup_indexed_propagation.py"
+      - "scripts/benchmark_rup_indexed_propagation.py"
+      - "scripts/generate_glucose_indexed_rup_lean.py"
+      - "tests/test_general_rup_indexed.py"
+      - "witnora_core/eth_clause_violation_parity.py"
+      - "tests/test_eth_clause_violation_parity.py"
+      - "witnora_core/constraint_geometry.py"
+      - "tests/test_constraint_geometry.py"
+      - "witnora_core/sparse_parity_checks.py"
+      - "tests/test_sparse_parity_checks.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "tests/test_geometry_aware_parity.py"
+      - "scripts/benchmark_geometry_aware_parity.py"
+      - "formal/Witnora/GeometryScope.lean"
+      - "formal/Witnora/AuxViolationBridge.lean"
+      - "witnora_core/aux_violation_tensors.py"
+      - "tests/test_aux_violation_tensors.py"
+      - "scripts/benchmark_aux_violation_tensors.py"
+      - "witnora_core/factor_elimination_orders.py"
+      - "tests/test_factor_elimination_orders.py"
+      - "scripts/benchmark_factor_elimination_orders.py"
+      - "witnora_core/exact_tensor_counting.py"
+      - "witnora_core/gf2_sparse_row_basis.py"
+      - "witnora_core/violation_image_anf.py"
+      - "formal/Witnora/ViolationProduct.lean"
+      - "tests/test_violation_image_anf.py"
+      - "scripts/benchmark_violation_image_anf.py"
+      - "witnora_core/anf_structured_counter.py"
+      - "formal/Witnora/ANFComponentFactor.lean"
+      - "tests/test_anf_structured_counter.py"
+      - "scripts/benchmark_anf_structured_counter.py"
+      - "witnora_core/anf_separator_conditioning.py"
+      - "tests/test_anf_separator_conditioning.py"
+      - "scripts/benchmark_anf_separator_conditioning.py"
+      - "formal/Witnora/GF2RowParity.lean"
+      - "tests/test_gf2_sparse_row_basis.py"
+      - "scripts/benchmark_gf2_sparse_basis_counting.py"
+      - "tests/test_exact_tensor_counting.py"
+      - "scripts/benchmark_exact_tensor_counting.py"
+      - "scripts/benchmark_sparse_parity.py"
+      - "scripts/benchmark_eth_constraint_geometry.py"
+      - "formal/Witnora/ClauseViolationParity.lean"
+      - "scripts/generate_eth_clause_violation_parity_lean.py"
+      - "tests/test_general_resolution_trace.py"
+      - "tests/test_general_rup_trace.py"
+      - ".github/workflows/general-resolution-lean.yml"
+  pull_request:
+    paths:
+      - "formal/Witnora/GeneralResolution.lean"
+      - "formal/Witnora/GeneralResolutionIndexed.lean"
+      - "formal/Witnora/GeneralResolutionStream.lean"
+      - "formal/Witnora/GeneralResolutionAscii.lean"
+      - "formal/Witnora/GeneralRUP.lean"
+      - "formal/Witnora/GeneralRUPAscii.lean"
+      - "formal/Witnora/GeneralRUPIndexed.lean"
+      - "formal/Witnora/GeneralRUPIndexedAscii.lean"
+      - "scripts/generate_general_resolution_lean.py"
+      - "scripts/generate_general_rup_lean.py"
+      - "tests/test_glucose_drup_import.py"
+      - "scripts/generate_glucose_drup_rup_lean.py"
+      - "scripts/benchmark_cdcl_rup_scaling.py"
+      - "scripts/generate_glucose_dense_3sat_lean.py"
+      - "tests/test_glucose_dense_3sat.py"
+      - "witnora_core/rup_witness_import.py"
+      - "witnora_core/rup_indexed_propagation.py"
+      - "tests/test_rup_indexed_propagation.py"
+      - "scripts/benchmark_rup_indexed_propagation.py"
+      - "scripts/generate_glucose_indexed_rup_lean.py"
+      - "tests/test_general_rup_indexed.py"
+      - "witnora_core/eth_clause_violation_parity.py"
+      - "tests/test_eth_clause_violation_parity.py"
+      - "witnora_core/constraint_geometry.py"
+      - "tests/test_constraint_geometry.py"
+      - "witnora_core/sparse_parity_checks.py"
+      - "tests/test_sparse_parity_checks.py"
+      - "witnora_core/geometry_aware_parity.py"
+      - "tests/test_geometry_aware_parity.py"
+      - "scripts/benchmark_geometry_aware_parity.py"
+      - "formal/Witnora/GeometryScope.lean"
+      - "formal/Witnora/AuxViolationBridge.lean"
+      - "witnora_core/aux_violation_tensors.py"
+      - "tests/test_aux_violation_tensors.py"
+      - "scripts/benchmark_aux_violation_tensors.py"
+      - "witnora_core/factor_elimination_orders.py"
+      - "tests/test_factor_elimination_orders.py"
+      - "scripts/benchmark_factor_elimination_orders.py"
+      - "witnora_core/exact_tensor_counting.py"
+      - "witnora_core/gf2_sparse_row_basis.py"
+      - "witnora_core/violation_image_anf.py"
+      - "formal/Witnora/ViolationProduct.lean"
+      - "tests/test_violation_image_anf.py"
+      - "scripts/benchmark_violation_image_anf.py"
+      - "witnora_core/anf_structured_counter.py"
+      - "formal/Witnora/ANFComponentFactor.lean"
+      - "tests/test_anf_structured_counter.py"
+      - "scripts/benchmark_anf_structured_counter.py"
+      - "witnora_core/anf_separator_conditioning.py"
+      - "tests/test_anf_separator_conditioning.py"
+      - "scripts/benchmark_anf_separator_conditioning.py"
+      - "formal/Witnora/GF2RowParity.lean"
+      - "tests/test_gf2_sparse_row_basis.py"
+      - "scripts/benchmark_gf2_sparse_basis_counting.py"
+      - "tests/test_exact_tensor_counting.py"
+      - "scripts/benchmark_exact_tensor_counting.py"
+      - "scripts/benchmark_sparse_parity.py"
+      - "scripts/benchmark_eth_constraint_geometry.py"
+      - "formal/Witnora/ClauseViolationParity.lean"
+      - "scripts/generate_eth_clause_violation_parity_lean.py"
+      - "tests/test_general_resolution_trace.py"
+      - "tests/test_general_rup_trace.py"
+      - ".github/workflows/general-resolution-lean.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Install pinned independent CDCL solver
+        run: python -m pip install "python-sat==1.8.dev24"
+      - name: Kernel-check universal resolution soundness
+        working-directory: formal
+        run: lake build Witnora.GeneralResolution Witnora.GeneralResolutionIndexed Witnora.GeneralResolutionStream Witnora.GeneralResolutionAscii Witnora.GeneralRUP Witnora.GeneralRUPAscii Witnora.GeneralRUPIndexed Witnora.GeneralRUPIndexedAscii
+      - name: Kernel-check universal clause-violation parity soundness
+        working-directory: formal
+        run: lake build Witnora.ClauseViolationParity
+
+      - name: Exhaustively verify source-bound ETH-style parity sketches
+        run: python -m unittest tests.test_eth_clause_violation_parity -v
+
+      - name: Validate non-enumerative dense parity and constraint geometry
+        run: python -m unittest tests.test_constraint_geometry -v
+
+      - name: Benchmark non-enumerative sketch construction only
+        run: python -m scripts.benchmark_eth_constraint_geometry
+
+      - name: Check nonenumerative sparse parity guarantees and 4-bit adversary
+        run: python -m unittest tests.test_sparse_parity_checks -v
+
+      - name: Measure sparse parity scope and min-degree contraction width
+        run: python -m scripts.benchmark_sparse_parity
+
+      - name: Kernel-check direct parity scope containment theorem
+        working-directory: formal
+        run: lake build Witnora.GeometryScope
+
+      - name: Verify geometry-aware sparse parity and source edge preservation
+        run: python -m unittest tests.test_geometry_aware_parity -v
+
+      - name: Measure compression-versus-contraction geometry frontier
+        run: python -m scripts.benchmark_geometry_aware_parity
+
+      - name: Kernel-check auxiliary clause-violation model bridge
+        working-directory: formal
+        run: lake build Witnora.AuxViolationBridge
+
+      - name: Verify auxiliary model-count constant coefficient and scopes
+        run: python -m unittest tests.test_aux_violation_tensors -v
+
+      - name: Measure auxiliary vs direct parity factor-graph geometry
+        run: python -m scripts.benchmark_aux_violation_tensors
+
+      - name: Independently verify scope-aware elimination orders
+        run: python -m unittest tests.test_factor_elimination_orders -v
+
+      - name: Benchmark source/aux block and limited min-fill order strategies
+        run: python -m scripts.benchmark_factor_elimination_orders
+
+      - name: Check exact polynomial factor-contraction semantics and collision
+        run: python -m unittest tests.test_exact_tensor_counting -v
+
+      - name: Benchmark small exact source versus auxiliary tensor counting
+        run: python -m scripts.benchmark_exact_tensor_counting
+
+      - name: Kernel-check universal GF2 parity row-XOR equivalence
+        working-directory: formal
+        run: lake build Witnora.GF2RowParity
+
+      - name: Verify sparse GF2 basis witnesses and exact counting preservation
+        run: python -m unittest tests.test_gf2_sparse_row_basis -v
+
+      - name: Benchmark certified sparse-basis exact polynomial counting
+        run: python -m scripts.benchmark_gf2_sparse_basis_counting
+
+      - name: Kernel-check clause-violation false-literal product semantics
+        working-directory: formal
+        run: lake build Witnora.ViolationProduct
+
+      - name: Verify symbolic ANF semantics and exact bounded common-zero counting
+        run: python -m unittest tests.test_violation_image_anf -v
+
+      - name: Benchmark nonlinear violation-image ANF versus original CNF constraints
+        run: python -m scripts.benchmark_violation_image_anf
+
+      - name: Kernel-check universal independent-component counting identity
+        working-directory: formal
+        run: lake build Witnora.ANFComponentFactor
+
+      - name: Verify shared-cofactor ANF counter, independent scopes and collisions
+        run: python -m unittest tests.test_anf_structured_counter -v
+
+      - name: Compare bounded exact ANF counter strategies on frozen controls
+        run: python -m scripts.benchmark_anf_structured_counter
+
+      - name: Verify exact bounded separator conditioning and no-separator controls
+        run: python -m unittest tests.test_anf_separator_conditioning -v
+
+      - name: Benchmark connected bridge structures versus dense 3SAT controls
+        run: python -m scripts.benchmark_anf_separator_conditioning
+
+      - name: Generate bounded source-CNF versus parity-equivalence checks
+        run: python -m scripts.generate_eth_clause_violation_parity_lean > formal/Witnora/GeneratedETHParity.lean
+
+      - name: Lean-check exact parity sketches on dense UNSAT and SAT controls
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedETHParity.lean
+
+      - name: Test independent proof generation and tamper rejection
+        run: python -m unittest tests.test_general_resolution_trace tests.test_general_rup_trace tests.test_glucose_drup_import tests.test_glucose_dense_3sat tests.test_rup_indexed_propagation tests.test_general_rup_indexed -v
+      - name: Generate non-affine CNF resolution examples
+        run: python -m scripts.generate_general_resolution_lean > formal/Witnora/GeneratedGeneralResolution.lean
+      - name: Lean-check all generated non-affine examples
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedGeneralResolution.lean
+      - name: Generate explicit non-affine RUP unit witnesses
+        run: python -m scripts.generate_general_rup_lean > formal/Witnora/GeneratedGeneralRUP.lean
+      - name: Lean-check proposed RUP additions and forged witness rejection
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedGeneralRUP.lean
+      - name: Generate independently sourced Glucose DRUP RUP witnesses
+        run: python -m scripts.generate_glucose_drup_rup_lean > formal/Witnora/GeneratedGlucoseDRUP.lean
+      - name: Lean-check actual CDCL refutations
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedGlucoseDRUP.lean
+      - name: Measure frozen non-affine CDCL proof annotation scaling
+        run: python -m scripts.benchmark_cdcl_rup_scaling
+
+      - name: Generate real dense random 3SAT and planted-SAT controls
+        run: python -m scripts.generate_glucose_dense_3sat_lean > formal/Witnora/GeneratedDense3SAT.lean
+      - name: Lean-check dense no-small-separator 3SAT and positive SAT models
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedDense3SAT.lean
+
+      - name: Compare indexed and reference DRUP annotation on frozen cases
+        run: python -m scripts.benchmark_rup_indexed_propagation
+
+      - name: Generate actual Glucose indexed row-reason RUP certificates
+        run: python -m scripts.generate_glucose_indexed_rup_lean > formal/Witnora/GeneratedIndexedRUP.lean
+      - name: Lean-check exact RUP reason rows and forged-index rejection
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedIndexedRUP.lean
+

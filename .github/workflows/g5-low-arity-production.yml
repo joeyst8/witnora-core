@@ -1,0 +1,36 @@
+name: G5 zero and unit affine completeness fix
+
+on:
+  push:
+    branches:
+      - research/g5-low-arity-production-v56
+  pull_request:
+    paths:
+      - "witnora_core/operator_genesis.py"
+      - "tests/test_tc063_unit_counterexample.py"
+      - "scripts/check_low_arity_g5_lean.py"
+      - ".github/workflows/g5-low-arity-production.yml"
+  workflow_dispatch:
+
+jobs:
+  low-arity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit/zero regression and surrounding affine checks
+        run: |
+          PYTHONPATH=. python -m unittest tests.test_tc063_unit_counterexample tests.test_affine_residue_extraction tests.test_affine_residue_certificate tests.test_tc063_structural_validator tests.test_tc063_direct_attack -v
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Build G5 source certificate checker
+        working-directory: formal
+        run: lake build Witnora.SourceG5 Witnora.G5IndexedBridge Witnora.TC063UnitCounterexample
+      - name: Require Lean-accepted source-bound native certificates
+        run: PYTHONPATH=. python scripts/check_low_arity_g5_lean.py

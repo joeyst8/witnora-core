@@ -1,0 +1,30 @@
+name: Conjecture triage research gate
+
+on:
+  push:
+    branches:
+      - 'research/conjecture-triage-v16'
+  pull_request:
+    paths:
+      - 'witnora_core/conjecture_triage.py'
+      - 'tests/test_conjecture_triage.py'
+      - 'scripts/experiment_conjecture_triage.py'
+      - '.github/workflows/conjecture-triage-v16.yml'
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test canonicalization and fail-closed Lean queue
+        run: PYTHONPATH=. python -m unittest tests.test_conjecture_triage -v
+      - name: Triage finite conjectures against known identities and adversarial graphs
+        run: PYTHONPATH=. python scripts/experiment_conjecture_triage.py
+      - name: Archive exact hypotheses counterexamples and formalization obligations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conjecture-triage-${{ github.sha }}
+          path: conjecture-triage-v16.json
+          if-no-files-found: ignore

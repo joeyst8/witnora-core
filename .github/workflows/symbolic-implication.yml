@@ -1,0 +1,30 @@
+name: Symbolic implication research gate
+
+on:
+  push:
+    branches:
+      - 'research/symbolic-implication-v17'
+  pull_request:
+    paths:
+      - 'witnora_core/symbolic_implication.py'
+      - 'tests/test_symbolic_implication.py'
+      - 'scripts/experiment_symbolic_implication.py'
+      - '.github/workflows/symbolic-implication.yml'
+
+jobs:
+  implication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test known-axiom implication and unsupported controls
+        run: PYTHONPATH=. python -m unittest tests.test_symbolic_implication -v
+      - name: Classify prior conjectures by explicit symbolic rules
+        run: PYTHONPATH=. python scripts/experiment_symbolic_implication.py
+      - name: Archive rule references and unresolved obligations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: symbolic-implication-${{ github.sha }}
+          path: symbolic-implication-ledger.json
+          if-no-files-found: ignore

@@ -1,0 +1,88 @@
+name: Witnora Verify Docker
+description: Self-contained Docker runner for scoped artifact verification and partial replay trust cards.
+author: Witnora-Core
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  source-zip:
+    required: true
+    description: Source archive path.
+  diagnostic-zip:
+    required: true
+    description: Diagnostic artifact path.
+  manifest:
+    required: true
+    description: Release asset manifest path.
+  depth:
+    required: false
+    default: metadata
+    description: Verification depth. Supported values are metadata and partial.
+  select:
+    required: false
+    default: largest
+    description: Partial replay selection policy. Supported values are largest, first, all, and instance.
+  select-instance:
+    required: false
+    default: ""
+    description: Selected instance when select is instance, for example tseitin_20:c=2.
+  rerun-drat-trim:
+    required: false
+    default: "false"
+    description: Whether to rerun drat-trim on selected proof evidence.
+  drat-trim:
+    required: false
+    default: ""
+    description: Path to drat-trim for optional replay.
+  max-replay-proofs:
+    required: false
+    default: "1"
+    description: Maximum selected proofs to replay with drat-trim.
+  replay-timeout-seconds:
+    required: false
+    default: "120"
+    description: Timeout for each optional drat-trim replay.
+  fail-on:
+    required: false
+    default: hash_mismatch,overclaim,missing_file
+    description: Backward-compatible comma-separated fail conditions.
+  fail-on-risk-flags:
+    required: false
+    default: ""
+    description: Comma-separated risk flags that fail the action.
+  fail-on-verdict:
+    required: false
+    default: ""
+    description: Comma-separated verdicts that fail the action.
+  out-dir:
+    required: false
+    default: witnora-verify-out
+    description: Directory for verification reports and trust card.
+  upload-artifacts:
+    required: false
+    default: "false"
+    description: Retained for input parity. Use a separate upload-artifact step after this Docker action.
+
+outputs:
+  verdict:
+    description: Verification verdict.
+  certification_level:
+    description: Verification certification level.
+  verification_depth:
+    description: Verification depth used by the report.
+  replay_depth:
+    description: Replay depth used by the report.
+  risk_flags:
+    description: JSON array of risk flags.
+  selected_evidence:
+    description: JSON array of selected evidence.
+  trust_card_path:
+    description: Generated Markdown trust card path.
+  report_path:
+    description: Generated JSON verification report path.
+
+runs:
+  using: docker
+  image: Dockerfile

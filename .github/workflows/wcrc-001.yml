@@ -1,0 +1,146 @@
+name: W-CRC-001 exact boundary source controls
+
+on:
+  push:
+    branches:
+      - research/w-crc-001-asymmetric-v1
+    paths:
+      - "witnora_core/crc_boundary.py"
+      - "witnora_core/crc_source.py"
+      - "witnora_core/crc_shannon_oracle.py"
+      - "witnora_core/crc_orbit_oracle.py"
+      - "witnora_core/crc_defect_oracle.py"
+      - "witnora_core/crc_conflict_oracle.py"
+      - "witnora_core/crc_independence_audit.py"
+      - "witnora_core/crc_structural_independence.py"
+      - "witnora_core/crc_conditional_independence.py"
+      - "witnora_core/crc_separator_discovery.py"
+      - "witnora_core/crc_cutset_count.py"
+      - "witnora_core/crc_variable_elimination.py"
+      - "witnora_core/crc_variable_elimination_indexed.py"
+      - "tests/test_crc_boundary.py"
+      - "tests/test_crc_source.py"
+      - "tests/test_crc_shannon_oracle.py"
+      - "tests/test_crc_shannon_integration.py"
+      - "scripts/benchmark_crc_vs_anf.py"
+      - "scripts/benchmark_crc_scaling.py"
+      - "tests/test_crc_scaling_benchmark.py"
+      - "tests/test_crc_highcount_benchmark.py"
+      - "scripts/benchmark_crc_highcount.py"
+      - "tests/test_crc_orbit_oracle.py"
+      - "tests/test_crc_defect_oracle.py"
+      - "tests/test_crc_conflict_oracle.py"
+      - "tests/test_crc_independence_audit.py"
+      - "tests/test_crc_structural_independence.py"
+      - "tests/test_crc_conditional_independence.py"
+      - "tests/test_crc_separator_discovery.py"
+      - "tests/test_crc_cutset_count.py"
+      - "tests/test_crc_adversarial_benchmark.py"
+      - "tests/test_crc_variable_elimination.py"
+      - "tests/test_crc_variable_elimination_indexed.py"
+      - "tests/test_crc_heldout.py"
+      - "tests/test_crc_dense_semantics.py"
+      - "scripts/benchmark_crc_dense_semantics.py"
+      - "tests/test_crc_matched_semantics.py"
+      - "scripts/benchmark_crc_matched_semantics.py"
+      - "scripts/benchmark_crc_equivalent_encodings.py"
+      - "tests/test_crc_equivalent_encodings.py"
+      - "scripts/benchmark_crc_orbit.py"
+      - "scripts/benchmark_crc_symmetry_stress.py"
+      - "scripts/benchmark_crc_defect.py"
+      - "scripts/benchmark_crc_conflict.py"
+      - "scripts/benchmark_crc_independence.py"
+      - "scripts/benchmark_crc_structural_independence.py"
+      - "scripts/benchmark_crc_conditional_independence.py"
+      - "scripts/benchmark_crc_separator_discovery.py"
+      - "scripts/benchmark_crc_cutset_count.py"
+      - "scripts/benchmark_crc_adversarial.py"
+      - "scripts/benchmark_crc_variable_elimination.py"
+      - "scripts/benchmark_crc_variable_elimination_indexed.py"
+      - "scripts/benchmark_crc_heldout.py"
+      - "scripts/run_witnora_research_queue.py"
+      - "tests/test_research_queue.py"
+      - ".github/workflows/wcrc-001.yml"
+  pull_request:
+    paths:
+      - "witnora_core/crc_boundary.py"
+      - "witnora_core/crc_source.py"
+      - "witnora_core/crc_shannon_oracle.py"
+      - "tests/test_crc_boundary.py"
+      - "tests/test_crc_source.py"
+      - "tests/test_crc_shannon_oracle.py"
+      - "tests/test_crc_shannon_integration.py"
+      - "tests/test_crc_scaling_benchmark.py"
+      - "scripts/benchmark_crc_scaling.py"
+      - "tests/test_crc_highcount_benchmark.py"
+      - "scripts/benchmark_crc_highcount.py"
+      - "scripts/benchmark_crc_symmetry_stress.py"
+      - "scripts/benchmark_crc_defect.py"
+      - "scripts/benchmark_crc_conflict.py"
+      - "scripts/benchmark_crc_independence.py"
+      - "scripts/benchmark_crc_structural_independence.py"
+      - "scripts/benchmark_crc_conditional_independence.py"
+      - "scripts/benchmark_crc_separator_discovery.py"
+      - "scripts/benchmark_crc_cutset_count.py"
+      - "scripts/benchmark_crc_adversarial.py"
+      - "scripts/benchmark_crc_variable_elimination.py"
+      - "scripts/benchmark_crc_variable_elimination_indexed.py"
+      - "scripts/benchmark_crc_heldout.py"
+      - "scripts/run_witnora_research_queue.py"
+      - "tests/test_research_queue.py"
+      - ".github/workflows/wcrc-001.yml"
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PySAT and Ganak independent counting baselines
+        run: python -m pip install --disable-pip-version-check python-sat pyganak==2.8.0
+      - name: Exact source and coefficient controls
+        run: python -m unittest tests.test_crc_boundary tests.test_crc_source tests.test_crc_shannon_oracle tests.test_crc_shannon_integration tests.test_crc_scaling_benchmark tests.test_crc_highcount_benchmark tests.test_crc_orbit_oracle tests.test_crc_defect_oracle tests.test_crc_conflict_oracle tests.test_crc_independence_audit tests.test_crc_structural_independence tests.test_crc_conditional_independence tests.test_crc_separator_discovery tests.test_crc_cutset_count tests.test_crc_adversarial_benchmark tests.test_crc_variable_elimination tests.test_crc_variable_elimination_indexed tests.test_crc_heldout tests.test_crc_dense_semantics tests.test_crc_matched_semantics tests.test_crc_equivalent_encodings tests.test_research_queue -v
+      - name: Source-bound CRC versus structured ANF pilot
+        run: python -m scripts.benchmark_crc_vs_anf
+      - name: W-CRC-002 dense and mixed scaling pilot
+        run: python -m scripts.benchmark_crc_scaling
+      - name: W-CRC-003 high-model-count pilot versus Ganak
+        run: python -m scripts.benchmark_crc_highcount
+      - name: W-CRC-003 expanded state-budget falsification
+        run: python -m scripts.benchmark_crc_highcount --max-states 30000 --seconds 2.5 --repeats 1
+      - name: W-CRC-004 dense nonlinear orbit coefficient benchmark
+        run: python -m scripts.benchmark_crc_orbit
+      - name: W-CRC-005 adversarial symmetry-defect controls
+        run: python -m scripts.benchmark_crc_symmetry_stress
+      - name: W-CRC-005 exact high-order defect coefficient pilot against Ganak
+        run: python -m scripts.benchmark_crc_defect
+      - name: W-CRC-006 mixed-polarity exact coefficient pilot against Ganak
+        run: python -m scripts.benchmark_crc_conflict
+      - name: W-CRC-008 exact independence-certificate cost and source-count control
+        run: python -m scripts.benchmark_crc_independence
+      - name: W-CRC-009 near-linear sufficient certificate versus exact Fourier control
+        run: python -m scripts.benchmark_crc_structural_independence
+      - name: W-CRC-010 signed-source conditional separator audit and scaling
+        run: python -m scripts.benchmark_crc_conditional_independence
+      - name: W-CRC-011 bounded minimum separator discovery scaling
+        run: python -m scripts.benchmark_crc_separator_discovery
+      - name: W-CRC-012 exact source counting including separator discovery versus Ganak
+        run: python -m scripts.benchmark_crc_cutset_count
+      - name: W-CRC-013 adversarial full-count controls and witness cost
+        run: python -m scripts.benchmark_crc_adversarial
+      - name: W-CRC-014 width-bounded VE versus independent Ganak
+        run: python -m scripts.benchmark_crc_variable_elimination
+      - name: W-CRC-015 indexed exact VE versus frozen reference and Ganak
+        run: python -m scripts.benchmark_crc_variable_elimination_indexed
+      - name: W-CRC-016 held-out signed trees, ladders and dense controls
+        run: python -m scripts.benchmark_crc_heldout
+      - name: W-CRC-017 same primal graph, different source algebra
+        run: python -m scripts.benchmark_crc_dense_semantics
+      - name: W-CRC-018 matched edge, clause and model counts, distinct semantic dependence
+        run: python -m scripts.benchmark_crc_matched_semantics
+      - name: W-CRC-019 equivalent solutions under distinct source encodings
+        run: python -m scripts.benchmark_crc_equivalent_encodings

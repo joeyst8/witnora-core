@@ -1,0 +1,145 @@
+name: G14 Python seen-at-enqueue refinement
+
+on:
+  push:
+    branches:
+      - formal/g14-python-seen-enqueue-v121
+  pull_request:
+    paths:
+      - "formal/Witnora/G14DFSSeenEnqueue.lean"
+      - "formal/Witnora/G14DFSOuterScan.lean"
+      - "formal/Witnora/G14DFSPreseen.lean"
+      - "formal/Witnora/G14DFSOwnerLabels.lean"
+      - "formal/Witnora/G14DFSModelBridge.lean"
+      - "formal/Witnora/TC063CompletenessReduction.lean"
+      - "formal/Witnora/TC063CanonicalAffineBridge.lean"
+      - "formal/Witnora/TC063PatternPermutation.lean"
+      - "formal/Witnora/TC063CanonicalBound.lean"
+      - "formal/Witnora/TC063SparseDirectChecker.lean"
+      - "formal/Witnora/TC063SparseCover.lean"
+      - "formal/Witnora/TC063SparseG5OperationBound.lean"
+      - "formal/Witnora/TC063SparseDagResource.lean"
+      - "formal/Witnora/TC063PythonCompilerModel.lean"
+      - "formal/Witnora/TC063PythonOperationCodec.lean"
+      - "formal/Witnora/TC063EliminationPairSignal.lean"
+      - "formal/Witnora/TC063VertexCoupling.lean"
+      - "formal/Witnora/TC063VertexCouplingFiniteOracle.lean"
+      - "formal/Witnora/TC063VertexCouplingCheckerSound.lean"
+      - "formal/Witnora/TC063SourceVertexCuts.lean"
+      - "formal/Witnora/TC063AsciiSourceVertexCuts.lean"
+      - "formal/Witnora/TC063AsciiCutG14Composition.lean"
+      - "formal/Witnora/TC063AsciiTwoCutSmoke.lean"
+      - "formal/Witnora/TC063CanonicalSortAudit.lean"
+      - "scripts/generate_python_canonical_sort_differential_lean.py"
+      - "fixtures/tc063_ascii_two_cut_unsat_smoke.cnf"
+      - "fixtures/tc063_three_row_affine_unsat.cnf"
+      - "scripts/generate_tc063_ascii_smoke_identity_lean.py"
+      - "scripts/generate_python_ascii_source_vertex_cuts_lean.py"
+      - "scripts/generate_python_source_vertex_cuts_differential_lean.py"
+      - "scripts/generate_python_g5_path_two_cut_lean.py"
+      - "witnora_core/lean_g5_gate.py"
+      - "tests/test_lean_g5_gate.py"
+      - "tests/test_lean_g5_wire_real.py"
+      - "witnora_core/separator_structural_priority.py"
+      - "witnora_core/separator_affine_family_theorem.py"
+      - "tests/test_separator_structural_priority.py"
+      - "witnora_core/g5_elimination_activity.py"
+      - "tests/test_g5_elimination_activity.py"
+      - "tests/test_g5_elimination_activity_robustness.py"
+      - "tests/test_g5_elimination_activity_crossfamilies.py"
+      - "tests/test_g5_activity_hybrid_heldout.py"
+      - "tests/test_g5_pairwise_dense_bridge.py"
+      - "witnora_core/g5_boundary_path_signal.py"
+      - "tests/test_g5_boundary_path_signal.py"
+      - "witnora_core/global_coupling_separator.py"
+      - "tests/test_global_coupling_separator.py"
+      - "witnora_core/vertex_coupling_separator.py"
+      - "tests/test_vertex_coupling_separator.py"
+      - "tests/test_vertex_coupling_g14_benchmark.py"
+      - "tests/test_vertex_coupling_exhaustive.py"
+      - "scripts/generate_python_vertex_coupling_differential_lean.py"
+      - "scripts/generate_python_g5_compiler_differential_lean.py"
+      - ".github/workflows/g14-dfs-seen-enqueue.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check seen-at-enqueue invariants
+        working-directory: formal
+        run: lake build Witnora.G14DFSSeenEnqueue Witnora.G14DFSOuterScan Witnora.G14DFSPreseen Witnora.G14DFSOwnerLabels Witnora.G14DFSModelBridge Witnora.TC063CompletenessReduction Witnora.TC063CanonicalAffineBridge Witnora.TC063PatternPermutation Witnora.TC063CanonicalBound Witnora.TC063SparseDirectChecker Witnora.TC063SparseCover Witnora.TC063SparseG5OperationBound Witnora.TC063SparseDagResource Witnora.TC063PythonCompilerModel Witnora.TC063PythonOperationCodec Witnora.TC063EliminationPairSignal Witnora.TC063VertexCoupling Witnora.TC063VertexCouplingFiniteOracle Witnora.TC063VertexCouplingCheckerSound Witnora.TC063SourceVertexCuts Witnora.TC063AsciiSourceVertexCuts Witnora.TC063AsciiCutG14Composition Witnora.TC063AsciiTwoCutSmoke Witnora.TC063CanonicalSortAudit
+      - name: Production G5 numeric-wire gate unit and real Lean smoke tests
+        run: python -m unittest tests.test_lean_g5_gate tests.test_lean_g5_wire_real -v
+      - name: Exercise structural separator prototype and independent graph oracle
+        run: python -m unittest tests.test_separator_structural_priority tests.test_separator_affine_family_theorem -v
+      - name: Study elimination-derived separator hints on a non-articulation graph
+        run: python -m unittest tests.test_g5_elimination_activity -v
+      - name: Adversarial relabeling and equation-order activity study
+        run: python -m unittest tests.test_g5_elimination_activity_robustness -v
+      - name: Independent biconnected topology and clique control study
+        run: python -m unittest tests.test_g5_elimination_activity_crossfamilies -v
+      - name: Held-out degree vs G5 hybrid topology challenge
+        run: python -m unittest tests.test_g5_activity_hybrid_heldout -v
+      - name: Regular 2-cut dense-bridge pairwise scale study
+        run: python -m unittest tests.test_g5_pairwise_dense_bridge -v
+      - name: G5 indexed-provenance boundary-path discovery and no-cut controls
+        run: python -m unittest tests.test_g5_boundary_path_signal -v
+      - name: Global two-edge coupling hidden-bridge and G14 recognition checks
+        run: python -m unittest tests.test_global_coupling_separator -v
+      - name: Vertex-coupling completeness, randomized graph oracle and dense-overlap G14 test
+        run: python -m unittest tests.test_vertex_coupling_separator -v
+      - name: Complete labeled graph census and randomized Python articulation differential oracle
+        run: python -m unittest tests.test_vertex_coupling_exhaustive -v
+      - name: Compare vertex-coupling ranking and actual G14 ternary-XOR recognition
+        run: python -m unittest tests.test_vertex_coupling_g14_benchmark -v
+      - name: Emit actual Python G5 compiler differential trace assertions
+        run: python -m scripts.generate_python_g5_compiler_differential_lean > formal/Witnora/GeneratedPythonG5CompilerDifferential.lean
+      - name: Lean-check every Python compiler differential result
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedPythonG5CompilerDifferential.lean
+      - name: Generate actual Python vertex-coupling outputs for independent Lean DFS checks
+        run: python -m scripts.generate_python_vertex_coupling_differential_lean > formal/Witnora/GeneratedPythonVertexCouplingDifferential.lean
+      - name: Lean-check each Python articulation and two-cut result
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedPythonVertexCouplingDifferential.lean
+      - name: Generate Python source-CNF two-vertex-cut certificates for Lean
+        run: python -m scripts.generate_python_source_vertex_cuts_differential_lean > formal/Witnora/GeneratedPythonSourceVertexCutsDifferential.lean
+      - name: Lean-check Python claims against reconstructed signed-source primal graph
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedPythonSourceVertexCutsDifferential.lean
+      - name: Generate G5 path-boundary hints from actual Python elimination traces
+        run: python -m scripts.generate_python_g5_path_two_cut_lean > formal/Witnora/GeneratedG5PathSourceTwoCuts.lean
+      - name: Lean-check G5-derived cuts against signed source-CNF G14 DFS
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedG5PathSourceTwoCuts.lean
+      - name: Generate original Python DIMACS document bytes for Lean structural certificates
+        run: python -m scripts.generate_python_ascii_source_vertex_cuts_lean > formal/Witnora/GeneratedPythonAsciiSourceVertexCuts.lean
+      - name: Lean-check source ASCII bytes, signed stream and exact separator claims
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedPythonAsciiSourceVertexCuts.lean
+      - name: Generate source-byte identity obligation from committed DIMACS smoke fixture
+        run: python -m scripts.generate_tc063_ascii_smoke_identity_lean > formal/Witnora/GeneratedTC063SmokeFileIdentity.lean
+      - name: Lean-check that committed source bytes match the proved UNSAT smoke theorem
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedTC063SmokeFileIdentity.lean
+      - name: Generate Python-derived unsorted affine-row normalization differential cases
+        run: python -m scripts.generate_python_canonical_sort_differential_lean > formal/Witnora/GeneratedPythonCanonicalSortDifferential.lean
+      - name: Lean-check exact affine extraction acceptance before and after row sorting
+        working-directory: formal
+        run: lake env lean Witnora/GeneratedPythonCanonicalSortDifferential.lean
+      - name: Reject proof holes
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G14DFSSeenEnqueue.lean formal/Witnora/G14DFSOuterScan.lean formal/Witnora/G14DFSPreseen.lean formal/Witnora/G14DFSOwnerLabels.lean formal/Witnora/G14DFSModelBridge.lean formal/Witnora/TC063CompletenessReduction.lean formal/Witnora/TC063CanonicalAffineBridge.lean formal/Witnora/TC063PatternPermutation.lean formal/Witnora/TC063CanonicalBound.lean formal/Witnora/TC063SparseDirectChecker.lean formal/Witnora/TC063SparseCover.lean formal/Witnora/TC063SparseG5OperationBound.lean formal/Witnora/TC063SparseDagResource.lean formal/Witnora/TC063PythonCompilerModel.lean formal/Witnora/TC063PythonOperationCodec.lean formal/Witnora/TC063EliminationPairSignal.lean formal/Witnora/TC063VertexCoupling.lean formal/Witnora/TC063VertexCouplingFiniteOracle.lean formal/Witnora/TC063VertexCouplingCheckerSound.lean formal/Witnora/TC063SourceVertexCuts.lean formal/Witnora/TC063AsciiSourceVertexCuts.lean formal/Witnora/TC063AsciiCutG14Composition.lean formal/Witnora/TC063AsciiTwoCutSmoke.lean formal/Witnora/TC063CanonicalSortAudit.lean; then
+            exit 1
+          fi

@@ -1,0 +1,28 @@
+name: G5 scheduled absence invariant
+on:
+  push:
+    branches: [formal/g5-scheduled-absence-invariant-v89]
+  pull_request:
+    paths:
+      - "formal/Witnora/G5ScheduledAbsenceInvariant.lean"
+      - ".github/workflows/g5-scheduled-absence-invariant.yml"
+  workflow_dispatch:
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          build: false
+          test: false
+      - name: Kernel-check scheduled absent-variable invariant
+        working-directory: formal
+        run: lake build Witnora.G5ScheduledAbsenceInvariant
+      - name: Reject proof holes
+        run: |
+          if grep -E '^[[:space:]]*(sorry|axiom|unsafe[[:space:]]|native_decide)' formal/Witnora/G5ScheduledAbsenceInvariant.lean; then
+            exit 1
+          fi

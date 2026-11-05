@@ -1,0 +1,31 @@
+name: Color repair operator study
+
+on:
+  push:
+    branches:
+      - research/color-repair-v22
+  pull_request:
+    paths:
+      - "witnora_core/color_repair_lab.py"
+      - "scripts/experiment_color_repair.py"
+      - "tests/test_color_repair_lab.py"
+      - ".github/workflows/color-repair.yml"
+  workflow_dispatch:
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test coloring repair invariants
+        run: PYTHONPATH=. python -m unittest tests.test_color_repair_lab -v
+      - name: Run training and unseen holdout study
+        run: PYTHONPATH=. python scripts/experiment_color_repair.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: color-repair-ledger
+          path: color-repair-ledger.json
