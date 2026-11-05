@@ -21,6 +21,11 @@ shorter on 16/72 cases, tied on 56/72, and longer on 0/72. This is evidence
 within this frozen, narrow synthetic family only; it does not predict results
 on arbitrary formulas or on representative SAT competition instances.
 
+An additional exploratory **200-case local** run with the same pinned
+external verifier passed (67 SAT controls; 42 shorter witness proofs, 158
+ties, zero regressions). This extended run is not part of the frozen 72-case
+native CI gate and should not be presented as such.
+
 ### Named gates
 
 | Gates | Research boundary |
@@ -54,7 +59,9 @@ python -m unittest tests.test_r300_manifest_audit -v
 python -m scripts.audit_witnora_r300
 ```
 
-**Status:** R-300 is a **candidate pending focused GitHub Actions CI**.
-Readiness here means research branch saved and regression-gated for further
-review. It is not a release, main-branch merge, complete Rust migration,
-general SAT performance guarantee or proof of any P-vs-NP claim.
+**Status:** R-300 focused native CI
+[#41958473142](https://github.com/joeyst8/witnora-core/actions/runs/41958473142)
+passed, including the pinned independent verifier, Rust/Python comparisons
+and R-300 audit. Readiness means research branch saved and regression-gated
+for further review; it is not a release, main-branch merge, complete Rust
+migration, general SAT performance guarantee or P-vs-NP proof.

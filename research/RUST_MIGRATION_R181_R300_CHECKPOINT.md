@@ -13,8 +13,8 @@ checks, Lean obligations and source-CNF identity remain trust boundaries.
 | R-221–R-240 | Complete contradictory XOR original-CNF proof scaling, widths 1–10; measured `2**w-1` proof clauses | Focused CI [#41956471056](https://github.com/joeyst8/witnora-core/actions/runs/41956471056) green |
 | R-241–R-260 | Sparse chain, `2*n` source clauses, `n` proof clauses through 80 variables | Focused CI [#41956982135](https://github.com/joeyst8/witnora-core/actions/runs/41956982135) green |
 | R-261–R-280 | Shortest odd-parity cycle witness and full-original-CNF proof; example 40-vertex proof shrinks 67 to 21 clauses | Focused CI [#41957568052](https://github.com/joeyst8/witnora-core/actions/runs/41957568052) green |
-| R-281–R-299 | Independent exhaustive minimum odd-cycle oracle; 72 held-out contradictory graphs, 24 SAT controls, 16 improvements and no regressions in the sample | Local tests and external checker green; native CI pending |
-| R-300 | Manifest accounting, gap-free test names, pinned checker/workflow audit and original sources preserved | Candidate pending final focused CI |
+| R-281–R-299 | Independent exhaustive minimum odd-cycle oracle; 72 held-out contradictory graphs, 24 SAT controls, 16 improvements and no regressions in the sample | Focused CI [#41958473142](https://github.com/joeyst8/witnora-core/actions/runs/41958473142) green |
+| R-300 | Manifest accounting, gap-free test names, pinned checker/workflow audit and original sources preserved | Focused CI [#41958473142](https://github.com/joeyst8/witnora-core/actions/runs/41958473142) green |
 
 Independent external `drat-trim` is pinned to upstream revision
 `2e3b2dc0ecf938addbd779d42877b6ed69d9a985` in the focused workflow.
@@ -43,4 +43,8 @@ Independent external `drat-trim` is pinned to upstream revision
 - Not a completed full Python-to-Rust migration, formal Lean proof, P-vs-NP
   result, release approval, or permission to merge into `main`.
 
-**Final R-300 CI sign-off:** pending; only update after confirming a green run.
+**Final R-300 research sign-off:** focused native GitHub Actions
+[#41958473142](https://github.com/joeyst8/witnora-core/actions/runs/41958473142)
+completed successfully. Signed off for further independent research review
+only; the draft branch remains unmerged and no main-branch/release approval
+is inferred.
