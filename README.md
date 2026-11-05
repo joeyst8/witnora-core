@@ -1,5 +1,19 @@
 # Witnora-Core v0.9.8
 
+## Development architecture: Rust-first
+
+Witnora's forward-looking core implementation language is **Rust**. New
+production SAT/#SAT algorithms, graph/XOR/constraint kernels and
+certificate-producing computation default to Rust. Python remains supported
+for experimental research, benchmarking, integration, and independent
+differential oracles; Lean is used for formal proof checking and external
+checkers remain independent.
+
+This policy does **not** mean the existing Python core has already been
+ported or verified as native-default. See
+[the migration and verification ledger](research/FULL_PYTHON_TO_RUST_MIGRATION.md)
+for actual status and release gates.
+
 ## v2.23 TC-063 Theorem Hardening
 
 v2.23 hardens `TC-063 Bounded Separator-Affine Collapse Theorem` from
