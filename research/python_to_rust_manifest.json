@@ -3538,7 +3538,10 @@
       "path": "witnora_core/verification_report.py",
       "sha": "44093aab54785cd8980da602cca4c07b9812c6af",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/verification_view.rs",
+      "native_executable": "rust/witnora-ve/src/bin/witnora_verification_view.rs",
+      "migration_note": "Only three presentation functions (report/trust-card Markdown and trust-card projection) have Python-free Rust alternatives verified in 128 seeded differential cases and focused/full CI #41977249209/#41977249249. Certificate checking, release archive verification, Lean/DRAT proof replay, and Python default orchestration remain; no full source migration is claimed. Additional SHA-256 integrity CLI is pending CI."
     },
     {
       "path": "witnora_core/verified_compression_pipeline.py",
@@ -3999,8 +4002,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 466,
-    "parallel_reference": 80,
+    "not_migrated": 465,
+    "parallel_reference": 81,
     "partial_native_verified": 14
   }
 }

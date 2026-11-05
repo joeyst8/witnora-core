@@ -185,21 +185,38 @@ See [`PYTHON_ORACLE_RETENTION.md`](PYTHON_ORACLE_RETENTION.md). The original
 DRAT/Lean/source-CNF gates and malicious-input validation remain necessary.
 The repository contains additional migration tests beyond that baseline.
 
-## Migration wave 7: native verification presentation layer (candidate)
+## Migration wave 7: native verification presentation layer (verified subset)
 
-Source: `witnora_core/verification_report.py` (currently unmigrated).
+Source: `witnora_core/verification_report.py` (unmigrated before wave 7).
 Rust candidate: `rust/witnora-ve/src/verification_view.rs`, exposed via the
 Python-free `witnora_verification_view` executable. Three pure presentation
 operations are reproduced: report-to-trust-card projection, trust-card
 Markdown, and verification-report Markdown. Seeded byte/parity tests compare
 128 realistic verification records with the independent Python renderer,
 including partial replay scope disclaimers, proof-selection risk flags,
-checker lists, artifact hashes, and malformed JSON rejection.
+checker lists, artifact hashes, and malformed JSON rejection. Focused CI
+[#41977249209](https://github.com/joeyst8/witnora-core/actions/runs/41977249209)
+and full Rust CI
+[#41977249249](https://github.com/joeyst8/witnora-core/actions/runs/41977249249)
+passed.
 
 **Boundary:** this is not source-CNF verification, independent `drat-trim`,
 Lean proof checking, certificate validation, archive extraction, or full
 release-verification orchestration. Those Python paths remain required.
-No source-file status changes until native CI passes.
+The source ledger now records `verification_report.py` as
+`parallel_reference`, because only presentation is ported. Current counts:
+465 not migrated, 81 parallel Rust references, 14 partial-native verified.
+
+## Migration wave 8: native artifact SHA-256 integrity check (candidate)
+
+Same source: `witnora_core/verification_report.py`. A separate Python-free
+`witnora_evidence_check` CLI reproduces the artifact integrity subset:
+streamed uppercase SHA-256 file hashing, release-manifest Markdown hash-table
+parsing, source-path/name lookups and `MATCH`/`MISMATCH`/`MISSING` status.
+Its differential gate compares 128 seeded binary files, a 1 MiB boundary
+case, expected-hash casing, missing files and malformed manifests with the
+Python verifier helpers. It is **not** independent proof checking and must
+never promote a mere hash match into SAT or UNSAT certification. CI is pending.
 
 ## Next dependency-aware work
 
