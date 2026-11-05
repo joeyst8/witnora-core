@@ -42,5 +42,7 @@ WITNORA_DRAT_TRIM=/path/to/drat-trim python -m unittest tests.test_xor_cycles_26
 python -m scripts.benchmark_xor_cycle_frontier --compare-rust --drat-trim /path/to/drat-trim
 ```
 
-**Status:** 20 named research checks plus external checker gate passed
-locally; pending focused native CI. No merge/release approval.
+**Status:** focused native CI
+[#41957568052](https://github.com/joeyst8/witnora-core/actions/runs/41957568052)
+passed, including Rust/Python comparison and external certification of both
+proof candidates. No merge/release approval.

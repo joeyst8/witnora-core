@@ -125,6 +125,11 @@ on:
       - "scripts/benchmark_xor_chain_frontier.py"
       - "tests/test_xor_cycles_261_280.py"
       - "scripts/benchmark_xor_cycle_frontier.py"
+      - "tests/test_xor_heldout_281_299.py"
+      - "scripts/benchmark_xor_heldout_281_299.py"
+      - "tests/test_r300_manifest_audit.py"
+      - "scripts/audit_witnora_r300.py"
+      - "scripts/audit_witnora_r180.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -252,6 +257,11 @@ on:
       - "scripts/benchmark_xor_chain_frontier.py"
       - "tests/test_xor_cycles_261_280.py"
       - "scripts/benchmark_xor_cycle_frontier.py"
+      - "tests/test_xor_heldout_281_299.py"
+      - "scripts/benchmark_xor_heldout_281_299.py"
+      - "tests/test_r300_manifest_audit.py"
+      - "scripts/audit_witnora_r300.py"
+      - "scripts/audit_witnora_r180.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -290,7 +300,7 @@ jobs:
           git -C "$RUNNER_TEMP/witnora-drat-trim" checkout --quiet --detach 2e3b2dc0ecf938addbd779d42877b6ed69d9a985
           make -C "$RUNNER_TEMP/witnora-drat-trim" drat-trim
           echo "WITNORA_DRAT_TRIM=$RUNNER_TEMP/witnora-drat-trim/drat-trim" >> "$GITHUB_ENV"
-      - name: Focused R-067 through R-142 source comparisons
+      - name: Focused native and research R-067 through R-300 checks
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
@@ -389,9 +399,13 @@ jobs:
           python -m unittest tests.test_xor_scaling_221_240 -v
           python -m unittest tests.test_xor_chain_241_260 -v
           python -m unittest tests.test_xor_cycles_261_280 -v
+          python -m unittest tests.test_xor_heldout_281_299 -v
+          python -m unittest tests.test_r300_manifest_audit -v
           python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_proof_scaling --max-width 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_chain_frontier --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_cycle_frontier --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_heldout_281_299 --samples 72 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m unittest tests.test_r180_manifest_audit -v
           python -m scripts.audit_witnora_r180
+          python -m scripts.audit_witnora_r300
