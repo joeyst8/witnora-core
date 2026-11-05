@@ -421,6 +421,11 @@ jobs:
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_hybrid_refutation
           WITNORA_RUST_HYBRID_REFUTATION_BIN="$PWD/rust/witnora-ve/target/release/witnora_hybrid_refutation" python -m unittest tests.test_hybrid_refutation_rust -v
           rust/witnora-ve/target/release/witnora_hybrid_refutation
+      - name: W-CROSSDOMAIN-020 covariance XOR and resolution separation baselines
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_separation_baselines
+          WITNORA_RUST_SEPARATION_BIN="$PWD/rust/witnora-ve/target/release/witnora_separation_baselines" python -m unittest tests.test_separation_baselines_rust -v
+          rust/witnora-ve/target/release/witnora_separation_baselines
       - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
         run: |
           python -c 'from witnora_ve import aux_solution_geometry_native'

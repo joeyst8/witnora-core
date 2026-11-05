@@ -100,12 +100,12 @@ fn source(family:Family,index:usize)->Vec<Vec<i32>> {
 }
 
 #[derive(Clone)]
-struct Equation {vars:[usize;3],rhs:u8,indices:[usize;4]}
+pub(crate) struct Equation {vars:[usize;3],rhs:u8,indices:[usize;4]}
 impl Equation {
     fn mask(&self)->u16 {
         self.vars.iter().fold(0u16,|acc,&v|acc | (1u16<<(v-1)))
     }
-    fn json(&self)->Value {
+    pub(crate) fn json(&self)->Value {
         json!({"variables":self.vars,"rhs":self.rhs,"clause_indices":self.indices})
     }
 }
@@ -152,7 +152,7 @@ fn symmetric_difference(a:&BTreeSet<usize>,b:&BTreeSet<usize>)->BTreeSet<usize> 
     a.symmetric_difference(b).copied().collect()
 }
 
-fn verify_xor(clauses:&[Vec<i32>],proof:&[Equation])->Result<(),String> {
+pub(crate) fn verify_xor(clauses:&[Vec<i32>],proof:&[Equation])->Result<(),String> {
     let (mut left,mut right)=(0u16,0u8);
     if proof.is_empty(){return Err("W019 empty XOR contradiction".into());}
     for eq in proof {
@@ -175,7 +175,7 @@ fn verify_xor(clauses:&[Vec<i32>],proof:&[Equation])->Result<(),String> {
     Ok(())
 }
 
-fn xor_certificate(clauses:&[Vec<i32>])->Result<Option<Vec<Equation>>,String> {
+pub(crate) fn xor_certificate(clauses:&[Vec<i32>])->Result<Option<Vec<Equation>>,String> {
     let equations=extract(clauses);
     let mut basis:BTreeMap<usize,(u16,u8,BTreeSet<usize>)>=BTreeMap::new();
     for (i,eq) in equations.iter().enumerate() {
