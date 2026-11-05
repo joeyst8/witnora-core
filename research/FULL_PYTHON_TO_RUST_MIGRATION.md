@@ -130,6 +130,19 @@ the independent Python API across 128 seeded Unicode-adjacent files and
 normal/adversarial controls. Until native CI passes and a replacement policy
 is adopted, this is a candidate path, not a newly migrated Python file.
 
+## Migration wave 5: strict benchmark artifact UNSAT summary (candidate)
+
+Source: `witnora_core/benchmark_artifact.py` (`not_migrated` in the ledger).
+Candidate Rust implementation: `rust/witnora-ve/src/benchmark_artifact_summary.rs`,
+with Python-free `witnora_artifact_summary BENCHMARK_JSON [--out SUMMARY_JSON]`.
+Only the `strict_verification_summary` pure-data function is reproduced;
+artifact packaging, certificate copying, report composition and archive
+creation remain Python. The opt-in CLI is compared with Python on 128 seeded
+benchmark records, including every UNSAT evidence category, and rejects
+malformed JSON without creating an output. The critical rule is unchanged:
+native XOR UNSAT labels never count as independently `drat-trim`-certified.
+**This is pending native CI and cannot be counted as a full migration.**
+
 ## Next dependency-aware work
 
 1. Finish and independently verify the remaining CI CLI/report orchestration,

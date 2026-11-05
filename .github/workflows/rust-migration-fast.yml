@@ -153,6 +153,8 @@ on:
       - "witnora_core/compare.py"
       - "tests/test_compare_standalone_rust_cli.py"
       - "tests/test_claims_standalone_rust_cli.py"
+      - "witnora_core/benchmark_artifact.py"
+      - "tests/test_artifact_summary_standalone_rust_cli.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -308,6 +310,8 @@ on:
       - "witnora_core/compare.py"
       - "tests/test_compare_standalone_rust_cli.py"
       - "tests/test_claims_standalone_rust_cli.py"
+      - "witnora_core/benchmark_artifact.py"
+      - "tests/test_artifact_summary_standalone_rust_cli.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -486,3 +490,7 @@ jobs:
         run: |
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_claims
           WITNORA_RUST_CLAIMS_BIN="$PWD/rust/witnora-ve/target/release/witnora_claims" python -m unittest tests.test_claims_standalone_rust_cli -v
+      - name: Standalone Rust strict UNSAT artifact summary parity
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_artifact_summary
+          WITNORA_RUST_ARTIFACT_SUMMARY_BIN="$PWD/rust/witnora-ve/target/release/witnora_artifact_summary" python -m unittest tests.test_artifact_summary_standalone_rust_cli -v
