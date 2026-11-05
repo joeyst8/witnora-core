@@ -62,6 +62,7 @@ pub mod parity_compression;
 pub mod crc_structural_independence;
 pub mod crc_conditional_independence;
 pub mod aux_violation_tensors;
+pub mod aux_fourier_violation;
 pub mod constraint_geometry;
 pub mod geometry_aware_parity;
 pub mod claim_boundary;
@@ -933,6 +934,17 @@ fn aux_conditioned_violation_profile_native(
 ) -> PyResult<Vec<u64>> {
     aux_violation_tensors::conditioned_violation_profile(
         &source,nvars,&separator,max_component_variables,max_separator_variables)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn aux_fourier_parity_violation_profile_native(
+    source:Vec<Vec<i32>>,nvars:usize,rows:Vec<Vec<usize>>,rhs:Vec<bool>,
+    max_component_variables:usize,
+) -> PyResult<Vec<u64>> {
+    aux_fourier_violation::fourier_parity_violation_profile(
+        &source,nvars,&rows,&rhs,max_component_variables)
         .map_err(PyValueError::new_err)
 }
 
@@ -2612,6 +2624,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(aux_weight_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_factorized_violation_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(aux_conditioned_violation_profile_native, module)?)?;
+    module.add_function(wrap_pyfunction!(aux_fourier_parity_violation_profile_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_rows_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_validate_native, module)?)?;
     module.add_function(wrap_pyfunction!(dense_geometry_audit_native, module)?)?;
