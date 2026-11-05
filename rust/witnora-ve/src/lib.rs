@@ -2133,6 +2133,21 @@ fn xor_gaussian_native(equations:Vec<(Vec<usize>,u8)>)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_verify_assignment_native(equations:Vec<(Vec<usize>,u8)>,
+    assignment:Vec<(usize,bool)>)->bool{
+    xor_equations::verify_assignment(&equations,&assignment)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn xor_canonical_cnf_native(variables:Vec<usize>,rhs:u8,max_width:usize)
+    ->PyResult<Vec<Vec<i64>>>{
+    xor_equations::canonical_xor_cnf(&variables,rhs,max_width)
+        .map_err(PyValueError::new_err)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2458,6 +2473,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_substitute_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_system_substitute_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_gaussian_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_verify_assignment_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_canonical_cnf_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;

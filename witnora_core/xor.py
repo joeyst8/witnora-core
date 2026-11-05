@@ -393,7 +393,16 @@ def reconstruct_assignment(solution: dict[str, Any]) -> dict[int, bool]:
     return {int(var): bool(value) for var, value in solution.get("assignment", {}).items()}
 
 
-def verify_xor_assignment(system: XorSystem, assignment: dict[int, bool]) -> bool:
+def verify_xor_assignment(system: XorSystem, assignment: dict[int, bool],
+                          *, backend="python") -> bool:
+    if backend == "rust":
+        from witnora_ve import xor_verify_assignment_native
+        bindings = [(v, bool(assignment[v])) for v in system.variables
+                    if v in assignment]
+        return xor_verify_assignment_native(
+            [(list(eq.variables), eq.rhs) for eq in system.equations], bindings)
+    if backend != "python":
+        raise ValueError("unknown XOR backend")
     return all(eq.evaluate(assignment) is True for eq in system.equations)
 
 
@@ -401,11 +410,18 @@ def _clause_for_forbidden_assignment(variables: tuple[int, ...], bits: tuple[int
     return tuple(sorted((-var if bit else var) for var, bit in zip(variables, bits)))
 
 
-def canonical_xor_cnf_clauses(variables: Iterable[int], rhs: int) -> set[tuple[int, ...]]:
+def canonical_xor_cnf_clauses(variables: Iterable[int], rhs: int,
+                              *, backend="python", max_native_variables=16) -> set[tuple[int, ...]]:
     """Return the exact full CNF encoding of a positive-variable XOR equation."""
 
     canonical = _normalize_xor_variables(variables)
     target_rhs = int(rhs) & 1
+    if backend == "rust":
+        from witnora_ve import xor_canonical_cnf_native
+        return {tuple(clause) for clause in xor_canonical_cnf_native(
+            list(canonical), target_rhs, max_native_variables)}
+    if backend != "python":
+        raise ValueError("unknown XOR backend")
     if not canonical:
         # XOR over no variables is 0: 0=0 is tautological, 0=1 requires
         # the empty CNF clause (the canonical contradiction).

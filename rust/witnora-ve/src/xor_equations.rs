@@ -112,6 +112,32 @@ pub fn gaussian(equations:&[(Vec<usize>,u8)])->GaussianAnswer{
  (false,assignment.into_iter().collect(),pivots,free,forced,trace,rref)
 }
 
+/// R-126: independently verify that a partial assignment satisfies every row.
+pub fn verify_assignment(equations:&[(Vec<usize>,u8)],
+ assignment:&[(usize,bool)])->bool{
+ equations.iter().all(|(vars,rhs)|evaluate(vars,*rhs,assignment)==Some(true))
+}
+
+/// R-127: bounded exact complete CNF encoding of an XOR parity equation.
+pub fn canonical_xor_cnf(variables:&[usize],rhs:u8,max_width:usize)
+ ->Result<Vec<Vec<i64>>,String>{
+ let canonical=normalize_variables(variables)?;
+ if canonical.len()>max_width || canonical.len()>=usize::BITS as usize{
+  return Err(format!("native XOR CNF width limit {} exceeded",max_width));
+ }
+ let mut clauses=Vec::new();
+ for mask in 0..(1usize<<canonical.len()){
+  if ((mask.count_ones() as u8)&1)==(rhs&1){continue;}
+  let mut clause=Vec::with_capacity(canonical.len());
+  for (i,&variable) in canonical.iter().enumerate(){
+   let v=i64::try_from(variable).map_err(|_|"variable exceeds signed literal range")?;
+   clause.push(if (mask & (1usize<<i))!=0{-v}else{v});
+  }
+  clause.sort_unstable();clauses.push(clause);
+ }
+ clauses.sort();Ok(clauses)
+}
+
 #[cfg(test)]mod tests{use super::*;#[test]fn normalization(){
  assert_eq!(normalize_variables(&[3,1,3,2,1,7]).unwrap(),vec![2,7]);
  assert_eq!(normalize_variables(&[]).unwrap(),Vec::<usize>::new());
@@ -125,4 +151,9 @@ pub fn gaussian(equations:&[(Vec<usize>,u8)])->GaussianAnswer{
  assert!(!sat.0);assert_eq!(sat.1,vec![(1,true),(2,false)]);
  let unsat=gaussian(&[(vec![1],0),(vec![1],1)]);
  assert!(unsat.0);
+ assert!(verify_assignment(&[(vec![1,2],1)],&[(1,true),(2,false)]));
+ assert!(!verify_assignment(&[(vec![1,2],1)],&[(1,true)]));
+ assert_eq!(canonical_xor_cnf(&[],1,16).unwrap(),vec![vec![]]);
+ assert_eq!(canonical_xor_cnf(&[1,2],1,16).unwrap(),
+  vec![vec![-2,-1],vec![1,2]]);
 }}
