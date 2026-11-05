@@ -330,7 +330,7 @@ jobs:
           git -C "$RUNNER_TEMP/witnora-drat-trim" checkout --quiet --detach 2e3b2dc0ecf938addbd779d42877b6ed69d9a985
           make -C "$RUNNER_TEMP/witnora-drat-trim" drat-trim
           echo "WITNORA_DRAT_TRIM=$RUNNER_TEMP/witnora-drat-trim/drat-trim" >> "$GITHUB_ENV"
-      - name: Focused native and research R-067 through R-300 checks
+      - name: Focused native and research R-067 through R-500 checks
         env:
           WITNORA_RUST_VE_BIN: rust/witnora-ve/target/release/witnora-ve
         run: |
