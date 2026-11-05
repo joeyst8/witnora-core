@@ -32,8 +32,8 @@ EXTERNAL_VERIFIER_REVISION = "2e3b2dc0ecf938addbd779d42877b6ed69d9a985"
 
 def audit() -> dict:
     baseline = baseline_audit()
-    if baseline["verified_xor_frontier"] != 300:
-        raise AssertionError("the R-300 milestone ledger must be gap-free and end at R-300")
+    if baseline["verified_xor_frontier"] < 300:
+        raise AssertionError("the R-300 historical milestone ledger is incomplete")
     named = set()
     for suite in TEST_SUITES:
         module = importlib.import_module(suite)

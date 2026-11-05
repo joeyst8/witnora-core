@@ -139,6 +139,12 @@ on:
       - "scripts/benchmark_xor_gauge_frontier.py"
       - "tests/test_xor_resource_381_400.py"
       - "scripts/benchmark_xor_resource_frontier.py"
+      - "tests/test_xor_heldout_401_460.py"
+      - "scripts/benchmark_xor_heldout_401_460.py"
+      - "tests/test_xor_hostile_461_480.py"
+      - "scripts/benchmark_xor_hostile_461_480.py"
+      - "tests/test_r500_manifest_audit.py"
+      - "scripts/audit_witnora_r500.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   push:
@@ -280,6 +286,12 @@ on:
       - "scripts/benchmark_xor_gauge_frontier.py"
       - "tests/test_xor_resource_381_400.py"
       - "scripts/benchmark_xor_resource_frontier.py"
+      - "tests/test_xor_heldout_401_460.py"
+      - "scripts/benchmark_xor_heldout_401_460.py"
+      - "tests/test_xor_hostile_461_480.py"
+      - "scripts/benchmark_xor_hostile_461_480.py"
+      - "tests/test_r500_manifest_audit.py"
+      - "scripts/audit_witnora_r500.py"
       - "scripts/benchmark_xor_frontier.py"
       - ".github/workflows/rust-migration-fast.yml"
   workflow_dispatch:
@@ -423,6 +435,9 @@ jobs:
           python -m unittest tests.test_xor_geometry_341_360 -v
           python -m unittest tests.test_xor_gauge_361_380 -v
           python -m unittest tests.test_xor_resource_381_400 -v
+          python -m unittest tests.test_xor_heldout_401_460 -v
+          python -m unittest tests.test_xor_hostile_461_480 -v
+          python -m unittest tests.test_r500_manifest_audit -v
           python -m unittest tests.test_r300_manifest_audit -v
           python -m scripts.benchmark_xor_frontier --seeds 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_proof_scaling --max-width 10 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
@@ -433,6 +448,9 @@ jobs:
           python -m scripts.benchmark_xor_constraint_geometry --max-n 14 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_gauge_frontier --samples 64 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m scripts.benchmark_xor_resource_frontier --max-n 16 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_heldout_401_460 --samples 16 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
+          python -m scripts.benchmark_xor_hostile_461_480 --samples 32 --compare-rust --drat-trim "$WITNORA_DRAT_TRIM"
           python -m unittest tests.test_r180_manifest_audit -v
           python -m scripts.audit_witnora_r180
           python -m scripts.audit_witnora_r300
+          python -m scripts.audit_witnora_r500

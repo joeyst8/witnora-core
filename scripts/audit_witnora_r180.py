@@ -38,7 +38,7 @@ def audit() -> dict:
     frontier = max(nums)
     if set(range(132, frontier + 1)) != nums:
         raise AssertionError("XOR proof milestones contain an unverified gap")
-    if frontier > 300:
+    if frontier > 500:
         raise AssertionError("unexpected future milestone claimed")
 
     for fn, names in (

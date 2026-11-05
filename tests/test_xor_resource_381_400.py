@@ -102,7 +102,7 @@ class XorResourceExternalTests(unittest.TestCase):
         result=run_resource(external_checker=checker)
         self.assertTrue(all(row["external_drat_verified"] for row in result["rows"]))
 
-    def test_r398_real_drat_trim_rejects_same_proof_on_sat_cnf(self):
+    def test_group_r398_real_drat_trim_rejects_same_proof_on_sat_cnf(self):
         checker=find_drat_trim(os.environ.get("WITNORA_DRAT_TRIM"))
         original,rows=geometry(4,"cycle",contradictory=True)
         sat,_=geometry(4,"cycle",contradictory=False)
