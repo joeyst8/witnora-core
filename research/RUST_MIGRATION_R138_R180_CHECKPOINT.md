@@ -21,7 +21,7 @@ development checkpoints, **not** 1:1 counts of the 560 original Python files.
 | R-171–R-174 | Opt-in native proof controls surfaced in certificate exporter and CLI | Focused CI #41951668179 green |
 | R-175–R-178 | Adversarial relabel/caps/malformed-trace/missing-source controls | Focused CI #41952269269 green |
 | R-179 | Read-only manifest accounting and default trust-gate audit | Focused CI #41952269269 green |
-| R-180 | Final research-branch readiness sign-off | Candidate **pending final frontier CI** |
+| R-180 | Final research-branch readiness sign-off | Focused CI #41952745259 green |
 
 All native interfaces are optional. The unmodified Python reference remains
 the default. Native derivation produces candidate clauses, never a trusted
@@ -30,8 +30,9 @@ where the existing workflow requires them.
 
 ## Final gate
 
-The R-175–R-179 focused run is green. The R-180 frontier audit still requires a
-final CI pass against the updated manifest before sign-off. It will mean
-completion of the scoped **research milestone batch**, not the entire 560-file
-migration or Lean proof.
+The R-180 frontier audit has passed focused GitHub Actions CI
+[#41952745259](https://github.com/joeyst8/witnora-core/actions/runs/41952745259)
+with Rust library tests, native Python wheel build, and focused migration checks
+green. This signs off the scoped **research milestone batch** for further
+review, not the entire 560-file migration or a Lean proof.
 No merge into `main` is authorized by this checkpoint.
