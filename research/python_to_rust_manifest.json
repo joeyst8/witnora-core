@@ -3591,7 +3591,11 @@
       "path": "witnora_core/xor_drat.py",
       "sha": "dc088da7e44bec98fb3a085695add47edfd1da1d",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "partial_native_verified",
+      "rust_counterpart": "rust/witnora-ve/src/xor_drat_resolution.rs",
+      "test": "tests/test_xor_drat_resolution_rust.py",
+      "verified_milestone": "R-132",
+      "migration_note": "Focused Rust CI #41942614415 passed 400 seeded native signed-clause resolution comparisons. Proof export, sparse row-operation scheduling and external DRAT verification remain Python/externally managed; no proof trust is transferred."
     },
     {
       "path": "witnora_core/xor.py",
@@ -3600,9 +3604,9 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/xor_equations.rs",
       "test": "tests/test_xor_substitute_rust.py",
-      "verified_milestone": "R-130",
-      "verified_milestones": ["R-121", "R-122", "R-123", "R-124", "R-125", "R-126", "R-127", "R-128", "R-129", "R-130"],
-      "migration_note": "CI #41940786252 passed normalization/evaluation/substitution; #41941245719 passed batch substitution and full Gaussian solution/trace; #41941696815 passed verification and XOR-CNF encoding; #41942185395 passed exact clause overlap, composed and full native source-CNF XOR detector diagnostics. Sidecar parsing and DRAT export paths remain pending."
+      "verified_milestone": "R-131",
+      "verified_milestones": ["R-121", "R-122", "R-123", "R-124", "R-125", "R-126", "R-127", "R-128", "R-129", "R-130", "R-131"],
+      "migration_note": "CI #41940786252 passed normalization/evaluation/substitution; #41941245719 passed batch substitution and Gaussian trace; #41941696815 passed verification/XOR-CNF encoding; #41942185395 passed complete source-CNF XOR detection; #41942614415 passed exact explicit sidecar parser tests. Python default and provenance checks remain."
     }
   ],
   "last_updated": "2026-11-04",
@@ -3982,8 +3986,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 471,
+    "not_migrated": 470,
     "parallel_reference": 76,
-    "partial_native_verified": 13
+    "partial_native_verified": 14
   }
 }

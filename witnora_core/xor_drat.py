@@ -203,13 +203,47 @@ def _row_id_sort_key(row_id: str, rows: dict[str, tuple[frozenset[int], int]]) -
     return (len(vars_), tuple(sorted(vars_)), rhs, row_id)
 
 
-def _sparse_xor_elimination_schedule(equations: Iterable[XorEquation]) -> dict[str, Any]:
+def _sparse_xor_elimination_schedule(equations: Iterable[XorEquation],
+                                     *, backend="python") -> dict[str, Any]:
     """Build a deterministic sparse/min-fill row-operation schedule.
 
     The schedule is a native GF(2) certificate.  It does not certify the
     clausal proof by itself; proof.drat is still accepted only after RUP and
     drat-trim checks.
     """
+
+    if backend == "rust":
+        from witnora_ve import xor_sparse_schedule_native
+        (order, native_ops, initial, peak, final) = xor_sparse_schedule_native(
+            [(list(eq.variables), eq.rhs) for eq in equations])
+        operations = []
+        for (step, variable, pivot_id, other_id, result_id,
+             new_vars, rhs, width) in native_ops:
+            operations.append({
+                "step": step,
+                "pivot_variable": variable,
+                "pivot_row_id": pivot_id,
+                "combined_row_ids": [pivot_id, other_id],
+                "left_row_id": pivot_id,
+                "right_row_id": other_id,
+                "result_row_id": result_id,
+                "result_row_variables": new_vars,
+                "result_rhs": rhs,
+                "result_row_width": width,
+            })
+        return {
+            "strategy": "sparse_min_fill",
+            "elimination_order_source": ELIM_SOURCE_SPARSE_MIN_FILL,
+            "elimination_order_variables": order,
+            "elimination_tie_break_rules": SPARSE_MIN_FILL_TIE_BREAK_RULES,
+            "row_operation_trace": operations,
+            "row_width_initial": initial,
+            "row_width_peak": peak,
+            "row_width_final_contradiction": final,
+            "xor_elimination_order": order,
+        }
+    if backend != "python":
+        raise ValueError("unknown sparse XOR elimination backend")
 
     active: dict[str, tuple[frozenset[int], int]] = {
         f"input_{idx:04d}": (frozenset(eq.variables), int(eq.rhs) & 1)
@@ -342,8 +376,9 @@ def _sparse_xor_elimination_schedule(equations: Iterable[XorEquation]) -> dict[s
     }
 
 
-def _sparse_xor_elimination_order(equations: Iterable[XorEquation]) -> tuple[list[int], dict[str, Any]]:
-    schedule = _sparse_xor_elimination_schedule(equations)
+def _sparse_xor_elimination_order(equations: Iterable[XorEquation],
+                                  *, backend="python") -> tuple[list[int], dict[str, Any]]:
+    schedule = _sparse_xor_elimination_schedule(equations, backend=backend)
     return list(schedule["xor_elimination_order"]), schedule
 
 

@@ -93,6 +93,7 @@ pub mod anf_separator_conditioning;
 pub mod anf_structured_counter;
 pub mod xor_equations;
 pub mod xor_drat_resolution;
+pub mod xor_sparse_schedule;
 pub mod certificate_json;
 pub mod bundle_manifest;
 pub mod reconstruction;
@@ -2180,6 +2181,13 @@ fn xor_drat_resolve_fast_native(a:Vec<i64>,b:Vec<i64>,pivot:i64)
 
 #[cfg(feature = "python")]
 #[pyfunction]
+fn xor_sparse_schedule_native(equations:Vec<(Vec<usize>,u8)>)
+    ->xor_sparse_schedule::ScheduleAnswer{
+    xor_sparse_schedule::schedule(&equations)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
 fn anf_count_common_zeros_native(equations:Vec<Vec<Vec<usize>>>,
     nvars:usize,max_states:usize)->PyResult<violation_image_anf::CountAnswer>{
     violation_image_anf::count_zeros(&equations,nvars,max_states)
@@ -2511,6 +2519,7 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(xor_detect_cnf_patterns_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_parse_lines_native, module)?)?;
     module.add_function(wrap_pyfunction!(xor_drat_resolve_fast_native, module)?)?;
+    module.add_function(wrap_pyfunction!(xor_sparse_schedule_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_count_common_zeros_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_residual_component_sizes_native, module)?)?;
     module.add_function(wrap_pyfunction!(anf_find_bounded_separator_native, module)?)?;
