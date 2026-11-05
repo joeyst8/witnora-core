@@ -3308,7 +3308,9 @@
       "path": "witnora_core/report.py",
       "sha": "c610a596dc16d6644533aaf94e79a7b0e2311145",
       "group": "witnora_core",
-      "status": "not_migrated"
+      "status": "parallel_reference",
+      "native_counterpart": "rust/witnora-ve/src/benchmark_report.rs",
+      "migration_note": "Complete benchmark Markdown rendering has opt-in Rust reference verified with byte-for-byte seeded Python differential in focused CI #41966761084 and full Rust CI #41966761079. Python CLI/default path remains; no full source-module migration is claimed."
     },
     {
       "path": "witnora_core/reproducibility_package.py",
@@ -3990,8 +3992,8 @@
     "Only after complete independent comparison and approvals may old Python runtime paths be removed"
   ],
   "current_status_counts": {
-    "not_migrated": 469,
-    "parallel_reference": 77,
+    "not_migrated": 468,
+    "parallel_reference": 78,
     "partial_native_verified": 14
   }
 }

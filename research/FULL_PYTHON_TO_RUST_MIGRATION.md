@@ -68,7 +68,12 @@ adversarial missing-field and 128 seeded report fixtures run through native
 differential tests in focused CI. The file still contains a Python CLI and
 is **not** a complete source-file migration.
 
-Wave 2 status: **candidate pending native GitHub CI**.
+Wave 2 status: **parallel Rust reference verified** by focused CI
+[#41966761084](https://github.com/joeyst8/witnora-core/actions/runs/41966761084)
+and full Rust CI
+[#41966761079](https://github.com/joeyst8/witnora-core/actions/runs/41966761079).
+Current manifest counts: 468 not migrated, 78 parallel, 14 partially native
+verified; still **zero fully migrated source files**.
 
 ## Next dependency-aware work
 
