@@ -3594,10 +3594,10 @@
       "status": "partial_native_verified",
       "rust_counterpart": "rust/witnora-ve/src/xor_drat_resolution.rs",
       "test": "tests/test_xor_drat_resolution_rust.py",
-      "verified_milestone": "R-150",
-      "verified_milestones": ["R-132", "R-133", "R-134", "R-135", "R-136", "R-137", "R-138", "R-139", "R-140", "R-141", "R-142", "R-143", "R-144", "R-145", "R-146", "R-147", "R-148", "R-149", "R-150"],
-      "native_additional_counterparts": ["rust/witnora-ve/src/xor_sparse_schedule.rs", "rust/witnora-ve/src/xor_proof_order.rs", "rust/witnora-ve/src/xor_proof_emit.rs", "rust/witnora-ve/src/xor_ve_refutation.rs", "rust/witnora-ve/src/xor_row_sources.rs", "rust/witnora-ve/src/xor_row_validation.rs", "rust/witnora-ve/src/xor_row_derivation.rs"],
-      "migration_note": "Native CI #41942614415 verified R-132; #41943866142 verified R-133–R-137; focused/full native #41946908938/#41946908913 verified R-138–R-144; focused #41947535584 verified R-145–R-148; focused/full native #41948198829/#41948198826 verified R-149–R-150. All Python references and independent RUP, DRAT and Lean trust checks remain unchanged. R-151–R-152 are implementation only pending CI."
+      "verified_milestone": "R-152",
+      "verified_milestones": ["R-132", "R-133", "R-134", "R-135", "R-136", "R-137", "R-138", "R-139", "R-140", "R-141", "R-142", "R-143", "R-144", "R-145", "R-146", "R-147", "R-148", "R-149", "R-150", "R-151", "R-152"],
+      "native_additional_counterparts": ["rust/witnora-ve/src/xor_sparse_schedule.rs", "rust/witnora-ve/src/xor_proof_order.rs", "rust/witnora-ve/src/xor_proof_emit.rs", "rust/witnora-ve/src/xor_ve_refutation.rs", "rust/witnora-ve/src/xor_row_sources.rs", "rust/witnora-ve/src/xor_row_validation.rs", "rust/witnora-ve/src/xor_row_derivation.rs", "rust/witnora-ve/src/xor_row_trace.rs"],
+      "migration_note": "Native CI #41942614415 verified R-132; #41943866142 verified R-133–R-137; focused/full native #41946908938/#41946908913 verified R-138–R-144; focused #41947535584 verified R-145–R-148; focused/full native #41948198829/#41948198826 verified R-149–R-150; focused/full native #41948721033/#41948719469 verified R-151–R-152. All Python references and independent RUP, DRAT and Lean trust checks remain unchanged. R-153–R-154 are implementation only pending CI."
     },
     {
       "path": "witnora_core/xor.py",

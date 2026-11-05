@@ -991,7 +991,10 @@ def export_xor_drat_for_path(
     max_proof_clauses: int = 50000,
     max_proof_bytes: int = 5_000_000,
     timeout_seconds: float | None = 120.0,
+    proof_backend: str = "python",
 ) -> XorDRATBridgeResult:
+    if proof_backend not in ("python", "rust"):
+        raise ValueError("unknown XOR proof backend")
     empty_diagnostics = _diagnostics(
         original_formula,
         [],
@@ -1098,15 +1101,17 @@ def export_xor_drat_for_path(
             max_proof_clauses=max_proof_clauses,
             max_proof_bytes=max_proof_bytes,
             timeout_seconds=timeout_seconds,
+            backend=proof_backend,
         )
     else:
         proof_text, error, proof_stats = _variable_elimination_refutation(
             original_formula,
-            _source_clauses(detected),
+            _source_clauses(detected, backend=proof_backend),
             list(order_info["xor_elimination_order"]),
             max_proof_clauses=max_proof_clauses,
             max_proof_bytes=max_proof_bytes,
             timeout_seconds=timeout_seconds,
+            backend=proof_backend,
         )
     proof_runtime = round(time.perf_counter() - proof_started, 6)
     proof_diagnostics = {**base_diagnostics, **proof_stats, "proof_generation_runtime_seconds": proof_runtime}
