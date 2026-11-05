@@ -640,6 +640,26 @@ def main(argv: list[str] | None = None) -> int:
         help="XOR elimination order used for XOR-to-DRAT export",
     )
     parser.add_argument(
+        "--xor-proof-backend", choices=["python", "rust"], default="python",
+        help="experimental XOR proof candidate generator (default Python)",
+    )
+    parser.add_argument(
+        "--xor-dual-rup", action="store_true",
+        help="require Python and Rust internal RUP-subset checkers to agree",
+    )
+    parser.add_argument(
+        "--xor-validate-source", action="store_true",
+        help="require canonical original-DIMACS source identity",
+    )
+    parser.add_argument(
+        "--xor-dual-source-parser", action="store_true",
+        help="also require independent Rust DIMACS parser agreement",
+    )
+    parser.add_argument(
+        "--xor-native-proof-audit", action="store_true",
+        help="verify native proof text/size accounting before RUP checking",
+    )
+    parser.add_argument(
         "--drat-trim",
         help="optional drat-trim executable path for external proof.drat verification",
     )
@@ -671,6 +691,11 @@ def main(argv: list[str] | None = None) -> int:
             xor_drat_max_proof_bytes=args.xor_drat_max_proof_bytes,
             xor_drat_timeout_seconds=args.xor_drat_timeout_seconds,
             xor_elim_order=args.xor_elim_order,
+            xor_proof_backend=args.xor_proof_backend,
+            xor_require_dual_internal=args.xor_dual_rup,
+            xor_require_source_identity=args.xor_validate_source,
+            xor_require_dual_source_parser=args.xor_dual_source_parser,
+            xor_require_native_proof_audit=args.xor_native_proof_audit,
         )
     print(json.dumps(path.to_dict(), indent=2, sort_keys=True))
     return 0

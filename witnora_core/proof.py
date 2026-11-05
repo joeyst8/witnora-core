@@ -278,6 +278,11 @@ def export_certificate_bundle(
     xor_drat_max_proof_bytes: int = 5_000_000,
     xor_drat_timeout_seconds: float | None = 120.0,
     xor_elim_order: str = "gaussian",
+    xor_proof_backend: str = "python",
+    xor_require_dual_internal: bool = False,
+    xor_require_source_identity: bool = False,
+    xor_require_dual_source_parser: bool = False,
+    xor_require_native_proof_audit: bool = False,
     hash_backend: str = "python",
 ) -> Path:
     """Write a deterministic .wcert directory or .wcert.json certificate."""
@@ -296,6 +301,11 @@ def export_certificate_bundle(
             max_proof_bytes=xor_drat_max_proof_bytes,
             timeout_seconds=xor_drat_timeout_seconds,
             xor_elim_order=xor_elim_order,
+            proof_backend=xor_proof_backend,
+            require_dual_internal=xor_require_dual_internal,
+            require_source_identity=xor_require_source_identity,
+            require_dual_source_parser=xor_require_dual_source_parser,
+            require_native_proof_audit=xor_require_native_proof_audit,
         )
         drat_export = xor_bridge.drat_export
         if path.xor_data is not None:

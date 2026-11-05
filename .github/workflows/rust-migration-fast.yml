@@ -353,3 +353,5 @@ jobs:
           python -m unittest tests.test_xor_dual_source_parser -v
           python -m unittest tests.test_xor_proof_audit_rust -v
           python -m unittest tests.test_xor_heldout_proof_rust -v
+          python -m unittest tests.test_xor_mixed_source_stress_rust -v
+          python -m unittest tests.test_xor_runner_options -v
