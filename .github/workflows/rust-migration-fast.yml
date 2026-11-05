@@ -416,6 +416,11 @@ jobs:
           cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_zero_variance_refutation
           WITNORA_RUST_ZERO_VARIANCE_BIN="$PWD/rust/witnora-ve/target/release/witnora_zero_variance_refutation" python -m unittest tests.test_zero_variance_refutation_rust -v
           rust/witnora-ve/target/release/witnora_zero_variance_refutation
+      - name: W-CROSSDOMAIN-019 hybrid covariance and XOR exact UNSAT certificates
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_hybrid_refutation
+          WITNORA_RUST_HYBRID_REFUTATION_BIN="$PWD/rust/witnora-ve/target/release/witnora_hybrid_refutation" python -m unittest tests.test_hybrid_refutation_rust -v
+          rust/witnora-ve/target/release/witnora_hybrid_refutation
       - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
         run: |
           python -c 'from witnora_ve import aux_solution_geometry_native'

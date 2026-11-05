@@ -84,7 +84,7 @@ fn source(family: Family, index: usize) -> Vec<Vec<i32>> {
     clauses
 }
 
-fn covariance(clauses: &[Vec<i32>]) -> Vec<Vec<i32>> {
+pub(crate) fn covariance(clauses: &[Vec<i32>]) -> Vec<Vec<i32>> {
     let m = clauses.len();
     let mut matrix = vec![vec![0; m];m];
     for i in 0..m {
@@ -134,7 +134,7 @@ fn normalize(values: &mut [BigInt], weights: &mut [BigInt]) {
 
 // Integer fraction-free column elimination. Every stored vector equals K*w;
 // when a column reduces to zero, its corresponding w is in ker(K).
-fn kernel_certificate(matrix: &[Vec<i32>]) -> Option<Vec<BigInt>> {
+pub(crate) fn kernel_certificate(matrix: &[Vec<i32>]) -> Option<Vec<BigInt>> {
     let m = matrix.len();
     let mut basis: BTreeMap<usize,(Vec<BigInt>,Vec<BigInt>)> = BTreeMap::new();
     for column in 0..m {
@@ -173,11 +173,11 @@ fn violated(clause: &[i32], assignment: usize) -> bool {
     })
 }
 
-fn model_count(clauses: &[Vec<i32>]) -> usize {
+pub(crate) fn model_count(clauses: &[Vec<i32>]) -> usize {
     (0..(1usize << N)).filter(|&a|clauses.iter().all(|c|!violated(c,a))).count()
 }
 
-fn verify(matrix:&[Vec<i32>], clauses:&[Vec<i32>], weights:&[BigInt]) -> Result<(),String> {
+pub(crate) fn verify(matrix:&[Vec<i32>], clauses:&[Vec<i32>], weights:&[BigInt]) -> Result<(),String> {
     let sum = weights.iter().sum::<BigInt>();
     if sum.is_zero() {return Err("W018 zero-sum witness".into());}
     for row in matrix {
