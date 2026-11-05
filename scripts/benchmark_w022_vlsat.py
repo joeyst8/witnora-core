@@ -53,7 +53,9 @@ def independent_dimacs_check(raw, expected_name):
     current = 0
     nclauses = 0
     edges = 0
-    for line in raw.decode("ascii").splitlines():
+    # DIMACS comments may contain UTF-8 author names; only tokens in
+    # non-comment lines must be ASCII integer literals.
+    for line in raw.decode("utf-8").splitlines():
         text = line.strip()
         if not text or text.startswith("c"):
             continue
