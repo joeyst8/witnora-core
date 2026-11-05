@@ -13,6 +13,8 @@ workspace has **463** `tests/test_*.py` paths, including **140** additional
 filenames ending `_rust.py` that serve migration/differential verification.
 These are different denominators: the original 560-file ledger should not
 be represented as the current total number of Python files in the repository.
+At this checkpoint, all 295 original test paths were checked against the
+workspace and every original file was present.
 
 ## Retention rules by trust boundary
 

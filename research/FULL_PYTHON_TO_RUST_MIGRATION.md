@@ -159,7 +159,7 @@ The current research branch has four Python-free reporting/scanning binaries:
 `witnora_artifact_summary`. None should be mistaken for a native-default
 replacement of the original Python module.
 
-## Migration wave 6: native CI log-summary renderer (candidate)
+## Migration wave 6: native CI log-summary renderer (verified subset)
 
 Source: `witnora_core/ci.py` (already `parallel_reference` from wave 1).
 The Python-free `witnora_ci_summary REPORT_JSON FAILURE_REASONS_JSON
@@ -167,10 +167,16 @@ The Python-free `witnora_ci_summary REPORT_JSON FAILURE_REASONS_JSON
 including source-scope disclaimer, selected certificate evidence, risk flags,
 truncated checks and failure reasons. Its 128 seeded byte-for-byte tests
 compare with `render_ci_log_summary` from the original Python module, plus
-malformed-input cases. This moves only deterministic formatting into Rust:
+malformed-input cases. Focused CI
+[#41974105096](https://github.com/joeyst8/witnora-core/actions/runs/41974105096)
+and full Rust CI
+[#41974105868](https://github.com/joeyst8/witnora-core/actions/runs/41974105868)
+passed. This moves only deterministic formatting into Rust:
 release verification, trust-card construction, artifact writes and GitHub
 output integration still require the Python verifier and are **not** claimed
-to be ported. Native CI is pending.
+to be ported. The source-file ledger remains 466 not migrated, 80 parallel
+Rust implementations and 14 partial-native verified; this extension of
+`ci.py` does not count as another newly ported Python source.
 
 ## Python test oracle decision
 
