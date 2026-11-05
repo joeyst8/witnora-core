@@ -58,6 +58,22 @@ class StandaloneRustReportCliTests(unittest.TestCase):
                               "summary": {"total_cases": len(rows)},
                               "per_case_results": rows})
 
+    def test_flag_before_input_matches_python_argparse(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "benchmark.json"
+            output = root / "report.md"
+            source.write_text('{"version":"v4"}', encoding="utf-8")
+            native = subprocess.run([RUST_BIN, "--out", str(output), str(source)],
+                                    capture_output=True, text=True)
+            self.assertEqual(native.returncode, 0, native.stderr)
+            self.assertIn("# Witnora Benchmark Report", output.read_text())
+
+    def test_help_does_not_create_report(self):
+        native = subprocess.run([RUST_BIN, "--help"], capture_output=True, text=True)
+        self.assertEqual(native.returncode, 0)
+        self.assertIn("usage:", native.stdout)
+
     def test_invalid_json_fails_closed(self):
         with TemporaryDirectory() as tmp:
             source = Path(tmp) / "bad.json"

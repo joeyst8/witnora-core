@@ -7,14 +7,25 @@ use std::fs;
 use std::process;
 
 fn run(args: &[String]) -> Result<(), String> {
-    if args.len() != 3 || args[1] != "--out" {
+    if args.len() == 1 && (args[0] == "--help" || args[0] == "-h") {
+        println!("usage: witnora_report BENCHMARK_JSON --out REPORT_MD");
+        return Ok(());
+    }
+    if args.len() != 3 {
         return Err("usage: witnora_report BENCHMARK_JSON --out REPORT_MD".into());
     }
-    let source = fs::read_to_string(&args[0])
+    let (input, output) = if args[1] == "--out" {
+        (&args[0], &args[2])
+    } else if args[0] == "--out" {
+        (&args[2], &args[1])
+    } else {
+        return Err("usage: witnora_report BENCHMARK_JSON --out REPORT_MD".into());
+    };
+    let source = fs::read_to_string(input)
         .map_err(|err| format!("cannot read benchmark JSON: {err}"))?;
     let report = witnora_ve::benchmark_report::generate_report(&source)
         .map_err(|err| format!("invalid benchmark JSON: {err}"))?;
-    fs::write(&args[2], report)
+    fs::write(output, report)
         .map_err(|err| format!("cannot write Markdown report: {err}"))?;
     Ok(())
 }
