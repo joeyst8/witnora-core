@@ -82,6 +82,25 @@ class NativeArtifactIntegrityTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertFalse(output.exists())
 
+    def test_duplicate_and_unknown_options_fail_closed(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "proof.drat"
+            source.write_bytes(b"0\n")
+            output = root / "should-not-exist.json"
+            invalid_commands = [
+                ["check", str(source), "drat", "--unknown"],
+                ["check", str(source), "drat", "--expected", "A" * 64,
+                 "--expected", "B" * 64],
+                ["manifest", str(source), "--expected", "A" * 64],
+            ]
+            for command in invalid_commands:
+                with self.subTest(command=command):
+                    result = subprocess.run([RUST_BIN, *command, "--out", str(output)],
+                                            capture_output=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(output.exists())
+
     def test_help(self):
         result = subprocess.run([RUST_BIN, "--help"], capture_output=True)
         self.assertEqual(result.returncode, 0)
