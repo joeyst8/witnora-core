@@ -146,6 +146,72 @@ pub fn factorized_violation_profile(
     Ok(result)
 }
 
+/// W-CROSSDOMAIN-007: exact cutset conditioning over one-based source-variable
+/// IDs. Pin separator assignments, remove each fixed variable from the source
+/// universe, factor each residual polynomial, and sum branch coefficients.
+/// Established cutset-conditioning mathematics; no general treewidth guarantee.
+pub fn conditioned_violation_profile(
+    source: &[Vec<i32>], nvars: usize, separator: &[usize],
+    max_component_variables: usize, max_separator_variables: usize,
+) -> Result<Vec<u64>, String> {
+    if nvars > 32 || source.len() > 64 || max_separator_variables > 8
+        || separator.len() > max_separator_variables {
+        return Err("unsupported separator/variable/column cap".into());
+    }
+    let mut separator_positions = BTreeMap::new();
+    for (position, &variable) in separator.iter().enumerate() {
+        if variable == 0 || variable > nvars
+            || separator_positions.insert(variable, position).is_some() {
+            return Err("separator must contain distinct in-range one-based IDs".into());
+        }
+    }
+    for clause in source {
+        for &literal in clause {
+            if literal == 0 || literal == i32::MIN
+                || literal.unsigned_abs() as usize > nvars {
+                return Err("literal outside source variable universe".into());
+            }
+        }
+    }
+    let mut remap = vec![0usize; nvars + 1];
+    let mut residual_nvars = 0usize;
+    for original in 1..=nvars {
+        if !separator_positions.contains_key(&original) {
+            residual_nvars += 1;
+            remap[original] = residual_nvars;
+        }
+    }
+    let mut answer = vec![0u64; source.len() + 1];
+    for assignment in 0..(1usize << separator.len()) {
+        let mut residual = Vec::with_capacity(source.len());
+        for clause in source {
+            let mut remaining = Vec::new();
+            let mut satisfied_by_separator = false;
+            for &literal in clause {
+                let original = literal.unsigned_abs() as usize;
+                if let Some(&position) = separator_positions.get(&original) {
+                    let fixed_value = (assignment & (1usize << position)) != 0;
+                    if fixed_value == (literal > 0) {
+                        satisfied_by_separator = true;
+                        break;
+                    }
+                } else {
+                    let new_id = remap[original] as i32;
+                    remaining.push(if literal > 0 {new_id} else {-new_id});
+                }
+            }
+            if !satisfied_by_separator { residual.push(remaining); }
+        }
+        let local = factorized_violation_profile(
+            &residual, residual_nvars, max_component_variables)?;
+        for (degree, coefficient) in local.into_iter().enumerate() {
+            answer[degree] = answer[degree].checked_add(coefficient)
+                .ok_or("conditional coefficient addition overflow")?;
+        }
+    }
+    Ok(answer)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -209,5 +275,52 @@ mod tests {
                        .unwrap(), vec![0, 2, 2, 0]);
         assert_eq!(factorized_violation_profile(&[], 32, 1).unwrap(),
                    vec![1u64 << 32]);
+    }
+
+    #[test]
+    fn connected_star_cutset_has_exact_analytic_polynomial() {
+        let source = (2..=25).map(|leaf| vec![1, leaf]).collect::<Vec<_>>();
+        assert!(factorized_violation_profile(&source, 25, 1).is_err());
+        let profile = conditioned_violation_profile(&source, 25, &[1], 1, 1).unwrap();
+        let mut choose = 1u64;
+        for degree in 0..=24usize {
+            let expected = choose + if degree == 0 {1u64 << 24} else {0};
+            assert_eq!(profile[degree], expected);
+            if degree < 24 { choose = choose * (24-degree) as u64 / (degree+1) as u64; }
+        }
+        assert_eq!(profile[0], (1u64 << 24) + 1);
+    }
+
+    #[test]
+    fn conditioned_polynomial_matches_exhaustive_source_oracle() {
+        let mut state = 137u64;
+        let mut next = || {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+            state >> 32
+        };
+        for n in 1..=8usize {
+            for _ in 0..48 {
+                let mut source = Vec::new();
+                for _ in 0..(n + 3) {
+                    let width = next() as usize % 4;
+                    source.push((0..width).map(|_| {
+                        let variable = (next() as usize % n + 1) as i32;
+                        if next() & 1 == 0 { variable } else { -variable }
+                    }).collect::<Vec<_>>());
+                }
+                let separator = if n == 1 {vec![1]} else {vec![2, 1]};
+                let expected = weight_profile(&source, n, &[], 14).unwrap();
+                let actual = conditioned_violation_profile(&source, n, &separator, 14, 2).unwrap();
+                assert_eq!(actual, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn conditioned_polynomial_rejects_invalid_separator() {
+        assert!(conditioned_violation_profile(&[vec![1]], 1, &[1,1], 1, 2).is_err());
+        assert!(conditioned_violation_profile(&[vec![1]], 1, &[2], 1, 1).is_err());
+        assert!(conditioned_violation_profile(&[vec![0]], 1, &[1], 1, 1).is_err());
+        assert!(conditioned_violation_profile(&[vec![1]], 1, &[1], 1, 0).is_err());
     }
 }
