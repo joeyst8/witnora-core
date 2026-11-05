@@ -17,6 +17,14 @@ const T1: [[usize; W]; M] = [
 const T2: [[usize; W]; M] = [
     [0, 1, 2], [0, 1, 3], [0, 2, 4], [0, 3, 5], [1, 2, 4], [3, 4, 5],
 ];
+// W-CROSSDOMAIN-013 fresh Pasch-core families, preregistered separately before
+// examining any signed solver costs. Indices are zero-based only in Rust.
+const P1: [[usize; W]; M] = [
+    [0, 1, 2], [0, 3, 4], [1, 3, 5], [2, 4, 5], [0, 1, 3], [2, 3, 4],
+];
+const P2: [[usize; W]; M] = [
+    [0, 1, 2], [0, 3, 4], [1, 3, 5], [2, 4, 5], [0, 1, 3], [0, 1, 4],
+];
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Cost {
@@ -71,7 +79,8 @@ fn canonical(mask: u32, variable_masks: &[u32; N], first: &[usize; N]) -> u32 {
     answer
 }
 
-fn direct_spectra(clauses: &[Vec<i32>]) -> ([u32; M + 1], [u32; M + 1], [u32; M + 1]) {
+fn direct_spectra(clauses: &[Vec<i32>], parity_row: &[usize])
+    -> ([u32; M + 1], [u32; M + 1], [u32; M + 1]) {
     let mut energy = [0u32; M + 1];
     let mut alternate_even = [0u32; M + 1];
     let mut all_even = [0u32; M + 1];
@@ -85,7 +94,7 @@ fn direct_spectra(clauses: &[Vec<i32>]) -> ([u32; M + 1], [u32; M + 1], [u32; M 
             });
             if !satisfied {
                 violations += 1;
-                if ALTERNATE.contains(&index) { alternating_violations += 1; }
+                if parity_row.contains(&index) { alternating_violations += 1; }
             }
         }
         energy[violations] += 1;
@@ -151,9 +160,9 @@ fn dpll(clauses: &[Vec<i32>], order: &[usize; N]) -> Cost {
     count
 }
 
-fn row(mask: u32, scopes: &[[usize; W]; M]) -> Result<Row, String> {
+fn row(mask: u32, scopes: &[[usize; W]; M], parity_row: &[usize]) -> Result<Row, String> {
     let clauses = source(mask, scopes);
-    let (energy, alternate_even, all_even) = direct_spectra(&clauses);
+    let (energy, alternate_even, all_even) = direct_spectra(&clauses, parity_row);
     let forward = dpll(&clauses, &FORWARD);
     let reverse = dpll(&clauses, &REVERSE);
     if energy[0] < 16 || forward.models != energy[0] || reverse.models != energy[0] {
@@ -168,7 +177,7 @@ fn row(mask: u32, scopes: &[[usize; W]; M]) -> Result<Row, String> {
         }
     }
     let fourier = crate::aux_fourier_violation::fourier_parity_violation_profile(
-        &clauses, N, &[ALTERNATE.to_vec()], &[false], N)?;
+        &clauses, N, &[parity_row.to_vec()], &[false], N)?;
     if fourier != alternate_even.iter().map(|&n| u64::from(n)).collect::<Vec<_>>() {
         return Err(format!("Fourier-vs-source syndrome mismatch at signing {mask}"));
     }
@@ -233,14 +242,15 @@ fn example(row: &Row, scopes: &[[usize; W]; M]) -> Value {
                    "clause_scans":row.reverse.clause_scans}})
 }
 
-fn family(scopes: &[[usize; W]; M], name: &str) -> Result<Value, String> {
+fn family(scopes: &[[usize; W]; M], name: &str,
+          parity_row: &[usize]) -> Result<Value, String> {
     let (variable_masks, first) = gauge_masks(scopes)?;
     let masks = (0..(1u32 << (M * W)))
         .map(|mask| canonical(mask, &variable_masks, &first))
         .collect::<BTreeSet<_>>();
     if masks.len() != 4096 { return Err("unexpected hypergraph gauge orbit count".into()); }
     let mut rows = Vec::with_capacity(masks.len());
-    for mask in masks { rows.push(row(mask, scopes)?); }
+    for mask in masks { rows.push(row(mask, scopes, parity_row)?); }
     let groups = groups(&rows);
     let labels = rows.iter().map(|r| r.alternate_even).collect::<Vec<_>>();
     let spectra = rows.iter().map(|r| (r.energy, r.alternate_even))
@@ -282,9 +292,10 @@ fn family(scopes: &[[usize; W]; M], name: &str) -> Result<Value, String> {
             "exploratory_permutation_p":(extreme+1) as f64/(TRIALS+1) as f64})
     };
     let controls = [0u32, 1, 12345, (1u32 << (M*W)) - 1].iter()
-        .map(|&mask| row(mask, scopes).map(|r| example(&r, scopes)))
+        .map(|&mask| row(mask, scopes, parity_row).map(|r| example(&r, scopes)))
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(json!({"graph_name":name,"source_scopes_one_based":scopes.iter()
+    Ok(json!({"graph_name":name,"chosen_parity_indices":parity_row,
+        "source_scopes_one_based":scopes.iter()
                 .map(|s|s.iter().map(|&v|v+1).collect::<Vec<_>>()).collect::<Vec<_>>(),
         "signings":1u32<<(M*W),"gauge_representatives":rows.len(),
         "energy_profiles":groups.len(),"energy_plus_alternating_parity_profiles":spectra,
@@ -300,8 +311,8 @@ fn family(scopes: &[[usize; W]; M], name: &str) -> Result<Value, String> {
 /// A negative result is a valid successful audit; only exact invariants may
 /// cause an error. The locked statistical criterion is recorded, not enforced.
 pub fn audit() -> Result<Value, String> {
-    let t1 = family(&T1, "T1_cyclic_triple_overlap")?;
-    let t2 = family(&T2, "T2_skew_incidence")?;
+    let t1 = family(&T1, "T1_cyclic_triple_overlap", &ALTERNATE)?;
+    let t2 = family(&T2, "T2_skew_incidence", &ALTERNATE)?;
     let strict = [&t1, &t2].iter().all(|r| {
         ["forward", "reverse"].iter().all(|&policy| {
             r[policy]["improvement_fraction"].as_f64().is_some_and(|x| x > 0.0)
@@ -313,6 +324,51 @@ pub fn audit() -> Result<Value, String> {
         "scope":"preregistered, exhaustive, six-variable six-clause 3-CNF; all SAT",
         "alternating_clause_indices":ALTERNATE,
         "strict_four_way_replication_met":strict,"families":[t1,t2]}))
+}
+
+/// Bounded exact GF(2) left-kernel search of an unsigned clause-variable
+/// incidence matrix. This finds minimum support at m=6 by enumerating only
+/// 63 nonzero subsets; no efficient general minimum-codeword claim is made.
+fn smallest_even_incidence_row(scopes: &[[usize; W]; M]) -> Result<Vec<usize>, String> {
+    gauge_masks(scopes)?; // validate all six active, triple scopes nonrepeating
+    let mut clause_incidence = [0u8; M];
+    for (index, scope) in scopes.iter().enumerate() {
+        for &variable in scope { clause_incidence[index] ^= 1u8 << variable; }
+    }
+    let mut best: Option<(u32, usize)> = None;
+    for mask in 1usize..(1usize << M) {
+        let mut variable_parity = 0u8;
+        for (index, &incidence) in clause_incidence.iter().enumerate() {
+            if mask & (1usize << index) != 0 { variable_parity ^= incidence; }
+        }
+        if variable_parity != 0 { continue; }
+        let weight = mask.count_ones();
+        if best.map_or(true, |(prior_weight, prior_mask)|
+            (weight, mask) < (prior_weight, prior_mask)) {
+            best = Some((weight, mask));
+        }
+    }
+    let (_, mask) = best.ok_or("no nonzero even-incidence hypercycle")?;
+    Ok((0..M).filter(|&index| mask & (1usize << index) != 0).collect())
+}
+
+/// W-CROSSDOMAIN-013: prospective algebraic feature on new Pasch-core graphs.
+pub fn audit_hypercycles() -> Result<Value, String> {
+    let p1_row = smallest_even_incidence_row(&P1)?;
+    let p2_row = smallest_even_incidence_row(&P2)?;
+    let p1 = family(&P1, "P1_Pasch_offset", &p1_row)?;
+    let p2 = family(&P2, "P2_Pasch_shared_vertices", &p2_row)?;
+    let strict = [&p1, &p2].iter().all(|r| {
+        ["forward", "reverse"].iter().all(|&policy| {
+            r[policy]["improvement_fraction"].as_f64().is_some_and(|x| x > 0.0)
+                && r[policy]["exploratory_permutation_p"].as_f64()
+                    .is_some_and(|p| p <= 0.0125)
+        })
+    });
+    Ok(json!({"research_id":"W-CROSSDOMAIN-013",
+        "scope":"fresh preregistered 3-CNF Pasch-core families; bounded exact GF2 hypercycle selection",
+        "selection":"minimum nonzero clause-subset weight then smallest numeric GF2 incidence-kernel mask",
+        "strict_four_way_replication_met":strict,"families":[p1,p2]}))
 }
 
 #[cfg(test)]
@@ -342,10 +398,10 @@ mod tests {
         for scopes in [&T1, &T2] {
             let (bits, first) = gauge_masks(scopes).unwrap();
             for mask in [0u32, 1, 12345, (1u32 << (M*W)) - 1] {
-                let original = row(mask, scopes).unwrap();
+                let original = row(mask, scopes, &ALTERNATE).unwrap();
                 for variable in 0..N {
                     let flipped_mask = mask ^ bits[variable];
-                    let flipped = row(flipped_mask, scopes).unwrap();
+                    let flipped = row(flipped_mask, scopes, &ALTERNATE).unwrap();
                     assert_eq!(flipped.energy, original.energy);
                     assert_eq!(flipped.alternate_even, original.alternate_even);
                     assert_eq!(flipped.forward, original.forward);
@@ -370,5 +426,42 @@ mod tests {
         }
         assert_eq!(dpll(&clauses, &FORWARD).models, 0);
         assert_eq!(dpll(&clauses, &REVERSE).models, 0);
+    }
+
+    #[test]
+    fn preregistered_gf2_even_incidence_hypercycle_controls() {
+        for scopes in [&P1, &P2] {
+            let chosen = smallest_even_incidence_row(scopes).unwrap();
+            assert_eq!(chosen, vec![0, 1, 2, 3]);
+            let mut parity = [0u8; N];
+            for &index in &chosen {
+                for &variable in &scopes[index] { parity[variable] ^= 1; }
+            }
+            assert_eq!(parity, [0; N]);
+            let (bits, first) = gauge_masks(scopes).unwrap();
+            for mask in [0u32, 1, 12345, (1u32 << (M*W)) - 1] {
+                let baseline = row(mask, scopes, &chosen).unwrap();
+                for variable in 0..N {
+                    let flip_mask = mask ^ bits[variable];
+                    let flipped = row(flip_mask, scopes, &chosen).unwrap();
+                    assert_eq!(flipped.energy, baseline.energy);
+                    assert_eq!(flipped.alternate_even, baseline.alternate_even);
+                    assert_eq!(flipped.forward, baseline.forward);
+                    assert_eq!(flipped.reverse, baseline.reverse);
+                    assert_eq!(canonical(mask, &bits, &first),
+                               canonical(flip_mask, &bits, &first));
+                }
+            }
+        }
+        let report = audit_hypercycles().unwrap();
+        assert_eq!(report["research_id"], "W-CROSSDOMAIN-013");
+        let families = report["families"].as_array().unwrap();
+        assert_eq!(families.len(), 2);
+        for r in families {
+            assert_eq!(r["chosen_parity_indices"], json!([0, 1, 2, 3]));
+            assert_eq!(r["gauge_representatives"], 4096);
+            assert!(r["minimum_model_count"].as_u64().unwrap() >= 16);
+            // No favorable predictive outcome is required for CI success.
+        }
     }
 }
