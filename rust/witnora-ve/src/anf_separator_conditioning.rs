@@ -2,6 +2,7 @@
 use num_bigint::BigUint;
 use num_traits::{One,Zero};
 use std::collections::{BTreeMap,BTreeSet};
+use crate::anf_structured_counter;
 
 fn bits(value:&BigUint)->Vec<usize>{
  let mut result=Vec::new();
@@ -112,9 +113,58 @@ pub fn find_separator(equations:&[Vec<Vec<usize>>],nvars:usize,
  Ok((None,checked))
 }
 
+/// R-119: exact separator-conditioned counter, entirely within one native call.
+pub type ConditionAnswer=(String,Vec<usize>,bool,usize,usize,usize,usize,usize,usize);
+pub fn count_conditioned(equations:&[Vec<Vec<usize>>],nvars:usize,
+ max_states:usize,max_separator_size:usize,max_candidate_checks:usize)
+ ->Result<ConditionAnswer,String>{
+ if max_states<1{return Err("max_states must be positive".into());}
+ let (selected,checked)=find_separator(
+  equations,nvars,max_separator_size,max_candidate_checks)?;
+ let selected=match selected{
+  Some(s)=>s,
+  None=>{
+   let (answer,states,_memo,hits,_cached,splits,forced,_maximum)=
+       anf_structured_counter::count(equations,nvars,max_states)?;
+   return Ok((answer,vec![],false,1,states,splits,hits,forced,checked));
+  }
+ };
+ if selected.len()>=usize::BITS as usize{
+  return Err("separator assignment count exceeds platform capacity".into());
+ }
+ let branches=1usize<<selected.len();
+ let mut total=BigUint::zero();
+ let mut states=0usize;
+ let mut splits=0usize;
+ let mut hits=0usize;
+ let mut forced=0usize;
+ for assignment in 0..branches{
+  let mut pinned=equations.to_vec();
+  for (i,&var) in selected.iter().enumerate(){
+   let bit=(assignment & (1usize<<i))!=0;
+   pinned.push(if bit {vec![vec![],vec![var]]} else {vec![vec![var]]});
+  }
+  let budget=max_states-states;
+  if budget<1{
+   return Err(format!("max total symbolic states {} exceeded",max_states));
+  }
+  let (answer,used,_memo,cofactor_hits,_cached,component_splits,unit_forced,_max)=
+      anf_structured_counter::count(&pinned,nvars,budget)?;
+  total+=BigUint::parse_bytes(answer.as_bytes(),10)
+      .ok_or("invalid internal count")?;
+  states+=used;
+  splits+=component_splits;
+  hits+=cofactor_hits;
+  forced+=unit_forced;
+ }
+ Ok((total.to_string(),selected,true,branches,states,splits,hits,forced,checked))
+}
+
 #[cfg(test)]mod tests{use super::*;#[test]fn sample(){
  assert_eq!(component_sizes(&["3".into(),"12".into()],"0").unwrap(),vec![2,2]);
  assert_eq!(component_sizes(&["3".into(),"6".into()],"2").unwrap(),vec![1,1]);
  assert_eq!(find_separator(&[vec![vec![1,2]],vec![vec![2,3]]],3,1,100).unwrap(),
   (Some(vec![2]),3));
+ assert_eq!(count_conditioned(&[],2,100,2,10).unwrap(),
+  ("4".into(),vec![],false,1,0,0,0,0,0));
 }}

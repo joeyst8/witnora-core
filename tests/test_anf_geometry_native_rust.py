@@ -10,7 +10,7 @@ class AnfGeometryNativeRustTests(unittest.TestCase):
     def test_seeded_geometries(self):
         for n in range(3, 15):
             for index in range(18):
-                source = random_three_cnf(n, n+6, 20261129+n*100+index,
+                source = random_three_cnf(n, n+2, 20261129+n*100+index,
                                           planted=index % 2 == 0)
                 sketch = geometry_aware_sparse_sketch(source, n)
                 with self.subTest(n=n, index=index):

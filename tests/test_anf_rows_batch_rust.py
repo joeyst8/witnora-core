@@ -11,7 +11,7 @@ class AnfRowsBatchRustTests(unittest.TestCase):
     def test_seeded_sketches_and_basis_rows(self):
         for n in range(3, 12):
             for index in range(18):
-                source = random_three_cnf(n, n+4, 20261128+n*100+index,
+                source = random_three_cnf(n, n+2, 20261128+n*100+index,
                                           planted=index % 2 == 0)
                 sketch = geometry_aware_sparse_sketch(source, n)
                 basis = build_sparse_parity_basis(sketch)

@@ -160,6 +160,26 @@ def count_common_zeros_conditioned(
     """Exact #solutions, using small-separator conditioning if found."""
     if max_states < 1:
         raise ValueError("max_states must be positive")
+    if nvars < 0 or max_separator_size < 0 or max_candidate_checks < 1:
+        raise ValueError("invalid separator search bounds")
+    if backend == "rust":
+        from witnora_ve import anf_count_conditioned_native
+        native = [[[int(v) for v in sorted(mon)]
+                   for mon in sorted(eq, key=lambda m: tuple(sorted(m)))]
+                  for eq in equations]
+        try:
+            (answer, selected, found, branches, states, splits,
+             hits, forced, checks) = anf_count_conditioned_native(
+                native, nvars, max_states, max_separator_size, max_candidate_checks)
+        except ValueError as exc:
+            if str(exc).startswith(("max symbolic states ",
+                                    "max total symbolic states ")):
+                raise ANFCountingBudgetExceeded(str(exc)) from exc
+            raise
+        return SeparatorCountResult(int(answer), tuple(selected), found,
+                                    branches, states, splits, hits, forced, checks)
+    if backend != "python":
+        raise ValueError("unknown ANF backend")
     selected, checks = find_bounded_separator(
         equations, nvars, max_separator_size=max_separator_size,
         max_candidate_checks=max_candidate_checks, backend=backend)
