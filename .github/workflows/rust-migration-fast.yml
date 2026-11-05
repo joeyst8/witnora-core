@@ -61,6 +61,8 @@ on:
       - "tests/test_factorized_violation_profile_rust.py"
       - "tests/test_cutset_violation_profile_rust.py"
       - "tests/test_fourier_parity_violation_rust.py"
+      - "tests/test_fourier_signed_controls.py"
+      - "scripts/benchmark_fourier_signed_controls.py"
       - "tests/test_constraint_geometry_rust.py"
       - "tests/test_geometry_aware_parity_rust.py"
       - "tests/test_claim_boundary_rust.py"
@@ -225,6 +227,8 @@ on:
       - "tests/test_factorized_violation_profile_rust.py"
       - "tests/test_cutset_violation_profile_rust.py"
       - "tests/test_fourier_parity_violation_rust.py"
+      - "tests/test_fourier_signed_controls.py"
+      - "scripts/benchmark_fourier_signed_controls.py"
       - "tests/test_constraint_geometry_rust.py"
       - "tests/test_geometry_aware_parity_rust.py"
       - "tests/test_claim_boundary_rust.py"
@@ -362,6 +366,10 @@ jobs:
         run: |
           python -c 'from witnora_ve import aux_factorized_violation_profile_native, aux_conditioned_violation_profile_native, aux_fourier_parity_violation_profile_native'
           python -m unittest tests.test_factorized_violation_profile_rust tests.test_cutset_violation_profile_rust tests.test_fourier_parity_violation_rust -v
+      - name: W-CROSSDOMAIN-009 matched signed-graph syndrome-spectrum audit
+        run: |
+          python -m unittest tests.test_fourier_signed_controls -v
+          python -m scripts.benchmark_fourier_signed_controls
       - name: Build pinned external drat-trim
         run: |
           git clone --quiet https://github.com/marijnheule/drat-trim.git "$RUNNER_TEMP/witnora-drat-trim"
