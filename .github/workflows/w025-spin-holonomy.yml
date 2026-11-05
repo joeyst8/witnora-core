@@ -44,3 +44,5 @@ jobs:
           name: w025-exact-gauge-holonomy
           path: ${{ runner.temp }}/w025_spin_holonomy.json
           if-no-files-found: ignore
+
+# Run after full-tree recovery; W025 verifies Rust plus 1,024 matched gauge masks.
