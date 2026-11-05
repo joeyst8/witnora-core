@@ -38,8 +38,26 @@ def _check_status_failed(items: list[dict[str, Any]]) -> bool:
     return any(str(item.get("status", "")).upper() in {"FAIL", "SKIP"} for item in items)
 
 
-def evaluate_fail_conditions(report: dict[str, Any], fail_on: set[str]) -> list[str]:
+def evaluate_fail_conditions(
+    report: dict[str, Any], fail_on: set[str], *, backend: str = "python"
+) -> list[str]:
     """Return CI failure reasons selected by ``fail_on``."""
+
+    if backend == "rust":
+        from witnora_ve import ci_failure_reasons_native
+
+        # The native path only accepts string-valued evidence fields. Caller
+        # controls which backend is used; Python remains the reference.
+        return ci_failure_reasons_native(
+            list(report.get("risk_flags", [])),
+            str(report.get("verdict", "")),
+            [str(item.get("status", "")) for item in report.get("drat_trim_replay", [])],
+            [str(item.get("status", "")) for item in report.get("independent_checker_replay", [])],
+            sorted(fail_on),
+            [VERDICT_ARTIFACT_INTEGRITY_VERIFIED, VERDICT_PARTIAL_REPLAY_VERIFIED],
+        )
+    if backend != "python":
+        raise ValueError("unknown CI failure-policy backend")
 
     risk_flags = set(report.get("risk_flags", []))
     verdict = str(report.get("verdict", ""))
@@ -68,7 +86,19 @@ def evaluate_marketplace_fail_conditions(
     *,
     fail_on_risk_flags: set[str],
     fail_on_verdict: set[str],
+    backend: str = "python",
 ) -> list[str]:
+    if backend == "rust":
+        from witnora_ve import ci_marketplace_failure_reasons_native
+
+        return ci_marketplace_failure_reasons_native(
+            [str(flag) for flag in report.get("risk_flags", [])],
+            str(report.get("verdict", "")),
+            sorted(fail_on_risk_flags),
+            sorted(fail_on_verdict),
+        )
+    if backend != "python":
+        raise ValueError("unknown CI failure-policy backend")
     risk_flags = {str(flag).upper() for flag in report.get("risk_flags", [])}
     verdict = str(report.get("verdict", "")).upper()
     reasons = [f"risk_flag:{flag}" for flag in sorted(fail_on_risk_flags & risk_flags)]

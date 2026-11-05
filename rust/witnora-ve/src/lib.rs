@@ -108,6 +108,7 @@ pub mod reconstruction;
 pub mod local_replay;
 pub mod component_proof;
 pub mod component_context_replay;
+pub mod ci_fail_policy;
 
 use num_bigint::BigUint;
 use num_traits::{One, Zero};
@@ -698,6 +699,27 @@ fn native_unsat_trace_metadata_supported_native(
 ) -> bool {
     proof_trace_metadata::is_supported(format.as_deref(), replayed,
         external.as_deref(), lrat_frat.as_deref(), reason.as_deref())
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ci_failure_reasons_native(
+    risk_flags: Vec<String>, verdict: String, drat_statuses: Vec<String>,
+    independent_statuses: Vec<String>, fail_on: Vec<String>,
+    positive_verdicts: Vec<String>,
+) -> Vec<String> {
+    ci_fail_policy::failure_reasons(&risk_flags, &verdict, &drat_statuses,
+        &independent_statuses, &fail_on, &positive_verdicts)
+}
+
+#[cfg(feature = "python")]
+#[pyfunction]
+fn ci_marketplace_failure_reasons_native(
+    risk_flags: Vec<String>, verdict: String, selected_flags: Vec<String>,
+    selected_verdicts: Vec<String>,
+) -> Vec<String> {
+    ci_fail_policy::marketplace_failure_reasons(&risk_flags, &verdict,
+        &selected_flags, &selected_verdicts)
 }
 
 #[cfg(feature = "python")]
@@ -2533,6 +2555,8 @@ fn witnora_ve(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(conjecture_identity_key_native, module)?)?;
     module.add_function(wrap_pyfunction!(conjecture_known_identities_native, module)?)?;
     module.add_function(wrap_pyfunction!(native_unsat_trace_metadata_supported_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ci_failure_reasons_native, module)?)?;
+    module.add_function(wrap_pyfunction!(ci_marketplace_failure_reasons_native, module)?)?;
     module.add_function(wrap_pyfunction!(bipartition_audit_native, module)?)?;
     module.add_function(wrap_pyfunction!(possible_two_xor_patterns_native, module)?)?;
     module.add_function(wrap_pyfunction!(full_cnf_anchors_separated_native, module)?)?;
