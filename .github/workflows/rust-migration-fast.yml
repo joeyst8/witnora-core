@@ -376,6 +376,11 @@ jobs:
         run: |
           python -m unittest tests.test_fourier_signed_controls -v
           python -m scripts.benchmark_fourier_signed_controls
+      - name: W-CROSSDOMAIN-010 Rust cycle-spectrum versus search-tree cost pilot
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_cycle_cost
+          WITNORA_RUST_CYCLE_COST_BIN="$PWD/rust/witnora-ve/target/release/witnora_cycle_cost" python -m unittest tests.test_cycle_cost_audit_rust -v
+          rust/witnora-ve/target/release/witnora_cycle_cost
       - name: W-GEOMETRY-001 source-faithful solution geometry and distance-pair gate
         run: |
           python -c 'from witnora_ve import aux_solution_geometry_native'
