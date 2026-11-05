@@ -205,4 +205,57 @@ mod tests {
         assert!(pure_binary_xor_topology(&[vec![1, 2]], 2).unwrap().is_none());
         assert!(pure_binary_xor_topology(&[vec![1]], 2).unwrap().is_none());
     }
+
+    #[test]
+    fn cycle_diagnostic_matches_native_gaussian_and_finite_source_oracle() {
+        // W-CROSSDOMAIN-003: deterministically generated complete source-CNF
+        // gadgets, including duplicate supports and contradictory labels.
+        // The Gaussian implementation is a distinct GF(2) algorithm.
+        let mut state = 0x52917u64;
+        let mut next = || {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+            state >> 32
+        };
+        for n in 2..=8usize {
+            for trial in 0..64usize {
+                let mut clauses = Vec::new();
+                let mut equations = Vec::<(Vec<usize>,u8)>::new();
+                for _ in 0..(n + trial % (n + 2)) {
+                    let u = (next() as usize % n) + 1;
+                    let mut v = (next() as usize % (n - 1)) + 1;
+                    if v >= u { v += 1; }
+                    let rhs = (next() & 1) as u8;
+                    clauses.extend(pattern_clauses(u as i32, v as i32, rhs as u32));
+                    equations.push((vec![u, v], rhs));
+                }
+                let routed = pure_binary_xor_topology(&clauses, n).unwrap().unwrap();
+                let gaussian_contradiction = crate::xor_equations::gaussian(&equations).0;
+                let direct_count = (0..(1usize << n)).filter(|&assignment| {
+                    clauses.iter().all(|clause| clause.iter().any(|&lit| {
+                        let bit = assignment & (1usize << (lit.unsigned_abs() as usize - 1)) != 0;
+                        bit == (lit > 0)
+                    }))
+                }).count();
+                assert_eq!(routed.inconsistent_cycle_candidate, gaussian_contradiction);
+                assert_eq!(routed.exact_model_count_if_pure, direct_count.to_string());
+            }
+        }
+    }
+
+    #[test]
+    fn mixed_sources_fail_closed_before_any_pure_xor_count() {
+        let mut source = Vec::new();
+        source.extend(pattern_clauses(1, 2, 0));
+        source.extend(pattern_clauses(2, 3, 0));
+        assert_eq!(pure_binary_xor_topology(&source, 3).unwrap().unwrap()
+                   .exact_model_count_if_pure, "2");
+
+        for additional in [vec![1], vec![-1], vec![1, 3], vec![]] {
+            let mut mixed = source.clone();
+            mixed.push(additional);
+            assert!(pure_binary_xor_topology(&mixed, 3).unwrap().is_none());
+        }
+        assert!(pure_binary_xor_topology(&[vec![1, 2]], 3).unwrap().is_none());
+        assert!(pure_binary_xor_topology(&[vec![4]], 3).is_err());
+    }
 }
