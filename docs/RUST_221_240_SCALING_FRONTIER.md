@@ -41,6 +41,8 @@ WITNORA_DRAT_TRIM=/path/to/drat-trim python -m unittest tests.test_xor_scaling_2
 python -m scripts.benchmark_xor_proof_scaling --max-width 10 --compare-rust --drat-trim /path/to/drat-trim
 ```
 
-**Status:** Python and external checks green locally; pending native Rust CI.
-No production behavior, default Python path, source-file status, Lean kernel
-or main branch is changed by this study.
+**Status:** focused native Rust CI
+[#41956471056](https://github.com/joeyst8/witnora-core/actions/runs/41956471056)
+passed, including independent external proof verification and Rust/Python
+comparison. No production behavior, default Python path, source-file status,
+Lean kernel or main branch is changed by this study.
