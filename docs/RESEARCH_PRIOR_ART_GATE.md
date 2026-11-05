@@ -53,6 +53,11 @@ flag-complex Betti number is established mathematics; only a future
 reproducible solver benefit or separately proved new theorem could support
 a genuine Witnora contribution.
 
+The second tracked cross-domain test is
+[W-CROSSDOMAIN-002 signed-graph balance × XOR](W_CROSSDOMAIN_002_SIGNED_CYCLES.md).
+It shows why a graph's unlabeled topological holes cannot determine parity
+consistency, and reuses the existing Rust source-bound odd-cycle machinery.
+
 ## Initial application: W-STRUCT-001/002 small separators and #SAT
 
 The W-STRUCT-001 finding (same n, clause count and primal density, different
