@@ -1,0 +1,84 @@
+name: W039 independent label-conditioned source and statistics replay
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w039_conditional_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_039_LABEL_CONDITIONAL_RESULTS.md'
+      - '.github/workflows/w039-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-source-and-null-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned numerical library
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
+      - name: Rebuild all source CNFs and replay 499 permutations
+        run: |
+          python - <<'PY'
+          import gzip,hashlib,json,math,random
+          from pathlib import Path
+          import numpy as np
+          from scripts.benchmark_w039_label_conditioned import (
+              source_cases,clause_pool,clause_truth_masks,exact_truth,folds_for_cells,
+              evaluate_models,mse,CELLS,SIZES,SEED,PERMUTATIONS)
+          from scripts.w038_cheap_geometry import cheap_features,FEATURE_NAMES
+          from scripts.w035_dpll_reference import solve
+
+          packed=Path('research/results/w039_conditional_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest()=='8efad0b925540a807bb1cceb93d3892c72872a0952ce643585d4193e75684c6f'
+          raw=gzip.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest()=='6595b74cb73cd8c6073f8baa2cbaa8cec9d494bb0c8f3079d4d87f149c9c5927'
+          data=json.loads(raw)
+          generated,attempts=source_cases()
+          assert len(generated)==len(data['rows'])==180
+          assert attempts==data['generation_attempts_by_size']
+          truth_masks=clause_truth_masks(clause_pool())
+          cells=[(r['clause_count'],r['truth']) for r in data['rows']]
+          folds=folds_for_cells(cells)
+          for row,(case_id,m,label,attempt,clauses),fold in zip(data['rows'],generated,folds):
+              assert (row['case_id'],row['clause_count'],row['truth'],row['source_attempt'],row['clauses'],row['fold'])==(case_id,m,label,attempt,clauses,fold)
+              assert exact_truth(clauses,truth_masks)==label
+              assert solve(clauses)['verdict']==label
+              assert solve(clauses)['clause_scans']==row['target_clause_scans']
+              assert math.isclose(row['target_log_scans'],math.log1p(row['target_clause_scans']),rel_tol=1e-12)
+              got=cheap_features(10,clauses)
+              for name in FEATURE_NAMES:
+                  assert math.isclose(got[name],row['features'][name],rel_tol=1e-11,abs_tol=1e-12)
+          y=np.array([r['target_log_scans'] for r in data['rows']])
+          x=np.array([[r['features'][k] for k in FEATURE_NAMES] for r in data['rows']])
+          baseline,predicted=evaluate_models(x,y,cells,folds,conditional=True)
+          size_base,size_pred=evaluate_models(x,y,cells,folds,conditional=False)
+          for i,row in enumerate(data['rows']):
+              for key,val in [('conditional_baseline_pred',baseline[i]),('conditional_geometry_pred',predicted[i]),('size_baseline_pred',size_base[i]),('size_geometry_pred',size_pred[i])]:
+                  assert math.isclose(row[key],val,rel_tol=1e-11,abs_tol=1e-12)
+          assert math.isclose(mse(y,baseline),data['baseline_conditional_oof_mse'],rel_tol=1e-12)
+          assert math.isclose(mse(y,predicted),data['geometry_conditional_oof_mse'],rel_tol=1e-12)
+          assert math.isclose(mse(y,size_base),data['size_only_baseline_oof_mse'],rel_tol=1e-12)
+          assert math.isclose(mse(y,size_pred),data['size_plus_geometry_oof_mse'],rel_tol=1e-12)
+          base=mse(y,baseline);observed=(base-mse(y,predicted))/base
+          rng=random.Random(SEED+2);null=[]
+          for _ in range(PERMUTATIONS):
+              shuffled=x.copy()
+              for cell in CELLS:
+                  ids=[i for i,c in enumerate(cells) if c==cell]
+                  perm=ids.copy();rng.shuffle(perm)
+                  shuffled[ids]=x[perm]
+              _,pred=evaluate_models(shuffled,y,cells,folds,conditional=True)
+              null.append((base-mse(y,pred))/base)
+          assert np.allclose(null,data['permutation_null_improvements'],rtol=1e-11,atol=1e-12)
+          p=(1+sum(v>=observed for v in null))/(PERMUTATIONS+1)
+          assert math.isclose(p,data['within_cell_permutation_p'],rel_tol=1e-12)
+          print('W039_REPLAY_OK: 180 independent oracle sources, six exact label cells, all features, all folds, 499 null draws; p=',p)
+          PY
