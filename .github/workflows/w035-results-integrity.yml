@@ -1,0 +1,68 @@
+name: W035 same-host cost raw evidence integrity
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w035_cost_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_035_DPLL_COST_RESULTS.md'
+      - '.github/workflows/w035-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify evidence digests, every DPLL scan and paired timing
+        run: |
+          python -m unittest tests.test_w035_dpll_reference -q
+          python - <<'PY'
+          import gzip,hashlib,json,statistics
+          from pathlib import Path
+          from scripts.w035_dpll_reference import solve
+
+          packed=Path('research/results/w035_cost_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest()=='d074e115f6c8f5860226b583ad21a5c0c5c02549de0078708a6e395c554d577b'
+          uncompressed=gzip.decompress(packed)
+          assert hashlib.sha256(uncompressed).hexdigest()=='4451e2c8621c85aeca47e1e330cb29023acfe0920b3ed1a249a67d808c280e1a'
+          report=json.loads(uncompressed)
+          source=json.loads(gzip.decompress(Path('research/results/w034_weighted_small_raw.json.gz').read_bytes()))
+          assert report['study']=='W-CROSSDOMAIN-035'
+          assert len(source['rows'])==len(report['rows'])==200
+          expected={(rep,arm) for rep in range(3) for arm in ('dpll_reference','w034_integer_audited_lp')}
+          for case,old in zip(report['rows'],source['rows']):
+              assert case['case_id']==old['case_id']
+              assert case['ground_truth']==old['ground_truth']
+              assert case['clauses']==len(old['clauses'])
+              runs=case['invocations']
+              assert len(runs)==6
+              assert {(r['rep'],r['arm']) for r in runs}==expected
+              ref=solve(old['clauses'])
+              assert ref['verdict']==old['ground_truth']
+              for row in runs:
+                  assert row['case_id']==old['case_id']
+                  assert row['wall_ns']>0
+                  if row['arm']=='dpll_reference':
+                      assert row['verdict']==ref['verdict']
+                      for key in ('nodes','decisions','unit_assignments','clause_scans'):
+                          assert row[key]==ref[key]
+                  else:
+                      assert row['verdict']==old['weighted_status']
+                      assert row['integer_bound']==old['exact_weighted_bound_numerator']
+              medians={arm:statistics.median(r['wall_ns'] for r in runs if r['arm']==arm)
+                       for arm in ('dpll_reference','w034_integer_audited_lp')}
+              assert medians==case['median_wall_ns']
+              assert medians['w034_integer_audited_lp']/medians['dpll_reference']==case['lp_over_dpll_ratio']
+          assert report['total_invocations']==1200
+          assert statistics.median(row['lp_over_dpll_ratio'] for row in report['rows'])==report['median_case_ratio_lp_over_dpll']
+          assert sum(row['lp_over_dpll_ratio']<1 for row in report['rows'])==report['cases_lp_faster_than_dpll']==0
+          print('W035_INTEGRITY_OK: 1,200 timed records, 200 exact DPLL source replays')
+          PY
