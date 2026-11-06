@@ -1,0 +1,85 @@
+name: W041 official source and frustration-statistic exact replay
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'docs/W_CROSSDOMAIN_041_SATLIB_INTERACTION_RESULTS.md'
+      - 'research/results/w041_satlib_raw.json.gz'
+      - '.github/workflows/w041-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-publisher-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned NumPy
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
+      - name: Download and verify original publisher archive
+        run: |
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 30 --max-time 180 \
+            'https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/uf20-91.tar.gz' \
+            --output source-uf20-91.tar.gz
+          echo 'be2835295e8500bb28f0314eba70bd0deaff1250b187260f7b6d0772bdf111a5  source-uf20-91.tar.gz' | sha256sum --check
+      - name: Replay exact W041 original instances and 499 permutations
+        run: |
+          python - <<'PY'
+          import gzip,hashlib,json,math,random
+          from pathlib import Path
+          import numpy as np
+          from scripts.benchmark_w041_satlib_interactions import source_cases,fixed_folds,FEATURE_NAMES,PERMUTATIONS,NULL_SEED
+          from scripts.benchmark_w040_satlib import out_of_fold,mse,SCANS_LIMIT
+          from scripts.w041_interaction_features import interaction_features
+          from scripts.w040_bounded_dpll import solve_bounded
+
+          packed=Path('research/results/w041_satlib_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest()=='2f8d9a5b5b67650e04676bb23e55c7dbfb24986e4ef31f0cab400cec2ea49d4b'
+          raw=gzip.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest()=='ee76098d3764de862010f61d5fed769a80de1f9f55a537eb00909ff5fb33c218'
+          data=json.loads(raw)
+          source_bytes=Path('source-uf20-91.tar.gz').read_bytes()
+          sources,total=source_cases(source_bytes)
+          assert total==1000 and len(sources)==len(data['rows'])==200
+          for row,source in zip(data['rows'],sources):
+              for key in ('source_rank','source_member','source_sha256','clauses'):
+                  assert row[key]==source[key]
+              feat=interaction_features(20,source['clauses'])
+              for key in FEATURE_NAMES:
+                  assert math.isclose(row['features'][key],feat[key],rel_tol=1e-11,abs_tol=1e-12)
+              solved=solve_bounded(source['clauses'],max_clause_scans=SCANS_LIMIT)
+              assert solved['verdict']==row['verdict']=='SAT'
+              assert solved['clause_scans']==row['clause_scans']
+              assert math.isclose(row['target_log_scans'],math.log1p(solved['clause_scans']),rel_tol=1e-12)
+              assert all(any(solved['assignment'].get(abs(lit))==(lit>0) for lit in clause)
+                         for clause in source['clauses'])
+          folds=fixed_folds(200)
+          y=np.array([r['target_log_scans'] for r in data['rows']])
+          x=np.array([[r['features'][key] for key in FEATURE_NAMES] for r in data['rows']])
+          baseline,predicted=out_of_fold(x,y,folds)
+          for i,row in enumerate(data['rows']):
+              assert row['fold']==folds[i]
+              assert math.isclose(row['baseline_pred'],baseline[i],rel_tol=1e-11,abs_tol=1e-12)
+              assert math.isclose(row['geometry_pred'],predicted[i],rel_tol=1e-11,abs_tol=1e-12)
+          base=mse(y,baseline);new=mse(y,predicted)
+          assert math.isclose(data['baseline_oof_mse'],base,rel_tol=1e-12)
+          assert math.isclose(data['geometry_oof_mse'],new,rel_tol=1e-12)
+          obs=(base-new)/base
+          rng=random.Random(NULL_SEED);null=[]
+          for _ in range(PERMUTATIONS):
+              ids=list(range(200));rng.shuffle(ids)
+              _,p=out_of_fold(x[ids],y,folds)
+              null.append((base-mse(y,p))/base)
+          assert np.allclose(null,data['null_improvements'],rtol=1e-11,atol=1e-12)
+          p_value=(1+sum(v>=obs for v in null))/(PERMUTATIONS+1)
+          assert math.isclose(p_value,data['permutation_p'],rel_tol=1e-12)
+          print('W041_REPLAY_OK: disjoint 200 SATLIB original sources and 499 permutations; p=',p_value)
+          PY
