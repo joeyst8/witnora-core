@@ -24,7 +24,8 @@ jobs:
         with:
           python-version: '3.11'
       - name: Pin numerical candidate generator, not proof authority
-        run: python -m pip install --only-binary=:all: numpy==2.3.5 scipy==1.17.0
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5 scipy==1.17.0
       - name: Independently audit exact integer proofs and known failure case
         run: python -m unittest tests.test_w034_weighted_walsh tests.test_w033_walsh_bound -v
       - name: Freeze and exhaustively verify 200 exact source formulas
