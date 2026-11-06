@@ -24,7 +24,8 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install pinned linear algebra
-        run: python -m pip install --only-binary=:all: numpy==2.3.5
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
       - name: Check analytic overlap and spectral equivalence
         run: python -m unittest tests.test_w038_cheap_geometry -q
       - name: Run fixed independent sample
