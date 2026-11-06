@@ -1,0 +1,82 @@
+name: W036 original prefix indices and exact local proofs integrity
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w036_local_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_036_LOCAL_PREFIX_RESULTS.md'
+      - '.github/workflows/w036-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-source-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact candidate verifier dependencies
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5 scipy==1.17.0
+      - name: Re-download and source-hash verify all originals; replay gate
+        timeout-minutes: 20
+        run: |
+          python - <<'PY'
+          import gzip,hashlib,json,math,tempfile
+          from pathlib import Path
+          from scripts.benchmark_w036_local_gate import source_cases
+          from scripts.w036_local_gate import read_prefix,neighborhoods,unit_propagation_contradiction,bounded_dpll
+          from scripts.w030_smoke_cases import source_bytes
+          from scripts.w033_walsh_bound import walsh_bound
+          from scripts.w034_weighted_walsh import audit_integer_weights,search_integer_certificate
+
+          packed=Path('research/results/w036_local_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest()=='31788a3aeed1544ebb95f53179455a5c9ada7e0c07d89e11178599ed3f79dea8'
+          raw=gzip.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest()=='002602484baebbe92dd85410fe94f804675ed9bb71de918b60f23ffc2cf0b115'
+          report=json.loads(raw)
+          assert report['study']=='W-CROSSDOMAIN-036' and report['phase']=='A_prefix_local_exploration'
+          assert len(report['source_cases'])==16
+          with tempfile.TemporaryDirectory() as temp:
+              for index,((metadata,source),stored) in enumerate(zip(source_cases(),report['source_cases'])):
+                  assert metadata['case_id']==stored['case_id']
+                  assert metadata['sha256']==stored['sha256']==hashlib.sha256(source).hexdigest()
+                  path=Path(temp)/(str(index)+'.cnf')
+                  path.write_bytes(source)
+                  for b in stored['budget_results']:
+                      limit=math.ceil(stored['declared_clauses']*b['percent']/100)
+                      prefix=read_prefix(path,limit)
+                      assert b['limit']==b['read_clauses']==prefix['read_clauses']==limit
+                      assert b['read_bytes']==prefix['read_bytes']
+                      for caprecord in b['caps']:
+                          candidates=neighborhoods(prefix,3,caprecord['cap'])
+                          assert len(candidates)==len(caprecord['candidates'])
+                          for candidate,old in zip(candidates,caprecord['candidates']):
+                              assert candidate['anchor']==old['anchor']
+                              assert candidate['source_indices']==old['source_clause_indices']
+                              assert len(candidate['clauses'])==old['selected_clauses']
+                              assert hashlib.sha256(source_bytes(prefix['variables'],candidate['clauses'])).hexdigest()==old['source_selected_sha256']
+                              short=[c for c in candidate['clauses'] if len(c)<=3]
+                              assert len(short)==old['short_clauses']
+                              assert unit_propagation_contradiction(candidate['clauses'])==old['root_unit_unsat']
+                              dpll=bounded_dpll(candidate['clauses'])
+                              assert dpll['status']==old['dpll_status']
+                              assert dpll['nodes']==old['dpll_nodes'] and dpll['clause_scans']==old['dpll_clause_scans']
+                              assert walsh_bound(prefix['variables'],short)['status']==old['unweighted_status']
+                              weighted=search_integer_certificate(prefix['variables'],short,max_clauses=64) if short else None
+                              assert (weighted['status'] if weighted else 'NO_CERTIFICATE')==old['weighted_status']
+                              if weighted and weighted['status']=='UNSAT_CERTIFIED':
+                                  assert audit_integer_weights(short,prefix['variables'],weighted['weights'])['status']=='UNSAT_CERTIFIED'
+                              if stored['expected']=='SAT':
+                                  assert not old['root_unit_unsat']
+                                  assert old['dpll_status']!='UNSAT_CERTIFIED'
+                                  assert old['unweighted_status']!='UNSAT_CERTIFIED'
+                                  assert old['weighted_status']!='UNSAT_CERTIFIED'
+          print('W036_INTEGRITY_OK: original 16 sources, every budget and selected source subformula replayed')
+          PY
