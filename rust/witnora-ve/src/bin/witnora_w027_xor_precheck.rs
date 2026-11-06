@@ -108,7 +108,7 @@ fn reconstruct(parsed: &Parsed) -> Vec<XorRow> {
             provenance[corner].get_or_insert(source);
         }
         for rhs in [false, true] {
-            let corners = (0..8)
+            let corners = (0usize..8)
                 .filter(|&corner| (corner.count_ones() % 2 == 0) == rhs)
                 .collect::<Vec<_>>();
             let found = corners
