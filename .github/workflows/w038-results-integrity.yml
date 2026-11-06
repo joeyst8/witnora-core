@@ -1,0 +1,84 @@
+name: W038 independent source and statistical replay
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w038_independent_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_038_INDEPENDENT_CHEAP_GEOMETRY_RESULTS.md'
+      - '.github/workflows/w038-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-predictions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numerical baseline
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
+      - name: Rebuild all 200 source CNFs and reproduce the null test
+        run: |
+          python - <<'PY'
+          import gzip, hashlib, json, math, random
+          from pathlib import Path
+          import numpy as np
+          from scripts.w038_cheap_geometry import cheap_features,FEATURE_NAMES as CHEAP_NAMES
+          from scripts.w037_geometry_features import features,FEATURE_NAMES as ALL_NAMES
+          from scripts.benchmark_w038_independent import source_cases,size_folds,regress,mse,SIZES,SEED,PERMUTATIONS
+          from scripts.w035_dpll_reference import solve
+
+          packed=Path('research/results/w038_independent_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest()=='64cb482d208bc9b6d5fac4cd77d1d71f4787dbc00298f91a26408682c0e8db8d'
+          raw=gzip.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest()=='c0650f6e50f04323836e7b351cdda8810914452f264a3c8bf3acc104d464819c'
+          d=json.loads(raw)
+          assert len(d['rows'])==200
+          generated=source_cases()
+          sizes=[r['clause_count'] for r in d['rows']]
+          folds=size_folds(sizes)
+          for row, (case_id,size,clauses),fold in zip(d['rows'],generated,folds):
+              assert row['case_id']==case_id and row['clause_count']==size
+              assert row['clauses']==clauses and row['fold']==fold
+              computed_cheap=cheap_features(8,clauses)
+              computed_all=features(8,clauses)
+              for name in CHEAP_NAMES:
+                  assert math.isclose(row['cheap_features'][name],computed_cheap[name],abs_tol=1e-11)
+              for name in ALL_NAMES:
+                  assert math.isclose(row['all_features'][name],computed_all[name],abs_tol=1e-11)
+              out=solve(clauses)
+              assert out['clause_scans']==row['target_clause_scans']
+              assert out['verdict']==row['verdict']
+              assert math.isclose(math.log1p(out['clause_scans']),row['target_log_scans'],rel_tol=1e-12)
+          y=np.array([row['target_log_scans'] for row in d['rows']])
+          cheap_x=np.array([[row['cheap_features'][k] for k in CHEAP_NAMES] for row in d['rows']])
+          all_x=np.array([[row['all_features'][k] for k in ALL_NAMES] for row in d['rows']])
+          base, cheap_pred=regress(cheap_x,y,sizes,folds)
+          _, all_pred=regress(all_x,y,sizes,folds)
+          assert math.isclose(mse(y,base),d['baseline_oof_mse'],rel_tol=1e-12)
+          assert math.isclose(mse(y,cheap_pred),d['cheap_oof_mse'],rel_tol=1e-12)
+          assert math.isclose(mse(y,all_pred),d['all_oof_mse'],rel_tol=1e-12)
+          for i,row in enumerate(d['rows']):
+              for key,value in [('baseline_pred',base[i]),('cheap_pred',cheap_pred[i]),('all_pred',all_pred[i])]:
+                  assert math.isclose(row[key],value,rel_tol=1e-11,abs_tol=1e-13)
+          observed=(mse(y,base)-mse(y,cheap_pred))/mse(y,base)
+          rng=random.Random(SEED+2);null=[]
+          for _ in range(PERMUTATIONS):
+              permuted=cheap_x.copy()
+              for size in SIZES:
+                  ids=[i for i,v in enumerate(sizes) if v==size]
+                  shuffled=ids.copy();rng.shuffle(shuffled)
+                  permuted[ids]=cheap_x[shuffled]
+              _,pred=regress(permuted,y,sizes,folds)
+              null.append((mse(y,base)-mse(y,pred))/mse(y,base))
+          assert np.allclose(null,d['permutation_null_improvements'],atol=1e-12,rtol=1e-11)
+          assert math.isclose((1+sum(v>=observed for v in null))/201,d['permutation_p'],rel_tol=1e-12)
+          print('W038_INTEGRITY_OK: regenerated source, SAT answers, all features, held-out predictions, 200 permutations')
+          PY
