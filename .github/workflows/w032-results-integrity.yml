@@ -1,0 +1,59 @@
+name: W032 source-frozen results integrity audit
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w032_external_raw.json.gz'
+      - 'research/results/w032_external_analysis.json'
+      - 'docs/W_CROSSDOMAIN_032_EXTERNAL_DOMAIN_RESULTS.md'
+      - '.github/workflows/w032-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-original-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify bytes, frozen coverage, solver witnesses and analysis
+        run: |
+          python - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+          from scripts.analyze_w032_external import ARMS, REPEATS, analyze
+          from scripts.w032_external_cases import manifest
+
+          packed = Path('research/results/w032_external_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest() == 'aa87459c45986ac23be6e38b4f741024c67bfedf8db14061efdd00658fb2fa38'
+          raw_bytes = gzip.decompress(packed)
+          assert hashlib.sha256(raw_bytes).hexdigest() == '67dbfa8a52099506efee01b57898448bb8b9a73ad76dec342a360b0054215fff'
+          raw = json.loads(raw_bytes)
+          frozen = json.loads(Path('research/results/w032_case_manifest.json').read_text())
+          assert frozen == manifest()
+          expected = {(e['case_id'], arm, rep) for e in frozen['entries'] for arm in ARMS for rep in range(REPEATS)}
+          seen = set()
+          cases = {e['case_id']: e for e in frozen['entries']}
+          for row in raw['rows']:
+              key = (row['case_id'], row['arm'], row['repeat'])
+              assert key in expected and key not in seen, key
+              seen.add(key)
+              assert row['cnf_sha256'] == cases[row['case_id']]['cnf_sha256']
+              assert row['stratum'] == cases[row['case_id']]['stratum']
+              assert row['expected'] == cases[row['case_id']]['expected']
+              if row['verdict'] == 'SAT':
+                  assert row['model_verified'] is True
+              if row['xor_certificate_verified']:
+                  assert row['verdict'] == 'UNSAT' and not row['used_downstream_solver']
+          assert seen == expected
+          assert raw['kissat_source_sha'] == '8af8e56f174b778aef3aa45af9f739b2a5f492c2'
+          expected_analysis = json.loads(Path('research/results/w032_external_analysis.json').read_text())
+          assert analyze(raw) == expected_analysis
+          print('W032_INTEGRITY_OK',len(seen),'original timed invocations verified')
+          PY

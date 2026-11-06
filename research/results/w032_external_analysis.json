@@ -1,0 +1,62 @@
+{
+  "analysis": "external_source_verified_censoring_aware",
+  "external_arm_outcomes": {
+    "kissat": {
+      "errors": 0,
+      "solved_invocations": 9,
+      "timeouts": 15
+    },
+    "w027_plus_kissat": {
+      "errors": 0,
+      "solved_invocations": 9,
+      "timeouts": 15
+    },
+    "w030_prefix_plus_kissat": {
+      "errors": 0,
+      "solved_invocations": 9,
+      "timeouts": 15
+    }
+  },
+  "external_case_count": 8,
+  "external_mean_source_fraction_read": 1.0,
+  "external_prefix_source_proof_cases": [],
+  "fully_jointly_solved_external_cases": [
+    {
+      "case_id": "vlsat2_684_13953",
+      "expected": "UNSAT",
+      "kissat_over_w030_ratio": 0.9990678504419226,
+      "median_pipeline_ms": {
+        "kissat": 1169.475308,
+        "w027_plus_kissat": 1168.281813,
+        "w030_prefix_plus_kissat": 1170.566451
+      },
+      "w027_over_w030_ratio": 0.9980482628747406
+    },
+    {
+      "case_id": "vlsat2_684_9417",
+      "expected": "UNSAT",
+      "kissat_over_w030_ratio": 0.9966479395939458,
+      "median_pipeline_ms": {
+        "kissat": 1024.032844,
+        "w027_plus_kissat": 1029.338392,
+        "w030_prefix_plus_kissat": 1027.477009
+      },
+      "w027_over_w030_ratio": 1.001811605499389
+    },
+    {
+      "case_id": "vlsat2_708_10259",
+      "expected": "UNSAT",
+      "kissat_over_w030_ratio": 0.9910440988675772,
+      "median_pipeline_ms": {
+        "kissat": 874.307959,
+        "w027_plus_kissat": 877.521289,
+        "w030_prefix_plus_kissat": 882.208935
+      },
+      "w027_over_w030_ratio": 0.9946864673276065
+    }
+  ],
+  "jointly_solved_case_count": 3,
+  "scope": "only solved-case pairwise ratios are interpretable as timings; 6s timeouts are right-censored, no inference of a domain-wide solver win",
+  "study": "W-CROSSDOMAIN-032",
+  "timed_invocations": 126
+}
