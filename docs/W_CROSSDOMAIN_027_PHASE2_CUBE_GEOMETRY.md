@@ -38,6 +38,30 @@ This audit is a **logical correctness test**, not a throughput benchmark;
 it does not amend the previously recorded W027 Phase-1 timings. Further
 benchmarking must be prospective, pinned, and cost-inclusive.
 
+## Measured verification outcome (2026-11-06 UTC)
+
+**PASS:** [GitHub Actions run 42138630632](https://github.com/joeyst8/witnora-core/actions/runs/42138630632),
+commit `889947a3082bb82719d11ba140ae913daecbb7d4`.
+
+- Three Rust unit tests passed, including the full 256-subset cube test.
+- Three independent Python tests passed; the 256-subset test ran with
+  duplicated clauses and reversed source order and independently
+  brute-forced all eight Boolean assignments for each case.
+- For single-triple CNFs, 225 subsets contain no complete parity
+  tetrahedron, 30 contain exactly one, and one contains both. The
+  255 incomplete-full-cube cases were SAT by brute-force oracle; the
+  complete eight-corner case was UNSAT and independently certified.
+- No detected status mismatch, extracted-equation-count mismatch,
+  certificate error, or test failure.
+
+The first CI attempt (`aeebe20`) failed at *compilation* due to an
+ambiguous integer type for `count_ones`; it was fixed by explicitly
+using `0usize..8`. It was not a mathematical counterexample.
+
+This verifies robustness of the detector on the enumerated tiny
+family; it does **not** establish solver speedup or general SAT
+tractability. The previously archived W027 timings remain unaltered.
+
 ## Prior work
 
 - Rebola-Pardo et al., *DRAT Proofs for XOR Reasoning* (2016):
