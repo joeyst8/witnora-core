@@ -1,0 +1,42 @@
+name: W035 same-host DPLL versus weighted spectral cost audit
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'scripts/w035_dpll_reference.py'
+      - 'scripts/benchmark_w035_cost.py'
+      - 'tests/test_w035_dpll_reference.py'
+      - 'docs/W_CROSSDOMAIN_035_DPLL_COST_PROTOCOL.md'
+      - '.github/workflows/w035-dpll-cost.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  same-host-cost:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact candidate optimizer dependencies
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5 scipy==1.17.0
+      - name: Verify DPLL and weighted-source proof tests
+        run: python -m unittest tests.test_w035_dpll_reference tests.test_w034_weighted_walsh -q
+      - name: Time 1200 rotated, truth-verified algorithm invocations
+        env:
+          W035_REPORT_PATH: ${{ runner.temp }}/w035_cost_raw.json
+        run: python -m scripts.benchmark_w035_cost
+      - name: Preserve raw same-host cost measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w035-dpll-cost-raw
+          path: ${{ runner.temp }}/w035_cost_raw.json
+          if-no-files-found: ignore
+          retention-days: 90
