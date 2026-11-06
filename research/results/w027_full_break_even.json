@@ -1,0 +1,109 @@
+{
+  "analysis": "synthetic_matched_break_even",
+  "noise_groups": [
+    {
+      "bootstrap_draws": 5000,
+      "bootstrap_intervals_only_for_gt_cases": 5000,
+      "break_even": {
+        "rule": "UNSAT_fraction_gt",
+        "threshold": 0.7543617989268424
+      },
+      "conditional_bootstrap_95pct_interval": [
+        0.7209621435570479,
+        0.7893157711640678
+      ],
+      "mean_sat_overhead_ms": 6.522127625,
+      "mean_unsat_saving_ms": 2.123760375,
+      "noise": 0,
+      "unusable_matched_pairs": 0,
+      "usable_matched_pairs": 16
+    },
+    {
+      "bootstrap_draws": 5000,
+      "bootstrap_intervals_only_for_gt_cases": 5000,
+      "break_even": {
+        "rule": "UNSAT_fraction_gt",
+        "threshold": 0.7614763233513845
+      },
+      "conditional_bootstrap_95pct_interval": [
+        0.7402098246595553,
+        0.7841376302768894
+      ],
+      "mean_sat_overhead_ms": 6.5710026875,
+      "mean_unsat_saving_ms": 2.0582908125,
+      "noise": 32,
+      "unusable_matched_pairs": 0,
+      "usable_matched_pairs": 16
+    },
+    {
+      "bootstrap_draws": 5000,
+      "bootstrap_intervals_only_for_gt_cases": 5000,
+      "break_even": {
+        "rule": "UNSAT_fraction_gt",
+        "threshold": 0.7273981309362516
+      },
+      "conditional_bootstrap_95pct_interval": [
+        0.6884379078283736,
+        0.7658183761944903
+      ],
+      "mean_sat_overhead_ms": 5.763343875,
+      "mean_unsat_saving_ms": 2.15988775,
+      "noise": 256,
+      "unusable_matched_pairs": 0,
+      "usable_matched_pairs": 16
+    },
+    {
+      "bootstrap_draws": 5000,
+      "bootstrap_intervals_only_for_gt_cases": 5000,
+      "break_even": {
+        "rule": "UNSAT_fraction_gt",
+        "threshold": 0.7673333688719023
+      },
+      "conditional_bootstrap_95pct_interval": [
+        0.7352487532824361,
+        0.7971704769165086
+      ],
+      "mean_sat_overhead_ms": 6.872415625,
+      "mean_unsat_saving_ms": 2.0838163125,
+      "noise": 1024,
+      "unusable_matched_pairs": 0,
+      "usable_matched_pairs": 16
+    },
+    {
+      "bootstrap_draws": 5000,
+      "bootstrap_intervals_only_for_gt_cases": 5000,
+      "break_even": {
+        "rule": "UNSAT_fraction_gt",
+        "threshold": 0.7632242308441496
+      },
+      "conditional_bootstrap_95pct_interval": [
+        0.7390717657199761,
+        0.7875264762331998
+      ],
+      "mean_sat_overhead_ms": 8.207181125,
+      "mean_unsat_saving_ms": 2.5461215,
+      "noise": 4096,
+      "unusable_matched_pairs": 0,
+      "usable_matched_pairs": 16
+    },
+    {
+      "bootstrap_draws": 5000,
+      "bootstrap_intervals_only_for_gt_cases": 5000,
+      "break_even": {
+        "rule": "UNSAT_fraction_gt",
+        "threshold": 0.7974096851341691
+      },
+      "conditional_bootstrap_95pct_interval": [
+        0.7781711668006993,
+        0.8193943440278154
+      ],
+      "mean_sat_overhead_ms": 10.047903125,
+      "mean_unsat_saving_ms": 2.5527754375,
+      "noise": 8192,
+      "unusable_matched_pairs": 0,
+      "usable_matched_pairs": 16
+    }
+  ],
+  "note": "Exploratory within frozen W026 synthetic family; no assumed real UNSAT prevalence; bootstrap intervals exclude non-gt regimes and are conditional",
+  "study": "W-CROSSDOMAIN-027"
+}
