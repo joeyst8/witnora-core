@@ -1,0 +1,84 @@
+name: W040 official SATLIB and held-out statistical integrity replay
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'docs/W_CROSSDOMAIN_040_SATLIB_RESULTS.md'
+      - 'research/results/w040_satlib_raw.json.gz'
+      - '.github/workflows/w040-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publisher-source-exact-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned NumPy
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
+      - name: Download original SATLIB source independently
+        run: |
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 30 --max-time 180 \
+            'https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/uf20-91.tar.gz' \
+            --output source-uf20-91.tar.gz
+      - name: Rebuild 200 source cases and 499 permutation draws
+        run: |
+          python - <<'PY'
+          import gzip,hashlib,json,math,random
+          from pathlib import Path
+          import numpy as np
+          from scripts.benchmark_w040_satlib import source_cases,fixed_folds,out_of_fold,mse,FEATURE_NAMES,PERMUTATIONS,NULL_SEED,SCANS_LIMIT
+          from scripts.w038_cheap_geometry import cheap_features
+          from scripts.w040_bounded_dpll import solve_bounded
+
+          pack=Path('research/results/w040_satlib_raw.json.gz').read_bytes()
+          assert hashlib.sha256(pack).hexdigest()=='6bbf4894bd8394c09d885dba40586db971b4ec22a591a578832b06f4d7d19ae9'
+          raw=gzip.decompress(pack)
+          assert hashlib.sha256(raw).hexdigest()=='cae5fb2a4d51f519f28a1119a75d2bafb4e04c38ff4b3714c09a07745f67d40e'
+          data=json.loads(raw)
+          archive=Path('source-uf20-91.tar.gz').read_bytes()
+          assert hashlib.sha256(archive).hexdigest()=='be2835295e8500bb28f0314eba70bd0deaff1250b187260f7b6d0772bdf111a5'
+          sources,all_count=source_cases(archive)
+          assert all_count==1000 and len(sources)==len(data['rows'])==200
+          for row,source in zip(data['rows'],sources):
+              for name in ('source_member','source_sha256','clauses'):
+                  assert row[name]==source[name]
+              feat=cheap_features(20,source['clauses'])
+              for name in FEATURE_NAMES:
+                  assert math.isclose(row['features'][name],feat[name],rel_tol=1e-11,abs_tol=1e-12)
+              result=solve_bounded(source['clauses'],max_clause_scans=SCANS_LIMIT)
+              assert result['verdict']==row['verdict']=='SAT'
+              assert result['clause_scans']==row['clause_scans']
+              assert math.isclose(row['target_log_scans'],math.log1p(result['clause_scans']),rel_tol=1e-12)
+              assert all(any(result['assignment'].get(abs(lit))==(lit>0) for lit in clause)
+                         for clause in source['clauses'])
+          folds=fixed_folds(200)
+          y=np.array([r['target_log_scans'] for r in data['rows']])
+          x=np.array([[r['features'][k] for k in FEATURE_NAMES] for r in data['rows']])
+          baseline,predicted=out_of_fold(x,y,folds)
+          for i,row in enumerate(data['rows']):
+              assert row['fold']==folds[i]
+              assert math.isclose(row['baseline_pred'],baseline[i],rel_tol=1e-11,abs_tol=1e-12)
+              assert math.isclose(row['geometry_pred'],predicted[i],rel_tol=1e-11,abs_tol=1e-12)
+          base=mse(y,baseline);geom=mse(y,predicted)
+          assert math.isclose(base,data['baseline_oof_mse'],rel_tol=1e-12)
+          assert math.isclose(geom,data['geometry_oof_mse'],rel_tol=1e-12)
+          observed=(base-geom)/base
+          rng=random.Random(NULL_SEED);null=[]
+          for _ in range(PERMUTATIONS):
+              indices=list(range(200));rng.shuffle(indices)
+              _,pred=out_of_fold(x[indices],y,folds)
+              null.append((base-mse(y,pred))/base)
+          assert np.allclose(null,data['null_improvements'],rtol=1e-11,atol=1e-12)
+          p=(1+sum(z>=observed for z in null))/(PERMUTATIONS+1)
+          assert math.isclose(p,data['permutation_p'],rel_tol=1e-12)
+          print('W040_INTEGRITY_OK: 200 original publisher CNFs, SAT assignments, exact scans, predictions, 499 null draws; p=',p)
+          PY
