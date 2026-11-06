@@ -1,0 +1,51 @@
+{
+  "entries": [
+    {
+      "case_id": "decoy_partial_64",
+      "clauses": 198,
+      "cnf_sha256": "bea1d67be71dbddd08d4123ea5af59ae97938b18cb343695a94779e317565139",
+      "expected": "SAT",
+      "filler": 0,
+      "kind": "partial",
+      "seed": 40894481,
+      "support_count": 64,
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_partial_256_noise4096",
+      "clauses": 4888,
+      "cnf_sha256": "deaacd27f49a2b2469460fb12bdc8904070b1d01166f8a50938d3ecf085c7e33",
+      "expected": "SAT",
+      "filler": 4096,
+      "kind": "partial",
+      "seed": 40894482,
+      "support_count": 256,
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_mixed_64",
+      "clauses": 262,
+      "cnf_sha256": "ca6b8536693238401dad56253a9e95a8c976ab2a6b7e8f89eb0d4b9a4c7ba66b",
+      "expected": "SAT",
+      "filler": 0,
+      "kind": "mixed",
+      "seed": 40894497,
+      "support_count": 64,
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_mixed_256_noise4096",
+      "clauses": 5144,
+      "cnf_sha256": "c7117eafc59654a6fe10957482af375828cd9b092ecb52714e932b7d3c95e6f2",
+      "expected": "SAT",
+      "filler": 4096,
+      "kind": "mixed",
+      "seed": 40894498,
+      "support_count": 256,
+      "variables": 128
+    }
+  ],
+  "generator": "scripts/w027_full_decoys.py",
+  "purpose": "frozen_near_xor_adversarial_controls",
+  "study": "W-CROSSDOMAIN-027"
+}

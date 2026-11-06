@@ -1,0 +1,88 @@
+name: W027 full preregistered cost-inclusive SAT solver comparison
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - "scripts/benchmark_w027_full.py"
+      - "scripts/w027_full_decoys.py"
+      - "tests/test_w027_full_harness.py"
+      - "research/results/w027_full_decoy_manifest.json"
+      - ".github/workflows/w027-full-solver.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-w027:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install stable Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Build and verify sound source-indexed Rust precheck
+        run: |
+          cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck
+          echo "W027_PRECHECK_BIN=$PWD/rust/witnora-ve/target/release/witnora_w027_xor_precheck" >> "$GITHUB_ENV"
+      - name: Independently test source proofs, decoys, and timing logic
+        env:
+          WITNORA_W027_PRECHECK_BIN: ${{ github.workspace }}/rust/witnora-ve/target/release/witnora_w027_xor_precheck
+        run: |
+          python -m unittest tests.test_w027_precheck tests.test_w027_full_harness tests.test_w027_smoke_harness -v
+      - name: Build pinned Kissat rel-4.0.4
+        run: |
+          git clone --quiet --depth 1 --branch rel-4.0.4 https://github.com/arminbiere/kissat.git "$RUNNER_TEMP/w027-kissat"
+          cd "$RUNNER_TEMP/w027-kissat"
+          test "$(git rev-parse HEAD)" = "8af8e56f174b778aef3aa45af9f739b2a5f492c2"
+          ./configure
+          make -C build -j 2 kissat
+          echo "W027_KISSAT_BIN=$RUNNER_TEMP/w027-kissat/build/kissat" >> "$GITHUB_ENV"
+          echo "W027_KISSAT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Build pinned CryptoMiniSat release/v5.17.0
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgmp-dev zlib1g-dev ninja-build cmake
+          git clone --quiet --depth 1 --branch release/v5.17.0 https://github.com/msoos/cryptominisat.git "$RUNNER_TEMP/w027-cms"
+          test "$(git -C "$RUNNER_TEMP/w027-cms" rev-parse HEAD)" = "03954f7f7815ea3984774c95a66e7c224cd25952"
+          cmake -S "$RUNNER_TEMP/w027-cms" -B "$RUNNER_TEMP/w027-cms/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+          cmake --build "$RUNNER_TEMP/w027-cms/build" -j 2
+          CMS_BIN=$(find "$RUNNER_TEMP/w027-cms/build" -type f -name cryptominisat5 -executable -print -quit)
+          test -n "$CMS_BIN"
+          echo "W027_CMS_BIN=$CMS_BIN" >> "$GITHUB_ENV"
+          echo "W027_CMS_SHA=$(git -C "$RUNNER_TEMP/w027-cms" rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Freeze measured runner context
+        run: |
+          echo "W027_RUNNER_OS=$(uname -srm)" >> "$GITHUB_ENV"
+          echo "W027_RUSTC=$(rustc --version)" >> "$GITHUB_ENV"
+          echo "W027_CC=$(cc --version | head -1)" >> "$GITHUB_ENV"
+          echo "W027_CPU=$(sed -n 's/^model name[[:space:]]*:[[:space:]]*//p' /proc/cpuinfo | head -1)" >> "$GITHUB_ENV"
+      - name: Run full preregistered W027 comparison with 30-second caps
+        timeout-minutes: 27
+        env:
+          W027_REPORT_PATH: ${{ runner.temp }}/w027_full_raw.json
+        run: python -m scripts.benchmark_w027_full
+      - name: Validate completed full-study raw JSON
+        env:
+          W027_REPORT_PATH: ${{ runner.temp }}/w027_full_raw.json
+        run: |
+          python -c 'import json,os;d=json.load(open(os.environ["W027_REPORT_PATH"])); assert d["case_count"]==204; assert len(d["rows"])==204*3*sum(d["arm_availability"].values()); assert not any(x["verdict"]=="ERROR" for x in d["rows"]); print("Verified",len(d["rows"]),"raw records")'
+          echo "W027_FULL_EVIDENCE_BEGIN"
+          python -c 'import os,pathlib;print(pathlib.Path(os.environ["W027_REPORT_PATH"]).read_text())'
+          echo "W027_FULL_EVIDENCE_END"
+      - name: Preserve source-digest-pinned raw full-study results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w027-full-solver-measurements
+          path: ${{ runner.temp }}/w027_full_raw.json
+          if-no-files-found: ignore
+          retention-days: 90
