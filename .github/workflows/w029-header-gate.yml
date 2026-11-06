@@ -1,0 +1,25 @@
+name: W029 exact header-gate barrier audit
+on:
+  push:
+    paths:
+      - 'scripts/audit_w029_header_gate.py'
+      - 'tests/test_w029_header_gate.py'
+      - 'research/results/w027_full_solver_measurements.json'
+      - 'research/results/w029_header_gate_audit.json'
+      - 'docs/W_CROSSDOMAIN_029_CHEAP_GATE_BARRIER.md'
+      - '.github/workflows/w029-header-gate.yml'
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit-test rejection of mismatched header controls
+        run: python -m unittest tests.test_w029_header_gate -v
+      - name: Recalculate frozen W029 audit and match archived result
+        run: |
+          python -c 'import json; from pathlib import Path; from scripts.audit_w029_header_gate import audit; raw=json.loads(Path("research/results/w027_full_solver_measurements.json").read_text()); frozen=json.loads(Path("research/results/w029_header_gate_audit.json").read_text()); assert audit(raw)==frozen; assert frozen["matched_pair_count"]==96; print("W029 AUDIT MATCHED: 96 frozen pairs, 6 exact header bins")'

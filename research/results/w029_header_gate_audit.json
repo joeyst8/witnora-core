@@ -1,0 +1,86 @@
+{
+  "all_header_bin_full_precheck_costs_positive": true,
+  "all_header_bins_balanced": true,
+  "analysis": "empirical_size_only_gate_information_barrier",
+  "best_header_only_gate_for_these_empirical_bins": "SKIP_EVERYWHERE",
+  "groups": [
+    {
+      "best_size_only_gate_on_balanced_W027": "SKIP",
+      "clauses": 20,
+      "empirical_sat_probability_conditional_on_header": 0.5,
+      "matched_pairs": 16,
+      "mean_full_precheck_extra_ms_per_case": 2.1991836250000003,
+      "mean_sat_penalty_ms": 6.522127625,
+      "mean_unsat_saving_ms": 2.123760375,
+      "sat_cases": 16,
+      "unsat_cases": 16,
+      "variables": 64
+    },
+    {
+      "best_size_only_gate_on_balanced_W027": "SKIP",
+      "clauses": 52,
+      "empirical_sat_probability_conditional_on_header": 0.5,
+      "matched_pairs": 16,
+      "mean_full_precheck_extra_ms_per_case": 2.2563559375,
+      "mean_sat_penalty_ms": 6.5710026875,
+      "mean_unsat_saving_ms": 2.0582908125,
+      "sat_cases": 16,
+      "unsat_cases": 16,
+      "variables": 64
+    },
+    {
+      "best_size_only_gate_on_balanced_W027": "SKIP",
+      "clauses": 276,
+      "empirical_sat_probability_conditional_on_header": 0.5,
+      "matched_pairs": 16,
+      "mean_full_precheck_extra_ms_per_case": 1.8017280625,
+      "mean_sat_penalty_ms": 5.763343875,
+      "mean_unsat_saving_ms": 2.15988775,
+      "sat_cases": 16,
+      "unsat_cases": 16,
+      "variables": 64
+    },
+    {
+      "best_size_only_gate_on_balanced_W027": "SKIP",
+      "clauses": 1044,
+      "empirical_sat_probability_conditional_on_header": 0.5,
+      "matched_pairs": 16,
+      "mean_full_precheck_extra_ms_per_case": 2.3942996562500003,
+      "mean_sat_penalty_ms": 6.872415625,
+      "mean_unsat_saving_ms": 2.0838163125,
+      "sat_cases": 16,
+      "unsat_cases": 16,
+      "variables": 64
+    },
+    {
+      "best_size_only_gate_on_balanced_W027": "SKIP",
+      "clauses": 4116,
+      "empirical_sat_probability_conditional_on_header": 0.5,
+      "matched_pairs": 16,
+      "mean_full_precheck_extra_ms_per_case": 2.8305298125,
+      "mean_sat_penalty_ms": 8.207181125,
+      "mean_unsat_saving_ms": 2.5461215,
+      "sat_cases": 16,
+      "unsat_cases": 16,
+      "variables": 64
+    },
+    {
+      "best_size_only_gate_on_balanced_W027": "SKIP",
+      "clauses": 8212,
+      "empirical_sat_probability_conditional_on_header": 0.5,
+      "matched_pairs": 16,
+      "mean_full_precheck_extra_ms_per_case": 3.74756384375,
+      "mean_sat_penalty_ms": 10.047903125,
+      "mean_unsat_saving_ms": 2.5527754375,
+      "sat_cases": 16,
+      "unsat_cases": 16,
+      "variables": 64
+    }
+  ],
+  "header_signature_count": 6,
+  "matched_pair_count": 96,
+  "scope": "Finite frozen synthetic benchmark with paired medians; no universal impossibility for SAT routing and no generalization to unseen real workloads.",
+  "source_sha": "0fb12ed16378d2973c76c9dc9cb1596b8341f880",
+  "source_study": "W-CROSSDOMAIN-027",
+  "study": "W-CROSSDOMAIN-029"
+}
