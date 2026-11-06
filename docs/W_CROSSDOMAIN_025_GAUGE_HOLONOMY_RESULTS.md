@@ -2,7 +2,7 @@
 
 ## Result: verified known physics applied to Witnora
 
-W025's prospective protocol was committed as 50cbb37a14fafbe95978e8a59e1ac2c08425eb46 before the experiment. After restoring the full repository tree, the [dedicated W025 workflow](https://github.com/joeyst8/witnora-core/actions/runs/42133492427) completed **successfully** (Rust tests, independent Python audit, raw artifact).
+W025's prospective protocol was committed as 50cbb37a14fafbe95978e8a59e1ac2c08425eb46 before the experiment. After restoring the full repository tree, the [dedicated W025 workflow](https://github.com/joeyst8/witnora-core/actions/runs/42133492427) and [archival rerun](https://github.com/joeyst8/witnora-core/actions/runs/42133987931) completed **successfully** (Rust tests, independent Python audit, raw artifact).
 
 This is a controlled mathematical connection, **not** a new SAT algorithm, complexity separation, or demonstrated solver speedup. The 64 variable relabelings and 16 gauge transformations per relabeling are **symmetry controls**, not independent samples.
 
@@ -42,8 +42,8 @@ The Rust program exhaustively enumerated all \(2^9=512\) spin assignments per fo
 - [Rust source](../rust/witnora-ve/src/bin/witnora_spin_holonomy.rs).
 - [Independent Python audit](../tests/test_spin_holonomy_rust.py).
 - [GitHub Actions W025 PASS](https://github.com/joeyst8/witnora-core/actions/runs/42133492427).
-- [W025 raw JSON artifact](https://github.com/joeyst8/witnora-core/actions/runs/42133492427/artifacts/13463988340), with artifact ZIP SHA-256 b341aa03ba5ce89746406b1c9a7769aa6437d293578d24162687c497ed0f900e.
-- A permanent repository-level JSON archive will be added separately after retrieval.
+- [W025 original raw JSON artifact](https://github.com/joeyst8/witnora-core/actions/runs/42133492427/artifacts/13463988340), with artifact ZIP SHA-256 b341aa03ba5ce89746406b1c9a7769aa6437d293578d24162687c497ed0f900e.
+- Permanent original Rust JSON: [research/results/w025_spin_holonomy.json](../research/results/w025_spin_holonomy.json), recovered from the verified Rust workflow's evidence log and independently JSON-parsed (64 cases, 16 gauge masks each).
 
 ## Interpretation and next experiment
 
