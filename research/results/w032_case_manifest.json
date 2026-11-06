@@ -1,0 +1,129 @@
+{
+  "entries": [
+    {
+      "case_id": "vlsat2_544_8738",
+      "clauses": 8738,
+      "cnf_sha256": "d95953c8104e4b61a10e45f4365c9d5391e4358e3841795e848553bce6a42e8a",
+      "compressed_sha256": "b285d4dbb0d99bacbc14f96c13cd01926ced9ec49cdebc5154a4f4d742fba4bb",
+      "expected": "UNSAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 544
+    },
+    {
+      "case_id": "vlsat2_600_11440",
+      "clauses": 11440,
+      "cnf_sha256": "2339dbf36e3253502709f62a8e5bee72d5de98c661e83a4c1424151cb5cfaded",
+      "compressed_sha256": "eed2e20c71d48b2d5bdd60a5528cb343741d1ce37c5b151e261aea3c4f9e2e55",
+      "expected": "UNSAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 600
+    },
+    {
+      "case_id": "vlsat2_684_9417",
+      "clauses": 9417,
+      "cnf_sha256": "1cd8212eec2b7824c5d807b5527851b6dbe91dd498d524b903a5533bc3896698",
+      "compressed_sha256": "295972954ad18c95da99199138faf187797605a0cf871fece779519a4234c3c9",
+      "expected": "UNSAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 684
+    },
+    {
+      "case_id": "vlsat2_684_13953",
+      "clauses": 13953,
+      "cnf_sha256": "1a8e61e242ebd40cf7ddba0f506810fea11f44fcf5dff76595539854bd9e7e83",
+      "compressed_sha256": "eb821c1fc2ee4132914d042f03c8ec6701909500bf6d8c7b78a78c37f8e473cb",
+      "expected": "UNSAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 684
+    },
+    {
+      "case_id": "vlsat2_708_10259",
+      "clauses": 10259,
+      "cnf_sha256": "941c668bff52b9356ea2a0a7d44243699bf700d6417cbd27d3c331c3261f6c28",
+      "compressed_sha256": "ca84eb41e3f0c4be98c422cea6234a2752169278595f121045029ab76dde06cc",
+      "expected": "UNSAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 708
+    },
+    {
+      "case_id": "vlsat2_736_11022",
+      "clauses": 11022,
+      "cnf_sha256": "d52dadb7f04dc9964b70e387b3eef40a5fb8abba853bbe33d18303e0a91b971f",
+      "compressed_sha256": "8517b21221128730825009954c6ff0444f62e90dd2bf1df20dd123757b93e21e",
+      "expected": "UNSAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 736
+    },
+    {
+      "case_id": "vlsat2_1000_22250",
+      "clauses": 22250,
+      "cnf_sha256": "7fa1dcc2579120d44355a0a2e397b5ffb7afa71ef00ee2a7a7b0ea2de10bd304",
+      "compressed_sha256": "42e6b960976093e4021f80f5455b7201013688fb7e7b1b26833f1be4425ff0bd",
+      "expected": "SAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 1000
+    },
+    {
+      "case_id": "vlsat2_3456_192912",
+      "clauses": 192912,
+      "cnf_sha256": "338f0f88e1ad0a55672da038f9a3ec7a28b7978df9f83a0e35d720bd397f9f24",
+      "compressed_sha256": "ef60ab29d31a046e8e7308c25df25241b55e4d437d174aec74c5b6bfa6a32ed5",
+      "expected": "SAT",
+      "stratum": "official_external_vlsat2",
+      "variables": 3456
+    },
+    {
+      "case_id": "decoy_partial_64",
+      "clauses": 198,
+      "cnf_sha256": "bea1d67be71dbddd08d4123ea5af59ae97938b18cb343695a94779e317565139",
+      "expected": "SAT",
+      "stratum": "frozen_adversarial_sat_decoy",
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_partial_256_noise4096",
+      "clauses": 4888,
+      "cnf_sha256": "deaacd27f49a2b2469460fb12bdc8904070b1d01166f8a50938d3ecf085c7e33",
+      "expected": "SAT",
+      "stratum": "frozen_adversarial_sat_decoy",
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_mixed_64",
+      "clauses": 262,
+      "cnf_sha256": "ca6b8536693238401dad56253a9e95a8c976ab2a6b7e8f89eb0d4b9a4c7ba66b",
+      "expected": "SAT",
+      "stratum": "frozen_adversarial_sat_decoy",
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_mixed_256_noise4096",
+      "clauses": 5144,
+      "cnf_sha256": "c7117eafc59654a6fe10957482af375828cd9b092ecb52714e932b7d3c95e6f2",
+      "expected": "SAT",
+      "stratum": "frozen_adversarial_sat_decoy",
+      "variables": 128
+    },
+    {
+      "case_id": "w032_w026_r0_sat_sanity",
+      "clauses": 8212,
+      "cnf_sha256": "1599d880e318bd8973da1bd359bab49762611b072c0dcea0e1cc4d48228fb903",
+      "expected": "SAT",
+      "stratum": "synthetic_sanity_only",
+      "variables": 64
+    },
+    {
+      "case_id": "w032_w026_r0_unsat_sanity",
+      "clauses": 8212,
+      "cnf_sha256": "6db6ce80104534fab52c7b9826d46e6b3bde53b52b09f25fad7375932fe75867",
+      "expected": "UNSAT",
+      "stratum": "synthetic_sanity_only",
+      "variables": 64
+    }
+  ],
+  "phase": "frozen_external_domain_pilot",
+  "protocol": "docs/W_CROSSDOMAIN_032_EXTERNAL_DOMAIN_PROTOCOL.md",
+  "source": "INRIA VLSAT2 publisher plus W027/W026 controls",
+  "study": "W-CROSSDOMAIN-032"
+}
+
