@@ -17,7 +17,7 @@ permissions:
 jobs:
   full-w027:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -66,7 +66,7 @@ jobs:
           echo "W027_CC=$(cc --version | head -1)" >> "$GITHUB_ENV"
           echo "W027_CPU=$(sed -n 's/^model name[[:space:]]*:[[:space:]]*//p' /proc/cpuinfo | head -1)" >> "$GITHUB_ENV"
       - name: Run full preregistered W027 comparison with 30-second caps
-        timeout-minutes: 27
+        timeout-minutes: 48
         env:
           W027_REPORT_PATH: ${{ runner.temp }}/w027_full_raw.json
         run: python -m scripts.benchmark_w027_full
@@ -83,6 +83,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: w027-full-solver-measurements
-          path: ${{ runner.temp }}/w027_full_raw.json
+          path: |
+            ${{ runner.temp }}/w027_full_raw.json
+            ${{ runner.temp }}/w027_full_raw.partial.jsonl
           if-no-files-found: ignore
           retention-days: 90

@@ -140,6 +140,11 @@ def run():
         cms = None
     available = [arm for arm in ARMS if arm != "cryptominisat" or cms is not None]
     rows = []
+    # A previous run reached the external cases but was cut off by the
+    # workflow's *total* wall allowance. Save source-pinned raw records
+    # after each completed case, outside the timing region, so any future
+    # infrastructure interruption remains auditable.
+    checkpoint = Path(os.environ["W027_REPORT_PATH"]).with_suffix(".partial.jsonl")
 
     with tempfile.TemporaryDirectory(prefix="witnora-w027-full-") as folder:
         cases = source_cases(Path(folder))
@@ -157,6 +162,9 @@ def run():
                         assert record.get("precheck_blocks") == 0
                         assert record.get("precheck_status") == "NO_CERTIFICATE"
                     rows.append(record)
+            with checkpoint.open("a", encoding="utf-8") as stream:
+                for record in rows[-REPEATS * len(available):]:
+                    stream.write(json.dumps(record, separators=(",", ":"), sort_keys=True) + "\n")
             print("W027 FULL case", i + 1, "/", len(cases), name,
                   "verdicts", ",".join(r["verdict"] for r in rows[-REPEATS * len(available):]),
                   flush=True)
