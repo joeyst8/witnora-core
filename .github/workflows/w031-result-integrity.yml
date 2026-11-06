@@ -1,0 +1,19 @@
+name: W031 immutable raw evidence and analysis integrity
+on:
+  push:
+    paths:
+      - 'scripts/analyze_w031_order.py'
+      - 'research/results/w031_order_raw.json.gz'
+      - 'research/results/w031_order_analysis.json'
+      - 'docs/W_CROSSDOMAIN_031_ORDER_ROBUSTNESS_RESULTS.md'
+      - '.github/workflows/w031-result-integrity.yml'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original uncompressed SHA256 and recomputed statistics
+        run: |
+          python -c 'import gzip,hashlib,json;from pathlib import Path;from scripts.analyze_w031_order import analyze;p=Path("research/results/w031_order_raw.json.gz");s=gzip.open(p,"rb").read();assert hashlib.sha256(s).hexdigest()=="0764220a14b5b309ba13e123c3a97fede1336beece4c64432850c4d722d3a85c";saved=json.loads(Path("research/results/w031_order_analysis.json").read_text());actual=analyze(json.loads(s));assert saved==actual;assert actual["timed_invocations"]==900;assert actual["primary_H1_passes"];print("W031 raw bytes, 900 trials and frozen H1 audited")'

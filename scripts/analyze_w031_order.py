@@ -7,6 +7,7 @@ No cross-domain performance claim is inferred from a synthetic test family.
 
 from __future__ import annotations
 
+import gzip
 import json
 from pathlib import Path
 import random
@@ -106,6 +107,9 @@ def analyze(report):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        raise SystemExit("usage: python -m scripts.analyze_w031_order raw-W031.json")
-    report=json.loads(Path(sys.argv[1]).read_text())
+        raise SystemExit("usage: python -m scripts.analyze_w031_order raw-W031.json[.gz]")
+    path = Path(sys.argv[1])
+    # Packaging-only support for archiving the *identical* raw bytes as gzip.
+    raw = gzip.open(path, "rt").read() if path.suffix == ".gz" else path.read_text()
+    report=json.loads(raw)
     print(json.dumps(analyze(report),indent=2,sort_keys=True))

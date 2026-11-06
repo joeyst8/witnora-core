@@ -1,0 +1,78 @@
+{
+  "analysis": "preregistered_16_seed_order_robustness",
+  "by_order": [
+    {
+      "bootstrap_95pct_ci_for_balanced_extra_ms": [
+        0.20450912499999951,
+        0.39538574999999954
+      ],
+      "bootstrap_95pct_ci_for_unsat_saving_vs_w027_ms": [
+        3.482558375,
+        3.5407830000000002
+      ],
+      "descriptive_break_even_unsat_fraction": 0.5274462495103975,
+      "frozen_H1_w030_beats_w027_on_unsat_at_95pct": true,
+      "matched_seeds": 16,
+      "max_unsat_source_fraction_read": 0.001948368241597662,
+      "mean_balanced_sat_unsat_extra_vs_kissat_ms": 0.3003012812499999,
+      "mean_sat_overhead_vs_kissat_ms": 5.771017437499999,
+      "mean_unsat_saving_vs_kissat_ms": 5.170414875,
+      "mean_unsat_saving_vs_w027_ms": 3.5111835625000003,
+      "mean_unsat_source_fraction_read": 0.001948368241597662,
+      "min_unsat_source_fraction_read": 0.001948368241597662,
+      "order": "corefirst",
+      "paired_bootstrap_draws": 5000
+    },
+    {
+      "bootstrap_95pct_ci_for_balanced_extra_ms": [
+        1.7028103749999999,
+        1.8842613125
+      ],
+      "bootstrap_95pct_ci_for_unsat_saving_vs_w027_ms": [
+        0.42629868749999983,
+        0.47162481249999993
+      ],
+      "descriptive_break_even_unsat_fraction": 0.7268676093853582,
+      "frozen_H1_w030_beats_w027_on_unsat_at_95pct": true,
+      "matched_seeds": 16,
+      "max_unsat_source_fraction_read": 0.9995129079396006,
+      "mean_balanced_sat_unsat_extra_vs_kissat_ms": 1.79091484375,
+      "mean_sat_overhead_vs_kissat_ms": 5.7379631875,
+      "mean_unsat_saving_vs_kissat_ms": 2.1561335,
+      "mean_unsat_saving_vs_w027_ms": 0.4501005624999999,
+      "mean_unsat_source_fraction_read": 0.9995129079396006,
+      "min_unsat_source_fraction_read": 0.9995129079396006,
+      "order": "corelast",
+      "paired_bootstrap_draws": 5000
+    },
+    {
+      "bootstrap_95pct_ci_for_balanced_extra_ms": [
+        1.6381523125000002,
+        1.8196440625
+      ],
+      "bootstrap_95pct_ci_for_unsat_saving_vs_w027_ms": [
+        0.5357698125000001,
+        0.6739243125000001
+      ],
+      "descriptive_break_even_unsat_fraction": 0.7121670494910036,
+      "frozen_H1_w030_beats_w027_on_unsat_at_95pct": true,
+      "matched_seeds": 16,
+      "max_unsat_source_fraction_read": 0.9973209936678032,
+      "mean_balanced_sat_unsat_extra_vs_kissat_ms": 1.7258664062499998,
+      "mean_sat_overhead_vs_kissat_ms": 5.7931011875,
+      "mean_unsat_saving_vs_kissat_ms": 2.341368375,
+      "mean_unsat_saving_vs_w027_ms": 0.6060725625,
+      "mean_unsat_source_fraction_read": 0.9528129566488066,
+      "min_unsat_source_fraction_read": 0.9013638577691183,
+      "order": "shuffled",
+      "paired_bootstrap_draws": 5000
+    }
+  ],
+  "independent_noise_seeds": 16,
+  "negative_control_sat_decoys": 4,
+  "primary_H1": "shuffled UNSAT paired-bootstrap 95% lower bound for mean(W027\u2212W030) >0 ms",
+  "primary_H1_passes": true,
+  "scope": "restricted W026 synthetic generator; bootstrap conditional on its frozen seeds; does not generalize to external SAT instances or P versus NP",
+  "study": "W-CROSSDOMAIN-031",
+  "timed_invocations": 900
+}
