@@ -35,6 +35,7 @@ class ExternalDPLLCases(unittest.TestCase):
         source='c comment\np cnf 20 91\n' + ('1 -2 3 0\n'*91)
         parsed=parse_dimacs(source.encode('ascii'))
         self.assertEqual(len(parsed),91)
+        self.assertEqual(parse_dimacs((source+'%\n0\n').encode('ascii')),parsed)
         for invalid in ('p cnf 21 91\n', 'p cnf 20 91\n1 -1 2 0\n', 'p cnf 20 91\n1 2 0\n'):
             with self.assertRaises(ValueError):
                 parse_dimacs(invalid.encode('ascii'))

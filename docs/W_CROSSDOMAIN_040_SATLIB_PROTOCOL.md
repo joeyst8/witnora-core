@@ -11,6 +11,7 @@
 - Download the **official publisher archive directly from GitHub Actions** with curl and record compressed archive SHA256. Keep the exact downloaded bytes under CI-run provenance; record SHA256 and original DIMACS clauses of each included member in the raw experiment artifact.
 - Inspect the gzip tar **without extracting paths**. Select **the first 200 `.cnf` members by lexicographic original archive member name**; reject duplicate names. Do not select by SAT difficulty, measured feature values, labels, solver performance, or file size. Require at least 200 valid CNFs.
 - Parse each selected DIMACS file strictly: `p cnf 20 91`, exactly 91 three-literal clauses of distinct variables, each literal in the ±1..20 range, no tautological clause. Preserve clause order for reference DPLL. In case of parse failure, stop the run rather than silently exclude cases.
+- A publisher-source syntax clarification after the first failed preflight: SATLIB DIMACS files can contain the conventional `%` terminal marker after the clauses; treat it as an end-of-file postamble, while still requiring all 91 complete clauses before it. This changes no case selection, solver measurement, or statistical decision.
 - The publisher declares the whole `uf20-91` family SAT. For every solved result, independently verify that the reported assignment satisfies every original clause. Any UNSAT verdict is a stop condition; bounded incomplete results are marked `CENSORED`, never misclassified.
 
 ### Solver budget and predeclared statistical test

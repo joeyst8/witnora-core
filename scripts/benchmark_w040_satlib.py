@@ -39,6 +39,10 @@ def parse_dimacs(content: bytes):
         words=line.split()
         if not words or words[0]=='c':
             continue
+        if words[0]=='%':
+            # Historical DIMACS files may end with a '%' postamble marker.
+            # The 91 source clauses must still be present before it.
+            break
         if words[0]=='p':
             if header is not None or len(words)!=4 or words[1]!='cnf':
                 raise ValueError('invalid duplicate or non-CNF header')
