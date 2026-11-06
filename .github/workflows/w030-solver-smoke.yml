@@ -1,0 +1,65 @@
+name: W030 cost-inclusive Rust prefix-XOR solver smoke
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'scripts/w030_smoke_cases.py'
+      - 'scripts/benchmark_w030_smoke.py'
+      - 'tests/test_w030_smoke_harness.py'
+      - 'research/results/w030_smoke_case_manifest.json'
+      - 'docs/W_CROSSDOMAIN_030_SMOKE_PROTOCOL.md'
+      - '.github/workflows/w030-solver-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w030-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile frozen W027 and new W030 Rust precheck
+        run: |
+          cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w030_prefix_xor
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck --bin witnora_w030_prefix_xor
+          echo "W030_OLD_PRECHECK_BIN=$PWD/rust/witnora-ve/target/release/witnora_w027_xor_precheck" >> "$GITHUB_ENV"
+          echo "W030_PREFIX_BIN=$PWD/rust/witnora-ve/target/release/witnora_w030_prefix_xor" >> "$GITHUB_ENV"
+      - name: Independently validate frozen cases and Rust proof
+        env:
+          WITNORA_W030_PREFIX_BIN: ${{ github.workspace }}/rust/witnora-ve/target/release/witnora_w030_prefix_xor
+        run: python -m unittest tests.test_w030_smoke_harness tests.test_w030_prefix_xor -v
+      - name: Build exact pinned Kissat rel-4.0.4
+        run: |
+          git clone --quiet --depth 1 --branch rel-4.0.4 https://github.com/arminbiere/kissat.git "$RUNNER_TEMP/w030-kissat"
+          cd "$RUNNER_TEMP/w030-kissat"
+          test "$(git rev-parse HEAD)" = "8af8e56f174b778aef3aa45af9f739b2a5f492c2"
+          ./configure
+          make -C build -j 2 kissat
+          echo "W030_KISSAT_BIN=$RUNNER_TEMP/w030-kissat/build/kissat" >> "$GITHUB_ENV"
+          echo "W030_KISSAT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Execute frozen eight-case cost-inclusive comparison
+        env:
+          W030_REPORT_PATH: ${{ runner.temp }}/w030_smoke_raw.json
+        run: python -m scripts.benchmark_w030_smoke
+      - name: Print original W030 evidence with exact markers
+        env:
+          W030_REPORT_PATH: ${{ runner.temp }}/w030_smoke_raw.json
+        run: |
+          python -m json.tool "$W030_REPORT_PATH" > /dev/null
+          echo "W030_SMOKE_EVIDENCE_BEGIN"
+          python -c 'import os,pathlib;print(pathlib.Path(os.environ["W030_REPORT_PATH"]).read_text())'
+          echo "W030_SMOKE_EVIDENCE_END"
+      - name: Preserve raw per-invocation W030 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w030-smoke-solver-measurements
+          path: ${{ runner.temp }}/w030_smoke_raw.json
+          if-no-files-found: ignore
+          retention-days: 90

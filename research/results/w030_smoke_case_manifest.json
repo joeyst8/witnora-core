@@ -1,0 +1,84 @@
+{
+  "entries": [
+    {
+      "case_id": "w030_d0_r0_sat_corefirst",
+      "clauses": 20,
+      "cnf_sha256": "006ac54f441d3311f620e004dd82c6f8378aeb8dcbdd8febfff379a001703c5f",
+      "expected": "SAT",
+      "noise_fingerprint_fnv64": "14695981039346656037",
+      "noise_seed": 431796658,
+      "stratum": "w026_corefirst",
+      "variables": 64
+    },
+    {
+      "case_id": "w030_d0_r0_unsat_corefirst",
+      "clauses": 20,
+      "cnf_sha256": "f058a39049b3375f434f21541f805a08442c125af16580486bbc3350c86ff219",
+      "expected": "UNSAT",
+      "noise_fingerprint_fnv64": "14695981039346656037",
+      "noise_seed": 431796658,
+      "stratum": "w026_corefirst",
+      "variables": 64
+    },
+    {
+      "case_id": "w030_d8192_r0_sat_corefirst",
+      "clauses": 8212,
+      "cnf_sha256": "1599d880e318bd8973da1bd359bab49762611b072c0dcea0e1cc4d48228fb903",
+      "expected": "SAT",
+      "noise_fingerprint_fnv64": "16086413905533854625",
+      "noise_seed": 1668174258,
+      "stratum": "w026_corefirst",
+      "variables": 64
+    },
+    {
+      "case_id": "w030_d8192_r0_sat_corelast",
+      "clauses": 8212,
+      "cnf_sha256": "25b5d28b705753a28da2cb0d64c2ae2f3af2f59091e93a3c31d44f6f25ea0aa2",
+      "expected": "SAT",
+      "noise_fingerprint_fnv64": "16086413905533854625",
+      "noise_seed": 1668174258,
+      "stratum": "w026_corelast",
+      "variables": 64
+    },
+    {
+      "case_id": "w030_d8192_r0_unsat_corefirst",
+      "clauses": 8212,
+      "cnf_sha256": "6db6ce80104534fab52c7b9826d46e6b3bde53b52b09f25fad7375932fe75867",
+      "expected": "UNSAT",
+      "noise_fingerprint_fnv64": "16086413905533854625",
+      "noise_seed": 1668174258,
+      "stratum": "w026_corefirst",
+      "variables": 64
+    },
+    {
+      "case_id": "w030_d8192_r0_unsat_corelast",
+      "clauses": 8212,
+      "cnf_sha256": "b762199eaadb7bb4dd9ed01f3fd9e305a1aa99c741b3f9c85d4b7842ec23280f",
+      "expected": "UNSAT",
+      "noise_fingerprint_fnv64": "16086413905533854625",
+      "noise_seed": 1668174258,
+      "stratum": "w026_corelast",
+      "variables": 64
+    },
+    {
+      "case_id": "decoy_partial_256_noise4096",
+      "clauses": 4888,
+      "cnf_sha256": "deaacd27f49a2b2469460fb12bdc8904070b1d01166f8a50938d3ecf085c7e33",
+      "expected": "SAT",
+      "stratum": "near_xor_decoy",
+      "variables": 128
+    },
+    {
+      "case_id": "decoy_mixed_256_noise4096",
+      "clauses": 5144,
+      "cnf_sha256": "c7117eafc59654a6fe10957482af375828cd9b092ecb52714e932b7d3c95e6f2",
+      "expected": "SAT",
+      "stratum": "near_xor_decoy",
+      "variables": 128
+    }
+  ],
+  "generator": "scripts/w030_smoke_cases.py",
+  "phase": "preregistered_exploratory_smoke",
+  "study": "W-CROSSDOMAIN-030"
+}
+
