@@ -1,0 +1,25 @@
+name: W030 Rust incremental prefix XOR proof checks
+on:
+  push:
+    paths:
+      - 'rust/witnora-ve/src/bin/witnora_w030_prefix_xor.rs'
+      - 'tests/test_w030_prefix_xor.py'
+      - 'docs/W_CROSSDOMAIN_030_PREFIX_CERTIFICATE_PROTOCOL.md'
+      - '.github/workflows/w030-prefix-xor.yml'
+  workflow_dispatch:
+jobs:
+  rust-prefix-certificate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Rust toolchain
+        run: rustc --version
+      - name: Rust exhaustive and prefix-order unit tests
+        run: cargo test --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w030_prefix_xor
+      - name: Build standalone Rust certificate detector
+        run: cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w030_prefix_xor
+      - name: Independent source clause and SAT oracle validation
+        env:
+          WITNORA_W030_PREFIX_BIN: ${{ github.workspace }}/rust/witnora-ve/target/release/witnora_w030_prefix_xor
+        run: python -m unittest tests.test_w030_prefix_xor -v
