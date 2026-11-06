@@ -1,0 +1,69 @@
+name: W031 16-seed clause-order robustness
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'scripts/w031_order_cases.py'
+      - 'scripts/benchmark_w031_order.py'
+      - 'scripts/analyze_w031_order.py'
+      - 'tests/test_w031_order_cases.py'
+      - 'tests/test_w031_order_analysis.py'
+      - 'research/results/w031_order_case_manifest.json'
+      - 'docs/W_CROSSDOMAIN_031_ORDER_ROBUSTNESS_PROTOCOL.md'
+      - '.github/workflows/w031-order-robustness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-synthetic-order-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify manifest and preregistered analyzer before timing
+        run: python -m unittest tests.test_w031_order_cases tests.test_w031_order_analysis -v
+      - name: Compile certified Rust precheck variants
+        run: |
+          cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w030_prefix_xor
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck --bin witnora_w030_prefix_xor
+          echo "W031_OLD_PRECHECK_BIN=$PWD/rust/witnora-ve/target/release/witnora_w027_xor_precheck" >> "$GITHUB_ENV"
+          echo "W031_PREFIX_BIN=$PWD/rust/witnora-ve/target/release/witnora_w030_prefix_xor" >> "$GITHUB_ENV"
+      - name: Revalidate independent Rust proof audit
+        env:
+          WITNORA_W030_PREFIX_BIN: ${{ github.workspace }}/rust/witnora-ve/target/release/witnora_w030_prefix_xor
+        run: python -m unittest tests.test_w030_prefix_xor -v
+      - name: Build pinned Kissat release 4.0.4
+        run: |
+          git clone --quiet --depth 1 --branch rel-4.0.4 https://github.com/arminbiere/kissat.git "$RUNNER_TEMP/w031-kissat"
+          cd "$RUNNER_TEMP/w031-kissat"
+          test "$(git rev-parse HEAD)" = "8af8e56f174b778aef3aa45af9f739b2a5f492c2"
+          ./configure
+          make -C build -j 2 kissat
+          echo "W031_KISSAT_BIN=$RUNNER_TEMP/w031-kissat/build/kissat" >> "$GITHUB_ENV"
+          echo "W031_KISSAT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Execute 900 precommitted cost-inclusive invocations
+        timeout-minutes: 50
+        env:
+          W031_REPORT_PATH: ${{ runner.temp }}/w031_order_raw.json
+        run: python -m scripts.benchmark_w031_order
+      - name: Validate raw dataset and run frozen analysis
+        env:
+          W031_REPORT_PATH: ${{ runner.temp }}/w031_order_raw.json
+        run: |
+          python -m json.tool "$W031_REPORT_PATH" > /dev/null
+          python -m scripts.analyze_w031_order "$W031_REPORT_PATH"
+          echo "W031 full source retained in the uploaded artifact"
+      - name: Preserve original all-seed timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w031-order-full-raw
+          path: ${{ runner.temp }}/w031_order_raw.json
+          if-no-files-found: ignore
+          retention-days: 90
