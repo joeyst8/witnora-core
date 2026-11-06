@@ -1,0 +1,46 @@
+name: W041 untouched published SATLIB polarity and Fourier interaction test
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'docs/W_CROSSDOMAIN_041_SATLIB_INTERACTION_PROTOCOL.md'
+      - 'scripts/w041_interaction_features.py'
+      - 'scripts/benchmark_w041_satlib_interactions.py'
+      - 'tests/test_w041_interaction_features.py'
+      - '.github/workflows/w041-satlib-interactions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-published-source-slice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned NumPy
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
+      - name: Verify interaction feature identities and gauge invariance
+        run: python -m unittest tests.test_w041_interaction_features -q
+      - name: Download immutable official SATLIB original
+        run: |
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 30 --max-time 180 \
+            'https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/uf20-91.tar.gz' \
+            --output source-uf20-91.tar.gz
+          echo 'be2835295e8500bb28f0314eba70bd0deaff1250b187260f7b6d0772bdf111a5  source-uf20-91.tar.gz' | sha256sum --check
+      - name: Evaluate previously unseen ranks 200-399
+        env:
+          W041_ARCHIVE_PATH: source-uf20-91.tar.gz
+          W041_REPORT_PATH: w041_satlib_raw.json
+        run: python -m scripts.benchmark_w041_satlib_interactions
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w041-new-interaction-raw
+          path: w041_satlib_raw.json
+          retention-days: 90
