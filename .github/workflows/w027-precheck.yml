@@ -1,0 +1,33 @@
+name: W027 sound XOR precheck differential gate
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - "rust/witnora-ve/src/bin/witnora_w027_xor_precheck.rs"
+      - "tests/test_w027_precheck.py"
+      - ".github/workflows/w027-precheck.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  precheck-soundness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Run Rust exact certificate tests
+        run: cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck
+      - name: Run independent source-clause and proof differential tests
+        run: |
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck
+          WITNORA_W027_PRECHECK_BIN="$PWD/rust/witnora-ve/target/release/witnora_w027_xor_precheck" python -m unittest tests.test_w027_precheck -v
