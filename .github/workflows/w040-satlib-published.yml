@@ -1,0 +1,46 @@
+name: W040 published SATLIB fixed-status conditional search test
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'docs/W_CROSSDOMAIN_040_SATLIB_PROTOCOL.md'
+      - 'scripts/w040_bounded_dpll.py'
+      - 'scripts/benchmark_w040_satlib.py'
+      - 'tests/test_w040_external.py'
+      - '.github/workflows/w040-satlib-published.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-publisher-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned NumPy
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5
+      - name: Test bounded search and strict source parsing
+        run: python -m unittest tests.test_w040_external -q
+      - name: Download publisher SATLIB uf20-91 archive
+        run: |
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 30 --max-time 180 \
+            'https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/uf20-91.tar.gz' \
+            --output w040_uf20-91.tar.gz
+          sha256sum w040_uf20-91.tar.gz
+      - name: Execute preregistered external-source trial
+        env:
+          W040_ARCHIVE_PATH: w040_uf20-91.tar.gz
+          W040_REPORT_PATH: w040_satlib_raw.json
+        run: python -m scripts.benchmark_w040_satlib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w040-satlib-official-raw
+          path: w040_satlib_raw.json
+          retention-days: 90
