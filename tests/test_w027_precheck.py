@@ -77,6 +77,38 @@ class W027PrecheckTests(unittest.TestCase):
             self.assertEqual(data["status"], "NO_CERTIFICATE")
             self.assertEqual(data["recovered_xor_equations"], 0)
 
+    def test_all_256_cube_occupancies_with_duplicates(self):
+        """Independent exhaustive SAT oracle for signed 3-clause cube corners."""
+        binary = os.environ["WITNORA_W027_PRECHECK_BIN"]
+        even = sum(1 << corner for corner in range(8) if corner.bit_count() % 2 == 0)
+        odd = 255 ^ even
+        with tempfile.TemporaryDirectory(prefix="witnora-w027-cube-") as folder:
+            path = Path(folder) / "cube.cnf"
+            for mask in range(256):
+                clauses = [
+                    [-(i + 1) if corner & (1 << i) else (i + 1) for i in range(3)]
+                    for corner in range(8) if mask & (1 << corner)
+                ]
+                if clauses:
+                    clauses.append(clauses[0][:])  # duplicate must not erase an XOR
+                clauses.reverse()  # provenance must survive source reorder
+                write_dimacs(path, clauses, n=3)
+                completed = subprocess.run([binary, str(path)], capture_output=True,
+                                           text=True, check=True)
+                data = json.loads(completed.stdout)
+                expected_rows = int(mask & even == even) + int(mask & odd == odd)
+                oracle_sat = any(
+                    all(any((assignment[abs(lit) - 1] == (lit > 0))
+                            for lit in clause) for clause in clauses)
+                    for assignment in (tuple(bool(bits & (1 << i)) for i in range(3))
+                                       for bits in range(8))
+                )
+                with self.subTest(cube_occupancy=f"{mask:08b}"):
+                    self.assertEqual(data["recovered_xor_equations"], expected_rows)
+                    self.assertEqual(data["status"], "NO_CERTIFICATE" if oracle_sat else "UNSAT_CERTIFIED")
+                    if not oracle_sat:
+                        self.assertTrue(verify_certificate(clauses, data))
+
 
 if __name__ == "__main__":
     unittest.main()

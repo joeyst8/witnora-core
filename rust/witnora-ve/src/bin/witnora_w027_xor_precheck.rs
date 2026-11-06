@@ -95,22 +95,34 @@ fn parse<R: BufRead>(input: R) -> Result<Parsed, String> {
 fn reconstruct(parsed: &Parsed) -> Vec<XorRow> {
     let mut rows = Vec::new();
     for (&triple, clauses) in &parsed.groups {
-        if clauses.len() != 4 {
-            continue;
+        // Signed clauses are corners of a Boolean 3-cube. Each of its two
+        // complementary parity tetrahedra consists of exactly four corners.
+        // A complete tetrahedron entails an XOR equation even if duplicate
+        // clauses or corners of the opposite parity are also present.
+        // Preserve source-clause provenance for the independent proof audit.
+        let mut provenance = [None; 8];
+        for &(signs, source) in clauses {
+            let corner = usize::from(signs[0] < 0)
+                | (usize::from(signs[1] < 0) << 1)
+                | (usize::from(signs[2] < 0) << 2);
+            provenance[corner].get_or_insert(source);
         }
-        let patterns = clauses.iter().map(|c| c.0).collect::<BTreeSet<_>>();
-        if patterns.len() != 4 {
-            continue;
+        for rhs in [false, true] {
+            let corners = (0..8)
+                .filter(|&corner| (corner.count_ones() % 2 == 0) == rhs)
+                .collect::<Vec<_>>();
+            let found = corners
+                .into_iter()
+                .map(|corner| provenance[corner])
+                .collect::<Option<Vec<_>>>();
+            if let Some(sources) = found {
+                rows.push(XorRow {
+                    triple,
+                    rhs,
+                    clauses: [sources[0], sources[1], sources[2], sources[3]],
+                });
+            }
         }
-        let product = clauses[0].0.iter().product::<i8>();
-        if !clauses.iter().all(|(signs, _)| signs.iter().product::<i8>() == product) {
-            continue;
-        }
-        rows.push(XorRow {
-            triple,
-            rhs: product > 0,
-            clauses: [clauses[0].1, clauses[1].1, clauses[2].1, clauses[3].1],
-        });
     }
     rows
 }
@@ -249,5 +261,40 @@ mod tests {
         let r = report_from_reader(s.as_bytes()).unwrap();
         assert_eq!(r["status"], "NO_CERTIFICATE");
         assert_eq!(r["recovered_xor_equations"], 0);
+    }
+
+    #[test]
+    fn exhaustive_cube_occupancy_and_duplicate_robustness() {
+        // Each unique 3-clause removes exactly one of the eight assignments.
+        // On one support, UNSAT occurs iff all eight corners are occupied.
+        for occupancy in 0u16..256 {
+            let mut clauses = Vec::new();
+            for corner in 0u8..8 {
+                if occupancy & (1u16 << corner) != 0 {
+                    let terms = (0..3)
+                        .map(|i| if corner & (1 << i) == 0 { (i + 1) as i32 } else { -((i + 1) as i32) })
+                        .collect::<Vec<_>>();
+                    clauses.push(terms);
+                }
+            }
+            // Exercise duplicated sources too: they must neither erase valid
+            // parity patterns nor manufacture a false contradiction.
+            if let Some(first) = clauses.first().cloned() {
+                clauses.push(first);
+            }
+            let mut text = format!("p cnf 3 {}\n", clauses.len());
+            for clause in &clauses {
+                text.push_str(&format!("{} {} {} 0\n", clause[0], clause[1], clause[2]));
+            }
+            let got = report_from_reader(text.as_bytes()).unwrap();
+            let parity_mask_even = (0u8..8)
+                .filter(|corner| corner.count_ones() % 2 == 0)
+                .fold(0u16, |mask, corner| mask | (1 << corner));
+            let parity_mask_odd = 0xff ^ parity_mask_even;
+            let expected_rows = usize::from(occupancy & parity_mask_even == parity_mask_even)
+                + usize::from(occupancy & parity_mask_odd == parity_mask_odd);
+            assert_eq!(got["recovered_xor_equations"], expected_rows, "occupancy {occupancy:08b}");
+            assert_eq!(got["status"], if occupancy == 255 { "UNSAT_CERTIFIED" } else { "NO_CERTIFICATE" });
+        }
     }
 }
