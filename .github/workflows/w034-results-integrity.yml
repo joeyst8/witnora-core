@@ -1,0 +1,72 @@
+name: W034 original formulas and exact integer proofs integrity
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w034_weighted_small_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_034_WEIGHTED_SPECTRAL_RESULTS.md'
+      - '.github/workflows/w034-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Resolve pinned numerical modules for exact weight auditor import
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5 scipy==1.17.0
+      - name: Audit compressed bytes, exact SAT tables and every integer proof
+        run: |
+          python - <<'PY'
+          import gzip,hashlib,itertools,json,random
+          from pathlib import Path
+          from scripts.w033_walsh_bound import walsh_bound
+          from scripts.w034_weighted_walsh import audit_integer_weights
+
+          packed=Path('research/results/w034_weighted_small_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest()=='fedfa2a11e4ea4f7e3c4973d0e862258a66cee9e78df5945fd0f11ef0078207e'
+          original=gzip.decompress(packed)
+          assert hashlib.sha256(original).hexdigest()=='261ca8144fc27799c6790012157c42986be37d0c0378f0dbdac7a98d8681a8c7'
+          data=json.loads(original)
+          assert data['study']=='W-CROSSDOMAIN-034' and len(data['rows'])==200
+          rng=random.Random(340034)
+          pool=[[a*s[0],b*s[1],c*s[2]] for a,b,c in itertools.combinations(range(1,6),3)
+                for s in itertools.product((-1,1),repeat=3)]
+          seen=set()
+          outcomes=[]
+          for m in (12,16,20,24,32):
+              for rep in range(40):
+                  row=data['rows'][len(seen)]
+                  case_id=f'n5_m{m}_r{rep:02}'
+                  assert row['case_id']==case_id and case_id not in seen
+                  seen.add(case_id)
+                  clauses=rng.sample(pool,m)
+                  assert clauses==row['clauses']
+                  min_viol=min(sum(not any(bits[abs(l)-1]==(l>0) for l in clause)
+                                   for clause in clauses)
+                               for bits in itertools.product((False,True),repeat=5))
+                  assert row['min_violated_by_truth_table']==min_viol
+                  truth='UNSAT' if min_viol else 'SAT'
+                  assert row['ground_truth']==truth
+                  audited=audit_integer_weights(clauses,5,row['weights'])
+                  assert audited['status']==row['weighted_status']
+                  assert audited['lower_bound_numerator']==row['exact_weighted_bound_numerator']
+                  assert walsh_bound(5,clauses)['status']==row['unweighted_status']
+                  if truth=='SAT':
+                      assert row['weighted_status']=='NO_CERTIFICATE'
+                  outcomes.append(row)
+          assert len(seen)==200
+          assert sum(r['ground_truth']=='UNSAT' for r in outcomes)==77
+          assert sum(r['weighted_status']=='UNSAT_CERTIFIED' for r in outcomes)==74
+          assert sum(r['unweighted_status']=='UNSAT_CERTIFIED' for r in outcomes)==0
+          print('W034_INTEGRITY_OK: 200 complete source formulas and exact weighted proofs')
+          PY
