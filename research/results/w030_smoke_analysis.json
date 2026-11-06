@@ -1,0 +1,132 @@
+{
+  "analysis": "exploratory_eight_case_cost_inclusive",
+  "case_count": 8,
+  "cases": [
+    {
+      "case_id": "decoy_mixed_256_noise4096",
+      "clauses_read_by_w030": 5144,
+      "clauses_total": 5144,
+      "expected": "SAT",
+      "kissat_ms": 6.891352,
+      "kissat_over_w030_ratio": 0.5966135620278458,
+      "prefix_read_fraction": 1.0,
+      "w027_ms": 11.477179,
+      "w027_over_w030_ratio": 0.9936280493611687,
+      "w030_ms": 11.55078
+    },
+    {
+      "case_id": "decoy_partial_256_noise4096",
+      "clauses_read_by_w030": 4888,
+      "clauses_total": 4888,
+      "expected": "SAT",
+      "kissat_ms": 6.656759,
+      "kissat_over_w030_ratio": 0.602717806125544,
+      "prefix_read_fraction": 1.0,
+      "w027_ms": 11.295847,
+      "w027_over_w030_ratio": 1.0227511799916158,
+      "w030_ms": 11.04457
+    },
+    {
+      "case_id": "w030_d0_r0_sat_corefirst",
+      "clauses_read_by_w030": 20,
+      "clauses_total": 20,
+      "expected": "SAT",
+      "kissat_ms": 3.091014,
+      "kissat_over_w030_ratio": 0.5440666465422178,
+      "prefix_read_fraction": 1.0,
+      "w027_ms": 5.56481,
+      "w027_over_w030_ratio": 0.9794933039269957,
+      "w030_ms": 5.681315
+    },
+    {
+      "case_id": "w030_d0_r0_unsat_corefirst",
+      "clauses_read_by_w030": 16,
+      "clauses_total": 20,
+      "expected": "UNSAT",
+      "kissat_ms": 3.141299,
+      "kissat_over_w030_ratio": 1.267136173717878,
+      "prefix_read_fraction": 0.8,
+      "w027_ms": 2.53635,
+      "w027_over_w030_ratio": 1.023112041932124,
+      "w030_ms": 2.479054
+    },
+    {
+      "case_id": "w030_d8192_r0_sat_corefirst",
+      "clauses_read_by_w030": 8212,
+      "clauses_total": 8212,
+      "expected": "SAT",
+      "kissat_ms": 8.319098,
+      "kissat_over_w030_ratio": 0.5953038457577963,
+      "prefix_read_fraction": 1.0,
+      "w027_ms": 13.873573,
+      "w027_over_w030_ratio": 0.9927748610848829,
+      "w030_ms": 13.974541
+    },
+    {
+      "case_id": "w030_d8192_r0_sat_corelast",
+      "clauses_read_by_w030": 8212,
+      "clauses_total": 8212,
+      "expected": "SAT",
+      "kissat_ms": 8.498736,
+      "kissat_over_w030_ratio": 0.6072880256716675,
+      "prefix_read_fraction": 1.0,
+      "w027_ms": 13.94762,
+      "w027_over_w030_ratio": 0.9966449849270131,
+      "w030_ms": 13.994572
+    },
+    {
+      "case_id": "w030_d8192_r0_unsat_corefirst",
+      "clauses_read_by_w030": 16,
+      "clauses_total": 8212,
+      "expected": "UNSAT",
+      "kissat_ms": 7.374087,
+      "kissat_over_w030_ratio": 2.5140109968784903,
+      "prefix_read_fraction": 0.001948368241597662,
+      "w027_ms": 6.113393,
+      "w027_over_w030_ratio": 2.084208828867897,
+      "w030_ms": 2.933196
+    },
+    {
+      "case_id": "w030_d8192_r0_unsat_corelast",
+      "clauses_read_by_w030": 8208,
+      "clauses_total": 8212,
+      "expected": "UNSAT",
+      "kissat_ms": 7.497823,
+      "kissat_over_w030_ratio": 1.2903636233467364,
+      "prefix_read_fraction": 0.9995129079396006,
+      "w027_ms": 6.144951,
+      "w027_over_w030_ratio": 1.057536465937933,
+      "w030_ms": 5.810628
+    }
+  ],
+  "claim_scope": "only eight precommitted CNFs and three repeats per arm; no cross-domain effect inference or claim about P=NP",
+  "equal_case_weight_mean_ms": {
+    "kissat_ms": 6.433771,
+    "w027_ms": 8.869215375,
+    "w030_ms": 8.433582
+  },
+  "illustrative_d8192_order_break_even": [
+    {
+      "arrangement": "corefirst",
+      "illustrative_unsat_fraction_to_break_even": 0.5601481686322975,
+      "inference": "single matched seed, descriptive only",
+      "matched_seed_count": 1,
+      "sat_overhead_ms": 5.655443,
+      "unsat_saving_ms": 4.440891000000001
+    },
+    {
+      "arrangement": "corelast",
+      "illustrative_unsat_fraction_to_break_even": 0.765113779962804,
+      "inference": "single matched seed, descriptive only",
+      "matched_seed_count": 1,
+      "sat_overhead_ms": 5.495836000000001,
+      "unsat_saving_ms": 1.687195
+    }
+  ],
+  "study": "W-CROSSDOMAIN-030",
+  "timed_invocations": 72,
+  "w030_extra_vs_kissat_percent": 31.083030465336737,
+  "w030_faster_than_kissat_sat_cases": 0,
+  "w030_faster_than_kissat_unsat_cases": 3,
+  "w030_saving_vs_w027_percent": 4.911746491442037
+}

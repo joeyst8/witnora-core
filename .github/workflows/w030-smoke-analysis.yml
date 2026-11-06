@@ -1,0 +1,22 @@
+name: W030 smoke result integrity and analysis audit
+on:
+  push:
+    paths:
+      - 'scripts/analyze_w030_smoke.py'
+      - 'tests/test_w030_smoke_analysis.py'
+      - 'research/results/w030_smoke_solver_measurements.json'
+      - 'research/results/w030_smoke_analysis.json'
+      - 'docs/W_CROSSDOMAIN_030_SMOKE_RESULTS.md'
+      - '.github/workflows/w030-smoke-analysis.yml'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify archived statistics exactly
+        run: python -m unittest tests.test_w030_smoke_analysis -v
+      - name: Check raw source count and cost direction
+        run: |
+          python -c 'import json; from pathlib import Path; r=json.loads(Path("research/results/w030_smoke_analysis.json").read_text()); assert r["timed_invocations"]==72; assert r["w030_extra_vs_kissat_percent"]>0; assert r["w030_faster_than_kissat_unsat_cases"]==3; assert r["w030_faster_than_kissat_sat_cases"]==0; print("W030 archive and headline claims verified")'
