@@ -1,0 +1,40 @@
+name: W033 exact Fourier certificate external-domain exploration
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'scripts/w033_walsh_bound.py'
+      - 'scripts/benchmark_w033_walsh_external.py'
+      - 'tests/test_w033_walsh_bound.py'
+      - 'docs/W_CROSSDOMAIN_033_SPECTRAL_CERTIFICATE_PROTOCOL.md'
+      - '.github/workflows/w033-spectral-external.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-spectral-proof-experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Exhaustively audit seeded spectral soundness
+        run: python -m unittest tests.test_w033_walsh_bound -v
+      - name: Source-verify eight external CNFs and compute exact spectral lower bounds
+        timeout-minutes: 20
+        env:
+          W033_REPORT_PATH: ${{ runner.temp }}/w033_walsh_external_raw.json
+        run: python -m scripts.benchmark_w033_walsh_external
+      - name: Preserve original exact external spectral evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w033-spectral-external-raw
+          path: ${{ runner.temp }}/w033_walsh_external_raw.json
+          if-no-files-found: ignore
+          retention-days: 90
