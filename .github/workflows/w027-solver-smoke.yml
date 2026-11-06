@@ -1,0 +1,76 @@
+name: W027 exploratory cost-inclusive solver smoke
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - "scripts/benchmark_w027_smoke.py"
+      - "tests/test_w027_smoke_harness.py"
+      - ".github/workflows/w027-solver-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exploratory-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Build verified Rust precheck and run its unit tests
+        run: |
+          cargo test --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck
+          cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin witnora_w027_xor_precheck
+          echo "W027_PRECHECK_BIN=$PWD/rust/witnora-ve/target/release/witnora_w027_xor_precheck" >> "$GITHUB_ENV"
+      - name: Independently test benchmark harness
+        run: python -m unittest tests.test_w027_smoke_harness tests.test_w027_precheck -v
+        env:
+          WITNORA_W027_PRECHECK_BIN: ${{ github.workspace }}/rust/witnora-ve/target/release/witnora_w027_xor_precheck
+      - name: Build pinned Kissat rel-4.0.4
+        run: |
+          git clone --quiet --depth 1 --branch rel-4.0.4 https://github.com/arminbiere/kissat.git "$RUNNER_TEMP/w027-kissat"
+          cd "$RUNNER_TEMP/w027-kissat"
+          test "$(git rev-parse HEAD)" = "8af8e56f174b778aef3aa45af9f739b2a5f492c2"
+          ./configure
+          make -C build -j 2 kissat
+          echo "W027_KISSAT_BIN=$RUNNER_TEMP/w027-kissat/build/kissat" >> "$GITHUB_ENV"
+          echo "W027_KISSAT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Build pinned CryptoMiniSat 5.17.0 (best-effort optional arm)
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgmp-dev zlib1g-dev ninja-build cmake
+          git clone --quiet --depth 1 --branch release/v5.17.0 https://github.com/msoos/cryptominisat.git "$RUNNER_TEMP/w027-cms"
+          cmake -S "$RUNNER_TEMP/w027-cms" -B "$RUNNER_TEMP/w027-cms/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+          cmake --build "$RUNNER_TEMP/w027-cms/build" -j 2
+          CMS_BIN=$(find "$RUNNER_TEMP/w027-cms/build" -type f -name cryptominisat5 -executable -print -quit)
+          test -n "$CMS_BIN"
+          echo "W027_CMS_BIN=$CMS_BIN" >> "$GITHUB_ENV"
+          echo "W027_CMS_SHA=$(git -C "$RUNNER_TEMP/w027-cms" rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Run precommitted cost-inclusive exploratory smoke
+        env:
+          W027_REPORT_PATH: ${{ runner.temp }}/w027_solver_smoke.json
+        run: python -m scripts.benchmark_w027_smoke
+      - name: Validate and expose original raw JSON for durable archive
+        env:
+          W027_REPORT_PATH: ${{ runner.temp }}/w027_solver_smoke.json
+        run: |
+          python -m json.tool "$W027_REPORT_PATH" > /dev/null
+          echo "W027_EVIDENCE_BEGIN"
+          python -c 'import os,pathlib;print(pathlib.Path(os.environ["W027_REPORT_PATH"]).read_text())'
+          echo "W027_EVIDENCE_END"
+      - name: Preserve all raw solver measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w027-exploratory-solver-smoke
+          path: ${{ runner.temp }}/w027_solver_smoke.json
+          if-no-files-found: ignore
