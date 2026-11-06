@@ -1,0 +1,60 @@
+name: W033 exact spectral external results integrity
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w033_walsh_external_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_033_SPECTRAL_EXTERNAL_RESULTS.md'
+      - '.github/workflows/w033-results-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-spectral-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify frozen source identities and all exact bound arithmetic
+        run: |
+          python -m unittest tests.test_w033_walsh_bound -q
+          python - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+          from scripts.w032_external_cases import cases_metadata
+
+          packed = Path('research/results/w033_walsh_external_raw.json.gz').read_bytes()
+          assert hashlib.sha256(packed).hexdigest() == '9acfcb39adef7123f75a58c72dfb0be32eadfa24268bdbcb9ab9fe2d597e266d'
+          raw = gzip.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest() == '975df576c7657fb5eba653e76cb2ce3781d0bd10d2f92a621d43b7361c0cda90'
+          data = json.loads(raw)
+          assert data['study'] == 'W-CROSSDOMAIN-033'
+          assert len(data['results']) == data['external_case_count'] == 8
+          entries = {e['case_id']: e for e in cases_metadata() if e['stratum'] == 'official_external_vlsat2'}
+          assert len(entries) == 8
+          seen = set()
+          for row in data['results']:
+              name = row['case_id']
+              assert name in entries and name not in seen
+              seen.add(name)
+              e = entries[name]
+              assert row['original_source_sha256'] == e['cnf_sha256']
+              assert row['publisher_expected'] == e['expected']
+              assert row['original_variables'] == e['variables']
+              assert row['original_clauses'] == e['clauses']
+              assert row['retained_width_at_most_3'] + row['skipped_width_above_3'] == e['clauses']
+              s = row['spectral_result']
+              assert s['source_clauses'] == row['retained_width_at_most_3']
+              assert s['denominator'] == 8
+              assert s['lower_bound_numerator'] == s['constant_numerator'] - s['nonconstant_l1_numerator']
+              assert (s['status'] == 'UNSAT_CERTIFIED') == (s['lower_bound_numerator'] > 0)
+              assert e['expected'] == 'UNSAT' or s['status'] == 'NO_CERTIFICATE'
+          assert seen == set(entries)
+          print('W033_INTEGRITY_OK',len(seen),'official source cases verified')
+          PY
