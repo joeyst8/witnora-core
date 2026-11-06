@@ -23,6 +23,10 @@ Frozen size-stratified fivefold predictions, with the exact same five clause-cou
 - Per-clause-count MSE improvement is not universal: at 24 clauses **0.10091 → 0.09039**, 32 **0.19803 → 0.16743**, 40 **0.10923 → 0.11129 (worse)**, 48 **0.04708 → 0.04050**, 56 **0.03884 → 0.04186 (worse)**.
 - Group composition varies strongly: 24 clauses **40 SAT / 0 UNSAT**; 32 **36/4**, 40 **14/26**, 48 **9/31**, 56 **3/37**. Size indicators already condition on that imbalance in both models, but future work should stratify by SAT label or target separate search regimes.
 
+### Exploratory diagnostic: controlling for the true answer
+
+After inspecting the frozen outcome, we also ran a **post-hoc, non-deployable oracle-label control** (`scripts/w038_oracle_label_diagnostic.py`) that gives both predictive models the true SAT/UNSAT label *in addition* to clause count. The oracle-label baseline's held-out MSE is **0.086595** and adding the same three geometric features gives **0.084216**, just **2.75%** improvement. This figure is not preregistered, has no independent confirmatory p-value, and uses an answer that an ordinary solver cannot know ahead of time. It suggests some of the original 8.63% effect might track SAT versus UNSAT behavior, not independent proof-search difficulty. A source-family, label-conditional replication is needed to distinguish these mechanisms.
+
 ## The useful mathematical simplification and its cost
 
 The three prechosen source-only features are:

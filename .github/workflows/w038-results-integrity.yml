@@ -82,3 +82,16 @@ jobs:
           assert math.isclose((1+sum(v>=observed for v in null))/201,d['permutation_p'],rel_tol=1e-12)
           print('W038_INTEGRITY_OK: regenerated source, SAT answers, all features, held-out predictions, 200 permutations')
           PY
+      - name: Reproduce exploratory nondeployable SAT-label control
+        run: |
+          python - <<'PY'
+          import gzip,json,math
+          from pathlib import Path
+          from scripts.w038_oracle_label_diagnostic import oracle_label_control
+          d=json.loads(gzip.decompress(Path('research/results/w038_independent_raw.json.gz').read_bytes()))
+          results=oracle_label_control(d['rows'])
+          assert math.isclose(results['oracle_label_baseline_mse'],0.08659475789968037,rel_tol=1e-10)
+          assert math.isclose(results['oracle_label_plus_geometry_mse'],0.08421609173276505,rel_tol=1e-10)
+          assert math.isclose(results['relative_mse_improvement'],0.027468939513301607,rel_tol=1e-10)
+          print('W038_EXPLORATORY_ORACLE_LABEL_CHECK_OK',results)
+          PY
