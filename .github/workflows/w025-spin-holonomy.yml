@@ -37,6 +37,13 @@ jobs:
         run: |
           rust/witnora-ve/target/release/witnora_spin_holonomy --json > "$W025_REPORT_PATH"
           python -m json.tool "$W025_REPORT_PATH" > /dev/null
+      - name: Export raw Rust evidence in logs for durable archive
+        env:
+          W025_REPORT_PATH: ${{ runner.temp }}/w025_spin_holonomy.json
+        run: |
+          echo "W025_EVIDENCE_BEGIN"
+          python -c 'import os,pathlib; print(pathlib.Path(os.environ["W025_REPORT_PATH"]).read_text())'
+          echo "W025_EVIDENCE_END"
       - name: Upload raw independent evidence
         if: always()
         uses: actions/upload-artifact@v4
