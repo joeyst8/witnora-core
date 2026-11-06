@@ -1,0 +1,42 @@
+name: W036 source-verified local prefix proof gate exploratory pilot
+
+on:
+  push:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'scripts/w036_local_gate.py'
+      - 'scripts/benchmark_w036_local_gate.py'
+      - 'tests/test_w036_local_gate.py'
+      - '.github/workflows/w036-local-prefix-pilot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prefix-proof-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install bounded LP proof candidate dependencies
+        run: |
+          python -m pip install --only-binary=:all: numpy==2.3.5 scipy==1.17.0
+      - name: Test prefix-bound I/O and source-only certificate invariants
+        run: python -m unittest tests.test_w036_local_gate tests.test_w034_weighted_walsh -v
+      - name: Publisher hash audit and 16-case three-budget local proof pilot
+        timeout-minutes: 25
+        env:
+          W036_REPORT_PATH: ${{ runner.temp }}/w036_local_raw.json
+        run: python -m scripts.benchmark_w036_local_gate
+      - name: Preserve source indices, budget and independent proof evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w036-local-prefix-raw
+          path: ${{ runner.temp }}/w036_local_raw.json
+          if-no-files-found: ignore
+          retention-days: 90
