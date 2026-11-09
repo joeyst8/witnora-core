@@ -1,0 +1,32 @@
+name: W042 archived negative-result integrity
+
+on:
+  push:
+    branches: [research/w042-actionable-branching]
+    paths:
+      - 'research/results/w042_satlib_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_042_ACTIONABLE_BRANCHING_RESULTS.md'
+      - 'scripts/audit_w042_results.py'
+      - '.github/workflows/w042-results-integrity.yml'
+  pull_request:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'research/results/w042_satlib_raw.json.gz'
+      - 'docs/W_CROSSDOMAIN_042_ACTIONABLE_BRANCHING_RESULTS.md'
+      - 'scripts/audit_w042_results.py'
+      - '.github/workflows/w042-results-integrity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  immutable-raw-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Replay original archived sources, verdicts, witnesses, costs and probe identities
+        run: python -m scripts.audit_w042_results
