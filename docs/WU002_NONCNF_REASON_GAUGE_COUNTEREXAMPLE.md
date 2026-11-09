@@ -1,6 +1,6 @@
 # WU-002 — A non-CNF reason exposes coordinate-graph gauge dependence
 
-**Status:** finite falsification completed, 4 Rust tests passed. **Claim
+**Status:** finite falsification completed, 5 Rust tests passed. **Claim
 boundary:** This refutes a *naive graph-construction hypothesis* in our
 research, not the 2026 CDCL(⊕) algorithm or the unresolved semantic parity
 1-UIP problem. No SAT speedup, no new complexity bound, no P-vs-NP claim.
@@ -41,6 +41,12 @@ true, the reason reduces to the unit `c⊕d=1`. With `d=0` already true,
 this can be represented as `c=1`. Crucially, the clause is semantically
 equivalent to `¬b ∨ (c⊕d=1)`; it does **not** simplify to a single CNF clause
 on the original variables.
+
+We checked the last claim algebraically: the clause's falsifying affine
+space has independent constraints `b=1` and `c⊕d=0`. Only `b` is individually
+fixed; `c` and `d` vary together. But the falsifying set of any one ordinary
+Boolean CNF clause is an axis-aligned subcube generated entirely by fixed
+single-variable assignments. The two spaces therefore cannot coincide.
 
 Under the known `a=1`, these are two **equally legitimate** propagated units:
 
@@ -96,9 +102,10 @@ cargo test --bin wu002_reason_gauge
 cargo run --bin wu002_reason_gauge
 ```
 
-Four tests verify the two displayed propagation representatives and graph
+Five tests verify the two displayed propagation representatives and graph
 dominators, all eight legal affine row representatives, the exact invariant
-intersection, all six ordered generator bases, and 2,000 deterministic
+intersection, the non-CNF semantic distinction, all six ordered generator
+bases, and 2,000 deterministic
 independent row-coordinate reconstructions.
 All linear operations use GF(2) elimination; no Boolean assignment
 enumeration is used.

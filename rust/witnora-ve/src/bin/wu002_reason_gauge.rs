@@ -272,6 +272,30 @@ mod tests {
         }
     }
 
+    #[test]
+    fn xor_reason_cannot_be_one_boolean_cnf_clause() {
+        let n = 4;
+        let b_true = 0b0010 | (1 << n);
+        let cd_zero = 0b1100;
+        let f = [cd_zero, b_true ^ cd_zero];
+        assert_eq!(rank(f.to_vec(), n + 1), 2);
+        // F contains b=1 and no individual assignment for a, c, or d.
+        // The falsity set of a single ordinary Boolean CNF clause is an
+        // axis-aligned subcube, generated only by fixed-variable equations.
+        // F has an extra essential non-axis-aligned relation c XOR d=0.
+        let mut fixed_variables = Vec::new();
+        for variable in 0..n {
+            for rhs in 0..=1u64 {
+                let row = (1 << variable) | (rhs << n);
+                if coordinates(&f, row, n + 1).is_some() {
+                    fixed_variables.push(row);
+                }
+            }
+        }
+        assert_eq!(fixed_variables, [b_true]);
+        assert_eq!(rank(fixed_variables, n + 1), 1);
+    }
+
     fn next(state: &mut u64) -> u64 {
         *state ^= *state << 13;
         *state ^= *state >> 7;
