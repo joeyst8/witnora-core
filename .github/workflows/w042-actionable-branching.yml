@@ -9,6 +9,14 @@ on:
       - 'scripts/benchmark_w042_branching.py'
       - 'tests/test_w042_branching.py'
       - '.github/workflows/w042-actionable-branching.yml'
+  pull_request:
+    branches: [research/w-crc-001-asymmetric-v1]
+    paths:
+      - 'docs/W_CROSSDOMAIN_042_ACTIONABLE_BRANCHING_PROTOCOL.md'
+      - 'rust/witnora-ve/src/bin/w042_branching.rs'
+      - 'scripts/benchmark_w042_branching.py'
+      - 'tests/test_w042_branching.py'
+      - '.github/workflows/w042-actionable-branching.yml'
   workflow_dispatch:
 
 permissions:
