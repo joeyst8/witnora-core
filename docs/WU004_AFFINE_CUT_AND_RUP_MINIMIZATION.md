@@ -1,6 +1,6 @@
 # WU-004 — Verified affine-resolution baseline and bounded RUP(⊕) minimization
 
-**Status:** five Rust tests pass. Two separate outcomes: (A) reproducibility
+**Status:** six Rust tests pass. Two separate outcomes: (A) reproducibility
 of *established* CDCL(⊕) affine conflict learning; (B) a finite diagnostic
 showing nonunique, certified clause strengthenings. No claim of an original
 theorem, solver-speed improvement, or progress on P versus NP.
@@ -76,6 +76,9 @@ assignments**, and checked each candidate with original-formula RUP(⊕).
 | Proof-certified strict strengthenings | **4** |
 | Rejected (no contradiction derived by RUP(⊕)) | 3 |
 | Unit-propagation clause scans in the certificates (fixed order) | **3–6** |
+| Clause orders checked | **24/24** |
+| Certified candidates cheapest under at least one order (ties allowed) | **4/4** |
+| Lowest scan count within each order, across orders | **3–4** |
 
 At least two validated candidates are incomparable:
 
@@ -101,6 +104,14 @@ this is exponential in `d` and subject to a strict diagnostic budget of
 certificate-scan counts are a local verifier-cost proxy, not solver wall
 time or an independent performance benchmark.
 
+We also permuted all **24** orderings of the four original clauses.
+All four certified candidates remained RUP(⊕)-valid, but **every one of
+the four could be a cheapest candidate under at least one clause order**
+(counting ties). This is a further restricted obstruction to declaring a
+single strengthening universally "best" based on one proof-replay scan
+count. The observation is about this one small witness, not a theorem about
+general solver rankings.
+
 ## Reproduce
 
 Rust: `rust/witnora-ve/src/bin/wu004_affine_cut_baseline.rs`
@@ -111,10 +122,10 @@ cargo test --release --bin wu004_affine_cut_baseline
 cargo run --release --bin wu004_affine_cut_baseline
 ```
 
-Five deterministic tests cover CNF-first-UIP conservativity (4,872 cases),
+Six deterministic tests cover CNF-first-UIP conservativity (4,872 cases),
 eight non-CNF row gauges with separate RUP checks, affine intersection
 rebasing, the four certified hyperplanes, and hyperplane-family invariance
-under all 168 invertible 3-row generating bases.
+under all 168 invertible 3-row generating bases, plus all 24 clause orders.
 
 ## WU-005 frontier question
 

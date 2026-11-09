@@ -346,6 +346,51 @@ fn certified_hyperplane_cost_range() -> (usize, usize) {
      *costs.last().expect("at least one certified candidate"))
 }
 
+fn clause_order_sensitivity() -> (usize, usize, usize, usize) {
+    let (learned, database) = minimization_witness();
+    let all = hyperplanes(&learned, 5);
+    let valid: Vec<(usize, &Vec<u64>)> = all
+        .iter()
+        .enumerate()
+        .filter(|(_, candidate)| rup_check(candidate, &database, 4))
+        .collect();
+    let mut orderings = 0;
+    let mut winning_candidates = std::collections::HashSet::new();
+    let mut smallest_best = usize::MAX;
+    let mut largest_best = 0;
+    for i in 0..4 {
+        for j in 0..4 {
+            for k in 0..4 {
+                for l in 0..4 {
+                    let order = [i, j, k, l];
+                    if independent(&order.map(|v| 1u64 << v), 4).len() != 4 {
+                        continue; // four different clause indices
+                    }
+                    orderings += 1;
+                    let reordered = order.map(|index| database[index].clone());
+                    let scores: Vec<(usize, usize)> = valid
+                        .iter()
+                        .map(|(id, candidate)| {
+                            let (scans, _) = rup_metrics(candidate, &reordered, 4)
+                                .expect("RUP status must be invariant under clause order");
+                            (*id, scans)
+                        })
+                        .collect();
+                    let best = scores.iter().map(|&(_, scans)| scans).min().unwrap();
+                    smallest_best = smallest_best.min(best);
+                    largest_best = largest_best.max(best);
+                    for (id, scans) in scores {
+                        if scans == best {
+                            winning_candidates.insert(id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    (orderings, winning_candidates.len(), smallest_best, largest_best)
+}
+
 fn report() -> (usize, usize) {
     let mut total = 0;
     let mut mismatches = 0;
@@ -382,6 +427,8 @@ fn main() {
     println!("Bounded rank-three minimization: {candidates} hyperplanes, {verified} RUP(XOR)-verified strict strengthenings.");
     let (min_scans, max_scans) = certified_hyperplane_cost_range();
     println!("Certificate replay scan counts for certified strengthenings: {min_scans}..{max_scans} (fixed clause order).");
+    let (orders, winners, best_min, best_max) = clause_order_sensitivity();
+    println!("Across {orders} clause orders, {winners} candidate(s) tie for best at least once; winning scan costs {best_min}..{best_max}.");
     println!("At least two verified strengthenings are incomparable: (!x OR !a) and (!y OR !a).");
     println!("Boundary: this replicates a published algorithm; 1-UIP generalization remains OPEN.");
 }
@@ -454,5 +501,12 @@ mod tests {
             }
         }
         assert_eq!(bases_checked, 168);
+    }
+
+    #[test]
+    fn rup_validity_survives_all_twenty_four_clause_orders() {
+        let (orders, winners, min_best, max_best) = clause_order_sensitivity();
+        assert_eq!(orders, 24);
+        assert!(winners >= 1 && min_best > 0 && max_best >= min_best);
     }
 }
