@@ -33,6 +33,69 @@ fn consistent(rows: &[u64], n: usize) -> bool {
     rank(rows.to_vec(), n + 1) == rank(rows.to_vec(), n)
 }
 
+/// Return a basis for span(A) ∩ span(B), including RHS bits. Uses a GF(2)
+/// nullspace computation, not enumeration of assignments or row subsets.
+/// This is diagnostic infrastructure for the *next* reason-aware conjecture.
+fn intersection_basis(a: &[u64], b: &[u64], width: usize) -> Vec<u64> {
+    let independent = |rows: &[u64]| {
+        let mut result = Vec::new();
+        for &row in rows {
+            let old_rank = rank(result.clone(), width);
+            result.push(row);
+            if rank(result.clone(), width) == old_rank {
+                result.pop();
+            }
+        }
+        result
+    };
+    let left = independent(a);
+    let right = independent(b);
+    let k = left.len() + right.len();
+    assert!(k < 63 && width < 63);
+    let columns: Vec<u64> = left.iter().chain(&right).copied().collect();
+    let mut equations: Vec<u64> = (0..width)
+        .map(|bit| {
+            columns.iter().enumerate().fold(0u64, |acc, (j, col)| {
+                acc | (((col >> bit) & 1) << j)
+            })
+        })
+        .collect();
+    let mut pivots = Vec::new();
+    let mut pivot_row = 0;
+    for col in 0..k {
+        if let Some(found) = (pivot_row..width).find(|&i| (equations[i] >> col) & 1 == 1) {
+            equations.swap(pivot_row, found);
+            for i in 0..width {
+                if i != pivot_row && (equations[i] >> col) & 1 == 1 {
+                    equations[i] ^= equations[pivot_row];
+                }
+            }
+            pivots.push(col);
+            pivot_row += 1;
+        }
+    }
+    let mut result = Vec::new();
+    for free in 0..k {
+        if pivots.contains(&free) {
+            continue;
+        }
+        let mut kernel = 1u64 << free;
+        for (i, &pivot) in pivots.iter().enumerate() {
+            if (equations[i] >> free) & 1 == 1 {
+                kernel |= 1 << pivot;
+            }
+        }
+        let mut intersection_vector = 0u64;
+        for (i, &row) in left.iter().enumerate() {
+            if (kernel >> i) & 1 == 1 {
+                intersection_vector ^= row;
+            }
+        }
+        result.push(intersection_vector);
+    }
+    independent(&result)
+}
+
 /// The affine falsity space of an XNF clause has codimension q relative to
 /// the prefix. A consistent q=1 complement is an affine hyperplane, so the
 /// clause becomes one parity unit. For q>=2 its complement has full affine
@@ -163,6 +226,15 @@ fn main() {
     assert_eq!(classical_first_uip_learnt(true), vec![-2]);
     assert_eq!(classical_first_uip_learnt(false), vec![-1]);
     println!("Independent classical 1-UIP learning: chain learns !b; fork learns !a.");
+    let n = 3;
+    let a = 0b001 | (1 << n);
+    let b = 0b010 | (1 << n);
+    let c_zero = 0b100;
+    let chain_premise = intersection_basis(&[b, c_zero], &[a, b], n + 1);
+    let fork_premise = intersection_basis(&[a, c_zero], &[a, b], n + 1);
+    assert_eq!(chain_premise, [b]);
+    assert_eq!(fork_premise, [a]);
+    println!("Reason-intersection candidate: chain premise span(b); fork premise span(a).");
     println!("Consequence: rank profile alone loses essential reason provenance.");
     println!("Boundary: this does NOT refute reason-aware parity UIP definitions.");
 }
@@ -245,6 +317,53 @@ mod tests {
         assert_eq!(classify(&[b1], &[b1], n), ClauseUnderPrefix::Conflict);
         assert_eq!(classify(&[], &[b1], n), ClauseUnderPrefix::Unit);
         assert_eq!(classify(&[], &[b1, c1], n), ClauseUnderPrefix::NonUnit { quotient_rank: 2 });
+    }
+
+    #[test]
+    fn reason_intersection_distinguishes_provenance_without_basis_choice() {
+        let n = 3;
+        let a = 0b001 | (1 << n);
+        let b = 0b010 | (1 << n);
+        let c_zero = 0b100;
+        let prefix = [a, b];
+        let chain_reason = [b, c_zero];
+        let fork_reason = [a, c_zero];
+        assert_eq!(intersection_basis(&chain_reason, &prefix, n + 1), [b]);
+        assert_eq!(intersection_basis(&fork_reason, &prefix, n + 1), [a]);
+        // A different generator pair gives precisely the same premise span.
+        assert_eq!(
+            intersection_basis(&[chain_reason[0] ^ chain_reason[1], chain_reason[1]], &prefix, n + 1),
+            [b]
+        );
+        // Replacing c=1 with c⊕a=0 is an equivalent trail extension. The
+        // earlier prefix (and thus the intrinsic premise) does not change.
+        let c_true = c_zero | (1 << n);
+        let gauge_changed_c = c_true ^ a;
+        assert_eq!(rank(vec![a, b, c_true], n + 1), rank(vec![a, b, gauge_changed_c], n + 1));
+        assert_eq!(intersection_basis(&chain_reason, &prefix, n + 1), [b]);
+    }
+
+    #[test]
+    fn intersection_matches_independent_equation_span_oracle() {
+        let n = 5;
+        let mut seed = 0xd2ed_96a7_2191_b3a5u64;
+        let span = |rows: &[u64]| {
+            let mut set = HashSet::from([0u64]);
+            for &r in rows {
+                let extra: Vec<u64> = set.iter().map(|&x| x ^ r).collect();
+                set.extend(extra);
+            }
+            set
+        };
+        for _ in 0..2_000 {
+            let len_a = (next(&mut seed) % 7) as usize;
+            let len_b = (next(&mut seed) % 7) as usize;
+            let a: Vec<u64> = (0..len_a).map(|_| next(&mut seed) & 0b11_1111).collect();
+            let b: Vec<u64> = (0..len_b).map(|_| next(&mut seed) & 0b11_1111).collect();
+            let exact: HashSet<_> = span(&a).intersection(&span(&b)).copied().collect();
+            let computed = span(&intersection_basis(&a, &b, n + 1));
+            assert_eq!(exact, computed, "A={a:?}, B={b:?}");
+        }
     }
 
     fn next(state: &mut u64) -> u64 {

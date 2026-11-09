@@ -77,10 +77,10 @@ cargo test --bin wu001_parity_uip_falsifier
 cargo run --release --bin wu001_parity_uip_falsifier
 ```
 
-Four tests check the exact witness (both graph dominators and the independent
-resolution trace), all six ordered bases of the same
-two-dimensional falsity span, affine consistency cases, and 4,000 fixed-seed
-row systems against an independent explicit **equation-span** oracle
+Six tests check the exact witness (both graph dominators and the independent
+resolution trace), all six ordered bases of the same two-dimensional falsity
+span, affine consistency cases, 4,000 fixed-seed row systems, and 2,000
+independent intersection cases against explicit **equation-span** oracles
 (enumerates subsets of equations, not Boolean variable assignments).
 
 ## Frontier direction H1: reason-aware, basis-independent dominators
@@ -93,6 +93,25 @@ The next hypothesis is deliberately narrower:
 > hypergraph of valid CDCL(⊕) reasons, invariant under equivalent changes of
 > equation basis, whose restriction to ordinary CNF agrees with graph 1-UIP
 > and which produces an asserting Res(⊕)-checkable cut.
+
+**First testable building block.** For a propagation with reason clause `R_i`,
+let `F_i = neg(R_i)` be the span of its falsifying equations, and let
+`P_i = span(f_1,…,f_(i−1))` denote the earlier true-unit span. Define
+
+    K_i = F_i ∩ P_i.
+
+As a subspace, `K_i` does not change when any generators of either argument
+are replaced with equivalent ones. The dimension of the residual reason
+`F_i / K_i` is one for a valid propagation. In the counterexample above,
+the reason-intersection diagnostic gives `K_c = span(b=1)` for the chain,
+versus `K_c = span(a=1)` for the fork; it therefore preserves provenance
+discarded by rank alone. A polynomial-time GF(2) nullspace implementation
+computes these intersections and passes 2,000 independent finite cases.
+
+This **does not establish** that `K_i` alone is a complete causal reason or
+that a unique parity UIP exists. In particular, recording a particular
+propagated affine equation rather than its quotient class can introduce
+artificial dependencies on older rows; further counterexamples are needed.
 
 This is **unproven and may fail**. A single equation is not the right
 primitive unless reason/decision labels break the GL(k,2) symmetry: for
