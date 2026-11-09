@@ -1,0 +1,59 @@
+name: W042 published SATLIB action-guided native branching
+
+on:
+  push:
+    branches: [research/w042-actionable-branching]
+    paths:
+      - 'docs/W_CROSSDOMAIN_042_ACTIONABLE_BRANCHING_PROTOCOL.md'
+      - 'rust/witnora-ve/src/bin/w042_branching.rs'
+      - 'scripts/benchmark_w042_branching.py'
+      - 'tests/test_w042_branching.py'
+      - '.github/workflows/w042-actionable-branching.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  published-branching:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install independent Glucose3 oracle
+        run: python -m pip install --disable-pip-version-check 'python-sat==1.8.dev24'
+      - name: Native Rust unit tests
+        run: cargo test --manifest-path rust/witnora-ve/Cargo.toml --bin w042_branching
+      - name: Build release native research binary
+        run: cargo build --release --manifest-path rust/witnora-ve/Cargo.toml --bin w042_branching
+      - name: Verify independent random CNFs and source parser
+        env:
+          W042_RUST_BINARY: rust/witnora-ve/target/release/w042_branching
+        run: python -m unittest tests.test_w042_branching -v
+      - name: Download and SHA-check both independent published source sets
+        run: |
+          mkdir -p w042-sources
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 30 --max-time 180 \
+            'https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/uf50-218.tar.gz' \
+            --output w042-sources/uf50-218.tar.gz
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 30 --max-time 180 \
+            'https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/RND3SAT/uuf50-218.tar.gz' \
+            --output w042-sources/uuf50-218.tar.gz
+          echo 'a40862e52dfdce78620b037254579a02dbda8182d2879433658a4c15cb00327c  w042-sources/uf50-218.tar.gz' | sha256sum --check
+          echo '24cc9f492673e0f975fecc56b3a4d8ac21c385cc46205d83b7491a787f43e13d  w042-sources/uuf50-218.tar.gz' | sha256sum --check
+      - name: Run preregistered W042 on 32 SAT and 32 UNSAT original CNFs
+        env:
+          W042_RUST_BINARY: rust/witnora-ve/target/release/w042_branching
+          W042_ARCHIVE_DIR: w042-sources
+          W042_REPORT_PATH: w042_published_raw.json
+        run: python -m scripts.benchmark_w042_branching
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w042-preregistered-raw
+          path: w042_published_raw.json
+          retention-days: 90
