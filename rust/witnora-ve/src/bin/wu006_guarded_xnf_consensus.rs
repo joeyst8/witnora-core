@@ -16,7 +16,7 @@ fn rank(mut rows: Vec<u64>, width: usize) -> usize {
     r
 }
 
-fn independent(rows: &[u64], width: usize) -> Vec<u64> {
+pub(crate) fn independent(rows: &[u64], width: usize) -> Vec<u64> {
     let mut b = Vec::new();
     for &row in rows {
         let old = b.len();
@@ -30,7 +30,7 @@ fn contained(a: &[u64], b: &[u64], width: usize) -> bool {
     rank([a, b].concat(), width) == rank(b.to_vec(), width)
 }
 
-fn same_span(a: &[u64], b: &[u64], width: usize) -> bool {
+pub(crate) fn same_span(a: &[u64], b: &[u64], width: usize) -> bool {
     contained(a, b, width) && contained(b, a, width)
 }
 
@@ -75,7 +75,7 @@ fn intersect(a: &[u64], b: &[u64], width: usize) -> Vec<u64> {
 // exactly one dimension over their intersection, and the independent
 // dimensions are complementary modulo that intersection. Their conjunction
 // entails the clause whose falsity span is the intersection.
-fn semantic_consensus(a: &[u64], b: &[u64], width: usize) -> Option<Vec<u64>> {
+pub(crate) fn semantic_consensus(a: &[u64], b: &[u64], width: usize) -> Option<Vec<u64>> {
     let left = independent(a, width);
     let right = independent(b, width);
     let common = intersect(&left, &right, width);
@@ -88,7 +88,7 @@ fn semantic_consensus(a: &[u64], b: &[u64], width: usize) -> Option<Vec<u64>> {
 
 // Independent parity unit-propagation/RUP replay; input rows describe
 // falsity of each *whole clause*, not asserted unit equations.
-fn rup_replay(start: &[u64], clauses: &[Vec<u64>], n: usize) -> (bool, usize) {
+pub(crate) fn rup_replay(start: &[u64], clauses: &[Vec<u64>], n: usize) -> (bool, usize) {
     let width = n + 1;
     let one = 1 << n;
     let mut known = independent(start, width);
@@ -115,7 +115,7 @@ fn rup_replay(start: &[u64], clauses: &[Vec<u64>], n: usize) -> (bool, usize) {
     }
 }
 
-fn exact_hyperplanes(f: &[u64], width: usize) -> Vec<Vec<u64>> {
+pub(crate) fn exact_hyperplanes(f: &[u64], width: usize) -> Vec<Vec<u64>> {
     let b = independent(f, width);
     let d = b.len();
     assert!((2..=10).contains(&d));
@@ -148,7 +148,7 @@ fn extend_from_anchor(f: &[u64], k: &[u64], width: usize) -> Vec<Vec<u64>> {
 }
 
 // Whole-system Gaussian closure is valid *only* for proved unit clauses.
-fn unit_global_candidates(f: &[u64], units: &[Vec<u64>], width: usize) -> Vec<Vec<u64>> {
+pub(crate) fn unit_global_candidates(f: &[u64], units: &[Vec<u64>], width: usize) -> Vec<Vec<u64>> {
     assert!(units.iter().all(|u| u.len() == 1));
     let basis = independent(f, width);
     let mut joined = vec![1 << (width - 1)];
@@ -157,10 +157,10 @@ fn unit_global_candidates(f: &[u64], units: &[Vec<u64>], width: usize) -> Vec<Ve
     extend_from_anchor(&basis, &anchor, width)
 }
 
-struct Fixture {
-    n: usize,
-    target: Vec<u64>,
-    guarded: Vec<Vec<u64>>,
+pub(crate) struct Fixture {
+    pub(crate) n: usize,
+    pub(crate) target: Vec<u64>,
+    pub(crate) guarded: Vec<Vec<u64>>,
 }
 
 fn guarded_path(edges: usize) -> Fixture {
@@ -183,7 +183,7 @@ fn guarded_path(edges: usize) -> Fixture {
     Fixture { n, target: vec![1 | rhs, 2 | rhs, 4 | rhs], guarded }
 }
 
-fn derive_unit_consensus(fixture: &Fixture) -> (Vec<Vec<u64>>, usize) {
+pub(crate) fn derive_unit_consensus(fixture: &Fixture) -> (Vec<Vec<u64>>, usize) {
     let mut lemmas: Vec<Vec<u64>> = Vec::new();
     let mut scans = 0;
     for i in 0..fixture.guarded.len() {
