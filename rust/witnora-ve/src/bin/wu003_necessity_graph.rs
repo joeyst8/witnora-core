@@ -185,46 +185,49 @@ fn chain_and_conjunction() -> (Trace, Trace) {
     (chain, conjunction)
 }
 
-fn enumerate_four_variable_traces() -> Vec<Trace> {
-    // All valid 4-variable DAGs of this restricted CNF form; independent
-    // reason sets for each newly propagated variable, all nonempty.
-    // Conflict involves newest variable and at least one earlier variable.
+fn enumerate_traces(n: usize) -> Vec<Trace> {
+    // All valid small n-variable DAGs of this restricted CNF form;
+    // antecedent sets are nonempty subsets of earlier variables. Conflict
+    // involves the newest variable and at least one earlier variable.
+    assert!((3..=5).contains(&n));
     let mut traces = Vec::new();
-    for parents_c in 1u64..4 {
-        for parents_d in 1u64..8 {
-            for conflict_earlier in 1u64..8 {
-                let tr = Trace {
-                    antecedents: vec![
-                        vec![0],
-                        (0..2).filter(|&p| (parents_c >> p) & 1 == 1).collect(),
-                        (0..3).filter(|&p| (parents_d >> p) & 1 == 1).collect(),
-                    ],
-                    conflict_parents: (0..3)
-                        .filter(|&p| (conflict_earlier >> p) & 1 == 1)
-                        .chain(std::iter::once(3))
+    fn extend(n: usize, index: usize, parents: &mut Vec<Vec<usize>>, out: &mut Vec<Trace>) {
+        if index == n {
+            for mask in 1u64..(1u64 << (n - 1)) {
+                out.push(Trace {
+                    antecedents: parents.clone(),
+                    conflict_parents: (0..(n - 1))
+                        .filter(|&p| (mask >> p) & 1 == 1)
+                        .chain(std::iter::once(n - 1))
                         .collect(),
-                };
-                traces.push(tr);
+                });
             }
+            return;
+        }
+        for mask in 1u64..(1u64 << index) {
+            parents.push((0..index).filter(|&p| (mask >> p) & 1 == 1).collect());
+            extend(n, index + 1, parents, out);
+            parents.pop();
         }
     }
+    extend(n, 1, &mut Vec::new(), &mut traces);
     traces
 }
 
-fn finite_collision_counts() -> (usize, usize, usize) {
-    let traces = enumerate_four_variable_traces();
-    let mut signatures: HashMap<Vec<(usize, usize)>, [usize; 4]> = HashMap::new();
+fn finite_collision_counts(n: usize) -> (usize, usize, usize) {
+    let traces = enumerate_traces(n);
+    let mut signatures: HashMap<Vec<(usize, usize)>, Vec<usize>> = HashMap::new();
     for tr in &traces {
         let signature = tr.necessity_graph();
-        let uip = first_uip(&tr.original_graph(), 4);
-        signatures.entry(signature).or_insert([0; 4])[uip] += 1;
+        let uip = first_uip(&tr.original_graph(), n);
+        signatures.entry(signature).or_insert(vec![0; n])[uip] += 1;
     }
     let ambiguous_signatures = signatures
         .values()
         .filter(|counts| counts.iter().filter(|&&v| v > 0).count() > 1)
         .count();
     let disagreeing_trace_pairs = signatures.values().map(|counts| {
-        (0..4).flat_map(|i| ((i + 1)..4).map(move |j| counts[i] * counts[j])).sum::<usize>()
+        (0..n).flat_map(|i| ((i + 1)..n).map(move |j| counts[i] * counts[j])).sum::<usize>()
     }).sum();
     (traces.len(), ambiguous_signatures, disagreeing_trace_pairs)
 }
@@ -235,11 +238,13 @@ fn main() {
     assert_eq!(same, conjunction.necessity_graph());
     assert_eq!(first_uip(&chain.original_graph(), 3), 1); // b
     assert_eq!(first_uip(&conjunction.original_graph(), 3), 0); // a
-    let (cases, ambiguous, pairs) = finite_collision_counts();
+    let (cases, ambiguous, pairs) = finite_collision_counts(4);
     println!("WU-003 H3 FALSIFIED on ordinary CNF, before parity generalization.");
     println!("Two different reason DAGs induce identical semantic leave-one-out necessity: {same:?}");
     println!("Their actual classical first UIPs are b (chain) and a (conjunction).");
     println!("Exact 4-variable scan: {cases} traces, {ambiguous} ambiguous signatures, {pairs} disagreeing trace pairs.");
+    let (cases5, ambiguous5, pairs5) = finite_collision_counts(5);
+    println!("Exact 5-variable scan: {cases5} traces, {ambiguous5} ambiguous signatures, {pairs5} disagreeing trace pairs.");
     assert!(ambiguous > 0 && pairs > 0);
     println!("Conclusion: necessity of an ancestor does not reveal whether it was an IMMEDIATE antecedent.");
 }
@@ -259,9 +264,12 @@ mod tests {
 
     #[test]
     fn exhaustive_four_variable_cnf_gate() {
-        let (cases, ambiguous, pairs) = finite_collision_counts();
+        let (cases, ambiguous, pairs) = finite_collision_counts(4);
         assert_eq!(cases, 147);
         assert!(ambiguous > 0 && pairs > 0);
+        let (cases5, ambiguous5, pairs5) = finite_collision_counts(5);
+        assert_eq!(cases5, 4725);
+        assert!(ambiguous5 > 0 && pairs5 > 0);
     }
 
     #[test]
@@ -279,7 +287,7 @@ mod tests {
         // neg(R_i) ∩ span(earlier true variables) is exactly span(p1,...,pk).
         // This is basis-intrinsic and distinguishes the two WU-003 traces;
         // it is an elementary restricted positive lemma, NOT parity 1-UIP.
-        for trace in enumerate_four_variable_traces() {
+        for trace in enumerate_traces(4).into_iter().chain(enumerate_traces(5)) {
             let n = trace.n();
             let rhs = 1 << n;
             let mut prefix = vec![1 | rhs];

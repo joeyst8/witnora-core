@@ -1,7 +1,7 @@
 # WU-003 — Semantic necessity is not a first-UIP implication graph
 
 **Status:** H3 falsified on ordinary CNF; restricted reason-subspace lemma
-passes 147 exact traces. **No claim of novel proof complexity, SAT
+passes 4,872 exact traces. **No claim of novel proof complexity, SAT
 acceleration, or resolved parity 1-UIP.**
 
 ## Source and testable question
@@ -61,8 +61,8 @@ are already identical.
 
 ### Exact finite search
 
-We enumerated a declared family of 147 four-variable selected-reason
-traces. Each has one positive decision, three subsequent positive units
+We enumerated a declared family of 147 four-variable and 4,725 five-variable
+selected-reason traces. Each has one positive decision, subsequent positive units
 whose ordinary CNF reasons use nonempty subsets of preceding variables,
 and a conflict clause falsified by the trail that includes the newest
 variable. For each trace we computed exact XNF-style unit closure under
@@ -71,11 +71,11 @@ actual classical implication-graph first-UIP.
 
 Results:
 
-| Quantity | Result |
-| --- | ---: |
-| Finite CNF traces checked | 147 |
-| Necessity signatures compatible with multiple actual 1-UIPs | 5 |
-| Pairs of traces with identical necessity signature but differing actual 1-UIPs | 411 |
+| Quantity | 4 variables | 5 variables |
+| --- | ---: | ---: |
+| Finite CNF traces checked | 147 | 4,725 |
+| Necessity signatures compatible with multiple actual 1-UIPs | 5 | 33 |
+| Pairs of traces with identical necessity signature but differing actual 1-UIPs | 411 | 82,575 |
 
 These are exact finite counts for this **restricted family**, not a
 representative benchmark of SAT instances or a theorem about arbitrary
@@ -104,7 +104,7 @@ intersection is therefore exactly the `k`-premise span. It is invariant
 under changing the displayed affine generating equations.
 
 The Rust suite verified the corresponding dimension/membership identities
-across all 147 generated CNF traces. **This is elementary linear algebra,
+across all 4,872 generated CNF traces. **This is elementary linear algebra,
 not a new theorem, and it is not sufficient to prove parity 1-UIP.**
 
 ## Reproduce
@@ -117,7 +117,7 @@ cargo test --release --bin wu003_necessity_graph
 cargo run --release --bin wu003_necessity_graph
 ```
 
-Four tests cover: the explicit counterexample, the exact 147-trace scan,
+Four tests cover: the explicit counterexample, both exhaustive finite scans,
 fixed-point affine closure behavior, and the positive restricted
 reason-intersection gate. No Boolean assignment enumeration.
 
