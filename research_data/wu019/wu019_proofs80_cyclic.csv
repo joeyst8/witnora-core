@@ -1,0 +1,3 @@
+family,n,seed,selection,build,status,solver_seconds,checker_seconds,proof_bytes,proof_sha256,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions
+embedded_unplanted,80,343598293299,cyclic,baseline,CHECKED_UNSAT,4.583962,0.325309,833665,7a5cc7d99856354bc5fb13c64660687160bea0a6db178ca5c9b049ddda66f17e,2912,21971,7161754,228193,2911,2913
+embedded_unplanted,80,343598293299,cyclic,wide,CHECKED_UNSAT,2.187907,0.310365,833665,7a5cc7d99856354bc5fb13c64660687160bea0a6db178ca5c9b049ddda66f17e,2912,21971,7161754,228193,2911,2913

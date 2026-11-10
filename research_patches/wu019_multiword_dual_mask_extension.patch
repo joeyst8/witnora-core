@@ -1,0 +1,148 @@
+--- a/src/algebra/dense/dense_gf2_vector.h
++++ b/src/algebra/dense/dense_gf2_vector.h
+@@ -32,6 +32,12 @@
+         return bits_.store()[0];
+     }
+ 
++    /// Read-only packed words for WU-019's experimental wide dual masks.
++    /// The unused high bits of the final word are zero by representation invariant.
++    std::span<const Word> packed_words() const noexcept {
++        return {bits_.store(), bits_.words()};
++    }
++
+     /// @brief Resize to `num_bits` bits, zeroing any new ones.
+     void resize(std::size_t num_bits) { bits_.resize(num_bits); }
+ 
+--- a/src/core/solver.cpp
++++ b/src/core/solver.cpp
+@@ -26,11 +26,19 @@
+     std::size_t rebuilds = 0;
+     std::size_t row_visits = 0;
+     std::size_t attempts = 0;
++    std::size_t wide_eligible = 0;
++    std::size_t wide_skipped = 0;
++    std::size_t wide_rebuilds = 0;
++    std::size_t wide_row_words = 0;
+ 
+     void print(const char* stage) const {
+         std::cerr << "WU018_DUAL stage=" << stage << " attempts=" << attempts
+                   << " eligible=" << eligible << " skipped=" << skipped
+                   << " rebuilds=" << rebuilds << " row_visits=" << row_visits
++                  << " wide_eligible=" << wide_eligible
++                  << " wide_skipped=" << wide_skipped
++                  << " wide_rebuilds=" << wide_rebuilds
++                  << " wide_row_words=" << wide_row_words
+                   << '\n';
+     }
+ 
+@@ -57,6 +65,27 @@
+         if (!ready_) {
+             rebuild(span);
+         }
++        if (word_count_ > 1) {
++            auto signature_wide = [&](const Equation& eqn) {
++                const auto words = gf2_vector_of<DenseGF2Vector>(eqn).packed_words();
++                unsigned sig = 0;
++                for (std::size_t bit = 0; bit < count_; ++bit) {
++                    unsigned parity = 0;
++                    for (std::size_t w = 0; w < word_count_; ++w) {
++                        parity ^= static_cast<unsigned>(
++                            std::popcount(words[w] & wide_masks_[bit][w]) & 1u);
++                    }
++                    sig |= parity << bit;
++                }
++                return sig;
++            };
++            const unsigned a = signature_wide(clause.row(clause.watched0));
++            if (a == 0) {
++                return false;
++            }
++            const unsigned b = signature_wide(clause.row(clause.watched1));
++            return b != 0 && a != b;
++        }
+         auto signature = [&](const Equation& eqn) {
+             const std::uint64_t word = packed(eqn);
+             unsigned sig = 0;
+@@ -78,6 +107,12 @@
+     void rebuild(const RowSpace& span) {
+         auto& stats = dual_stats();
+         ++stats.rebuilds;
++        word_count_ = (span.cols() + 63) / 64;
++        if (word_count_ > 1) {
++            rebuild_wide(span);
++            ready_ = true;
++            return;
++        }
+         count_ = 0;
+         const IndexSet& pivots = span.pivot_col_idxs();
+         for (std::size_t col = 0; col < span.cols() && count_ < masks_.size(); ++col) {
+@@ -102,9 +137,45 @@
+         ready_ = true;
+     }
+ 
++    void rebuild_wide(const RowSpace& span) {
++        auto& stats = dual_stats();
++        ++stats.wide_rebuilds;
++        count_ = 0;
++        const IndexSet& pivots = span.pivot_col_idxs();
++        for (std::size_t col = 0; col < span.cols() && count_ < wide_masks_.size(); ++col) {
++            if (!pivots.test(col)) {
++                auto& mask = wide_masks_[count_++];
++                mask.assign(word_count_, 0);
++                mask[col >> 6] = std::uint64_t{1} << (col & 63);
++            }
++        }
++        for (std::size_t idx = span.rows(); idx > 0; --idx) {
++            const Equation& row = span.row(idx - 1);
++            const auto pivot = row.leading_bit();
++            assert(pivot.has_value());
++            const auto words = gf2_vector_of<DenseGF2Vector>(row).packed_words();
++            assert(words.size() == word_count_);
++            for (std::size_t bit = 0; bit < count_; ++bit) {
++                unsigned parity = 0;
++                for (std::size_t w = 0; w < word_count_; ++w) {
++                    parity ^= static_cast<unsigned>(
++                        std::popcount(words[w] & wide_masks_[bit][w]) & 1u);
++                    ++stats.wide_row_words;
++                }
++                if (parity) {
++                    wide_masks_[bit][*pivot >> 6] ^=
++                        std::uint64_t{1} << (*pivot & 63);
++                }
++            }
++            ++stats.row_visits;
++        }
++    }
++
+     bool ready_ = false;
++    std::size_t word_count_ = 0;
+     std::size_t count_ = 0;
+     std::array<std::uint64_t, 4> masks_{};
++    std::array<std::vector<std::uint64_t>, 4> wide_masks_{};
+ };
+ 
+ } // namespace
+@@ -157,7 +228,7 @@
+     assert(conflict_check_eqn_.num_bits() == active_num_vars_ + 1);
+ 
+     DualGate dual_gate;
+-    const bool dual_enabled = repr_ == EquationRepr::dense && active_num_vars_ < 64;
++    const bool dual_enabled = repr_ == EquationRepr::dense;
+ 
+     while (true) {
+         const std::optional<ClauseSelection> selection = selector_->next_with_hint();
+@@ -179,8 +250,14 @@
+         if (dual_enabled && !selection->trigger_hint.has_value() &&
+             candidate.rows() > 1) {
+             ++stats.eligible;
++            if (active_num_vars_ >= 64) {
++                ++stats.wide_eligible;
++            }
+             if (dual_gate.skips(candidate, trail_.span())) {
+                 ++stats.skipped;
++                if (active_num_vars_ >= 64) {
++                    ++stats.wide_skipped;
++                }
+                 continue;
+             }
+         }

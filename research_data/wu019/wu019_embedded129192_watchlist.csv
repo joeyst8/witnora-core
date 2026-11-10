@@ -1,0 +1,5 @@
+seed,family,n,selection,compact,rep,build,status,seconds,sampled_rss_kb,verification,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions,profile_stage,attempts,eligible,skipped,rebuilds,row_visits,wide_eligible,wide_skipped,wide_rebuilds,wide_row_words
+554051690558,embedded_unplanted,129,leading_term_watchlist,False,0,baseline,UNSAT,3.499498,5912,UNSAT_NEEDS_PROOF,2851,21473,6253220,175037,2850,2851,,,,,,,,,,
+554051690558,embedded_unplanted,129,leading_term_watchlist,False,0,wide,UNSAT,2.484100,5760,UNSAT_NEEDS_PROOF,2851,21473,6253220,175037,2850,2851,end,6253220,5946337,4699981,24221,3018492,5946337,4699981,24221,30352611
+824634629891,embedded_unplanted,192,leading_term_watchlist,False,0,wide,UNSAT,3.016490,6532,UNSAT_NEEDS_PROOF,2978,22492,6995694,197218,2977,2981,end,6995694,6487619,5131734,25307,4748202,6487619,5131734,25307,63767352
+824634629891,embedded_unplanted,192,leading_term_watchlist,False,0,baseline,UNSAT,4.092032,6524,UNSAT_NEEDS_PROOF,2978,22492,6995694,197218,2977,2981,,,,,,,,,,
