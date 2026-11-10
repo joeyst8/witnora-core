@@ -1,0 +1,7 @@
+seed,family,n,selection,compact,rep,build,status,seconds,sampled_rss_kb,verification,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions,profile_stage,attempts,eligible,skipped,rebuilds,row_visits,wide_eligible,wide_skipped,wide_rebuilds,wide_row_words
+343598293299,embedded_unplanted,80,cyclic,False,0,baseline,UNSAT,2.500010,7196,UNSAT_NEEDS_PROOF,2912,21971,7161754,228193,2911,2913,,,,,,,,,,
+343598293299,embedded_unplanted,80,cyclic,False,0,wide,UNSAT,2.075661,7180,UNSAT_NEEDS_PROOF,2912,21971,7161754,228193,2911,2913,end,7161754,6876548,5511639,24826,1877966,6876548,5511639,24826,15023728
+343598293299,embedded_unplanted,80,cyclic,False,1,wide,UNSAT,2.046331,7156,UNSAT_NEEDS_PROOF,2912,21971,7161754,228193,2911,2913,end,7161754,6876548,5511639,24826,1877966,6876548,5511639,24826,15023728
+343598293299,embedded_unplanted,80,cyclic,False,1,baseline,UNSAT,2.186330,7156,UNSAT_NEEDS_PROOF,2912,21971,7161754,228193,2911,2913,,,,,,,,,,
+343598293299,embedded_unplanted,80,cyclic,False,2,baseline,UNSAT,2.063985,7200,UNSAT_NEEDS_PROOF,2912,21971,7161754,228193,2911,2913,,,,,,,,,,
+343598293299,embedded_unplanted,80,cyclic,False,2,wide,UNSAT,2.597515,7192,UNSAT_NEEDS_PROOF,2912,21971,7161754,228193,2911,2913,end,7161754,6876548,5511639,24826,1877966,6876548,5511639,24826,15023728
