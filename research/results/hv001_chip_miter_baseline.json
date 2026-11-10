@@ -1,0 +1,93 @@
+{
+  "experiment": "HV-001 chip miter baseline screening",
+  "date": "2026-11-10",
+  "corpus": {
+    "repository": "https://github.com/Tractables/cnfs",
+    "commit": "de4731f68e5a5bb6629269b3be1d19b44e812763",
+    "collection": "hwmcc",
+    "upstream": "https://doi.org/10.5281/zenodo.15207209"
+  },
+  "solver": {
+    "name": "Kissat",
+    "version": "4.0.4",
+    "commit": "8af8e56f174b778aef3aa45af9f739b2a5f492c2",
+    "flags": ["--time=30", "-n"]
+  },
+  "proof_checker": {
+    "name": "drat-trim",
+    "commit": "2e3b2dc0ecf938addbd779d42877b6ed69d9a985",
+    "build_flag_note": "-D_GNU_SOURCE required in this execution environment",
+    "verification_claim": "independently checked on three named cases only"
+  },
+  "machine_caveat": "shared container; timing not a controlled performance comparison",
+  "instances": [
+    {
+      "path": "hwmcc/ILA_AES_START_ENCRYPT_problem.cnf.xz",
+      "variables": 12554,
+      "clauses": 38299,
+      "source_sha256": "8d513af2c5caf9167395e1eb9143696bef71ec80af1855d1b169edd16810a9a3",
+      "result": "UNSAT",
+      "cpu_seconds": 0.04,
+      "conflicts": 0,
+      "decisions": 0,
+      "proof_verified": true,
+      "proof_sha256": "24d2fbfb08db4d806e432e3814daa8434b4445835d3b77de233a63e4035cf677"
+    },
+    {
+      "path": "hwmcc/picorv32-check-p09.cnf.xz",
+      "variables": 22020,
+      "clauses": 72911,
+      "source_sha256": "5253ff8c50b489b93ba9cc6e58553309a90ee69bd4304946bd60da1659ccc01a",
+      "result": "UNSAT",
+      "cpu_seconds": 0.07,
+      "conflicts": 0,
+      "decisions": 0,
+      "proof_verified": true,
+      "proof_sha256": "3f52fc95cdd2f0afb2c26e958704e1426ead75cc0ab636fdfbb3128e3fcd11cb"
+    },
+    {
+      "path": "hwmcc/VexRiscv-regch0-20-p1.cnf.xz",
+      "variables": 20612,
+      "clauses": 67744,
+      "source_sha256": "4378f2b8d38a5d1369ef28de8d692218b382cdd692d5ff0061c8385b00e5a95b",
+      "result": "UNSAT",
+      "cpu_seconds": 0.05,
+      "conflicts": 0,
+      "decisions": 0,
+      "proof_verified": true,
+      "proof_sha256": "6f9d7c1f4010b6edd7b7a4c940da6fd8179509792ad47261db02d11f0b468001"
+    },
+    {
+      "path": "hwmcc/ILA_Piccolo_BEQ_sanity.cnf.xz",
+      "variables": 111195,
+      "clauses": 355366,
+      "result": "UNSAT",
+      "cpu_seconds": 0.26,
+      "conflicts": 0,
+      "decisions": 0,
+      "proof_verified": false
+    },
+    {
+      "path": "hwmcc/ILA_Ridecore_XOR_sanity.cnf.xz",
+      "variables": 467972,
+      "clauses": 1589284,
+      "result": "UNSAT",
+      "cpu_seconds": 1.76,
+      "conflicts": 0,
+      "decisions": 0,
+      "proof_verified": false
+    },
+    {
+      "path": "hwmcc/ILA_Flute_XORI_sanity.cnf.xz",
+      "variables": 1293848,
+      "clauses": 4238108,
+      "result": "UNSAT",
+      "cpu_seconds": 6.81,
+      "conflicts": 0,
+      "decisions": 0,
+      "proof_verified": false
+    }
+  ],
+  "witnora_comparison_performed": false,
+  "claim": "Applied baseline established, no Witnora speedup or scientific novelty demonstrated"
+}
