@@ -26,7 +26,7 @@ pub(crate) fn independent(rows: &[u64], width: usize) -> Vec<u64> {
     b
 }
 
-fn contained(a: &[u64], b: &[u64], width: usize) -> bool {
+pub(crate) fn contained(a: &[u64], b: &[u64], width: usize) -> bool {
     rank([a, b].concat(), width) == rank(b.to_vec(), width)
 }
 
@@ -35,7 +35,7 @@ pub(crate) fn same_span(a: &[u64], b: &[u64], width: usize) -> bool {
 }
 
 // Kernel of [A|B], projected back to the left span; Gaussian elimination.
-fn intersect(a: &[u64], b: &[u64], width: usize) -> Vec<u64> {
+pub(crate) fn intersect(a: &[u64], b: &[u64], width: usize) -> Vec<u64> {
     let left = independent(a, width);
     let right = independent(b, width);
     let cols: Vec<u64> = left.iter().chain(&right).copied().collect();
