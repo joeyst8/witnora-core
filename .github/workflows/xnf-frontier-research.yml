@@ -1,4 +1,4 @@
-name: XNF frontier research reproducibility gate (WU-014 through WU-017)
+name: XNF frontier research reproducibility gate (WU-014 through WU-018)
 
 on:
   pull_request:
@@ -10,12 +10,17 @@ on:
       - "scripts/wu016_*.py"
       - "scripts/test_wu016_*.py"
       - "scripts/test_wu017_*.py"
+      - "scripts/wu018_*.py"
+      - "scripts/test_wu018_*.py"
       - "research_patches/wu016_*"
       - "research_patches/wu017_*"
+      - "research_patches/wu018_*"
       - "research_data/wu014/**"
       - "research_data/wu015/**"
       - "research_data/wu016/**"
       - "research_data/wu017/**"
+      - "research_data/wu018/**"
+      - "rust/witnora-ve/src/bin/wu018_*.rs"
       - ".github/workflows/xnf-frontier-research.yml"
   workflow_dispatch:
 
@@ -35,11 +40,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run exact-model and quotient-certificate unit tests
+      - name: Run exact-model, dual-certificate and profiler parser tests
         run: |
           python -m unittest -v \
             scripts.test_wu014_real_solver_pilot \
             scripts.test_wu015_xorcle_ablation \
             scripts.test_wu016_profile_xorcle \
             scripts.test_wu016_linear_gate \
-            scripts.test_wu017_quotient_signatures
+            scripts.test_wu017_quotient_signatures \
+            scripts.test_wu018_benchmark_dual
+
+  rust-dual-certificate-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify mathematical duals through randomized trail transitions
+        run: |
+          cargo test --release --manifest-path rust/witnora-ve/Cargo.toml \
+            --bin wu018_dual_certificate
