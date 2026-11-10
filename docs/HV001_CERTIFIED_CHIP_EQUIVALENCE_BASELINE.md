@@ -33,6 +33,12 @@ function of a reference design, and finding a counterexample when it does not.
    This repository documents its HWMCC collection as CC BY 4.0 and identifies
    the upstream Zenodo dataset. We selected six individual `.cnf.xz` files
    via a sparse checkout instead of downloading the complete corpus.
+   **Provenance limitation:** its `process_zip_cnf` importer flattens source
+   paths to basenames and skips subsequent duplicate names. Therefore the
+   flattened staged files do **not** identify whether they came from the
+   upstream `iso` or `opt` directory. Treat this screening set as
+   *variant-unknown* and retrieve exact upstream `opt` and `iso` paths before
+   making a difficulty or performance claim.
 3. Independent controls: compare optimized versus isomorphic miters when the
    source provenance can be recovered. Keep known-equivalent UNSAT instances
    distinct from deliberately mutated *non-equivalent* SAT circuits. A bug
