@@ -1,0 +1,150 @@
+//! WU-020 seeded, non-coordinate four-dual soundness test, independent of C++.
+//! No SAT assignment enumeration: arbitrary row spaces, trail extensions,
+//! truncations and watch equations across packed-word boundaries.
+
+fn leading(row: &[u64]) -> Option<usize> {
+    row.iter().enumerate().find_map(|(i, &word)| {
+        (word != 0).then(|| i * 64 + word.trailing_zeros() as usize)
+    })
+}
+
+fn parity(a: &[u64], b: &[u64]) -> bool {
+    a.iter().zip(b).fold(false, |acc, (&x, &y)| acc ^ ((x & y).count_ones() & 1 == 1))
+}
+
+fn reduce(mut row: Vec<u64>, basis: &[Vec<u64>]) -> Vec<u64> {
+    for b in basis {
+        let p = leading(b).expect("nonzero echelon row");
+        if row[p / 64] & (1u64 << (p % 64)) != 0 {
+            for (v, &w) in row.iter_mut().zip(b) { *v ^= w; }
+        }
+    }
+    row
+}
+
+fn add(basis: &mut Vec<Vec<u64>>, row: Vec<u64>) {
+    let row = reduce(row, basis);
+    if let Some(p) = leading(&row) {
+        let idx = basis.partition_point(|b| leading(b).unwrap() < p);
+        basis.insert(idx, row);
+    }
+}
+
+fn column_hash(col: usize) -> u8 {
+    let mut h = (col as u64).wrapping_add(0x9e3779b97f4a7c15);
+    h = (h ^ (h >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+    h = (h ^ (h >> 27)).wrapping_mul(0x94d049bb133111eb);
+    (h ^ (h >> 31)) as u8 & 0x0f
+}
+
+fn duals(basis: &[Vec<u64>], cols: usize) -> Vec<Vec<u64>> {
+    let words = cols.div_ceil(64);
+    let pivots = basis.iter().map(|b| leading(b).unwrap()).collect::<Vec<_>>();
+    let mut result = vec![vec![0u64; words]; 4];
+    for col in (0..cols).filter(|c| !pivots.contains(c)) {
+        let hash = column_hash(col);
+        for (bit, mask) in result.iter_mut().enumerate() {
+            if (hash >> bit) & 1 != 0 {
+                mask[col / 64] |= 1u64 << (col % 64);
+            }
+        }
+    }
+    for mask in &mut result {
+        for b in basis.iter().rev() {
+            if parity(&mask, b) {
+                let p = leading(b).unwrap();
+                mask[p / 64] ^= 1u64 << (p % 64);
+            }
+        }
+        assert!(basis.iter().all(|b| !parity(b, &mask)));
+    }
+    result
+}
+
+fn signatures(a: &[u64], basis: &[Vec<u64>], cols: usize) -> (u8, u8) {
+    let masks = duals(basis, cols);
+    let from_duals = masks.iter().enumerate().fold(0u8, |sig, (j, mask)| {
+        sig | ((parity(a, mask) as u8) << j)
+    });
+    let r = reduce(a.to_vec(), basis);
+    let pivots = basis.iter().map(|b| leading(b).unwrap()).collect::<Vec<_>>();
+    let from_reduction = (0..cols).filter(|c| !pivots.contains(c))
+        .filter(|&col| r[col / 64] & (1u64 << (col % 64)) != 0)
+        .fold(0u8, |sig, col| sig ^ column_hash(col));
+    (from_duals, from_reduction)
+}
+
+fn next(seed: &mut u64) -> u64 {
+    *seed ^= *seed >> 12;
+    *seed ^= *seed << 25;
+    *seed ^= *seed >> 27;
+    seed.wrapping_mul(0x2545f4914f6cdd1d)
+}
+
+fn random_row(seed: &mut u64, cols: usize) -> Vec<u64> {
+    let words = cols.div_ceil(64);
+    let mut row = (0..words).map(|_| next(seed)).collect::<Vec<_>>();
+    if cols % 64 != 0 { *row.last_mut().unwrap() &= (1u64 << (cols % 64)) - 1; }
+    row
+}
+
+fn check() {
+    let mut seed = 0x5775_3031_395f_7769u64;
+    for cols in [1, 32, 63, 64, 65, 80, 129, 192, 257] {
+        let mut basis = Vec::new();
+        for _ in 0..280 {
+            if next(&mut seed) & 3 == 0 && !basis.is_empty() {
+                let keep = next(&mut seed) as usize % basis.len();
+                basis.truncate(keep);
+            }
+            add(&mut basis, random_row(&mut seed, cols));
+            for _ in 0..4 {
+                let a = random_row(&mut seed, cols);
+                let b = random_row(&mut seed, cols);
+                let (asig, expected_a) = signatures(&a, &basis, cols);
+                let (bsig, expected_b) = signatures(&b, &basis, cols);
+                assert_eq!(asig, expected_a);
+                assert_eq!(bsig, expected_b);
+                if asig != 0 && bsig != 0 && asig != bsig {
+                    let ar = reduce(a, &basis);
+                    let br = reduce(b, &basis);
+                    assert!(leading(&ar).is_some() && leading(&br).is_some());
+                    assert_ne!(ar, br);
+                }
+            }
+        }
+    }
+}
+
+fn main() {
+    check();
+    println!("WU020: seeded wide dual signatures verified against elimination");
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn seeded_duals_match_full_reduction() {
+        super::check();
+    }
+
+    #[test]
+    fn seeded_masks_cover_independent_sparse_pairs_without_a_trail() {
+        let mut seed = 0xb3e4_842d_c5a6_2020;
+        let mut skips = 0;
+        for _ in 0..10_000 {
+            let mut left = vec![0u64; 3];
+            let mut right = vec![0u64; 3];
+            for _ in 0..4 {
+                let i = (super::next(&mut seed) as usize) % 192;
+                let j = (super::next(&mut seed) as usize) % 192;
+                left[i / 64] ^= 1u64 << (i % 64);
+                right[j / 64] ^= 1u64 << (j % 64);
+            }
+            let (a, _) = super::signatures(&left, &[], 192);
+            let (b, _) = super::signatures(&right, &[], 192);
+            skips += usize::from(a != 0 && b != 0 && a != b);
+        }
+        assert!((7_200..=9_000).contains(&skips), "unexpected sparse coverage {skips}");
+    }
+}

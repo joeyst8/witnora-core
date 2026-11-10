@@ -1,0 +1,5 @@
+seed,family,n,selection,compact,rep,build,status,seconds,sampled_rss_kb,verification,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions,profile_stage,attempts,eligible,skipped,rebuilds,row_visits,wide_eligible,wide_skipped,wide_rebuilds,wide_row_words
+343598293301,dense_planted,80,cyclic,False,0,baseline,TIMEOUT,3.004101,7620,none,,,,,,,,,,,,,,,,
+343598293301,dense_planted,80,cyclic,False,0,wide,TIMEOUT,3.018845,9612,none,,,,,,,snapshot,8000000,7999999,6384591,30592,1794043,7999999,6384591,30592,14352344
+343598293302,sparse_planted,80,cyclic,False,0,wide,TIMEOUT,3.020306,9988,none,,,,,,,snapshot,8000000,7999999,6281678,39523,2597388,7999999,6281678,39523,20779104
+343598293302,sparse_planted,80,cyclic,False,0,baseline,TIMEOUT,3.013938,8372,none,,,,,,,,,,,,,,,,

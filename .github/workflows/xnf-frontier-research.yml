@@ -1,4 +1,4 @@
-name: XNF frontier research reproducibility gate (WU-014 through WU-019)
+name: XNF frontier research reproducibility gate (WU-014 through WU-020)
 
 on:
   pull_request:
@@ -14,18 +14,23 @@ on:
       - "scripts/test_wu018_*.py"
       - "scripts/wu019_*.py"
       - "scripts/test_wu019_*.py"
+      - "scripts/wu020_*.py"
+      - "scripts/test_wu020_*.py"
       - "research_patches/wu016_*"
       - "research_patches/wu017_*"
       - "research_patches/wu018_*"
       - "research_patches/wu019_*"
+      - "research_patches/wu020_*"
       - "research_data/wu014/**"
       - "research_data/wu015/**"
       - "research_data/wu016/**"
       - "research_data/wu017/**"
       - "research_data/wu018/**"
       - "research_data/wu019/**"
+      - "research_data/wu020/**"
       - "rust/witnora-ve/src/bin/wu018_*.rs"
       - "rust/witnora-ve/src/bin/wu019_*.rs"
+      - "rust/witnora-ve/src/bin/wu020_*.rs"
       - ".github/workflows/xnf-frontier-research.yml"
   workflow_dispatch:
 
@@ -69,3 +74,5 @@ jobs:
             --bin wu019_wide_dual_certificate
           cargo test --release --manifest-path rust/witnora-ve/Cargo.toml \
             --bin wu019_generate_wide_xnf
+          cargo test --release --manifest-path rust/witnora-ve/Cargo.toml \
+            --bin wu020_seeded_dual_certificate
