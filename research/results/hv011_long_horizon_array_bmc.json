@@ -1,0 +1,71 @@
+{
+  "experiment": "HV-011",
+  "date": "2026-11-10",
+  "relationship": "Separate preregistered extension of completed HV-010",
+  "pr": 145,
+  "protocol": "docs/HV011_LONG_HORIZON_ARRAY_PROTOCOL.md",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "tools": {
+    "bitwuzla": "0.6.1",
+    "argv": [
+      "--lang",
+      "btor2",
+      "--time-limit",
+      "20000",
+      "--memory-limit",
+      "2048"
+    ]
+  },
+  "results": [
+    {
+      "depth": 32,
+      "probe_h1": false,
+      "frames": 33,
+      "constraints": 839,
+      "bads": 33,
+      "generated_sha256": "0e7eb26a91d0d49eb2febe8e656befd6918035f7cb760db2169db9368da6f355",
+      "bytes": 295076,
+      "exit_code": 0,
+      "stdout": "unknown",
+      "status": "UNKNOWN"
+    },
+    {
+      "depth": 64,
+      "probe_h1": false,
+      "frames": 65,
+      "constraints": 1671,
+      "bads": 65,
+      "generated_sha256": "de863f047e0707a70a36f37ea8a9df343b7284df7d4077023ff2fc2618a431c0",
+      "bytes": 611012,
+      "exit_code": 0,
+      "stdout": "unknown",
+      "status": "UNKNOWN"
+    },
+    {
+      "depth": 32,
+      "probe_h1": true,
+      "frames": 33,
+      "constraints": 839,
+      "bads": 66,
+      "generated_sha256": "fbbb492196ed8bf23d2b3e73d5c9e7ddfae11c10350921dfc1e47fcebdfee71d",
+      "bytes": 296924,
+      "exit_code": 0,
+      "stdout": "unknown",
+      "status": "UNKNOWN"
+    },
+    {
+      "depth": 64,
+      "probe_h1": true,
+      "frames": 65,
+      "constraints": 1671,
+      "bads": 130,
+      "generated_sha256": "fd8f1122b2eadbb1f5a857a3d11d325cf483d98db46bb56d6b9c60fbde91063f",
+      "bytes": 614716,
+      "exit_code": 0,
+      "stdout": "unknown",
+      "status": "UNKNOWN"
+    }
+  ],
+  "interpretation": "No new SAT or UNSAT; solver returned global 'unknown' under a 20-second limit for every depth-32/64 request. No per-bad results in output, so do not infer any frame-specific verdict. HV-010 depth-16 UNSAT remains valid but does not extend automatically.",
+  "novelty": "none"
+}
