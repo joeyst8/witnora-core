@@ -1,0 +1,74 @@
+{
+  "experiment": "HV-002",
+  "date": "2026-11-10",
+  "status": "benchmark_admitted_no_witnora_speedup_or_breakthrough",
+  "solver": {
+    "name": "Kissat 4.0.4",
+    "commit": "8af8e56f174b778aef3aa45af9f739b2a5f492c2",
+    "single_run_not_controlled": true
+  },
+  "checker": {
+    "name": "drat-trim",
+    "commit": "2e3b2dc0ecf938addbd779d42877b6ed69d9a985"
+  },
+  "rust": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "generator_sha256": "deb2fab612b851c1d11448c200e290fd6e7cce4106525190b44470f1583cdd75",
+  "witness_checker_sha256": "f11f5133fec6d25ce1846863953694e9640cf0361b52616d129afe2953a00c1d",
+  "public_hwmcc_screen": {
+    "repository": "Tractables/cnfs",
+    "commit": "de4731f68e5a5bb6629269b3be1d19b44e812763",
+    "source_variant": "unknown_flattened_iso_or_opt",
+    "all_result": "UNSAT",
+    "all_conflicts": 0,
+    "all_decisions": 0,
+    "cases": [
+      {"name": "mul9", "process_seconds": 0.09, "sha256_xz": "39f74436305f1a4f7d8cac76b29e8a6a9c0852ca8923ede8cd66fdde031a46f4"},
+      {"name": "AllInterval-019", "process_seconds": 0.20, "sha256_xz": "b72fea1d5712eb46ea8ded95dab23e21d2ca898ce7ea3941a6064a7e896c72b7"},
+      {"name": "Problem03_label51", "process_seconds": 0.11, "sha256_xz": "19df7618bc954413acc6f37a320dd21844a76725fe8cd71810290494320bc0a8"},
+      {"name": "a16-p012", "process_seconds": 0.05, "sha256_xz": "35614f9d0872280bba393be52fe223c607fd73ebe75cd3a412ff6537559cabe6"},
+      {"name": "dspfilters_fastfir_second-p06", "process_seconds": 0.11, "sha256_xz": "75f1d819debf9094970ccfeb39cb09d78478fb9210dd155d7fdc13130e3d3881"},
+      {"name": "cal97", "process_seconds": 0.09, "sha256_xz": "364072bbe0c47145021ddc1eadf7abff1a8ccbaffcee96aaa0f5b59d12d939ee"},
+      {"name": "pc_sfifo_1.cil-2+token_ring.05.cil-2", "process_seconds": 0.16, "sha256_xz": "38c4395dd13b761b90684a11217ee8abad6cb5c24ba2101ad5b98a36c132bc33"},
+      {"name": "picorv32_mutCX_nomem-p1", "process_seconds": 0.16, "sha256_xz": "a5d04abaf78a859093cefedf2cfebe297e96a78731ecc28989631b8a0681133e"},
+      {"name": "zonotope_2", "process_seconds": 0.10, "sha256_xz": "aae8082e15d87d9281b5dda2057fcaf754e2190da7d8862f99c268318568b0fc"},
+      {"name": "processed_hl_arr_access_128_bv", "process_seconds": 0.04, "sha256_xz": "30aae69c0bef9bda595d75f1c3e10a0686059822aca196e3b276b72149efd806"},
+      {"name": "lcm1_unwindbound2", "process_seconds": 0.06, "sha256_xz": "336f90c07ea470f571b4aa1007410d0c59287c51c3d4a8c8a582ff62a91605"},
+      {"name": "hard-ll_valuebound20", "process_seconds": 0.21, "sha256_xz": "9d82fbdf1c27051f037d32f348f67d94a15a6b14a0501f221d43a198fb217d67"}
+    ]
+  },
+  "synthetic_multipliers": {
+    "source": "Rust generator of ripple-accumulator vs carry-save-reduction unsigned multipliers; primary inputs and partial products shared",
+    "disclosure": "synthetic controlled hardware benchmark, not a published optimized industrial miter",
+    "correct_case": "assert discrepancy; expected UNSAT",
+    "fault_case": "candidate a[0]&b[0] partial-product stuck at zero; expected SAT",
+    "equivalent_results": [
+      {"width": 2, "vars": 22, "clauses": 60, "status": "UNSAT", "conflicts": 0, "decisions": 0},
+      {"width": 3, "vars": 67, "clauses": 205, "status": "UNSAT", "conflicts": 51, "decisions": 53},
+      {"width": 4, "vars": 134, "clauses": 424, "status": "UNSAT", "conflicts": 292, "decisions": 470},
+      {"width": 5, "vars": 228, "clauses": 735, "status": "UNSAT", "conflicts": 1498, "decisions": 2476},
+      {"width": 6, "vars": 339, "clauses": 1102, "status": "UNSAT", "conflicts": 6668, "decisions": 10870, "input_sha256": "c21df705e6731e72888d610c96418e25d8a607d732e03caa1266cf41f089ce76", "proof_sha256": "e06cc7411b8a4fb3e7b350ce998a6f66048faa51df24e8c4b4aad1826fa58f93", "drat_verified": true, "drat_check_seconds": 0.255},
+      {"width": 7, "vars": 480, "clauses": 1571, "status": "UNSAT", "conflicts": 34844, "decisions": 52670, "input_sha256": "79318b04afb25f252f7c13716775205b152ada74be919815d904fc7949e674d2", "proof_sha256": "7e4a621a37522d09ed9cc088f93a7e0104238e94a1b8bfb2373a935108a33253", "drat_verified": true, "drat_check_seconds": 1.457},
+      {"width": 8, "vars": 649, "clauses": 2135, "status": "UNSAT", "conflicts": 130641, "decisions": 202416, "input_sha256": "e5bf7d3c45131b4086061088e7dabb405a514fd84982fde55a0172ff909886f0", "proof_sha256": "32a83da5ab752f6679dbf8230249586d1da878a67fa83fe186bce748a96c127e", "drat_verified": true, "drat_check_seconds": 6.620, "solver_process_seconds_no_proof": 5.32},
+      {"width": 9, "vars": 820, "clauses": 2703, "status": "UNKNOWN", "cutoff_seconds": 20, "conflicts": 361420, "decisions": 585366, "input_sha256": "9ad823cc00a931aca9fbbb536d03d4fb9f5a393cb1eb8d5b93755bb474630069"},
+      {"width": 10, "vars": 1035, "clauses": 3422, "status": "UNKNOWN", "cutoff_seconds": 4, "conflicts": 81709, "decisions": 168491}
+    ],
+    "stuck_zero_witnesses": [
+      {"width": 6, "a": 63, "b": 63, "reference": 3969, "candidate": 3968, "all_original_clauses_checked": 1105, "verified": true},
+      {"width": 8, "a": 255, "b": 255, "reference": 65025, "candidate": 65024, "all_original_clauses_checked": 2138, "verified": true, "input_sha256": "444209bbe0c6f44badf83ea76f3358929cb2b48e4512e475242719ebc758d3ac"}
+    ],
+    "ablation_conflicts": [
+      {"width": 6, "default": 6668, "congruence_disabled": 8480, "xor_congruence_disabled": 6510},
+      {"width": 7, "default": 34844, "congruence_disabled": 31047, "xor_congruence_disabled": 32855},
+      {"width": 8, "default": 130641, "congruence_disabled": 124945, "xor_congruence_disabled": 127492}
+    ],
+    "synthetic_frozen_unrun_holdout_widths": [12, 14, 16]
+  },
+  "novelty": {
+    "claimed_new_algorithm": false,
+    "claimed_witnora_speedup": false,
+    "prior_art": [
+      "https://www.cs.helsinki.fi/u/mjarvisa/papers/jarvisalo.sat07benchmarks.pdf",
+      "https://doi.org/10.4230/LIPIcs.SAT.2024.6"
+    ]
+  }
+}
