@@ -93,6 +93,48 @@ congruence closure and miter-aware mapping, including the 2026 paper
 Equivalence Checking*, https://arxiv.org/abs/2607.07164. Neither XOR extraction
 nor Gaussian-guided XOR modeling is presumed novel.
 
+## Mandatory prior-art firewall before any new algorithm
+
+The following are **already established**, not discoveries Witnora may claim:
+
+| Mechanism or goal | Direct relevant prior art | Status |
+| --- | --- | --- |
+| Extract Boolean gates and collapse congruent gates from CNF | Biere et al., *Clausal Congruence Closure*, SAT 2024, https://doi.org/10.4230/LIPIcs.SAT.2024.6 | KNOWN |
+| Circuit-native CDCL and structural elimination | *X-SAT: An Efficient Circuit-Based SAT Solver*, DAC 2025, https://doi.org/10.1109/DAC63849.2025.11132604 | KNOWN |
+| Structural miter alignment, XOR/Gaussian modeling, solver-oriented LUT selection | Zhu et al., *Miter-Aware LUT Mapping*, DAC 2026 / https://arxiv.org/abs/2607.07164 | KNOWN |
+| Iterative cone-based SAT sweeping and selective reuse | *Efficient SAT Sweeping via Direct Circuit-Based SAT Solving*, ISEDA 2026, https://ieeexplore.ieee.org/document/11751530 | KNOWN |
+| Proof and witness requirements for hardware model checking | Froleyks et al., *Introducing Certificates to the Hardware Model Checking Competition*, 2025, https://doi.org/10.1007/978-3-031-98668-0_14 | KNOWN |
+
+The pilot's 0-conflict Kissat results are **known-method wins**; they are not
+Witnora contributions. A faster implementation of an already published
+algorithm could still be an engineering contribution if validated, but must
+never be presented as the invention of that algorithm.
+
+Before implementation, each candidate must record (1) the **exact new
+claim**, (2) its nearest paper/code predecessor and differences, (3) a
+counterexample or experiment that could disprove it, and (4) a **frozen
+holdout** selected before tuning. If the claim is equivalent to a known
+method, reclassify it as *replication* or *engineering* and do not promote it
+as new science. Literature screening cannot prove absolute novelty; wider
+expert review remains necessary.
+
+Candidate **unproven** research question, not yet a gap claim: after
+modern congruence closure and XOR-aware miter modeling have already run,
+is there a residual interaction structure that (a) predicts which local
+parity inferences are worth their cost, and (b) permits a provably sound,
+source-checkable inference that improves end-to-end certified solving?
+Null hypothesis: any apparent benefit disappears after comparison to the
+strongest existing baseline, or the mechanism is already described in
+the literature. Only proceed if a hard optimized-miter sample shows
+measurable unresolved work and clear evidence for the proposed feature.
+
+**Discovery gate:** label progress *research breakthrough* only after
+independent verification of a genuinely distinct mathematical result or
+reproducible, meaningful verified-runtime gains on unseen real hardware
+workloads, with the exact mechanism and predecessor comparison disclosed.
+Even substantial engineering wins do not imply a general SAT complexity
+result. If neither standard is met, report *negative/inconclusive/known*.
+
 ## Next admissions and stop conditions
 
 1. Recover clearly labeled **optimized** HWMCC miter CNFs, plus their
