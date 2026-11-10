@@ -35,6 +35,10 @@
     {"name": "pci_bridge32", "result": "UNSAT", "exit_code": 20, "conflicts": 638780, "decisions": 4474615, "reported_process_seconds": 9.16},
     {"name": "RISC", "result": "UNKNOWN_TIME_LIMIT", "exit_code": 0, "conflicts": 96729, "decisions": 16199662, "reported_process_seconds": 20.00}
   ],
+  "risc_30_second_sensitivity": [
+    {"solver": "CaDiCaL", "result": "UNKNOWN_TIME_LIMIT", "exit_code": 0, "conflicts": 231682, "decisions": 23097630, "reported_real_seconds": 30.00, "command": "cadical -t 30 -n CNF"},
+    {"solver": "Kissat", "result": "UNKNOWN_TIME_LIMIT", "exit_code": 0, "conflicts": 284993, "decisions": 22122510, "reported_process_seconds": 30.01, "command": "kissat --time=30 -n CNF"}
+  ],
   "independently_verified_new_unsat_proofs": [
     {
       "name": "aes_core",
