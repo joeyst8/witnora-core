@@ -69,6 +69,23 @@ was UNKNOWN illustrates uncontrolled timing and run-to-run variation. For AES
 the longer 20-second budget changes UNKNOWN to UNSAT. These are **not**
 contradictions and cannot support a stable solver speedup percentage.
 
+### RISC 30-second generic-solver sensitivity gate
+
+The same pinned RISC CNF was then run with `cadical -t 30 -n` and
+`kissat --time=30 -n`, each under a separate 39-second external kill guard.
+Neither reached a SAT/UNSAT answer:
+
+| Solver | Result | Conflicts | Decisions | Reported duration |
+| --- | --- | ---: | ---: | ---: |
+| CaDiCaL 3.0.1 | UNKNOWN, cutoff | 231,682 | 23,097,630 | 30.00 real s |
+| Kissat 4.0.4 | UNKNOWN, cutoff | 284,993 | 22,122,510 | 30.01 process s |
+
+ABC's separate circuit-level CEC of the *AIG pair* was equivalent at 30.51
+reported seconds under an approximate internal time limit. That is not a
+certified equal-resource race; it does show **RISC remains a legitimate
+stress case for these default generic CNF settings even with a longer
+cutoff**, rather than merely a ten-second threshold artifact.
+
 ### Independent UNSAT certificates for two new solved cases
 
 We repeated CaDiCaL with an explicit **ASCII DRAT** proof stream
@@ -94,7 +111,7 @@ from this stage, even though native ABC CEC reported equivalent.
 
 1. AES and PCI at a 10-second cutoff were **solver-specific unresolved
    cases**, not a demonstrated fundamental limitation or new research gap.
-2. RISC remains a *candidate* stress case for generic CNF SAT at 20 seconds;
+2. RISC remains a *candidate* stress case for generic CNF SAT at 30 seconds;
    ABC CEC already proved its source pair in approximately 30.51 seconds
    using a different native verification method and an approximate internal
    timeout. No one has shown a Witnora algorithm beating this.
