@@ -1,0 +1,112 @@
+{
+  "experiment": "HV-008",
+  "date": "2026-11-10",
+  "classification": "non_general_exhaustive_control_no_certifier_run_no_breakthrough",
+  "source": "Froleyks/cerbtora",
+  "source_commit": "983a21c440f8e4f25b1e8be8bd759332fee21e88",
+  "model_git_blob": "a8f625b2381c7031ccf554ef84c912f492c6b496",
+  "witness_git_blob": "2bfb7d7de64857824172c24cb99234311896d0fb",
+  "method": "Python subset BTOR2 interpreter exhaustive state enumeration on pinned upstream fixture",
+  "script": "research/hv008_btor2_fixture_enumerator.py",
+  "positive": {
+    "command": "python3 research/hv008_btor2_fixture_enumerator.py examples/model.btor2 examples/witness.btor2",
+    "exit_code": 0,
+    "passed": true,
+    "model": {
+      "init": {
+        "5": 0,
+        "9": 0
+      },
+      "reachable": [
+        {
+          "5": 0,
+          "9": 0
+        },
+        {
+          "5": 0,
+          "9": 3
+        }
+      ],
+      "reachable_count": 2,
+      "total_states": 8,
+      "unsafe_reachable": 0,
+      "base_safe": true,
+      "inductive": false,
+      "induction_counterexamples": [
+        {
+          "state": {
+            "5": 0,
+            "9": 1
+          },
+          "next": {
+            "5": 0,
+            "9": 2
+          }
+        }
+      ],
+      "unsafe_states": 2
+    },
+    "witness": {
+      "init": {
+        "5": 0,
+        "9": 0
+      },
+      "reachable": [
+        {
+          "5": 0,
+          "9": 0
+        },
+        {
+          "5": 0,
+          "9": 3
+        }
+      ],
+      "reachable_count": 2,
+      "total_states": 8,
+      "unsafe_reachable": 0,
+      "base_safe": true,
+      "inductive": true,
+      "induction_counterexamples": [],
+      "unsafe_states": 4
+    },
+    "model_and_witness_reset_and_transition_identical": true,
+    "witness_bad_predicate_superset_of_original_bad": true
+  },
+  "negative": {
+    "command": "python3 research/hv008_btor2_fixture_enumerator.py examples/model.btor2 examples/model.btor2",
+    "exit_code": 1,
+    "passed": true,
+    "reason": "Unstrengthened property not one-step inductive; arbitrary state transition=0,data=1 leads data=2"
+  },
+  "fixture_comment_discrepancy": {
+    "statement": "Published comment says transition flips each step.",
+    "source_operator": "7 neg 1 5",
+    "official_semantics": "Arithmetic two's-complement negation; width-1 neg is identity",
+    "observed_reachable_states": [
+      {
+        "transition": 0,
+        "data": 0
+      },
+      {
+        "transition": 0,
+        "data": 3
+      }
+    ],
+    "evidence": "https://github.com/hwmcc/btor2tools and CAV 2018 BTOR2 paper",
+    "impact": "prose differs from actual semantics; no change to safety or inductiveness"
+  },
+  "environment": {
+    "cmake_found": false,
+    "bitwuzla_found": false,
+    "cerbtora_built": false,
+    "cerbtora_witness_independently_accepted": false
+  },
+  "warnings": [
+    "Not a general BTOR2 implementation or external SMT proof checker",
+    "No Cerbtora/Bitwuzla executable run",
+    "Tiny example is not a real industrial hardware benchmark",
+    "No new Witnora method, speedup, mathematical invariant or research breakthrough",
+    "Prior frozen HV003/006 holdouts not touched"
+  ],
+  "next": "Pin full Cerbtora+Bitwuzla and comparator environment, then predeclare a BTOR2 array-rich cohort; run checker-accepted proof-included baselines before proposing novelty."
+}
