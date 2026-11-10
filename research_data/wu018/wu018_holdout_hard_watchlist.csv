@@ -1,0 +1,9 @@
+family,n,seed,repeat,selection,build,status,wall_seconds,verification,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions,dual_stage,attempts,eligible,skipped,rebuilds,row_visits
+unplanted,28,120259994306,0,leading_term_watchlist,baseline,TIMEOUT,2.503841,none,,,,,,,,,,,,
+unplanted,28,120259994306,0,leading_term_watchlist,dual,TIMEOUT,2.501906,none,,,,,,,snapshot,12000000,11999999,9600246,35991,844882
+planted,28,120259994307,0,leading_term_watchlist,dual,TIMEOUT,2.502095,none,,,,,,,snapshot,14000000,13999999,11201692,38272,899340
+planted,28,120259994307,0,leading_term_watchlist,baseline,TIMEOUT,2.504078,none,,,,,,,,,,,,
+unplanted,29,124554961602,0,leading_term_watchlist,baseline,TIMEOUT,2.503911,none,,,,,,,,,,,,
+unplanted,29,124554961602,0,leading_term_watchlist,dual,TIMEOUT,2.502856,none,,,,,,,snapshot,13000000,12999999,10399734,37509,918079
+planted,29,124554961603,0,leading_term_watchlist,dual,TIMEOUT,2.501689,none,,,,,,,snapshot,13000000,12999999,10405451,37629,920945
+planted,29,124554961603,0,leading_term_watchlist,baseline,TIMEOUT,2.503812,none,,,,,,,,,,,,

@@ -1,0 +1,174 @@
+--- a/src/algebra/dense/dense_gf2_vector.h
++++ b/src/algebra/dense/dense_gf2_vector.h
+@@ -25,6 +25,13 @@
+ 
+     std::size_t num_bits() const noexcept { return bits_.size(); }
+ 
++    /// The single packed word when this equation has no more than 64 columns.
++    /// Used only by the experimental WU-018 small-XNF dual signature gate.
++    Word small_word() const noexcept {
++        assert(bits_.size() > 0 && bits_.size() <= 64);
++        return bits_.store()[0];
++    }
++
+     /// @brief Resize to `num_bits` bits, zeroing any new ones.
+     void resize(std::size_t num_bits) { bits_.resize(num_bits); }
+ 
+--- a/src/core/solver.cpp
++++ b/src/core/solver.cpp
+@@ -1,18 +1,114 @@
+ #include "core/solver.h"
+ 
+ #include <algorithm>
++#include <array>
++#include <bit>
+ #include <cassert>
++#include <cstdint>
++#include <iostream>
+ #include <numeric>
+ #include <optional>
+ #include <utility>
+ #include <vector>
+ 
++#include "algebra/dense/dense_gf2_vector.h"
+ #include "algebra/reduce_result.h"
+ #include "core/analysis.h"
+ #include "heuristics/compaction/original_variables.h"
+ 
+ namespace xorcle {
+ 
++namespace {
++
++struct DualStats {
++    std::size_t eligible = 0;
++    std::size_t skipped = 0;
++    std::size_t rebuilds = 0;
++    std::size_t row_visits = 0;
++    std::size_t attempts = 0;
++
++    void print(const char* stage) const {
++        std::cerr << "WU018_DUAL stage=" << stage << " attempts=" << attempts
++                  << " eligible=" << eligible << " skipped=" << skipped
++                  << " rebuilds=" << rebuilds << " row_visits=" << row_visits
++                  << '\n';
++    }
++
++    ~DualStats() { print("end"); }
++};
++
++DualStats& dual_stats() {
++    static DualStats stats;
++    return stats;
++}
++
++std::uint64_t packed(const Equation& eqn) {
++    return gf2_vector_of<DenseGF2Vector>(eqn).small_word();
++}
++
++/// A direct, allocation-free evaluation of four canonical quotient bits.
++/// Rebuild masks only after the span changes; no per-clause cached state.
++/// This is deliberately restricted to dense <=63-variable instances.
++class DualGate {
++public:
++    void invalidate() noexcept { ready_ = false; }
++
++    bool skips(const Clause& clause, const RowSpace& span) {
++        if (!ready_) {
++            rebuild(span);
++        }
++        auto signature = [&](const Equation& eqn) {
++            const std::uint64_t word = packed(eqn);
++            unsigned sig = 0;
++            for (std::size_t bit = 0; bit < count_; ++bit) {
++                sig |= (static_cast<unsigned>(std::popcount(word & masks_[bit]) & 1u)
++                        << bit);
++            }
++            return sig;
++        };
++        const unsigned a = signature(clause.row(clause.watched0));
++        if (a == 0) {
++            return false;
++        }
++        const unsigned b = signature(clause.row(clause.watched1));
++        return b != 0 && a != b;
++    }
++
++private:
++    void rebuild(const RowSpace& span) {
++        auto& stats = dual_stats();
++        ++stats.rebuilds;
++        count_ = 0;
++        const IndexSet& pivots = span.pivot_col_idxs();
++        for (std::size_t col = 0; col < span.cols() && count_ < masks_.size(); ++col) {
++            if (!pivots.test(col)) {
++                masks_[count_++] = std::uint64_t{1} << col;
++            }
++        }
++        // Row-echelon rows are processed in decreasing pivot order, so a
++        // newly solved pivot never changes an already-processed higher row.
++        for (std::size_t idx = span.rows(); idx > 0; --idx) {
++            const Equation& row = span.row(idx - 1);
++            const auto pivot = row.leading_bit();
++            assert(pivot.has_value() && *pivot < 64);
++            const std::uint64_t word = packed(row);
++            for (std::size_t bit = 0; bit < count_; ++bit) {
++                if ((std::popcount(word & masks_[bit]) & 1u) != 0) {
++                    masks_[bit] ^= std::uint64_t{1} << *pivot;
++                }
++            }
++            ++stats.row_visits;
++        }
++        ready_ = true;
++    }
++
++    bool ready_ = false;
++    std::size_t count_ = 0;
++    std::array<std::uint64_t, 4> masks_{};
++};
++
++} // namespace
++
+ Solver::Solver(EquationRepr repr, std::size_t num_vars, std::unique_ptr<ClauseSelector> selector,
+                std::unique_ptr<DecisionProcedure> decisions,
+                std::unique_ptr<RestartPolicy> restarts, LrupLogger* proof_logger,
+@@ -60,6 +156,9 @@
+     assert(false_equation_.num_bits() == active_num_vars_ + 1);
+     assert(conflict_check_eqn_.num_bits() == active_num_vars_ + 1);
+ 
++    DualGate dual_gate;
++    const bool dual_enabled = repr_ == EquationRepr::dense && active_num_vars_ < 64;
++
+     while (true) {
+         const std::optional<ClauseSelection> selection = selector_->next_with_hint();
+         if (!selection.has_value()) {
+@@ -70,6 +169,22 @@
+                "selector returned an inactive clause");
+         ++counters_.num_attempt_props;
+ 
++        DualStats& stats = dual_stats();
++        ++stats.attempts;
++        if (stats.attempts % 1000000 == 0) {
++            stats.print("snapshot");
++        }
++
++        const Clause& candidate = selector_->clause(selection->id);
++        if (dual_enabled && !selection->trigger_hint.has_value() &&
++            candidate.rows() > 1) {
++            ++stats.eligible;
++            if (dual_gate.skips(candidate, trail_.span())) {
++                ++stats.skipped;
++                continue;
++            }
++        }
++
+         Equation* propagated_eqn = propagator_.unit_propagate_one_clause(
+             selection->id, selector_->clause(selection->id), trail_, selection->trigger_hint,
+             counters_.num_watch_updates, *selector_);
+@@ -84,6 +199,7 @@
+         // not the negation it returns, so the result can still hold span rows.
+         (void)trail_.span().partial_reduce(*propagated_eqn);
+         trail_.learn(*propagated_eqn, selection->id);
++        dual_gate.invalidate();
+         // The selector is notified even on the propagation that conflicts.
+         selector_->update_with_propagation(*propagated_eqn, trail_);
+ 
