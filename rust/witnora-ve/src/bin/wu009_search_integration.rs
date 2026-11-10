@@ -4,7 +4,7 @@
 
 #[allow(dead_code)]
 #[path = "wu008_counterfactual_support.rs"]
-mod previous;
+pub(crate) mod previous;
 
 use previous::{Fixture, Lemma};
 use std::hint::black_box;
@@ -14,11 +14,11 @@ use std::time::Instant;
 enum Mode { Plain, AllCertified, SelectedCertified }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-struct SearchCost {
-    nodes: u64,
-    decisions: u64,
-    propagations: u64,
-    clause_scans: u64,
+pub(crate) struct SearchCost {
+    pub(crate) nodes: u64,
+    pub(crate) decisions: u64,
+    pub(crate) propagations: u64,
+    pub(crate) clause_scans: u64,
 }
 
 #[derive(Debug)]
@@ -55,7 +55,7 @@ fn xnf_clause_to_cnf(rows: &[u64], n: usize) -> Vec<Vec<i32>> {
     clauses
 }
 
-fn cnf_from_xnf(clauses: &[Vec<u64>], n: usize) -> Vec<Vec<i32>> {
+pub(crate) fn cnf_from_xnf(clauses: &[Vec<u64>], n: usize) -> Vec<Vec<i32>> {
     clauses.iter().flat_map(|c| xnf_clause_to_cnf(c, n)).collect()
 }
 
@@ -65,7 +65,7 @@ fn true_literal(lit: i32, value: i8) -> bool {
 
 // Full, instrumented DPLL search with Boolean unit propagation.
 // No cached search results, oracle calls, or parity-specific search code.
-fn solve_cnf(clauses: &[Vec<i32>], n: usize) -> (Option<Vec<i8>>, SearchCost) {
+pub(crate) fn solve_cnf(clauses: &[Vec<i32>], n: usize) -> (Option<Vec<i8>>, SearchCost) {
     let mut degree = vec![0usize; n];
     for clause in clauses {
         for &lit in clause {
