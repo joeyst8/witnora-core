@@ -1,4 +1,4 @@
-name: XNF frontier research reproducibility gate (WU-014 through WU-020)
+name: XNF frontier research reproducibility gate (WU-014 through WU-021)
 
 on:
   pull_request:
@@ -16,11 +16,14 @@ on:
       - "scripts/test_wu019_*.py"
       - "scripts/wu020_*.py"
       - "scripts/test_wu020_*.py"
+      - "scripts/wu021_*.py"
+      - "scripts/test_wu021_*.py"
       - "research_patches/wu016_*"
       - "research_patches/wu017_*"
       - "research_patches/wu018_*"
       - "research_patches/wu019_*"
       - "research_patches/wu020_*"
+      - "research_patches/wu021_*"
       - "research_data/wu014/**"
       - "research_data/wu015/**"
       - "research_data/wu016/**"
@@ -28,6 +31,7 @@ on:
       - "research_data/wu018/**"
       - "research_data/wu019/**"
       - "research_data/wu020/**"
+      - "research_data/wu021/**"
       - "rust/witnora-ve/src/bin/wu018_*.rs"
       - "rust/witnora-ve/src/bin/wu019_*.rs"
       - "rust/witnora-ve/src/bin/wu020_*.rs"
@@ -59,7 +63,8 @@ jobs:
             scripts.test_wu016_linear_gate \
             scripts.test_wu017_quotient_signatures \
             scripts.test_wu018_benchmark_dual \
-            scripts.test_wu019_benchmark_wide
+            scripts.test_wu019_benchmark_wide \
+            scripts.test_wu021_benchmark_hybrid
 
   rust-dual-certificate-tests:
     runs-on: ubuntu-latest

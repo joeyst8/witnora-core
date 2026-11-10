@@ -1,0 +1,187 @@
+--- a/src/core/solver.cpp
++++ b/src/core/solver.cpp
+@@ -30,6 +30,10 @@
+     std::size_t wide_skipped = 0;
+     std::size_t wide_rebuilds = 0;
+     std::size_t wide_row_words = 0;
++    std::size_t hybrid_seed_checks = 0;
++    std::size_t hybrid_seed_skips = 0;
++    std::size_t hybrid_seed_rebuilds = 0;
++    std::size_t hybrid_seed_row_words = 0;
+ 
+     void print(const char* stage) const {
+         std::cerr << "WU018_DUAL stage=" << stage << " attempts=" << attempts
+@@ -39,6 +43,10 @@
+                   << " wide_skipped=" << wide_skipped
+                   << " wide_rebuilds=" << wide_rebuilds
+                   << " wide_row_words=" << wide_row_words
++                  << " hybrid_seed_checks=" << hybrid_seed_checks
++                  << " hybrid_seed_skips=" << hybrid_seed_skips
++                  << " hybrid_seed_rebuilds=" << hybrid_seed_rebuilds
++                  << " hybrid_seed_row_words=" << hybrid_seed_row_words
+                   << '\n';
+     }
+ 
+@@ -59,32 +67,61 @@
+ /// This is deliberately restricted to dense <=63-variable instances.
+ class DualGate {
+ public:
+-    void invalidate() noexcept { ready_ = false; }
++    void invalidate() noexcept {
++        ready_ = false;
++        seeded_ready_ = false;
++    }
+ 
+     bool skips(const Clause& clause, const RowSpace& span) {
+         if (!ready_) {
+             rebuild(span);
+         }
+         if (word_count_ > 1) {
+-            auto signature_wide = [&](const Equation& eqn) {
++            auto signature_wide = [&](const Equation& eqn,
++                                      const auto& masks) {
+                 const auto words = gf2_vector_of<DenseGF2Vector>(eqn).packed_words();
+                 unsigned sig = 0;
+                 for (std::size_t bit = 0; bit < count_; ++bit) {
+                     unsigned parity = 0;
+                     for (std::size_t w = 0; w < word_count_; ++w) {
+                         parity ^= static_cast<unsigned>(
+-                            std::popcount(words[w] & wide_masks_[bit][w]) & 1u);
++                            std::popcount(words[w] & masks[bit][w]) & 1u);
+                     }
+                     sig |= parity << bit;
+                 }
+                 return sig;
+             };
+-            const unsigned a = signature_wide(clause.row(clause.watched0));
+-            if (a == 0) {
++            const auto& row_a = clause.row(clause.watched0);
++            const auto& row_b = clause.row(clause.watched1);
++            const unsigned a = signature_wide(row_a, wide_masks_);
++            if (a != 0) {
++                const unsigned b = signature_wide(row_b, wide_masks_);
++                if (b != 0 && a != b) {
++                    return true;
++                }
++            }
++            // WU-021 predeclared selective fallback: two sparse watches
++            // (<=8 total coefficient+affine bits each) after coordinate miss.
++            // Large-density inputs use only the cheaper canonical masks.
++            if (!sparse_watch(row_a) || !sparse_watch(row_b)) {
++                return false;
++            }
++            auto& stats = dual_stats();
++            ++stats.hybrid_seed_checks;
++            if (!seeded_ready_) {
++                rebuild_seeded_wide(span);
++                seeded_ready_ = true;
++            }
++            const unsigned hashed_a = signature_wide(row_a, seeded_masks_);
++            if (hashed_a == 0) {
+                 return false;
+             }
+-            const unsigned b = signature_wide(clause.row(clause.watched1));
+-            return b != 0 && a != b;
++            const unsigned hashed_b = signature_wide(row_b, seeded_masks_);
++            const bool skip = hashed_b != 0 && hashed_a != hashed_b;
++            if (skip) {
++                ++stats.hybrid_seed_skips;
++            }
++            return skip;
+         }
+         auto signature = [&](const Equation& eqn) {
+             const std::uint64_t word = packed(eqn);
+@@ -140,26 +177,13 @@
+     void rebuild_wide(const RowSpace& span) {
+         auto& stats = dual_stats();
+         ++stats.wide_rebuilds;
+-        // WU-020 pilot: use four seeded, non-coordinate nullspace duals.
+-        // The all-free-column hash is fixed before examining any watches;
+-        // back substitution still makes every dual annihilate the trail.
+-        count_ = wide_masks_.size();
+-        for (auto& mask : wide_masks_) {
+-            mask.assign(word_count_, 0);
+-        }
++        count_ = 0;
+         const IndexSet& pivots = span.pivot_col_idxs();
+-        for (std::size_t col = 0; col < span.cols(); ++col) {
++        for (std::size_t col = 0; col < span.cols() && count_ < wide_masks_.size(); ++col) {
+             if (!pivots.test(col)) {
+-                std::uint64_t h = static_cast<std::uint64_t>(col)
+-                                  + UINT64_C(0x9e3779b97f4a7c15);
+-                h = (h ^ (h >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+-                h = (h ^ (h >> 27)) * UINT64_C(0x94d049bb133111eb);
+-                h ^= h >> 31;
+-                for (std::size_t bit = 0; bit < count_; ++bit) {
+-                    if ((h >> bit) & 1u) {
+-                        wide_masks_[bit][col >> 6] |= std::uint64_t{1} << (col & 63);
+-                    }
+-                }
++                auto& mask = wide_masks_[count_++];
++                mask.assign(word_count_, 0);
++                mask[col >> 6] = std::uint64_t{1} << (col & 63);
+             }
+         }
+         for (std::size_t idx = span.rows(); idx > 0; --idx) {
+@@ -184,11 +208,61 @@
+         }
+     }
+ 
++    bool sparse_watch(const Equation& eqn) const {
++        const auto words = gf2_vector_of<DenseGF2Vector>(eqn).packed_words();
++        unsigned weight = 0;
++        for (auto word : words) {
++            weight += static_cast<unsigned>(std::popcount(word));
++            if (weight > 8) return false;
++        }
++        return true;
++    }
++
++    void rebuild_seeded_wide(const RowSpace& span) {
++        auto& stats = dual_stats();
++        ++stats.hybrid_seed_rebuilds;
++        for (auto& mask : seeded_masks_) {
++            mask.assign(word_count_, 0);
++        }
++        const IndexSet& pivots = span.pivot_col_idxs();
++        for (std::size_t col = 0; col < span.cols(); ++col) {
++            if (pivots.test(col)) continue;
++            std::uint64_t h = static_cast<std::uint64_t>(col)
++                              + UINT64_C(0x9e3779b97f4a7c15);
++            h = (h ^ (h >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
++            h = (h ^ (h >> 27)) * UINT64_C(0x94d049bb133111eb);
++            h ^= h >> 31;
++            for (std::size_t bit = 0; bit < seeded_masks_.size(); ++bit) {
++                if ((h >> bit) & 1u) {
++                    seeded_masks_[bit][col >> 6] |= std::uint64_t{1} << (col & 63);
++                }
++            }
++        }
++        for (std::size_t idx = span.rows(); idx > 0; --idx) {
++            const Equation& row = span.row(idx - 1);
++            const auto pivot = row.leading_bit();
++            assert(pivot.has_value());
++            const auto words = gf2_vector_of<DenseGF2Vector>(row).packed_words();
++            for (auto& mask : seeded_masks_) {
++                unsigned parity = 0;
++                for (std::size_t w = 0; w < word_count_; ++w) {
++                    parity ^= static_cast<unsigned>(std::popcount(words[w] & mask[w]) & 1u);
++                    ++stats.hybrid_seed_row_words;
++                }
++                if (parity) {
++                    mask[*pivot >> 6] ^= std::uint64_t{1} << (*pivot & 63);
++                }
++            }
++        }
++    }
++
+     bool ready_ = false;
++    bool seeded_ready_ = false;
+     std::size_t word_count_ = 0;
+     std::size_t count_ = 0;
+     std::array<std::uint64_t, 4> masks_{};
+     std::array<std::vector<std::uint64_t>, 4> wide_masks_{};
++    std::array<std::vector<std::uint64_t>, 4> seeded_masks_{};
+ };
+ 
+ } // namespace

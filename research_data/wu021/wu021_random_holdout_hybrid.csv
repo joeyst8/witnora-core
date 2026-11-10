@@ -1,0 +1,13 @@
+seed,family,n,selection,compact,rep,build,status,seconds,sampled_rss_kb,verification,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions,profile_stage,attempts,eligible,skipped,rebuilds,row_visits,wide_eligible,wide_skipped,wide_rebuilds,wide_row_words,hybrid_seed_checks,hybrid_seed_skips,hybrid_seed_rebuilds,hybrid_seed_row_words
+343598293303,dense_planted,80,cyclic,False,0,baseline,TIMEOUT,2.011514,8896,none,,,,,,,,,,,,,,,,,,,,
+343598293303,dense_planted,80,cyclic,False,0,wide,TIMEOUT,2.024788,8816,none,,,,,,,snapshot,6000000,5999999,4725673,25806,1514253,5999999,4725673,25806,12114024,0,0,0,0
+343598293304,sparse_planted,80,cyclic,False,0,wide,TIMEOUT,2.022354,7084,none,,,,,,,snapshot,3000000,2999999,1380736,18544,1332885,2999999,1380736,18544,10466388,559141,376980,16865,9759056
+343598293304,sparse_planted,80,cyclic,False,0,baseline,TIMEOUT,2.001218,7220,none,,,,,,,,,,,,,,,,,,,,
+554051690562,dense_planted,129,cyclic,False,0,baseline,TIMEOUT,2.008142,8796,none,,,,,,,,,,,,,,,,,,,,
+554051690562,dense_planted,129,cyclic,False,0,wide,TIMEOUT,2.003882,8936,none,,,,,,,snapshot,6000000,5999999,4732131,25928,1511837,5999999,4732131,25928,18142044,0,0,0,0
+554051690563,sparse_planted,129,cyclic,False,0,wide,TIMEOUT,2.021452,6124,none,,,,,,,snapshot,1000000,999999,404305,9724,1109566,999999,404305,9724,13310589,562135,401535,8990,12356280
+554051690563,sparse_planted,129,cyclic,False,0,baseline,TIMEOUT,2.124509,5800,none,,,,,,,,,,,,,,,,,,,,
+824634629895,dense_planted,192,cyclic,False,0,baseline,TIMEOUT,2.020407,8552,none,,,,,,,,,,,,,,,,,,,,
+824634629895,dense_planted,192,cyclic,False,0,wide,TIMEOUT,2.013477,9496,none,,,,,,,snapshot,6000000,5999999,4747436,26156,1517640,5999999,4747436,26156,24282240,0,0,0,0
+824634629896,sparse_planted,192,cyclic,False,0,wide,TIMEOUT,2.001351,7108,none,,,,,,,snapshot,1000000,999999,487558,7669,1377088,999999,487558,7669,22021232,683425,481465,7046,20275088
+824634629896,sparse_planted,192,cyclic,False,0,baseline,TIMEOUT,2.001764,7044,none,,,,,,,,,,,,,,,,,,,,
