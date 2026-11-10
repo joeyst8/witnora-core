@@ -28,6 +28,12 @@ PROFILE_KEYS = ("attempts", "propagations", "conflicts", "watch_updates",
                 "analysis_calls", "analysis_samples", "analysis_ns",
                 "gate_eligible", "gate_independent", "gate_counterexamples")
 
+# WU-017 adds observational quotient signatures. These are optional so the
+# pinned WU-016 measurement-only build remains reproducible with this runner.
+ORACLE_KEYS = ("oracle_independent", "sig2_independent", "sig4_independent",
+               "sig8_independent", "oracle_counterexamples", "gate_not_oracle",
+               "quotient_dim_sum", "eager_refresh_items")
+
 
 def decode_output(value):
     if isinstance(value, bytes):
@@ -40,11 +46,13 @@ def last_profile(stderr):
     for line in stderr.splitlines():
         if not line.startswith("WU016_PROFILE "):
             continue
-        pairs = dict(re.findall(r"([a-z_]+)=([^\s]+)", line))
+        pairs = dict(re.findall(r"([a-z0-9_]+)=([^\s]+)", line))
         if not all(key in pairs for key in (*PROFILE_KEYS, "stage")):
             raise ValueError("incomplete instrumentation record")
         observations.append({"profile_stage": pairs["stage"],
-                             **{key: int(pairs[key]) for key in PROFILE_KEYS}})
+                             **{key: int(pairs[key]) for key in PROFILE_KEYS},
+                             **{key: int(pairs[key]) if key in pairs else ""
+                                for key in ORACLE_KEYS}})
     return observations[-1] if observations else None
 
 
@@ -69,17 +77,19 @@ def main():
     ap.add_argument("--profiled", type=Path, required=True)
     ap.add_argument("--results", type=Path, required=True)
     ap.add_argument("--max-cases", type=int, default=8)
+    ap.add_argument("--skip-cases", type=int, default=0)
     ap.add_argument("--timeout", type=float, default=2.0)
     args = ap.parse_args()
-    if args.max_cases < 1 or not 0.1 <= args.timeout <= 60:
-        ap.error("max-cases must be positive and timeout must be 0.1..60s")
+    if args.max_cases < 1 or args.skip_cases < 0 or not 0.1 <= args.timeout <= 60:
+        ap.error("max-cases must be positive, skip-cases nonnegative, timeout 0.1..60s")
     with (args.instances / "manifest.tsv").open(encoding="utf-8", newline="") as f:
-        cases = list(csv.DictReader(f, delimiter="\t"))[:args.max_cases]
+        cases = list(csv.DictReader(f, delimiter="\t"))[
+            args.skip_cases:args.skip_cases + args.max_cases]
     if not cases:
         ap.error("no cases")
     fields = ("family", "n", "seed", "build", "deadline_seconds", "status",
               "wall_seconds", "verification", "reported_attempts", "reported_conflicts",
-              "reported_watch_updates", "profile_stage", *PROFILE_KEYS)
+              "reported_watch_updates", "profile_stage", *PROFILE_KEYS, *ORACLE_KEYS)
     args.results.parent.mkdir(parents=True, exist_ok=True)
     with args.results.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -101,7 +111,8 @@ def main():
                        "wall_seconds": f"{elapsed:.6f}", "status": status,
                        "verification": "none", "reported_attempts": "",
                        "reported_conflicts": "", "reported_watch_updates": "",
-                       "profile_stage": "", **{key: "" for key in PROFILE_KEYS}}
+                       "profile_stage": "",
+                       **{key: "" for key in (*PROFILE_KEYS, *ORACLE_KEYS)}}
                 if status == "FINISHED":
                     solved_status, model = read_solution(stdout, n)
                     row["status"] = solved_status

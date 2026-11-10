@@ -1,0 +1,9 @@
+family,n,seed,build,deadline_seconds,status,wall_seconds,verification,reported_attempts,reported_conflicts,reported_watch_updates,profile_stage,attempts,propagations,conflicts,watch_updates,select_calls,select_samples,select_ns,probe_calls,probe_samples,probe_ns,post_calls,post_samples,post_ns,analysis_calls,analysis_samples,analysis_ns,gate_eligible,gate_independent,gate_counterexamples,oracle_independent,sig2_independent,sig4_independent,sig8_independent,oracle_counterexamples,gate_not_oracle,quotient_dim_sum,eager_refresh_items
+unplanted,28,120259994289,baseline,2.000,TIMEOUT,2.003079,none,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994289,profiled,2.000,TIMEOUT,2.002031,none,,,,progress,7000000,22885,2931,199392,7002940,27355,1139331,7000000,27343,5519277,22885,715,114548,2931,91,1366004,27343,62,0,26014,10066,21798,25756,0,0,216095,35548780
+planted,28,120259994290,profiled,2.000,TIMEOUT,2.002258,none,,,,progress,8000000,24598,3142,213953,8003149,31262,1232751,8000000,31250,5517312,24598,768,139261,3142,98,1590609,31250,47,0,29850,11485,25040,29606,0,0,246340,40779147
+planted,28,120259994290,baseline,2.000,TIMEOUT,2.003188,none,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994291,baseline,2.000,TIMEOUT,2.003104,none,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994291,profiled,2.000,TIMEOUT,2.002160,none,,,,progress,8000000,24487,3135,213196,8003142,31262,1361850,8000000,31250,5526449,24487,765,120802,3135,97,1494213,31250,55,0,29836,11287,24920,29558,0,0,246162,40504630
+planted,28,120259994292,profiled,2.000,TIMEOUT,2.002260,none,,,,progress,8000000,24485,3115,229523,8003122,31262,1305812,8000000,31250,5460519,24485,765,120837,3115,97,1396069,31250,46,0,29730,11306,24858,29448,0,0,246612,40147538
+planted,28,120259994292,baseline,2.000,TIMEOUT,2.003158,none,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
