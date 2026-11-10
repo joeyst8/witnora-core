@@ -1,0 +1,9 @@
+family,n,seed,build,deadline_seconds,status,wall_seconds,verification,reported_attempts,reported_conflicts,reported_watch_updates,profile_stage,attempts,propagations,conflicts,watch_updates,select_calls,select_samples,select_ns,probe_calls,probe_samples,probe_ns,post_calls,post_samples,post_ns,analysis_calls,analysis_samples,analysis_ns,gate_eligible,gate_independent,gate_counterexamples
+unplanted,28,120259994289,baseline,2.000,TIMEOUT,2.003114,none,,,,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994289,profiled,2.000,TIMEOUT,2.001913,none,,,,progress,8000000,24616,3151,224023,8003158,31262,1259340,8000000,31250,5238243,24616,769,129541,3151,98,1264087,31250,69,0
+planted,28,120259994290,profiled,2.000,TIMEOUT,2.001625,none,,,,progress,8000000,24598,3142,213953,8003149,31262,1290322,8000000,31250,5501592,24598,768,126390,3142,98,1899635,31250,47,0
+planted,28,120259994290,baseline,2.000,TIMEOUT,2.003128,none,,,,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994291,baseline,2.000,TIMEOUT,2.003155,none,,,,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994291,profiled,2.000,TIMEOUT,2.002275,none,,,,progress,8000000,24487,3135,213196,8003142,31262,1336962,8000000,31250,5304994,24487,765,135948,3135,97,1515821,31250,55,0
+planted,28,120259994292,profiled,2.000,TIMEOUT,2.001844,none,,,,progress,8000000,24485,3115,229523,8003122,31262,1323542,8000000,31250,5795468,24485,765,134568,3115,97,1549142,31250,46,0
+planted,28,120259994292,baseline,2.000,TIMEOUT,2.003203,none,,,,,,,,,,,,,,,,,,,,,,,
