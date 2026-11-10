@@ -1,0 +1,2 @@
+family,n,seed,status,proof_mode,proof_bytes,proof_sha256,proof_solve_seconds,proof_check_seconds
+unplanted,28,120259994289,VERIFIED_UNSAT,2,97820541,7fcf78fbc9b07c4ad08ed674a7f2e0fae34d92a7e890242b200166114ec30e33,2.928338,4.502802
