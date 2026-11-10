@@ -1,0 +1,7 @@
+seed,family,n,selection,compact,rep,build,status,seconds,sampled_rss_kb,verification,conflicts,propagations,attempted_propagations,watch_updates,learned_clauses,decisions,profile_stage,attempts,eligible,skipped,rebuilds,row_visits,wide_eligible,wide_skipped,wide_rebuilds,wide_row_words
+343598293304,sparse_planted,80,cyclic,False,0,baseline,TIMEOUT,2.020484,6800,none,,,,,,,,,,,,,,,,
+343598293304,sparse_planted,80,cyclic,False,0,wide,TIMEOUT,2.020754,7208,none,,,,,,,snapshot,3000000,2999999,1003756,18544,1332885,2999999,1003756,18544,10466388
+554051690563,sparse_planted,129,cyclic,False,0,wide,TIMEOUT,2.002852,6164,none,,,,,,,snapshot,1000000,999999,2770,9724,1109566,999999,2770,9724,13310589
+554051690563,sparse_planted,129,cyclic,False,0,baseline,TIMEOUT,2.017808,6360,none,,,,,,,,,,,,,,,,
+824634629896,sparse_planted,192,cyclic,False,0,baseline,TIMEOUT,2.017819,7180,none,,,,,,,,,,,,,,,,
+824634629896,sparse_planted,192,cyclic,False,0,wide,TIMEOUT,2.020149,6984,none,,,,,,,snapshot,1000000,999999,6093,7669,1377088,999999,6093,7669,22021232
