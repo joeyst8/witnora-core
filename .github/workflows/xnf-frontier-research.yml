@@ -1,0 +1,45 @@
+name: XNF frontier research reproducibility gate (WU-014 through WU-017)
+
+on:
+  pull_request:
+    paths:
+      - "scripts/wu014_*.py"
+      - "scripts/test_wu014_*.py"
+      - "scripts/wu015_*.py"
+      - "scripts/test_wu015_*.py"
+      - "scripts/wu016_*.py"
+      - "scripts/test_wu016_*.py"
+      - "scripts/test_wu017_*.py"
+      - "research_patches/wu016_*"
+      - "research_patches/wu017_*"
+      - "research_data/wu014/**"
+      - "research_data/wu015/**"
+      - "research_data/wu016/**"
+      - "research_data/wu017/**"
+      - ".github/workflows/xnf-frontier-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: witnora-xnf-frontier-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  stdlib-research-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run exact-model and quotient-certificate unit tests
+        run: |
+          python -m unittest -v \
+            scripts.test_wu014_real_solver_pilot \
+            scripts.test_wu015_xorcle_ablation \
+            scripts.test_wu016_profile_xorcle \
+            scripts.test_wu016_linear_gate \
+            scripts.test_wu017_quotient_signatures

@@ -1,0 +1,11 @@
+--- a/src/core/solver.cpp
++++ b/src/core/solver.cpp
+@@ -226,7 +226,7 @@
+                "selector returned an inactive clause");
+         ++counters_.num_attempt_props;
+ 
+-        const bool sample_probe = (++sampled_profile.probe_calls & 255u) == 0;
++        const bool sample_probe = (++sampled_profile.probe_calls & 255u) == 127u;
+         bool independent_gate = false;
+         bool independent_oracle = false;
+         if (sample_probe && !selection->trigger_hint.has_value() &&
