@@ -4,20 +4,20 @@
 
 #[allow(dead_code)]
 #[path = "wu006_guarded_xnf_consensus.rs"]
-mod core;
+pub(crate) mod core;
 
 #[derive(Clone)]
-struct Lemma {
-    falsity: u64,
-    weight: u32,
+pub(crate) struct Lemma {
+    pub(crate) falsity: u64,
+    pub(crate) weight: u32,
 }
 
-struct Fixture {
-    name: String,
-    n: usize,
-    f: Vec<u64>,
-    original: Vec<Vec<u64>>,
-    lemmas: Vec<Lemma>,
+pub(crate) struct Fixture {
+    pub(crate) name: String,
+    pub(crate) n: usize,
+    pub(crate) f: Vec<u64>,
+    pub(crate) original: Vec<Vec<u64>>,
+    pub(crate) lemmas: Vec<Lemma>,
 }
 
 fn parity_guard_fixture(name: &str, variable_count: usize, edges: &[(usize, usize, bool)]) -> Fixture {
@@ -46,7 +46,7 @@ fn parity_guard_fixture(name: &str, variable_count: usize, edges: &[(usize, usiz
         f: vec![1 | rhs, 2 | rhs, 4 | rhs], original, lemmas }
 }
 
-fn path_with_leaves(length: usize, leaves: usize) -> Fixture {
+pub(crate) fn path_with_leaves(length: usize, leaves: usize) -> Fixture {
     let variables = 3 + length - 1 + leaves;
     let nodes: Vec<usize> = std::iter::once(0)
         .chain(3..(3 + length - 1))
@@ -57,7 +57,7 @@ fn path_with_leaves(length: usize, leaves: usize) -> Fixture {
     parity_guard_fixture(&format!("single-path-{length}-leaves-{leaves}"), variables, &edges)
 }
 
-fn parallel_paths(a: usize, b: usize) -> Fixture {
+pub(crate) fn parallel_paths(a: usize, b: usize) -> Fixture {
     let variables = 3 + (a - 1) + (b - 1);
     let mut edges = Vec::new();
     for (length, z_start) in [(a, 3), (b, 3 + a - 1)] {
@@ -78,7 +78,7 @@ fn rng_next(s: &mut u64) -> u64 {
     *s
 }
 
-fn seeded_graph(seed: u64) -> Fixture {
+pub(crate) fn seeded_graph(seed: u64) -> Fixture {
     let mut s = seed.wrapping_mul(0x9e3779b97f4a7c15).wrapping_add(0x1234_5678_9abc_def1);
     let variable_count = 7; // x, y, a, z3, z4, z5, z6
     let mut values = [false; 7];
@@ -99,7 +99,7 @@ fn seeded_graph(seed: u64) -> Fixture {
     parity_guard_fixture(&format!("seeded-graph-{seed}"), variable_count, &edges)
 }
 
-fn rank_anchor(f: &[u64], units: &[u64], n: usize) -> Vec<u64> {
+pub(crate) fn rank_anchor(f: &[u64], units: &[u64], n: usize) -> Vec<u64> {
     let mut joined = vec![1u64 << n];
     joined.extend(units);
     core::intersect(f, &joined, n + 1)
@@ -135,7 +135,7 @@ fn leave_one_out(lemmas: &[Lemma], anchor: &[u64], n: usize) -> (usize, usize) {
 
 // Standard deletion-based minimal support: always retains the entire
 // full-set anchor, but its cost depends on deletion order.
-fn deletion_minimize(lemmas: &[Lemma], anchor: &[u64], n: usize, descending_cost: bool)
+pub(crate) fn deletion_minimize(lemmas: &[Lemma], anchor: &[u64], n: usize, descending_cost: bool)
     -> (usize, usize)
 {
     let mut order: Vec<usize> = (0..lemmas.len()).collect();
@@ -252,7 +252,7 @@ fn abstract_weighted_counterexample() -> (u32, u32, usize, usize) {
     (support_cost(&lemmas, greedy), support_cost(&lemmas, exact), calls, exact_calls)
 }
 
-fn collect_lemmas_from_original(original: &[Vec<u64>], n: usize) -> Vec<Lemma> {
+pub(crate) fn collect_lemmas_from_original(original: &[Vec<u64>], n: usize) -> Vec<Lemma> {
     let mut found: Vec<Lemma> = Vec::new();
     for i in 0..original.len() {
         for j in i + 1..original.len() {
@@ -270,7 +270,7 @@ fn collect_lemmas_from_original(original: &[Vec<u64>], n: usize) -> Vec<Lemma> {
     found
 }
 
-fn verify_with_chosen(f: &Fixture, selected: &[Lemma]) -> (usize, usize) {
+pub(crate) fn verify_with_chosen(f: &Fixture, selected: &[Lemma]) -> (usize, usize) {
     let mut scans = 0;
     let mut premises = f.original.clone();
     for lemma in selected {
