@@ -1,0 +1,68 @@
+{
+  "experiment": "HV-004",
+  "date": "2026-11-10",
+  "classification": "known_method_independent_solver_and_certificate_baseline_not_breakthrough",
+  "hardware_inputs": "exact same five published optimized-circuit CNFs as HV-003; details and source hashes in research/results/hv003_published_circuit_miters.json",
+  "cadical": {
+    "repository": "https://github.com/arminbiere/cadical",
+    "commit": "c60730422e758ef1cebe7aeddf2dda31c996bf04",
+    "version": "3.0.1",
+    "binary_sha256": "5f83c321328714cc35d0dcecd8ad86d28d4b849a76c1a1308b5e9ef55feecb4e",
+    "build": "./configure && make -j4",
+    "baseline_command": "cadical -t 10 -n CNF",
+    "proof_command": "cadical -t 20 --binary=false -n CNF DRAT_PROOF",
+    "timeout_seconds": 10,
+    "outer_kill_guard_seconds": 14
+  },
+  "kissat": {
+    "version": "4.0.4",
+    "commit": "8af8e56f174b778aef3aa45af9f739b2a5f492c2",
+    "sensitivity_command": "kissat --time=20 -n CNF"
+  },
+  "drat_trim": {
+    "commit": "2e3b2dc0ecf938addbd779d42877b6ed69d9a985",
+    "command": "drat-trim CNF ASCII_DRAT_PROOF"
+  },
+  "cadical_10_second_runs": [
+    {"name": "des_area", "result": "UNSAT", "exit_code": 20, "conflicts": 232723, "decisions": 698555, "reported_real_seconds": 6.33},
+    {"name": "usb_funct", "result": "UNSAT", "exit_code": 20, "conflicts": 35969, "decisions": 1063930, "reported_real_seconds": 2.15},
+    {"name": "aes_core", "result": "UNSAT", "exit_code": 20, "conflicts": 138415, "decisions": 776879, "reported_real_seconds": 8.64},
+    {"name": "pci_bridge32", "result": "UNSAT", "exit_code": 20, "conflicts": 412183, "decisions": 7287985, "reported_real_seconds": 7.00},
+    {"name": "RISC", "result": "UNKNOWN_TIME_LIMIT", "exit_code": 0, "conflicts": 34715, "decisions": 8968481, "reported_real_seconds": 10.00}
+  ],
+  "kissat_20_second_sensitivity": [
+    {"name": "aes_core", "result": "UNSAT", "exit_code": 20, "conflicts": 189703, "decisions": 1692967, "reported_process_seconds": 13.41},
+    {"name": "pci_bridge32", "result": "UNSAT", "exit_code": 20, "conflicts": 638780, "decisions": 4474615, "reported_process_seconds": 9.16},
+    {"name": "RISC", "result": "UNKNOWN_TIME_LIMIT", "exit_code": 0, "conflicts": 96729, "decisions": 16199662, "reported_process_seconds": 20.00}
+  ],
+  "independently_verified_new_unsat_proofs": [
+    {
+      "name": "aes_core",
+      "original_cnf_sha256": "24771e66a765e2ef0c67f06b317556cff3191b16db878dea18486fe4cb594fc0",
+      "ascii_drat_proof_sha256": "dd1fc6732d245a63a0652faf9e926dfa1cf0ce55d28d2531692dc819e538bd73",
+      "cadical_proof_run_reported_process_seconds": 8.85,
+      "drat_trim_status": "s VERIFIED",
+      "drat_trim_exit_code": 0,
+      "drat_trim_reported_verification_seconds": 5.412,
+      "proof_size_approx_megabytes": 31
+    },
+    {
+      "name": "pci_bridge32",
+      "original_cnf_sha256": "caeba6d7f9c0e802ce2f5bece7b985e5880e1d29bc47dd333cbf0ac01e57f638",
+      "ascii_drat_proof_sha256": "08472a8244745f4e826b442721a49ad47dba2870a5da00c579b5f0a7253dd2f7",
+      "cadical_proof_run_reported_process_seconds": 7.30,
+      "drat_trim_status": "s VERIFIED",
+      "drat_trim_exit_code": 0,
+      "drat_trim_reported_verification_seconds": 5.298,
+      "proof_size_approx_megabytes": 81
+    }
+  ],
+  "frozen_unrun_holdouts_preserved": ["tv80", "spi", "systemcaes"],
+  "limitations": [
+    "Single exploratory runs on shared, non-isolated CPU, not controlled time rankings",
+    "Proof-inclusive approximate times exclude full CNF-generation and verification pipeline",
+    "Independent DRAT checker validates UNSAT of generated CNFs, not formally verified RTL-to-CNF translation",
+    "ABC circuit-native CEC has independently validated the source pair but no separately checked proof in this experiment",
+    "No Witnora speedup, new algorithm or mathematical breakthrough"
+  ]
+}
