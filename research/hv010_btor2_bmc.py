@@ -43,6 +43,8 @@ def main():
     parser.add_argument("--depth", type=int, required=True)
     parser.add_argument("--positive-control", action="store_true",
                         help="Add a SAT-expected bad for free input ap_start in t=0")
+    parser.add_argument("--probe-h1", action="store_true",
+                        help="Add the H1 violation bad at every frame")
     args = parser.parse_args()
     if not 0 <= args.depth <= 64:
         raise SystemExit("Depth must be between 0 and 64")
@@ -124,6 +126,12 @@ def main():
     for t in range(args.depth + 1):
         for bad in bad_ids:
             emit("bad", expr[t][bad])
+        if args.probe_h1:
+            # Probe the H1 candidate directly at this reachable time frame:
+            # original node27 (FSM_bit5) && !node22 (result_latch).
+            complement_result = emit("not", sorts[1], expr[t][22])
+            h1_violated = emit("and", sorts[1], expr[t][27], complement_result)
+            emit("bad", h1_violated)
     if args.positive_control:
         # Input 4 is ap_start: it is unconstrained at t=0, so an additional
         # bad on this input is a SAT-positive parser/solver sanity check.
@@ -135,7 +143,7 @@ def main():
     print(f"depth={args.depth}")
     print(f"frames={args.depth + 1}")
     print(f"constraints={n_constraints}")
-    print(f"bads={(args.depth + 1) * len(bad_ids) + int(args.positive_control)}")
+    print(f"bads={(args.depth + 1) * (len(bad_ids) + int(args.probe_h1)) + int(args.positive_control)}")
     print(f"output_sha256={hashlib.sha256(output).hexdigest()}")
     print(f"output_bytes={len(output)}")
     print(f"output={args.output}")
