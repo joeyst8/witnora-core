@@ -122,12 +122,28 @@ the two source conventions compatible without modifying solver inputs.
 | Unplanted n29 seed 124554961585 | 344,695,735 bytes | 5.075s | 10.360s | VERIFIED UNSAT |
 | Unplanted n29 seed 124554961587 | 336,857,542 bytes | 4.839s | 10.515s | VERIFIED UNSAT |
 
+**Equal-budget caveat:** the 10-second comparison above counts the
+*no-proof answer* only. With proof rerun and external checker, the four
+text-certificate pipelines each exceed ten seconds even before minor
+wrapper/format-normalization overhead: including the original measured
+XNF→CNF-XOR conversion, their respective totals are approximately
+**11.102s, 10.418s, 15.467s, and 15.389s**. Thus the table's 8/8 CMS
+answers at 10s must **not** be read as 8/8 *verified* answers under
+the same 10-second total budget. The four SAT models were independently
+checked and the four UNSAT answers eventually certified, under a
+larger full-pipeline budget. No like-for-like 10-second certificate
+success ranking is asserted.
+
 As a known-format negative-control/engineering comparison, the first
 n28 proof was also generated as **binary XLRUP** and checked with Cake:
 97,820,541 bytes, 2.928s proof generation, 4.503s proof checking,
 again `VERIFIED UNSAT`. Relative to its text counterpart, binary
 serialization reduces size by ~54.8% and checking time by ~42.7% on
-this one sample. **Binary proof compression is already an established
+this one sample. On that same instance the binary proof+check+conversion
+total was approximately **7.462s**, versus **11.102s** in text (and
+2.026s for the initial unverified solve). This is an independent
+*rerun*, not a same-run change of serialization with all other
+conditions fixed. **Binary proof compression is already an established
 technique**, not a Witnora discovery. Even compressed, verified output
 remains expensive enough to matter in end-to-end solver design.
 
