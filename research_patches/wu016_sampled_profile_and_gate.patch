@@ -1,0 +1,204 @@
+--- a/src/core/solver.cpp
++++ b/src/core/solver.cpp
+@@ -2,6 +2,9 @@
+ 
+ #include <algorithm>
+ #include <cassert>
++#include <chrono>
++#include <cstdint>
++#include <cstdio>
+ #include <numeric>
+ #include <optional>
+ #include <utility>
+@@ -13,6 +16,88 @@
+ 
+ namespace xorcle {
+ 
++namespace {
++
++// WU-016 observational build only: 1-in-256 clause checks and 1-in-32
++// successful propagations / conflict analyses are timed. The original solver
++// semantics and public counters remain untouched. Samples are not exact
++// whole-run CPU attribution, because unsampled work and overhead remain.
++using ProfileClock = std::chrono::steady_clock;
++
++struct SampledProfile {
++    std::uint64_t selection_calls = 0;
++    std::uint64_t selection_samples = 0;
++    std::uint64_t selection_sample_ns = 0;
++    std::uint64_t probe_calls = 0;
++    std::uint64_t probe_samples = 0;
++    std::uint64_t probe_sample_ns = 0;
++    std::uint64_t post_calls = 0;
++    std::uint64_t post_samples = 0;
++    std::uint64_t post_sample_ns = 0;
++    std::uint64_t analysis_calls = 0;
++    std::uint64_t analysis_samples = 0;
++    std::uint64_t analysis_sample_ns = 0;
++    std::uint64_t leading_gate_eligible_samples = 0;
++    std::uint64_t leading_gate_independent_samples = 0;
++    std::uint64_t leading_gate_counterexamples = 0;
++
++    static std::uint64_t elapsed_ns(ProfileClock::time_point start) {
++        return static_cast<std::uint64_t>(
++            std::chrono::duration_cast<std::chrono::nanoseconds>(ProfileClock::now() - start)
++                .count());
++    }
++
++    void emit(const char* stage, std::size_t attempts, std::size_t propagations,
++              std::size_t conflicts, std::size_t watch_updates) const {
++        std::fprintf(stderr,
++                     "WU016_PROFILE stage=%s attempts=%zu propagations=%zu conflicts=%zu "
++                     "watch_updates=%zu select_calls=%llu select_samples=%llu "
++                     "select_ns=%llu probe_calls=%llu probe_samples=%llu probe_ns=%llu "
++                     "post_calls=%llu post_samples=%llu post_ns=%llu "
++                     "analysis_calls=%llu analysis_samples=%llu analysis_ns=%llu "
++                     "gate_eligible=%llu gate_independent=%llu gate_counterexamples=%llu\n",
++                     stage, attempts, propagations, conflicts, watch_updates,
++                     (unsigned long long)selection_calls,
++                     (unsigned long long)selection_samples,
++                     (unsigned long long)selection_sample_ns,
++                     (unsigned long long)probe_calls,
++                     (unsigned long long)probe_samples,
++                     (unsigned long long)probe_sample_ns,
++                     (unsigned long long)post_calls,
++                     (unsigned long long)post_samples,
++                     (unsigned long long)post_sample_ns,
++                     (unsigned long long)analysis_calls,
++                     (unsigned long long)analysis_samples,
++                     (unsigned long long)analysis_sample_ns,
++                     (unsigned long long)leading_gate_eligible_samples,
++                     (unsigned long long)leading_gate_independent_samples,
++                     (unsigned long long)leading_gate_counterexamples);
++        std::fflush(stderr);
++    }
++};
++
++SampledProfile sampled_profile;
++
++// Sound but deliberately conservative sufficient condition: the leading
++// column of *every nonzero vector in a row-echelon span* must be a pivot.
++// Thus two watched equations with distinct non-pivot leading columns are
++// linearly independent MODULO the span (their sum also leads at a nonpivot).
++// Do not mistake the raw coordinates in non-pivot columns for a quotient
++// projection: pivot rows can have nonzero bits there!
++// Observation only: NEVER skip a call in WU-016.
++bool leading_free_proves_independent(const Clause& clause, const RowSpace& trail_span) {
++    if (clause.rows() < 2) {
++        return false;
++    }
++    const IndexSet& pivots = trail_span.pivot_col_idxs();
++    const auto a = clause.row(clause.watched0).leading_bit();
++    const auto b = clause.row(clause.watched1).leading_bit();
++    return a.has_value() && b.has_value() && *a != *b &&
++           !pivots.test(*a) && !pivots.test(*b);
++}
++
++} // namespace
++
+ Solver::Solver(EquationRepr repr, std::size_t num_vars, std::unique_ptr<ClauseSelector> selector,
+                std::unique_ptr<DecisionProcedure> decisions,
+                std::unique_ptr<RestartPolicy> restarts, LrupLogger* proof_logger,
+@@ -61,7 +146,13 @@
+     assert(conflict_check_eqn_.num_bits() == active_num_vars_ + 1);
+ 
+     while (true) {
++        const bool sample_select = (++sampled_profile.selection_calls & 255u) == 0;
++        const auto select_start = sample_select ? ProfileClock::now() : ProfileClock::time_point{};
+         const std::optional<ClauseSelection> selection = selector_->next_with_hint();
++        if (sample_select) {
++            ++sampled_profile.selection_samples;
++            sampled_profile.selection_sample_ns += SampledProfile::elapsed_ns(select_start);
++        }
+         if (!selection.has_value()) {
+             return false;
+         }
+@@ -70,14 +161,40 @@
+                "selector returned an inactive clause");
+         ++counters_.num_attempt_props;
+ 
++        const bool sample_probe = (++sampled_profile.probe_calls & 255u) == 0;
++        bool independent_gate = false;
++        if (sample_probe && !selection->trigger_hint.has_value() &&
++            selector_->clause(selection->id).rows() >= 2) {
++            ++sampled_profile.leading_gate_eligible_samples;
++            independent_gate = leading_free_proves_independent(
++                selector_->clause(selection->id), trail_.span());
++            if (independent_gate) {
++                ++sampled_profile.leading_gate_independent_samples;
++            }
++        }
++        const auto probe_start = sample_probe ? ProfileClock::now() : ProfileClock::time_point{};
+         Equation* propagated_eqn = propagator_.unit_propagate_one_clause(
+             selection->id, selector_->clause(selection->id), trail_, selection->trigger_hint,
+             counters_.num_watch_updates, *selector_);
++        if (sample_probe) {
++            ++sampled_profile.probe_samples;
++            sampled_profile.probe_sample_ns += SampledProfile::elapsed_ns(probe_start);
++        }
++        if (independent_gate && propagated_eqn != nullptr) {
++            ++sampled_profile.leading_gate_counterexamples;
++        }
++        if (counters_.num_attempt_props % 1000000 == 0) {
++            sampled_profile.emit("progress", counters_.num_attempt_props,
++                                 counters_.num_propagations, counters_.num_conflicts,
++                                 counters_.num_watch_updates);
++        }
+         if (propagated_eqn == nullptr) {
+             continue;
+         }
+ 
+         ++counters_.num_propagations;
++        const bool sample_post = (++sampled_profile.post_calls & 31u) == 0;
++        const auto post_start = sample_post ? ProfileClock::now() : ProfileClock::time_point{};
+         assert(propagated_eqn->num_bits() == active_num_vars_ + 1);
+ 
+         // Re-normalize: the propagator reduced the clause row it propagated from,
+@@ -88,15 +205,26 @@
+         selector_->update_with_propagation(*propagated_eqn, trail_);
+ 
+         conflict_check_eqn_.assign_from(false_equation_);
+-        if (trail_.span().partial_reduce(conflict_check_eqn_).kind ==
+-            ReduceResult::Kind::eq_true) {
++        const bool conflict = trail_.span().partial_reduce(conflict_check_eqn_).kind ==
++                              ReduceResult::Kind::eq_true;
++        if (sample_post) {
++            ++sampled_profile.post_samples;
++            sampled_profile.post_sample_ns += SampledProfile::elapsed_ns(post_start);
++        }
++        if (conflict) {
+             return true;
+         }
+     }
+ }
+ 
+ void Solver::handle_non_root_conflict() {
++    const bool sample_analysis = (++sampled_profile.analysis_calls & 31u) == 0;
++    const auto analysis_start = sample_analysis ? ProfileClock::now() : ProfileClock::time_point{};
+     AssertingClause learned = find_asserting_clause(trail_, selector_->clauses(), *decisions_);
++    if (sample_analysis) {
++        ++sampled_profile.analysis_samples;
++        sampled_profile.analysis_sample_ns += SampledProfile::elapsed_ns(analysis_start);
++    }
+ 
+     // The id the clause is *about* to take, read before it is added.
+     const ClauseId new_clause_id = selector_->num_clauses();
+@@ -240,6 +368,9 @@
+             ++counters_.num_conflicts;
+             if (level() == 0) {
+                 write_root_unsat_proof();
++                sampled_profile.emit("finished", counters_.num_attempt_props,
++                                     counters_.num_propagations, counters_.num_conflicts,
++                                     counters_.num_watch_updates);
+                 return Solution{SolveResult::unsat, std::nullopt};
+             }
+             handle_non_root_conflict();
+@@ -252,6 +383,9 @@
+             IndexSet original_assignment = reconstruct_original_assignment(
+                 active_assignment, compaction_history_, active_var_to_original_,
+                 original_num_vars_);
++            sampled_profile.emit("finished", counters_.num_attempt_props,
++                                 counters_.num_propagations, counters_.num_conflicts,
++                                 counters_.num_watch_updates);
+             return Solution{SolveResult::sat, std::move(original_assignment)};
+         }

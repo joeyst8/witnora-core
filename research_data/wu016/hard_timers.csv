@@ -1,0 +1,9 @@
+family,n,seed,build,deadline_seconds,status,wall_seconds,verification,reported_attempts,reported_conflicts,reported_watch_updates,profile_stage,attempts,propagations,conflicts,watch_updates,select_calls,select_samples,select_ns,probe_calls,probe_samples,probe_ns,post_calls,post_samples,post_ns,analysis_calls,analysis_samples,analysis_ns
+unplanted,28,120259994289,baseline,2.000,TIMEOUT,2.003328,none,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994289,profiled,2.000,TIMEOUT,2.001942,none,,,,progress,8000000,24616,3151,224023,8003158,31262,1291927,8000000,31250,7109510,24616,769,127422,3151,98,1313106
+planted,28,120259994290,profiled,2.000,TIMEOUT,2.002063,none,,,,progress,8000000,24598,3142,213953,8003149,31262,1266178,8000000,31250,6938260,24598,768,136206,3142,98,1623034
+planted,28,120259994290,baseline,2.000,TIMEOUT,2.003735,none,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994291,baseline,2.000,TIMEOUT,2.003350,none,,,,,,,,,,,,,,,,,,,,
+unplanted,28,120259994291,profiled,2.000,TIMEOUT,2.002049,none,,,,progress,8000000,24487,3135,213196,8003142,31262,1251363,8000000,31250,7072899,24487,765,276732,3135,97,1683951
+planted,28,120259994292,profiled,2.000,TIMEOUT,2.001538,none,,,,progress,8000000,24485,3115,229523,8003122,31262,1268521,8000000,31250,7501991,24485,765,130596,3115,97,1512401
+planted,28,120259994292,baseline,2.000,TIMEOUT,2.003169,none,,,,,,,,,,,,,,,,,,,,
