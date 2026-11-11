@@ -1,0 +1,24 @@
+{
+  "experiment": "HV-017",
+  "date": "2026-11-10 America/Chicago",
+  "protocol": "docs/HV017_EXTENDED_IC3SA_PROTOCOL.md",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "solver": {
+    "name": "Pono",
+    "version": "2.0.0",
+    "commit": "c81aa363f4c1b1d4f05669478d9a94c16a0d4b44",
+    "backend": "Bitwuzla 0.8.2-dev"
+  },
+  "run": {
+    "cli": "--engine ic3sa --bound 1000000 --smt-solver bzla --show-invar",
+    "wall_timeout_seconds": 120,
+    "virtual_memory_kib": 2097152,
+    "stdout": "",
+    "stderr": "",
+    "exit_code": 124,
+    "timeout": true,
+    "status": "UNKNOWN",
+    "invariant_emitted": false
+  },
+  "interpretation": "Published Pono IC3SA did not decide this particular unchanged HLS array benchmark within 120 seconds and 2 GiB virtual memory. Does not establish safety, unsafety, novel research or global solver difficulty."
+}
