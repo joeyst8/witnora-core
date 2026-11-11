@@ -1,0 +1,23 @@
+{
+  "experiment": "HV-014",
+  "date": "2026-11-10",
+  "protocol": "docs/HV014_PREDECLARED_FSM_RESULT_WITNESS_H3.md",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "generator": "research/hv014_h3_witness.py",
+  "generator_sha256": "176fb9d0643044089ec87151f7b4dc6413b38ad45bede1cd8d1f6b430f3fbd40",
+  "hypothesis": "H3 combines legal-onehot FSM (original node100 invalid) with H1 bit5=>result latch (original 27,22), preserving all original state/input/next/init/bad and adding bad100 and bad(27&&!22)",
+  "witness_sha256": "d418c0df30a159a99415df8271da8ebb647d7742094ccd447c75d3a8b48c39f1",
+  "witness_bytes": 12423,
+  "checker": "Cerbtora 2.0.0 with Bitwuzla 0.6.1",
+  "limit_seconds": 20,
+  "limit_memory_mib": 2048,
+  "exit_code": 1,
+  "checks": {
+    "reset": "PASS",
+    "transition": "PASS",
+    "property": "PASS",
+    "base": "PASS",
+    "step": "FAIL (SAT) Bad property 801 satisfiable."
+  },
+  "conclusion": "H3 not a valid 1-inductive safety witness; legal controller codes and result implication alone do not suffice. Does not show reachable unsafe trace, does not establish novel algorithm."
+}
