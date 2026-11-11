@@ -1,0 +1,74 @@
+{
+  "experiment": "HV-006",
+  "date": "2026-11-10",
+  "classification": "existing_ABC_partitioning_screen_and_known_overlap_diagnostic_no_breakthrough",
+  "predeclared_protocol_file": "docs/HV006_PREDECLARED_DEVELOPMENT_COHORT.md",
+  "predeclared_protocol_commit": "66acf8020ddb49bd9c3cf7c1f53b156e0358163e",
+  "corpus": {
+    "repository": "https://github.com/lsils/sim-LSV_exp",
+    "commit": "071c4a9998eb5660c8f955c29e905315bdad2da2",
+    "reference_path": "benchmarks_ifraig-s/{name}.aig",
+    "optimized_path": "benchmarks_dc2syn2/{name}.aig",
+    "original_and_optimized_sha256s": "docs/HV006_PREDECLARED_DEVELOPMENT_COHORT.md",
+    "semantics": "paired public IWLS05-derived combinational AIGs; positional matched I/O; zero latches"
+  },
+  "abc": {
+    "repository": "https://github.com/berkeley-abc/abc",
+    "commit": "25d4ee221b2a9ab5124f3a222bcdf6f922d3d8a3",
+    "unpartitioned_command": "cec -n -C 10000 -T 9 REF OPT",
+    "partitioned_command": "cec -n -p -C 10000 -T 9 REF OPT",
+    "external_kill_guard_seconds": 14,
+    "warning": "ABC -T approximate; exit 124 means guarded cutoff. Results are single unisolated screening runs unless explicitly noted."
+  },
+  "predeclared_cases": [
+    {"name": "iwls05_i2c", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.28}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.25, "parts": 1}, "ref_ands": 1120, "opt_ands": 868},
+    {"name": "ss_pcm", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.23}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.23, "parts": 1}, "ref_ands": 405, "opt_ands": 397},
+    {"name": "systemcdes", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.39}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.40, "parts": 1}, "ref_ands": 2857, "opt_ands": 2586},
+    {"name": "ac97_ctrl", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 1.06}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 0.49, "parts": 9}, "ref_ands": 14199, "opt_ands": 10749},
+    {"name": "DMA", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 4.10}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 1.94, "parts": 16}, "ref_ands": 21992, "opt_ands": 20927},
+    {"name": "DSP", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 8.93}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 12.80, "parts": 101}, "ref_ands": 44132, "opt_ands": 39272},
+    {"name": "des_perf", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 10.15}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 4.95, "parts": 18}, "ref_ands": 81998, "opt_ands": 81303},
+    {"name": "wb_conmax", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 3.08}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 1.93, "parts": 14}, "ref_ands": 47449, "opt_ands": 39236},
+    {"name": "ethernet", "unpartitioned": {"status": "equivalent", "elapsed_wall_seconds": 3.66}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 1.44, "parts": 41}, "ref_ands": 86293, "opt_ands": 55832},
+    {"name": "vga_lcd", "unpartitioned": {"status": "external_cutoff", "elapsed_wall_seconds": 14.20, "exit_code": 124}, "partitioned": {"status": "equivalent", "elapsed_wall_seconds": 4.24, "parts": 70}, "ref_ands": 126427, "opt_ands": 88786}
+  ],
+  "predeclared_outcome": {"total_cases": 10, "unpartitioned_equivalent": 9, "unpartitioned_external_cutoff": 1, "partitioned_equivalent": 10},
+  "posthoc_DSP_replication": {
+    "run_order_after_initial_screen": ["partitioned", "unpartitioned", "unpartitioned", "partitioned", "partitioned", "unpartitioned"],
+    "unpartitioned_wall_seconds_initial_plus_three": [8.93, 9.90, 9.38, 9.04],
+    "partitioned_wall_seconds_initial_plus_three": [12.80, 12.83, 12.69, 13.34],
+    "unpartitioned_median_wall_seconds": 9.21,
+    "partitioned_median_wall_seconds": 12.815,
+    "partitioned_to_unpartitioned_median_ratio": 1.3914,
+    "all_eight_verified_equivalent_by_ABC": true,
+    "note": "Posthoc exploratory replication, not predeclared hypothesis confirmation or statistical confidence interval"
+  },
+  "posthoc_partition_workload_diagnostic": [
+    {"name": "iwls05_i2c", "sum_source_ands": 1988, "sum_reported_part_ands": 2307, "ratio": 1.16, "parts": 1},
+    {"name": "ss_pcm", "sum_source_ands": 802, "sum_reported_part_ands": 829, "ratio": 1.03, "parts": 1},
+    {"name": "systemcdes", "sum_source_ands": 5443, "sum_reported_part_ands": 5938, "ratio": 1.09, "parts": 1},
+    {"name": "ac97_ctrl", "sum_source_ands": 24948, "sum_reported_part_ands": 31332, "ratio": 1.26, "parts": 9},
+    {"name": "DMA", "sum_source_ands": 42919, "sum_reported_part_ands": 60256, "ratio": 1.40, "parts": 16},
+    {"name": "DSP", "sum_source_ands": 83404, "sum_reported_part_ands": 514432, "ratio": 6.17, "parts": 101},
+    {"name": "des_perf", "sum_source_ands": 163301, "sum_reported_part_ands": 159044, "ratio": 0.97, "parts": 18},
+    {"name": "wb_conmax", "sum_source_ands": 86685, "sum_reported_part_ands": 94737, "ratio": 1.09, "parts": 14},
+    {"name": "ethernet", "sum_source_ands": 142125, "sum_reported_part_ands": 194879, "ratio": 1.37, "parts": 41},
+    {"name": "vga_lcd", "sum_source_ands": 215213, "sum_reported_part_ands": 329392, "ratio": 1.53, "parts": 70}
+  ],
+  "existing_prior_art": [
+    "Mukherjee et al. automatic partitioning ASP-DAC 2000",
+    "Zheng et al. output grouping and circuit SAT 2005",
+    "ICCAD 2006 improvements to combinational equivalence checking",
+    "ASP-DAC 2007 incremental SAT output ordering and shared circuit overlaps",
+    "Zhu et al. 2026 Miter-Aware LUT Mapping"
+  ],
+  "frozen_unrun_holdouts_preserved": ["tv80", "spi", "systemcaes"],
+  "limitations": [
+    "Sample is deliberately size-diverse development cohort, not representative random draw",
+    "Exploratory single runs on shared host except four total DSP runs per mode",
+    "ABC native equivalence has no separately independent external certificate for these pairs",
+    "Aggregate ABC partition AND ratio is not exact gate-duplication count or a novel invariant",
+    "Overlap metric was post-hoc, not predeclared, and is only suggestive",
+    "No original Witnora algorithm, independent proof, or novel hardware SAT breakthrough"
+  ]
+}

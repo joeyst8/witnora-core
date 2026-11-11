@@ -1,0 +1,79 @@
+{
+  "experiment": "HV-005",
+  "date": "2026-11-10",
+  "classification": "known_abc_partitioning_explains_risc_difficulty_no_breakthrough",
+  "abc": {
+    "repository": "https://github.com/berkeley-abc/abc",
+    "commit": "25d4ee221b2a9ab5124f3a222bcdf6f922d3d8a3",
+    "command": "cec -n [ -p ] [ -s ] [ -C num ] -T num REF OPT",
+    "semantics": {
+      "-n": "match primary inputs and outputs by order",
+      "-p": "toggle automatic multioutput partitioning; default off",
+      "-s": "toggle SAT only instead of default FRAIG + SAT",
+      "-C": "SAT conflict budget; default 10000",
+      "-T": "approximate time limit, not a hard wall clock guard"
+    }
+  },
+  "corpus": {
+    "repository": "https://github.com/lsils/sim-LSV_exp",
+    "commit": "071c4a9998eb5660c8f955c29e905315bdad2da2",
+    "source_hashes": "research/results/hv003_published_circuit_miters.json",
+    "scope": "five reference vs optimized combinational AIG pairs; not sequential verification"
+  },
+  "risc_factorial_screen": {
+    "default_fraig_sat_unpartitioned": [
+      {"status": "equivalent", "external_elapsed_seconds": 26.52, "exit_code": 0, "abc_reported_seconds": 26.16},
+      {"status": "equivalent", "external_elapsed_seconds": 27.68, "exit_code": 0, "abc_reported_seconds": 27.34}
+    ],
+    "fraig_sat_partitioned": [
+      {"status": "equivalent", "external_elapsed_seconds": 4.85, "exit_code": 0, "number_of_partitions": 31},
+      {"status": "equivalent", "external_elapsed_seconds": 4.41, "exit_code": 0, "number_of_partitions": 31},
+      {"status": "equivalent", "external_elapsed_seconds": 5.30, "exit_code": 0, "number_of_partitions": 31, "note": "earlier pilot run"}
+    ],
+    "sat_only_unpartitioned_high_conflicts": {
+      "status": "no_conclusive_terminal_result_before_external_guard",
+      "external_guard_seconds": 32,
+      "approximate_abc_time_limit": 25,
+      "conflict_limit": 1000000,
+      "final_exit_code_retained": false
+    },
+    "sat_only_partitioned_high_conflicts": {
+      "status": "equivalent",
+      "external_elapsed_seconds": 4.70,
+      "exit_code": 0,
+      "number_of_partitions": 31,
+      "approximate_abc_time_limit": 30,
+      "conflict_limit": 1000000
+    },
+    "sat_only_unpartitioned_default_conflicts": {
+      "status": "undecided",
+      "abc_message": "Networks are undecided (SAT solver timed out).",
+      "default_conflict_limit": 10000,
+      "note": "Do not interpret message as proof that the wall clock limit was reached."
+    }
+  },
+  "other_circuit_partitioned_runs": [
+    {"name": "des_area", "result": "equivalent", "external_elapsed_seconds": 0.71, "partitions": 1, "prior_unpartitioned_abc_reported_seconds": 0.43},
+    {"name": "usb_funct", "result": "equivalent", "external_elapsed_seconds": 1.05, "partitions": 8, "prior_unpartitioned_abc_reported_seconds": 2.62},
+    {"name": "aes_core", "result": "equivalent", "external_elapsed_seconds": 4.99, "partitions": 2, "prior_unpartitioned_abc_reported_seconds": 4.41},
+    {"name": "pci_bridge32", "result": "equivalent", "external_elapsed_seconds": 2.28, "partitions": 16, "prior_unpartitioned_abc_reported_seconds": 3.48}
+  ],
+  "unpartitioned_sat_only_controls": [
+    {"name": "aes_core", "status": "equivalent_after_sat", "external_elapsed_seconds": 14.97, "conflict_limit": 1000000},
+    {"name": "pci_bridge32", "status": "external_guard_no_conclusion", "external_elapsed_seconds": 28.23, "exit_code": 124, "conflict_limit": 1000000},
+    {"name": "RISC", "status": "external_guard_no_conclusion", "external_elapsed_seconds_approx": 32, "exit_code_retained": false, "conflict_limit": 1000000}
+  ],
+  "prior_art": [
+    "Mishchenko/Chatterjee/Brayton 2006 Improvements to Combinational Equivalence Checking",
+    "ABC FRAIG and SAT sweeping (established)",
+    "Zhu et al. 2026 Miter-Aware LUT Mapping"
+  ],
+  "frozen_unrun_holdouts_preserved": ["tv80", "spi", "systemcaes"],
+  "limitations": [
+    "Exploratory sequential same-host runs, non-isolated CPU; process-wall and tool-internal timing sources not identical",
+    "ABC internal -T time limit is approximate; SAT-only default -C conflict cap can cause early undecided result",
+    "Native ABC CEC equivalent has no independently verified external proof for RISC",
+    "No source-level new partition algorithm implemented; measured built-in ABC features only",
+    "No Witnora performance or scientific breakthrough claim"
+  ]
+}
