@@ -1,0 +1,19 @@
+{
+  "experiment": "HV-023",
+  "date": "2026-11-16",
+  "task": "falsify comparison_enabled(t+1) => FSM_bit4(t) even from a legal one-hot previous FSM encoding",
+  "benchmark": "array/2024/hku/safe/processed_hl_arr_access_32_arr.btor2",
+  "mirror_sha256": "cfa12d67ca508b686e2c2609962fac74919e7448ca8a379d2527cdeba65d58bc",
+  "source_nodes_used": [14, 3, 60, 112, 176, 258, 308, 328, 262],
+  "arbitrary_predecessor": {"state14_FSM": 8, "state112_pp1_iter0": 1, "state60_i1": 0, "input3_ap_rst": 0, "state176_icmp34": 0, "input5_full_n": 1, "all_other_needed_values": 0},
+  "original_source_next_values": {"next_FSM_node258": 16, "next_pp1_iter1_node308": 1, "next_icmp34_reg_node328": 0, "next_compare_enable_node262": 1},
+  "false_implication": "compare_enable(t+1) => FSM_bit4(t)",
+  "falsified_in_unrestricted_transition_system": true,
+  "falsified_with_one_hot_previous_FSM": true,
+  "is_reachable_from_initial_state": "NOT TESTED",
+  "original_hardware_unsafe": "NOT ESTABLISHED",
+  "full_safety_certificate": false,
+  "consequence": "Need to prove a reachable controller entry/warm-up disjunction or an alternative data-valid condition; cannot assume previous stage4 whenever compare enable next is high",
+  "holdouts_untouched": true,
+  "new_algorithm_or_speedup": false
+}
