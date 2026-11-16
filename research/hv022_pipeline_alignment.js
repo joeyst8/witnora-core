@@ -18,7 +18,7 @@ const expected = {
   6:['sort','bitvec','8'], 81:['sort','bitvec','3'], 318:['sort','array','81','6'],
   153:['and','1','112','65'],316:['ite','6','153','315','164'],
   321:['ite','6','197','320','165'],317:['next','6','164','316'],
-  322:['next','6','165','321'], 405:['next','318','319','404'], 406:['bad','48']
+  322:['next','6','165','321'], 405:['next','318','319','404','mem_V_U.top_mem_V_ram_U.ram'], 406:['bad','48']
 };
 for(const [k,r] of Object.entries(expected)){
  const x=node.get(+k),p=[x.op,...x.p]; if(r.length!==p.length||r.some((v,i)=>v!==p[i]))
