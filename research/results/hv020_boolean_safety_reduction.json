@@ -1,0 +1,16 @@
+{
+  "arbitrary_prestate_cases_passed": 32,
+  "boolean_truth_table_cases_passed": 8,
+  "exact_node_equations_as_transcribed": true,
+  "experiment": "HV-020",
+  "fresh_upstream_btor2_bytes_read_this_run": false,
+  "full_chip_certificate": "NOT_RUN",
+  "novel_algorithm": false,
+  "positive_control_deliberately_false_equation_mismatches": 4,
+  "proven_identity_under_transcribed_equations": "bad(t+1) == full_n(t) & FSM_bit5(t) & !result_reg(t)",
+  "scope": "one-step structural identity over three source-derived Boolean inputs",
+  "source_rehashed_this_run": false,
+  "two_24bit_concat_cases_passed": 512,
+  "unbounded_original_safety": "UNKNOWN; not proved by this audit",
+  "upstream_sha256_from_prior_verification": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49"
+}

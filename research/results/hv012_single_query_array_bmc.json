@@ -1,0 +1,87 @@
+{
+  "experiment": "HV-012",
+  "date": "2026-11-10",
+  "protocol": "docs/HV012_SINGLE_QUERY_ARRAY_BMC_PROTOCOL.md",
+  "scope": "same pinned 32-named HKU array development model, no holdouts",
+  "source": {
+    "commit": "e19d110544fe7481763894f479b223aaa95fa582",
+    "sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49"
+  },
+  "scripts": {
+    "unroller": "research/hv010_btor2_bmc.py",
+    "unroller_sha256": "dd5e1791369eaea5c47801781659f83c8d0de7e3fa83ce6d03b95df4e88ba120",
+    "aggregator": "research/hv012_aggregate_bads.py",
+    "aggregator_sha256": "9c78218fb777ba09ca6e6310dc283868659686d90fd1c5d259c72711240a3ffd"
+  },
+  "toolchain": {
+    "bitwuzla_commit": "9bb73b69611d85fd04c20b3bd72f6dbe9bd9dc43",
+    "bitwuzla_version": "0.6.1",
+    "cerbtora": "2.0.0",
+    "btor2tools_commit": "e6941e37e056084ab6e51c5c1eee6233089a330d",
+    "bitwuzla_options": [
+      "--lang",
+      "btor2",
+      "--time-limit",
+      "20000",
+      "--memory-limit",
+      "2048"
+    ]
+  },
+  "checks": [
+    {
+      "depth": 16,
+      "kind": "replay original unrolling",
+      "sha256": "85fb4e83bb4dbf81776fcbc29fa1027c5f405d10e05799fc8227387f9c325689",
+      "matches_hv010": true
+    },
+    {
+      "depth": 16,
+      "kind": "OR of all 17 frame bads",
+      "sha256": "579ecf621651b8c3af4123519b76062c357bd8f8c9220e0d51bc366b40ed3d94",
+      "bytes": 146583,
+      "original_bad_count": 17,
+      "aggregated_bad_count": 1,
+      "stdout": "Bad property 6909 unsatisfiable.",
+      "exit_code": 0,
+      "wall_seconds": 0.041889943,
+      "status": "UNSAT"
+    },
+    {
+      "depth": 16,
+      "kind": "OR of 17 frame bads and SAT positive control",
+      "sha256": "50a635390298edf0c237dfd285a33de5bd59226fb59e444aaea57d5091e95bf8",
+      "bytes": 146601,
+      "original_bad_count": 18,
+      "aggregated_bad_count": 1,
+      "stdout": "Bad property 6910 satisfiable.",
+      "exit_code": 0,
+      "wall_seconds": 0.016266065,
+      "status": "SAT"
+    },
+    {
+      "depth": 32,
+      "kind": "OR of all 33 frame bads",
+      "sha256": "6d54c3987d35bd14a1a2be64687910d3e0c9456bf2400adf9073f1ddf7b7b3d8",
+      "bytes": 295300,
+      "original_bad_count": 33,
+      "aggregated_bad_count": 1,
+      "stdout": "unknown",
+      "exit_code": 0,
+      "wall_seconds": 19.902427664,
+      "status": "UNKNOWN"
+    },
+    {
+      "depth": 64,
+      "kind": "OR of all 65 frame bads",
+      "sha256": "18e8d654ac1a7e7db1196d243cb3b8655bd944c4a166ec08424bd5e055ddc6e5",
+      "bytes": 611460,
+      "original_bad_count": 65,
+      "aggregated_bad_count": 1,
+      "stdout": "unknown",
+      "exit_code": 0,
+      "wall_seconds": 19.908173395,
+      "status": "UNKNOWN"
+    }
+  ],
+  "interpretation": "Standard single-property aggregation is semantically equivalent for bounded reachability but still inconclusive beyond depth 16 at the fixed per-run limit. This eliminates simplistic per-bad query overhead as sole explanation; no unbounded safety proof or new Witnora algorithm."
+}

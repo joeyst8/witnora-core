@@ -1,0 +1,109 @@
+{
+  "experiment": "HV-003",
+  "date": "2026-11-10",
+  "classification": "certified_public_hardware_equivalence_baseline_not_breakthrough",
+  "corpus": {
+    "name": "lsils/sim-LSV_exp (IWLS05 AIG pairs)",
+    "url": "https://github.com/lsils/sim-LSV_exp",
+    "commit": "071c4a9998eb5660c8f955c29e905315bdad2da2",
+    "reference_path_template": "benchmarks_ifraig-s/{name}.aig",
+    "optimized_path_template": "benchmarks_dc2syn2/{name}.aig",
+    "semantics": "combinational circuits; zero latches; positional primary inputs/outputs; no manufacturing/tapeout claim"
+  },
+  "tools": {
+    "normalizer": {"source": "research/hv003_strip_aiger_suffix.rs", "sha256": "efca93b0831b4869f1fff6731c012070da316c00e7188882970235dfa2c542d0", "rustc": "1.99.1", "copies_logic_prefix_byte_identically": true, "original_prefix_cmp_passed": 10},
+    "aiger": {"repository": "arminbiere/aiger", "commit": "039ec1a2cc37d3093ac35c4b6df65336b346f409", "commands": ["aigmiter", "aigtocnf"]},
+    "kissat": {"version": "4.0.4", "commit": "8af8e56f174b778aef3aa45af9f739b2a5f492c2", "timeout_seconds": 10},
+    "abc": {"repository": "berkeley-abc/abc", "commit": "25d4ee221b2a9ab5124f3a222bcdf6f922d3d8a3", "command": "cec -n -T 10 REF OPT", "note": "approximate ABC internal timeout, not enforced hard wall limit; RISC took 30.51 reported seconds"},
+    "drat_trim": {"commit": "2e3b2dc0ecf938addbd779d42877b6ed69d9a985"}
+  },
+  "control_notes": [
+    "Exploratory single runs, shared machine not isolated; do not infer significant runtime ranking",
+    "Kissat UNKNOWN at 10s is censored, not non-equivalence",
+    "Independent DRAT checks validate generated CNF UNSAT, whereas ABC CEC is separate circuit-level verification without a separately checked external certificate",
+    "Source AIGER to CNF translation tool implementation is not independently formally verified"
+  ],
+  "cases": [
+    {
+      "name": "des_area", "inputs": 496, "outputs": 72,
+      "reference_ands": 4827, "optimized_ands": 4824,
+      "reference_aig_sha256": "86b2ddff870fbaadb226e3b7c880e94b0de02d3a9678a7bf4217f692dfb38314",
+      "optimized_aig_sha256": "6476c544010362184fa9abe16c63460c060911aa4fbf66b65a3edd94647cf9f2",
+      "normalized_reference_sha256": "41f6b58d320b00f2f90b10a3b778b5aa09f1e97e34f1c67d5c9f3d7c1812e357",
+      "normalized_optimized_sha256": "36966fb205d9b151a16f9a98a77610474b46e81dfc249a999ac20cd4feeee3d7",
+      "miter_aig_sha256": "ac3d31d350bc92e6024ea39db60052e4a810806c95d32ce187cc2d02e9a32cf0",
+      "cnf_vars": 8588, "cnf_clauses": 25962,
+      "cnf_sha256": "f3fde22ba21fd0804b79e58a39cb63a7f6730b1ca54191d62b28e4047a9100ec",
+      "kissat_result": "UNSAT", "kissat_conflicts": 265696, "kissat_decisions": 845547,
+      "abc_cec_result": "equivalent", "abc_cec_reported_seconds": 0.43,
+      "proof_drat_sha256": "adc9d53437171dbd03271049db427808846758106876c1e06dc35db73635070a",
+      "drat_verified": true, "drat_verification_seconds": 8.722,
+      "no_xor": {"vars": 9080, "clauses": 27031, "status": "UNSAT", "conflicts": 183144, "cnf_sha256": "1f812d3eb1e6c87ef8136ce2c5a1633f02ed2c1a15940995742f159fe9120fb3"},
+      "no_xor_or_ite": {"vars": 10297, "clauses": 29373, "status": "UNSAT", "conflicts": 223605, "cnf_sha256": "6ef4f4923ecbfb9355e49ee8b5638d5c5b452a47e2779ad01bd686804246c481"}
+    },
+    {
+      "name": "usb_funct", "inputs": 3620, "outputs": 1858,
+      "reference_ands": 15245, "optimized_ands": 13414,
+      "reference_aig_sha256": "0dc08e1432ca66ffaac5a482abb2c81858490cf3cb2dfdc9784099f2c761575b",
+      "optimized_aig_sha256": "86ecfb2eec517872860792b3e82fd89a1b96afc3d8550e965dd3f6db459d0f2b",
+      "normalized_reference_sha256": "7d2484b7b33624f1d253d86921476faabd2fc2fd4d3c32f979089c448a457203",
+      "normalized_optimized_sha256": "6d08f91476f3bda39d22921a94cca0495100493524de63d9a58479a98d98e748",
+      "miter_aig_sha256": "91c5bf44d64c2ec76f3473e55a0cbbaa5b943553bdc3736f3fb7ac6c6cc6cb8b",
+      "cnf_vars": 24717, "cnf_clauses": 68567,
+      "cnf_sha256": "f64b268a72a4f6f6bcf24ab8acc1bc23a955d4c2384d58a79f60f0f823f50b1c",
+      "kissat_result": "UNSAT", "kissat_conflicts": 59451, "kissat_decisions": 1341707,
+      "abc_cec_result": "equivalent", "abc_cec_reported_seconds": 2.62,
+      "proof_drat_sha256": "fc30fbbaa0ce29e3dc8476e7f50934a8b29eadb0c3bca251fd84c9f7174f26c3",
+      "drat_verified": true, "drat_verification_seconds": 4.644,
+      "no_xor": {"vars": 30179, "clauses": 78590, "status": "UNSAT", "conflicts": 63421, "cnf_sha256": "44f8d1450a1f905023cb25df0d7e1ba0167f6c39d83e9c2210ad91f515b5bef6"},
+      "no_xor_or_ite": {"vars": 37191, "clauses": 96093, "status": "UNSAT", "conflicts": 57703, "cnf_sha256": "da14263c06df497e5c60b83a3c8c58519d81d1f91125b1083ce9df4aa1979af4"}
+    },
+    {
+      "name": "aes_core", "inputs": 1319, "outputs": 668,
+      "reference_ands": 21441, "optimized_ands": 23362,
+      "reference_aig_sha256": "55c0bb43b208c2c2b318f4c086c7788fb139106356de1d3e4e878061712154e4",
+      "optimized_aig_sha256": "62aee6e5be92d25eb818b2e4e18ad356954dd5c10c5fec16947e585b7eceb96d",
+      "normalized_reference_sha256": "2f8dcf8c3f77cdab0a63b15f059c49252e8627752d2eba7e20d8b3be8bfa98a0",
+      "normalized_optimized_sha256": "5e0b2ca8574522b8adffb6f9414a615a65e14ace6c37029ddd8a924688d20b87",
+      "miter_aig_sha256": "c4f3d75fcac905c81b8cec1c6712ef00697aadae2be66347f2ae3a9dd21169a6",
+      "cnf_vars": 38138, "cnf_clauses": 116371,
+      "cnf_sha256": "24771e66a765e2ef0c67f06b317556cff3191b16db878dea18486fe4cb594fc0",
+      "kissat_result": "UNKNOWN", "kissat_conflicts": 129984, "kissat_decisions": 1291148,
+      "abc_cec_result": "equivalent", "abc_cec_reported_seconds": 4.41,
+      "no_xor": {"vars": 43418, "clauses": 128331, "status": "UNKNOWN", "conflicts": 105206, "cnf_sha256": "85825d5b61e1cc2ecc45c9fce23ddc752f6e6a0875333f6b8a2746bd324a2528"},
+      "no_xor_or_ite": {"vars": 47587, "clauses": 137601, "status": "UNKNOWN", "conflicts": 105190, "cnf_sha256": "d3f6432717352acc7709b5c2024e189605ff9c7629beab14a1bb62c9516c475c"}
+    },
+    {
+      "name": "pci_bridge32", "inputs": 6880, "outputs": 3533,
+      "reference_ands": 22521, "optimized_ands": 16392,
+      "reference_aig_sha256": "ac97c39c3a80de54d803160eb12c5ce40ff88dff085f71169e6c2a91702d8cc5",
+      "optimized_aig_sha256": "4a38c183d5c2d107aa566ab0a7fa8519cd4b53870714c2cf5605927c0d0ebff3",
+      "normalized_reference_sha256": "eea2be70940039f1d91ee9103a45e6700781480b2e8ff272438399a583514d1d",
+      "normalized_optimized_sha256": "fe0a6bbf2df9c3c5f1cc0613a10da41ffd26c2b5eaf9112c6f449f90576dcfd2",
+      "miter_aig_sha256": "e387ea0bc0c7a6ecabd79f8cb0ec498629501306c133dd2a66170485db50eb59",
+      "cnf_vars": 31333, "cnf_clauses": 83163,
+      "cnf_sha256": "caeba6d7f9c0e802ce2f5bece7b985e5880e1d29bc47dd333cbf0ac01e57f638",
+      "kissat_result": "UNKNOWN", "kissat_conflicts": 494178, "kissat_decisions": 4313044,
+      "abc_cec_result": "equivalent", "abc_cec_reported_seconds": 3.48
+    },
+    {
+      "name": "RISC", "inputs": 15678, "outputs": 8111,
+      "reference_ands": 73789, "optimized_ands": 61900,
+      "reference_aig_sha256": "d0245b28ace10c064fcc1871805eb6b28f12eb5bdba6ffd00afc21817cd19e76",
+      "optimized_aig_sha256": "5dda049476bb6ae45f1d0dc879c8d9c6fdb4bd4e531248184b0018cdc71fc8ef",
+      "normalized_reference_sha256": "fe2f065a16450b17b33cff55e800b78cfc96e4e1668aea3f736f1718d846f6af",
+      "normalized_optimized_sha256": "937fbc253739209c92bca1bf6029ae10471bf51cfe946af1b639bd55daa2531c",
+      "miter_aig_sha256": "a1a1559e0c1f2271dafe14099393302ee948f0cc1e3ee75ebcc4d04220fbb017",
+      "cnf_vars": 121977, "cnf_clauses": 338754,
+      "cnf_sha256": "25fb2e73486767fea12240c2fc537be26bf9bda3097752c3b41e699bc8585838",
+      "kissat_result": "UNKNOWN", "kissat_conflicts": 25664, "kissat_decisions": 4294082,
+      "abc_cec_result": "equivalent", "abc_cec_reported_seconds": 30.51
+    }
+  ],
+  "frozen_unrun_holdouts": [
+    {"name": "tv80", "reference_sha256": "ed6aff585d41ca7f22f34287963d89322ebcf4a78904bf05812c40367cb12bd3", "optimized_sha256": "e76bd320b00bc7148aaf9d7a4daec5d3c2ec92d078b773ba37e07aa4b057669a"},
+    {"name": "spi", "reference_sha256": "ecd06a3530c701888cd81592d53bdc5589a362575490081cd04b40ca8542fe89", "optimized_sha256": "61994aa466e5280594e566e22f6ec428ad074f6fffe303254969b76723945bf4"},
+    {"name": "systemcaes", "reference_sha256": "9b9f83d74087867a552d1eda0c7ee112540afdf0fd25ba5f9083fc535870dc66", "optimized_sha256": "5cff77b262bccd45e19f14333f13aa609fdaf3bc07c4b2b53d60ad07c287ebf6"}
+  ],
+  "novelty": {"new_solver_implemented": false, "witnora_speedup_claimed": false, "breakthrough_claimed": false}
+}

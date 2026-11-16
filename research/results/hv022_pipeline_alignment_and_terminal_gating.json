@@ -1,0 +1,55 @@
+{
+  "experiment": "HV-022",
+  "date": "2026-11-16",
+  "source": "CyanoKobalamyne/hwmcc-benchmarks/array/2024/hku/safe/processed_hl_arr_access_32_arr.btor2",
+  "source_revision": "57174f5d6f575aedcfe83694b35ec8e7b83043fc",
+  "mirror_sha256": "cfa12d67ca508b686e2c2609962fac74919e7448ca8a379d2527cdeba65d58bc",
+  "source_node_count": 406,
+  "ram_index_width_bits": 3,
+  "ram_data_width_bits": 8,
+  "ram_addressable_entries": 8,
+  "stage_alignment": {
+    "random_unconstrained_cases": 2520,
+    "stage_enabled_random_cases": 1260,
+    "stage_enabled_identity_failures": 0,
+    "forced_equal_cases": 576,
+    "forced_unequal_cases": 576,
+    "held_register_cases": 576,
+    "forced_control_failures": 0,
+    "example_terminal_false_equality": {
+      "counter": 8,
+      "ram_address": 0,
+      "ram_read_value": 145,
+      "free_input310": 146,
+      "phi_next": 146
+    },
+    "note": "Counterexample from arbitrary predecessor assignment; no claim that it is reachable"
+  },
+  "terminal_gating": {
+    "predeclared_exhaustive_cases": 512,
+    "en1_update_identity_pass": 512,
+    "icmp34_update_identity_pass": 512,
+    "comparison_enable_implies_nonterminal_previous_counter_pass": 512,
+    "comparison_enabled_cases": 45,
+    "deliberately_bad_mutant_rejections": 8,
+    "note": "All 16 4-bit counter values; 2 values each of reset, pp1_iter0, previous icmp, previous FSM bit4, next FSM bit4"
+  },
+  "algebra": {
+    "stage_condition": "E(t) := FSM_bit4(t) & pp1_iter0(t)",
+    "stage_address": "E(t) => ram_read_addr(t) = counter(t)[2:0]",
+    "stage_reads": "E(t) => q0(t+1) = RAM(t)[counter(t)[2:0]]",
+    "stage_expected": "E(t) => phi(t+1) = select_shadow(counter(t)) for counter 0..7; for counter 8, phi(t+1) = unconstrained input310(t)",
+    "local_equivalence": "E(t) and 0<=counter(t)<=7 => [q0(t+1) == phi(t+1)] iff [RAM(t)[counter[2:0]] == selected_shadow(t)]",
+    "terminal_gate": "pp1_iter1(t+1) = (!ap_rst(t)) & pp1_iter0(t) & (counter(t) != 8)",
+    "compare_gate": "compare_enable(t+1) implies [pp1_iter0(t) and !ap_rst(t) and counter(t)!=8], regardless of next FSM state",
+    "original_safety": "Not established: must prove selected RAM/shadow agreement on reachable compare-relevant cycles and preserve result latch"
+  },
+  "status": {
+    "source_unchanged": true,
+    "holdouts_untouched": true,
+    "full_unbounded_safety_proof": false,
+    "independent_certificate": false,
+    "novel_algorithm": false,
+    "verified_performance_gain": false
+  }
+}

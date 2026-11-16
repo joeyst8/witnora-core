@@ -1,0 +1,98 @@
+{
+  "experiment": "HV-013",
+  "date": "2026-11-10",
+  "protocol": "docs/HV013_K_INDUCTION_STEP_PROTOCOL.md",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "method": "plain k-induction step: drop seven reset constraints; preserve 26*k transition equalities; assume !bad frames0..k-1; check bad at frame k",
+  "script": "research/hv013_induction_step.py",
+  "script_sha256": "9c894600b190e302a3ee64252b0e6b52baa92d1e26c92ff041b329ec33548152",
+  "bitwuzla": {
+    "version": "0.6.1",
+    "time_limit_ms": 20000,
+    "memory_limit_mib": 2048
+  },
+  "step_results": [
+    {
+      "k": 1,
+      "step_sha256": "4b857a5d4071348c114c977e2e21679bf7a21eca8e9a74d94d1b1dece955a472",
+      "bytes": 14623,
+      "verdict": "SAT",
+      "stdout": "Bad property 792 satisfiable.",
+      "exit_code": 0
+    },
+    {
+      "k": 2,
+      "step_sha256": "39aebb95e1cabc289ef17e12dee303406d36eeb05fa15f1a8cf7b87b15e13839",
+      "bytes": 22764,
+      "verdict": "SAT",
+      "stdout": "Bad property 1202 satisfiable.",
+      "exit_code": 0
+    },
+    {
+      "k": 4,
+      "step_sha256": "011ea4cfb099dcf828cf9e4f1ba629ea57c1e24cab9d281f572da7fd302b2438",
+      "bytes": 40424,
+      "verdict": "SAT",
+      "stdout": "Bad property 2022 satisfiable.",
+      "exit_code": 0
+    },
+    {
+      "k": 8,
+      "step_sha256": "2032ae89d8ea48291088dde22d2a148733f51f62349f34d9d03521cb40769202",
+      "bytes": 75768,
+      "verdict": "SAT",
+      "stdout": "Bad property 3662 satisfiable.",
+      "exit_code": 0
+    },
+    {
+      "k": 16,
+      "step_sha256": "2059fa96b61186b0682f1272be679718cb6a35d28c4efe508b0fe185009e3f6d",
+      "bytes": 146708,
+      "verdict": "SAT",
+      "stdout": "Bad property 6942 satisfiable.",
+      "exit_code": 0
+    }
+  ],
+  "model_debug": [
+    {
+      "k": 1,
+      "at_t0": {
+        "fsm_bits": "100000",
+        "result_latch": 0,
+        "write_enable_input": 1,
+        "helper43": 1,
+        "helper45": 1
+      },
+      "at_t1": {
+        "fsm_bits": "000010",
+        "result_latch": 0,
+        "helper43": 0,
+        "helper45": 1
+      },
+      "interpretation": "Safety initially holds but initial FSM/result combination need not be reachable from reset, causing next-frame bad."
+    },
+    {
+      "k": 2,
+      "at_t0": {
+        "fsm_bits": "100001",
+        "result_latch": 0,
+        "helper43": 1,
+        "helper45": 1
+      },
+      "at_t1": {
+        "fsm_bits": "100000",
+        "result_latch": 0,
+        "helper43": 1,
+        "helper45": 0
+      },
+      "at_t2": {
+        "fsm_bits": "000010",
+        "result_latch": 0,
+        "helper43": 0,
+        "helper45": 1
+      },
+      "interpretation": "Induction starts in an invalid multi-hot FSM encoding 100001 (not one of six legal one-hot codes); the source has unconstrained fallback behavior from invalid encodings. This counterexample is not a reachable reset trace."
+    }
+  ],
+  "conclusion": "Plain unstrengthened safety property is not k-inductive at any tested k<=16. This does not mean original model unsafe; HV-010 BMC base was UNSAT through16. Pursue stronger reachable-state/controller-memory invariants and Pono/AVR baselines; no novel Witnora result."
+}

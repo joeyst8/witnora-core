@@ -1,0 +1,100 @@
+{
+  "experiment": "HV-009",
+  "date": "2026-11-10",
+  "classification": "predeclared_full_Cerbtora_checker_and_real_array_noninductiveness_admission__no_breakthrough",
+  "predeclared_protocol": "docs/HV009_PREDECLARED_WORD_LEVEL_ARRAY_COHORT.md",
+  "protocol_committed_before_runs": "7e0a21a7a640e22fc41bbd200d8d3282dda2a815",
+  "toolchain": {
+    "cerbtora_commit": "983a21c440f8e4f25b1e8be8bd759332fee21e88",
+    "cerbtora_version": "2.0.0",
+    "btor2tools_commit": "e6941e37e056084ab6e51c5c1eee6233089a330d",
+    "bitwuzla_commit": "9bb73b69611d85fd04c20b3bd72f6dbe9bd9dc43",
+    "bitwuzla_version": "0.6.1",
+    "embedded_cadical_version": "1.7.4",
+    "cmake": "3.31.6",
+    "meson": "1.8.2",
+    "ninja": "1.11.1.4",
+    "gcc": "14.2.0",
+    "build_status": "success; complete checker scripts installed in isolated scratch"
+  },
+  "controls": {
+    "official_cerbtora_example_positive": {
+      "exit_code": 0,
+      "reset": "pass",
+      "transition": "pass",
+      "property": "pass",
+      "base": "pass",
+      "step": "pass",
+      "t_total_seconds": 0.046544208,
+      "accepted": true
+    },
+    "official_cerbtora_example_unstrengthened_negative": {
+      "exit_code": 1,
+      "step": "SAT; rejected",
+      "t_total_seconds": 0.065142838,
+      "accepted": false
+    }
+  },
+  "corpus": {
+    "repo": "https://gitlab.com/sosy-lab/research/data/word-level-hwmc-benchmarks",
+    "commit": "e19d110544fe7481763894f479b223aaa95fa582",
+    "subgroup": "array/btor2/hku-array",
+    "expected_safe_labels_from_source_metadata": true
+  },
+  "protocol": {
+    "witness": "identical unmodified original model as deliberately weak putative invariant; NOT a produced proof",
+    "TIME_seconds_per_obligation": 20,
+    "SPACE_MiB": 2048,
+    "one_run_per_case": true,
+    "algorithm_tuning": false
+  },
+  "cases": [
+    {
+      "name": "processed_hl_arr_access_32_arr.btor2",
+      "sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+      "size_bytes": 12369,
+      "lines": 409,
+      "expected_safe_metadata": true,
+      "exit_code": 1,
+      "reset": "passed",
+      "transition": "passed",
+      "property": "passed",
+      "base": "passed",
+      "step": "SAT; candidate witness rejected",
+      "step_sat_identifier": 793,
+      "checker_t_total_seconds": 0.038783584,
+      "process_wall_seconds_approx": 0.115295157,
+      "certified_safe": false,
+      "design_proven_unsafe": false
+    },
+    {
+      "name": "processed_hl_arr_access_128_arr.btor2",
+      "sha256": "e1576463aa86a252d947d110f2daf6b54417c2cb3a7c4dfb871fe9ac5b33861b",
+      "size_bytes": 13083,
+      "lines": 402,
+      "expected_safe_metadata": true,
+      "exit_code": 1,
+      "reset": "passed",
+      "transition": "passed",
+      "property": "passed",
+      "base": "passed",
+      "step": "SAT; candidate witness rejected",
+      "step_sat_identifier": 779,
+      "checker_t_total_seconds": 0.041733329,
+      "process_wall_seconds_approx": 0.091813289,
+      "certified_safe": false,
+      "design_proven_unsafe": false
+    }
+  ],
+  "interpretation": "safe-labeled sequential array designs are not proven 1-inductive by original predicate; SAT induction-step alone is compatible with safety because counterexample source state can be unreachable",
+  "limitations": [
+    "No new certifying model checker or invariant generator",
+    "No accepted real-array safety certificate; rejection is not an UNSAFE witness",
+    "Originals are two nonrandom development cases, not holdouts",
+    "Timings measure rejecting an inadequate witness and are not real proof-solving performance",
+    "Bitwuzla SAT/UNSAT decisions not independently SMT-proof-logged",
+    "No original scientific or algorithmic breakthrough",
+    "Three previously frozen combinational holdouts remain unrun"
+  ],
+  "next": "Retrieve/reproduce a public certifying word-level invariant producer, then predeclare and measure genuine checker-accepted original array safety claims on unseen tasks"
+}

@@ -1,0 +1,53 @@
+{
+  "experiment": "HV-018",
+  "date": "2026-11-10 America/Chicago",
+  "protocol": "docs/HV018_FSM_ONEHOT_ISOLATION_PROTOCOL.md",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "unroller": "research/hv010_btor2_bmc.py",
+  "transformer": "research/hv018_fsm_onehot_queries.py",
+  "transformation_details": {
+    "onehot_legality_node": 99,
+    "onehot_violation_node": 100,
+    "source_sort_count": 11,
+    "expressions_per_frame": 355,
+    "emitted_violation_ids": {
+      "t0": 94,
+      "t1": 449
+    },
+    "init_equalities": 7,
+    "transition_equalities": 26
+  },
+  "solver": "Bitwuzla 0.6.1",
+  "budgets": {
+    "wall_seconds_per_query": 20,
+    "virtual_memory_kib": 2097152
+  },
+  "original_unroller_sha256": {
+    "k0": "d71a1b215dddeb3e9fcfdf38f9bc7fdb4f5801843c21c962d2f3b5d73fc7d235",
+    "k1": "51d1fd32b8bd7c70ab437daed7ed1bd0d419326ce7b9a6b50792529850e9d94b"
+  },
+  "runs": [
+    {
+      "case": "positive",
+      "query_sha256": "871103af789b60fc536be8266f65dd88d3996b43662786a4cbf0a3e3d95bc4e5",
+      "literal_stdout": "Bad property 790 satisfiable.\n",
+      "exit_code": 0,
+      "class": "SAT-positive control"
+    },
+    {
+      "case": "base",
+      "query_sha256": "4af7a74075afd41ec1d396ab294aab57fc9ae45cae797c2b001f8907ab51aa99",
+      "literal_stdout": "Bad property 382 unsatisfiable.\n",
+      "exit_code": 0,
+      "class": "UNSAT init -> legal"
+    },
+    {
+      "case": "step",
+      "query_sha256": "0cb26138d4570c3ce65c314891664ee24e1574d5781b07b5f2bbab2d632b7760",
+      "literal_stdout": "Bad property 792 unsatisfiable.\n",
+      "exit_code": 0,
+      "class": "UNSAT legal(s) & T -> legal(s')"
+    }
+  ],
+  "conclusion": "Within the exact bit-vector/array BTOR2 semantics, the one-hot controller legality lemma is 1-inductive according to Bitwuzla. This does not prove original bad node48 unreachable, is not Cerbtora-certified, and is not algorithmically novel. H3 combined witness failure therefore involves additional condition(s) or their conjunction, not onehot legality alone."
+}

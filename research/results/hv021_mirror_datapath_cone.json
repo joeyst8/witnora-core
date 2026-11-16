@@ -1,0 +1,141 @@
+{
+  "experiment": "HV-021",
+  "admission": {
+    "chip_safety_proved": false,
+    "depth1_deterministic_output_sha256": "51d1fd32b8bd7c70ab437daed7ed1bd0d419326ce7b9a6b50792529850e9d94b",
+    "experiment": "HV-021",
+    "full_depth1_output_digest_equal": true,
+    "mirror_raw_sha256": "cfa12d67ca508b686e2c2609962fac74919e7448ca8a379d2527cdeba65d58bc",
+    "negative_control_changed_output": true,
+    "negative_control_mutant_sha256": "67fda3ca2ee2523d278d2a16415b952177db73c216c5819fbf71617c0802d7ca",
+    "negative_control_output_sha256": "ad527adf46c1c487dde8820be35873dd3f4764efc417df9cbd10ca0ffeb24ac0",
+    "original_init_constraints": 7,
+    "original_transition_constraints": 26,
+    "original_unroller_source_guard_verified": true,
+    "previously_archived_depth1_output_sha256": "51d1fd32b8bd7c70ab437daed7ed1bd0d419326ce7b9a6b50792529850e9d94b",
+    "previously_pinned_raw_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+    "source_bytes_equal_to_pinned": false
+  },
+  "datapath_cone": {
+    "algorithm_novelty": false,
+    "experiment": "HV-021",
+    "mirror_sha256": "cfa12d67ca508b686e2c2609962fac74919e7448ca8a379d2527cdeba65d58bc",
+    "result_reg_next_node": 264,
+    "sequential_dependency_layers": {
+      "0": {
+        "contains_array_ram_state_319": false,
+        "contains_fsm_state_14": true,
+        "contains_q0_phi_equality_166": true,
+        "contains_result_register_22": true,
+        "input_ids": [],
+        "read_ids": [],
+        "state_ids": [
+          14,
+          22,
+          159,
+          164,
+          165,
+          176
+        ],
+        "visited_node_count": 16,
+        "write_ids": []
+      },
+      "1": {
+        "contains_array_ram_state_319": true,
+        "contains_fsm_state_14": true,
+        "contains_q0_phi_equality_166": true,
+        "contains_result_register_22": true,
+        "input_ids": [
+          3,
+          4,
+          5,
+          8,
+          75,
+          189,
+          310
+        ],
+        "read_ids": [
+          320
+        ],
+        "state_ids": [
+          14,
+          22,
+          33,
+          50,
+          51,
+          52,
+          60,
+          112,
+          125,
+          159,
+          164,
+          165,
+          176,
+          181,
+          182,
+          183,
+          184,
+          185,
+          186,
+          187,
+          188,
+          319
+        ],
+        "visited_node_count": 151,
+        "write_ids": []
+      },
+      "2": {
+        "contains_array_ram_state_319": true,
+        "contains_fsm_state_14": true,
+        "contains_q0_phi_equality_166": true,
+        "contains_result_register_22": true,
+        "input_ids": [
+          3,
+          4,
+          5,
+          7,
+          8,
+          75,
+          189,
+          310
+        ],
+        "read_ids": [
+          320,
+          397
+        ],
+        "state_ids": [
+          14,
+          22,
+          33,
+          50,
+          51,
+          52,
+          60,
+          112,
+          125,
+          159,
+          164,
+          165,
+          174,
+          176,
+          181,
+          182,
+          183,
+          184,
+          185,
+          186,
+          187,
+          188,
+          249,
+          319
+        ],
+        "visited_node_count": 252,
+        "write_ids": [
+          402
+        ]
+      }
+    },
+    "source": "GitHub mirror independently admitted by equality of depth1 unroll SHA",
+    "unbounded_safety_proved": false
+  }
+}

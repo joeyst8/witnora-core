@@ -1,0 +1,167 @@
+{
+  "experiment": "HV-010",
+  "date": "2026-11-10",
+  "branch": "research/hv001-certified-chip-miters",
+  "pull_request": 145,
+  "source": {
+    "corpus": "SoSy-Lab word-level-hwmc-benchmarks",
+    "commit": "e19d110544fe7481763894f479b223aaa95fa582",
+    "path": "array/btor2/hku-array/processed_hl_arr_access_32_arr.btor2",
+    "sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+    "expectation_from_yaml": true
+  },
+  "toolchain": {
+    "cerbtora": "2.0.0",
+    "bitwuzla": "0.6.1",
+    "bitwuzla_commit": "9bb73b69611d85fd04c20b3bd72f6dbe9bd9dc43",
+    "limit_seconds": 20,
+    "memory_mib": 2048
+  },
+  "scripts": {
+    "invariant_generator": "research/hv010_invariant_witness.py",
+    "invariant_generator_sha256": "b44ddcb1b41ab0fd30ac1b9fe62b5170fef06a330db62d4fdbb31f09d33cbf61",
+    "bmc_generator": "research/hv010_btor2_bmc.py",
+    "bmc_generator_sha256": "dd5e1791369eaea5c47801781659f83c8d0de7e3fa83ce6d03b95df4e88ba120"
+  },
+  "witness_certification": [
+    {
+      "id": "H1",
+      "preregistered": "docs/HV010_FSM_INVARIANT_CANDIDATE_H1.md",
+      "formula": "!(fsm_bit5 && !final_result_latch)",
+      "witness_sha256": "f0cbaf95ecf7c7136e5ac33f705cecbf5e0faaf0b9c896e794dde33dd1e81fd7",
+      "exit_code": 1,
+      "checks": {
+        "reset": "pass",
+        "transition": "pass",
+        "property": "pass",
+        "base": "pass",
+        "step": "SAT => fail"
+      },
+      "inductive_certificate": false
+    },
+    {
+      "id": "H2",
+      "preregistered": "docs/HV010_COMPLEMENTARY_LATCH_CANDIDATE_H2.md",
+      "formula": "XOR(latch43,latch45)",
+      "witness_sha256": "2f5210372f96abc69da21a64c44b1c9fe626eec40770dac3e7f075128a332f8c",
+      "exit_code": 1,
+      "checks": {
+        "reset": "pass",
+        "transition": "pass",
+        "property": "pass",
+        "base": "pass",
+        "step": "SAT => fail"
+      },
+      "inductive_certificate": false
+    }
+  ],
+  "bmc": {
+    "preregistered": "docs/HV010_BOUNDED_CHIP_DIAGNOSTIC_PROTOCOL.md",
+    "depths": [
+      0,
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "outputs": [
+      {
+        "depth": 0,
+        "model_sha256": "d71a1b215dddeb3e9fcfdf38f9bc7fdb4f5801843c21c962d2f3b5d73fc7d235",
+        "bad_properties": 1,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 1,
+        "model_sha256": "51d1fd32b8bd7c70ab437daed7ed1bd0d419326ce7b9a6b50792529850e9d94b",
+        "bad_properties": 2,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 2,
+        "model_sha256": "f5e9b31bcd0e63543ebee6f86618453c6e368d13e3244bf606d29152d845dbac",
+        "bad_properties": 3,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 4,
+        "model_sha256": "63ebcccb31bbd552336e846e10843321685b920313101e7de8e46ca3df8ac38a",
+        "bad_properties": 5,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 8,
+        "model_sha256": "4de47d45cc8e2b0f549c3cb6b0bf0f564983c3d55e00e84d3b622b4e3173c701",
+        "bad_properties": 9,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 16,
+        "model_sha256": "85fb4e83bb4dbf81776fcbc29fa1027c5f405d10e05799fc8227387f9c325689",
+        "bad_properties": 17,
+        "verdict": "all unsat",
+        "frames": 17,
+        "transition_equalities": 416,
+        "init_equalities": 7,
+        "bytes": 146487
+      }
+    ]
+  },
+  "positive_control": {
+    "test": "add bad at t=0 for unconstrained ap_start",
+    "model_sha256": "72045477699d2647eb4600ea2f973d1bba7be39d12b6476f66da102b821c0ecf",
+    "normal_bad": "unsat",
+    "control_bad": "sat"
+  },
+  "h1_reachability_probe": {
+    "preregistered": "docs/HV010_H1_REACHABILITY_PROBE_PROTOCOL.md",
+    "depths": [
+      0,
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "outputs": [
+      {
+        "depth": 0,
+        "sha256": "bef4027c0aef00ad4d960ca28311fa59aad35b4181ef12be4024cfa9dfc40edb",
+        "properties_checked": 2,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 1,
+        "sha256": "a664a1bd496df86e0cf0d6618e00d992a99076478570b08dc33e6606ead663b6",
+        "properties_checked": 4,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 2,
+        "sha256": "55bead813c4a0d2887f38e50826cf579bdb215774e0c89c3fd7f6298885494cf",
+        "properties_checked": 6,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 4,
+        "sha256": "05cd4059be65f3eefdf1bafb8c34c87ef3b6c4cd7c11ec295d5b8d50578e6e1a",
+        "properties_checked": 10,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 8,
+        "sha256": "72fd210c2c307450e64938a2e0399fd6302ca8bd3c2a680463ed63e1f70289c6",
+        "properties_checked": 18,
+        "verdict": "all unsat"
+      },
+      {
+        "depth": 16,
+        "sha256": "325d3f1894b876f73e4fde9a9e64f2f6a00aadaf01603dbf0020e7174c07a7aa",
+        "properties_checked": 34,
+        "verdict": "all unsat"
+      }
+    ]
+  },
+  "interpretation": "One-step inductive witness not yet obtained; bounded absence of original violations and H1 counterexamples through 16 transitions is not unbounded safety; procedures are established methods, not a breakthrough."
+}

@@ -1,0 +1,101 @@
+{
+  "experiment": "HV-007",
+  "date": "2026-11-10",
+  "classification": "reproducible_posthoc_oracle_replay_and_primary_prior_art_kill_gate__no_novel_algorithm",
+  "source_file": "research/results/hv006_partition_overhead_screen.json",
+  "source_sha": "bc7b397cc030d3e000e992c797301e3332ef3dfa",
+  "hv006_predeclared_commit": "66acf8020ddb49bd9c3cf7c1f53b156e0358163e",
+  "analysis_type": "deterministic arithmetic replay of archived single-run development data; no new solver executions",
+  "cases": 10,
+  "always_partitioned_screening_sum_wall_seconds": 28.67,
+  "per_case_hindsight_oracle_sum_wall_seconds": 24.79,
+  "oracle_gain_seconds": 3.88,
+  "oracle_gain_fraction_of_partitioned_sum": 0.1353331008022323,
+  "dsp_gain_seconds": 3.87,
+  "dsp_fraction_of_oracle_gain": 0.9974226804123711,
+  "other_nine_gain_seconds": 0.01,
+  "oracle_selection": {
+    "iwls05_i2c": "partitioned",
+    "ss_pcm": "unpartitioned",
+    "systemcdes": "unpartitioned",
+    "ac97_ctrl": "partitioned",
+    "DMA": "partitioned",
+    "DSP": "unpartitioned",
+    "des_perf": "partitioned",
+    "wb_conmax": "partitioned",
+    "ethernet": "partitioned",
+    "vga_lcd": "partitioned"
+  },
+  "pinned_mode_dsp_replication": {
+    "partitioned_median_wall_seconds": 12.815,
+    "unpartitioned_median_wall_seconds": 9.21,
+    "ratio": 1.3914,
+    "equivalence_status": "ABC equivalent in all eight mode runs"
+  },
+  "admission_decisions": [
+    "reject generic output-overlap/OCM novelty: primary 2004 paper",
+    "reject duplicate-cone SAT work and incremental reuse novelty: primary 2007 paper",
+    "reject generic certifying bit-level, incremental, retiming, liveness and PDR novelty: 2024-2026 prior art",
+    "reject broad word-level certificate production novelty: Btor2-Cert TACAS 2024 and Cerbtora IJCAR 2026",
+    "consider memory-rich word-level safety with accepted certificate, only as candidate measurable application gap"
+  ],
+  "primary_literature": [
+    {
+      "year": 2004,
+      "title": "Circuit Partitioning for SAT-based Combinational Circuit Verification — A Case Study",
+      "url": "https://edocs.tib.eu/files/e01fn06/519562895.pdf"
+    },
+    {
+      "year": 2007,
+      "title": "Combinational Equivalence Checking Using Incremental SAT Solving, Output Ordering, and Resets",
+      "url": "https://www.cecs.uci.edu/~papers/aspdac07/pdf/p938_9C-3.pdf"
+    },
+    {
+      "year": 2024,
+      "title": "Btor2-Cert: A Certifying Hardware-Verification Framework Using Software Analyzers",
+      "doi": "10.1007/978-3-031-57256-2_7"
+    },
+    {
+      "year": 2025,
+      "title": "Introducing Certificates to the Hardware Model Checking Competition",
+      "doi": "10.1007/978-3-031-98668-0_14"
+    },
+    {
+      "year": 2026,
+      "title": "Liveness Proofs for Hardware Model Checking",
+      "doi": "10.1007/978-3-032-32537-2_1"
+    },
+    {
+      "year": 2026,
+      "title": "Certified Sequential Sweep Without Unrolling",
+      "url": "https://arxiv.org/abs/2607.27498"
+    },
+    {
+      "year": 2026,
+      "title": "Certificate-Aware Property-Directed Reachability",
+      "url": "https://repositum.tuwien.at/handle/20.500.12708/230511"
+    },
+    {
+      "year": 2026,
+      "title": "Hardware Model Checking Certification with Certifaiger and Cerbtora",
+      "doi": "10.1007/978-3-032-32589-1_17"
+    },
+    {
+      "year": 2025,
+      "title": "Algorithm Selection for Word-Level Hardware Model Checking",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/35275"
+    }
+  ],
+  "limitations": [
+    "The per-case oracle sees outcomes and cannot be deployed",
+    "single unisolated screening run per case except DSP followup",
+    "0.01-second residue below plausible timing noise",
+    "14-second guard censors unpartitioned VGA",
+    "per-case oracle ignores feature extraction, selection, proof and checking overhead",
+    "the two modes and ten cases do not bound optimal new algorithms or generalization",
+    "DSP partition count ratio is not exact gate duplication",
+    "HV003/006 frozen holdouts remain unrun",
+    "no new Witnora solver, mathematical invariant, proof or breakthrough demonstrated"
+  ],
+  "next": "HV-008 candidate only: provenance-locked, certificate-inclusive word-level/array-rich hardware safety baseline and falsifiable intervention admission"
+}

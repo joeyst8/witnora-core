@@ -1,0 +1,34 @@
+{
+  "experiment": "HV-016",
+  "date": "2026-11-10 America/Chicago",
+  "protocol": "docs/HV016_HIGH_BOUND_INCUMBENT_PROTOCOL.md",
+  "model_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "pono_commit": "c81aa363f4c1b1d4f05669478d9a94c16a0d4b44",
+  "engine": "published Pono 2.0",
+  "resource_limits": {
+    "wall_seconds": 20,
+    "virtual_memory_kib": 2097152,
+    "bound": 1000000
+  },
+  "runs": [
+    {
+      "engine": "ic3sa",
+      "cli": "--engine ic3sa --bound 1000000 --smt-solver bzla",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 124,
+      "timeout": true,
+      "classification": "UNKNOWN at wall-time cutoff"
+    },
+    {
+      "engine": "ind",
+      "cli": "--engine ind --bound 1000000 --smt-solver bzla",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 124,
+      "timeout": true,
+      "classification": "UNKNOWN at wall-time cutoff"
+    }
+  ],
+  "notes": "Both fixed first-party engines consumed their 20-second budget without printing sat, unsat, or a witness. No out-of-memory error reported. Shell timeout code 124 was recorded. Result is not proof of safety, unsafety, or novel solver capability."
+}

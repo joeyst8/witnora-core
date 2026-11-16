@@ -1,0 +1,52 @@
+{
+  "experiment": "HV-015",
+  "date": "2026-11-10 America/Chicago",
+  "protocol": "docs/HV015_PONO_2_BASELINE_PROTOCOL.md",
+  "source_model": "processed_hl_arr_access_32_arr.btor2",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "model_state_nodes": 26,
+  "model_input_nodes": 10,
+  "model_array_sorts": 1,
+  "property": "b0",
+  "pono": {
+    "tag": "v2.0.0",
+    "commit": "c81aa363f4c1b1d4f05669478d9a94c16a0d4b44",
+    "local_version_output": "c81aa36-dirty",
+    "local_dirty_explanation": "build-concurrency-only adjustment to contrib/setup-smt-switch.sh; Pono model checking source unchanged"
+  },
+  "dependencies": {
+    "smt_switch": "v1.1.3",
+    "bitwuzla": "122f27f9518269cd9c1ebf0efced37dfd7f845e6 (0.8.2-dev)",
+    "cvc5": "cvc5-1.3.3",
+    "btor2tools": "fb69ee3b95e8baa5f0a9a6b0b19ee8beaad52932"
+  },
+  "resource_limits": {
+    "wall_timeout_seconds": 20,
+    "virtual_memory_kib": 2097152,
+    "method": "GNU timeout; bash ulimit -v"
+  },
+  "runs": [
+    {
+      "engine": "ic3sa",
+      "flags": "--engine ic3sa --smt-solver bzla",
+      "implicit_bound": 10,
+      "stdout": "unknown\nb0\n",
+      "process_exit_code": 255,
+      "timed_out": false,
+      "elapsed_observation": "<3 seconds",
+      "classification": "UNKNOWN; no safety proof and no counterexample"
+    },
+    {
+      "engine": "ind",
+      "flags": "--engine ind --bound 16 --smt-solver bzla",
+      "bound": 16,
+      "stdout": "unknown\nb0\n",
+      "process_exit_code": 255,
+      "timed_out": false,
+      "elapsed_observation": "<2 seconds",
+      "classification": "UNKNOWN; no safety proof and no counterexample"
+    }
+  ],
+  "source_code_semantics": "Pono pono.cpp: check_prop calls prover->check_until(pono_options.bound_ + has_monitor); source bounded early termination explains why 20-second timeout was not consumed. This is not established solver runtime failure.",
+  "novelty": "None; external published incumbent baseline; no independently certified invariant witness; no Witnora algorithmic discovery"
+}

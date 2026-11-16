@@ -1,0 +1,30 @@
+{
+  "experiment": "HV-019",
+  "date": "2026-11-10 America/Chicago",
+  "protocol": "docs/HV019_CONTROL_STRENGTHENED_PROPERTY_PROTOCOL.md",
+  "source_sha256": "93fb87c152dc8b7fc3e709f1d56a6ab1178ac782340a1b84b86ee69f8fa40c49",
+  "unroller_sha256": "51d1fd32b8bd7c70ab437daed7ed1bd0d419326ce7b9a6b50792529850e9d94b",
+  "generator": "research/hv019_strengthened_property_query.py",
+  "query_sha256": "1a2cab04dc6eef7cd4f4f0316a0fdd9105e28faa605c6489c2b716d5c0c8e7a3",
+  "query_bytes": 14655,
+  "property_frame0_id": 45,
+  "property_frame1_id": 400,
+  "illegal_fsm_frame0_id": 94,
+  "original_init_constraints_removed": 7,
+  "original_transition_constraints_retained": 26,
+  "assumptions": [
+    "original safety at frame 0",
+    "one-hot FSM legality at frame 0"
+  ],
+  "query": "Is original bad at frame 1 SAT under arbitrary starting states respecting both assumptions and exact transition?",
+  "solver": "Bitwuzla 0.6.1",
+  "resource": {
+    "wall_seconds": 20,
+    "virtual_memory_kib": 2097152
+  },
+  "literal_stdout": "Bad property 794 satisfiable.\n",
+  "exit_code": 0,
+  "verdict": "SAT induction-step counterexample",
+  "certification_attempt": "Skipped as predeclared; strengthened induction step not UNSAT",
+  "interpretation": "Legal FSM state alone is insufficient to make original safety property 1-inductive. This is a spurious arbitrary-start inductive-step counterexample; it does NOT show a reachable unsafe chip execution. Need additional reachable data-path relation. No new algorithm or safety proof."
+}
